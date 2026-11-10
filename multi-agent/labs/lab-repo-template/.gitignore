@@ -1,0 +1,5 @@
+__pycache__/
+.claude/settings.local.json
+.claude/worktrees/
+review.md
+.env

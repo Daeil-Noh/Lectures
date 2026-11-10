@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ma">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1회 · 왜 여러 에이전트인가 | 멀티 에이전트 시스템 구축</title>
+<meta name="description" content="멀티 에이전트 시스템 구축 1회: 에이전트 복습, 워크플로 패턴, 멀티 에이전트 토폴로지, 실패 유형과 판단 기준, API 실습 준비">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<link rel="stylesheet" href="../../assets/css/ma.css">
+<style>
+  .pat-node rect { fill: var(--surface); stroke: var(--line); stroke-width: 2; transition: fill .2s, stroke .2s; }
+  .pat-node.on rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 3; }
+  .pat-node.code rect { stroke-dasharray: 5 4; }
+  .pat-edge { stroke: var(--line); stroke-width: 2.5; fill: none; transition: stroke .2s; }
+  .pat-edge.on { stroke: var(--accent); stroke-width: 3.5; }
+  .chk-grid { display: grid; gap: 8px; }
+  .verdict { font-size: 26px; font-weight: 800; color: var(--accent); line-height: 1.3; }
+  .topo { text-align: center; }
+  .topo svg { height: 190px; }
+</style>
+</head>
+<body>
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">멀티 에이전트 시스템 구축 · 1회</p>
+    <h1>왜 여러<br>에이전트인가</h1>
+    <p class="lead" style="font-size:25px">개념 · 패턴 · 언제 쓰고 언제 쓰지 말아야 하는가</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>초급</span><span>180분</span><span>직접 해 보기 3개</span><span>실습 1</span></div>
+  </div>
+  <svg viewBox="0 0 500 440" style="width:500px;flex:none" aria-hidden="true">
+    <circle cx="250" cy="220" r="160" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 10"/>
+    <g stroke="var(--line)" stroke-width="3"><path d="M250 220 L250 70"/><path d="M250 220 L105 300"/><path d="M250 220 L395 300"/><path d="M250 220 L120 120"/><path d="M250 220 L380 120"/></g>
+    <circle r="7" class="f-acc2 flowdot"><animateMotion dur="2.4s" repeatCount="indefinite" path="M250,220 L250,70"/></circle>
+    <circle r="7" class="f-acc2 flowdot"><animateMotion dur="2.4s" begin="-1.9s" repeatCount="indefinite" path="M250,220 L105,300"/></circle>
+    <circle r="7" class="f-acc2 flowdot"><animateMotion dur="2.4s" begin="-1.4s" repeatCount="indefinite" path="M250,220 L395,300"/></circle>
+    <circle r="7" class="f-acc flowdot"><animateMotion dur="2.4s" begin="-0.9s" repeatCount="indefinite" path="M120,120 L250,220"/></circle>
+    <circle r="7" class="f-acc flowdot"><animateMotion dur="2.4s" begin="-0.4s" repeatCount="indefinite" path="M380,120 L250,220"/></circle>
+    <g><circle cx="250" cy="70" r="34" class="f-accs"/><circle cx="105" cy="300" r="34" class="f-accs"/><circle cx="395" cy="300" r="34" class="f-accs"/><circle cx="120" cy="120" r="30" class="f-acc2s"/><circle cx="380" cy="120" r="30" class="f-acc2s"/></g>
+    <g style="color:var(--accent)"><use href="#i-bot" x="232" y="52" width="36" height="36"/><use href="#i-bot" x="87" y="282" width="36" height="36"/><use href="#i-bot" x="377" y="282" width="36" height="36"/></g>
+    <g style="color:var(--accent-2)"><use href="#i-search" x="104" y="104" width="32" height="32"/><use href="#i-check" x="364" y="104" width="32" height="32"/></g>
+    <circle cx="250" cy="220" r="56" class="f-acc"/>
+    <text x="250" y="230" text-anchor="middle" style="font-size:28px;font-weight:800;fill:var(--surface)">Lead</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+  <aside class="notes" data-min="2">인사. "이번 과정은 5회, 회당 3시간입니다. 1회는 손보다 머리 — 언제 여러 에이전트를 쓰고 언제 쓰지 말아야 하는지 판단 기준을 세우는 시간입니다." 노트 패널(N)에 장별 예정 시간과 누적 시간이 나오고, T로 강의 시계를 켤 수 있다.</aside>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span><span class="lv l1">초급</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">에이전트 구조</div><div class="d">모델 · 루프 · 도구 · 하네스로 에이전트를 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-network"/></svg></span><div class="h">패턴과 토폴로지</div><div class="d">워크플로 5가지와 멀티 에이전트 배치 4가지를 구별한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">실패와 비용</div><div class="d">멀티 에이전트가 실패하는 유형과 토큰 비용을 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-scale"/></svg></span><div class="h">판단</div><div class="d">내 연구 과제에 멀티 에이전트가 맞는지 판단한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">네 번째 목표가 오늘의 진짜 목표. 대학원생은 "할 수 있다"보다 "해야 하는가"를 판단할 수 있어야 한다.</aside>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--accent-soft)"><b>① 에이전트 다시 보기</b><small>루프 · 하네스 · 한계</small></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>② 대표 패턴</b><small>직접 해 보기 1</small></div>
+      <div style="flex:1.2;background:var(--surface-2)"><b>휴식</b></div>
+      <div style="flex:3.5;background:var(--accent-soft)"><b>③ 실패 · 비용 · 판단</b><small>직접 해 보기 2 · 3</small></div>
+      <div style="flex:1.2;background:var(--surface-2)"><b>휴식</b></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>④ 실습</b><small>API 준비 · 세 방식 비교</small></div>
+    </div>
+    <p class="muted small" style="margin-top:22px">강의 진행: <span class="kbd">N</span> 발표자 노트 · <span class="kbd">T</span> 강의 시계 · <span class="kbd">O</span> 슬라이드 목록 · <span class="kbd">F</span> 전체 화면</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">휴식은 2번, 10분씩. 실습은 Colab에서 각자 API 키로 진행하므로 시작 전에 키가 준비됐는지 확인한다(미리 공지했어야 함).</aside>
+</section>
+
+<!-- 4. 전체 과정 지도 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">전체 과정</span></div>
+  <h2>5회 · 15시간의 지도</h2>
+  <div class="body">
+    <table>
+      <tr><th style="width:90px">회</th><th>주제</th><th style="width:300px">손에 남는 것</th><th style="width:90px">단계</th></tr>
+      <tr><td><b>1회</b></td><td>왜 여러 에이전트인가 — 개념 · 패턴 · 판단</td><td>판단 체크리스트, 첫 API 호출</td><td><span class="lv l1">초급</span></td></tr>
+      <tr><td><b>2회</b></td><td>처음부터 만들기 — 도구 루프와 오케스트레이터–워커</td><td>직접 짠 리드 + 워커 시스템</td><td><span class="lv l2">중급</span></td></tr>
+      <tr><td><b>3회</b></td><td>컨텍스트 · 상태 · 검토 루프, MCP와 프레임워크</td><td>라우터 + 작성–검토 루프, Agent SDK</td><td><span class="lv l2">중급</span></td></tr>
+      <tr><td><b>4회</b></td><td>코딩 에이전트 여럿 운용 — 개발 환경 구축</td><td>연구실 저장소용 에이전트 설정 한 벌</td><td><span class="lv l3">고급</span></td></tr>
+      <tr><td><b>5회</b></td><td>평가 · 관측 · 안전 · 비용, 미니 프로젝트</td><td>추적 기록, 평가 기준표, 발표</td><td><span class="lv l3">고급</span></td></tr>
+    </table>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">두 갈래를 함께 다룬다: (1) 파이썬으로 에이전트 시스템을 직접 만드는 길(2·3회), (2) 코딩 에이전트 여러 개를 연구 환경에 들이는 길(4회). 5회에는 둘 다에 필요한 평가·안전·비용. 미니 프로젝트 주제는 오늘 끝에 고르기 시작한다.</aside>
+</section>
+
+<!-- 5. 질문 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">들어가며</span></div>
+  <div class="body" style="align-items:flex-start">
+    <p class="quote">에이전트를 10개 붙이면<br>10배 똑똑해질까?</p>
+    <div class="grid g3" style="width:100%;margin-top:18px">
+      <div class="card frag"><div class="k">생각 1</div><div class="h">일을 나누면 빨라진다</div><div class="d">독립적인 조사 10건이라면 그럴 수 있다.</div></div>
+      <div class="card frag"><div class="k">생각 2</div><div class="h">말이 안 통하면 망한다</div><div class="d">한 사람이 쓴 코드를 열 사람이 고치면?</div></div>
+      <div class="card frag"><div class="k">생각 3</div><div class="h">비용은 확실히 는다</div><div class="d">토큰 사용량이 수 배~수십 배로 커진다.</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">손들기: "그렇다 / 아니다 / 경우에 따라". 대부분 '경우에 따라'를 고를 텐데, "오늘 3시간이 그 '경우'를 구체화하는 시간"이라고 연결. 카드 셋을 하나씩 열며 학생 답과 대조.</aside>
+</section>
+
+<!-- 6. 구간 ① -->
+<section class="slide section">
+  <div class="big">①</div>
+  <h2>에이전트 다시 보기</h2>
+  <p>멀티 에이전트를 말하기 전에, 에이전트 하나부터</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1">하네스 엔지니어링 특강을 들은 학생에게는 복습, 처음인 학생에게는 기초.</aside>
+</section>
+
+<!-- 7. 에이전트 = 모델 + 루프 + 도구 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 에이전트 다시 보기</span></div>
+  <h2>에이전트 = 도구를 쓰며 스스로 반복하는 모델</h2>
+  <div class="body">
+    <div class="cols">
+      <svg viewBox="0 0 560 330" aria-label="에이전트 루프: 모델이 판단하고 도구를 실행하고 결과를 관찰하는 반복">
+        <path d="M280 60 A130 120 0 1 1 279 60" fill="none" stroke="var(--line)" stroke-width="4" stroke-dasharray="8 8"/>
+        <circle r="8" class="f-acc2 flowdot"><animateMotion dur="5s" repeatCount="indefinite" path="M280,60 A130,120 0 1,1 279,60"/></circle>
+        <g transform="translate(205 20)"><rect width="150" height="64" rx="16" class="f-acc"/><text x="75" y="40" text-anchor="middle" class="t-w" style="font-size:19px">모델이 판단</text></g>
+        <g transform="translate(390 150)"><rect width="150" height="64" rx="16" class="f-surface" stroke="var(--accent)" stroke-width="2"/><text x="75" y="30" text-anchor="middle" class="t-main">도구 실행</text><text x="75" y="50" text-anchor="middle" class="t-sub">검색 · 코드 · 파일</text></g>
+        <g transform="translate(205 262)"><rect width="150" height="64" rx="16" class="f-surface" stroke="var(--accent)" stroke-width="2"/><text x="75" y="30" text-anchor="middle" class="t-main">결과 관찰</text><text x="75" y="50" text-anchor="middle" class="t-sub">대화 기록에 추가</text></g>
+        <g transform="translate(20 150)"><rect width="150" height="64" rx="16" class="f-accs"/><text x="75" y="30" text-anchor="middle" class="t-acc">끝낼까?</text><text x="75" y="50" text-anchor="middle" class="t-sub">아니면 다시 판단</text></g>
+      </svg>
+      <div>
+        <div class="box key" style="margin-bottom:14px"><p class="box-title">한 줄 정의</p><p style="margin:0;font-size:22px">모델이 <b>도구를 고르고 → 실행 결과를 보고 → 다음 행동을 정하는</b> 일을 목표를 이룰 때까지 반복하는 시스템</p></div>
+        <ul class="small" style="margin:0">
+          <li>멈추는 시점을 <b>모델이</b> 정한다</li>
+          <li>필요한 단계 수를 <b>미리 모른다</b></li>
+          <li>기억은 대화 기록(컨텍스트) 하나뿐</li>
+        </ul>
+      </div>
+    </div>
+    <p class="ref">참고: Anthropic, <i>Building effective agents</i> (2024.12) — "augmented LLM"과 에이전트 루프</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">세 번째 점이 오늘 계속 돌아올 포인트: 에이전트의 '기억'은 컨텍스트 창 하나. 멀티 에이전트는 결국 이 창을 여러 개로 나누는 일.</aside>
+</section>
+
+<!-- 8. 워크플로 vs 에이전트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 에이전트 다시 보기</span></div>
+  <h2>워크플로와 에이전트는 다르다</h2>
+  <div class="body">
+    <div class="grid g2">
+      <div class="card"><div class="k">워크플로 (workflow)</div><div class="h">코드가 순서를 정한다</div><div class="d">LLM과 도구를 <b>미리 정한 코드 경로</b>로 엮는다. 예측 가능하고 싸다.</div>
+        <svg viewBox="0 0 420 80" style="margin-top:12px"><g class="t-main"><rect x="0" y="20" width="90" height="40" rx="10" class="f-accs"/><rect x="165" y="20" width="90" height="40" rx="10" class="f-accs"/><rect x="330" y="20" width="90" height="40" rx="10" class="f-accs"/></g><path d="M95 40h62M260 40h62" stroke="var(--muted)" stroke-width="3" marker-end="url(#ar1)"/><defs><marker id="ar1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs><text x="45" y="46" text-anchor="middle" class="t-acc">LLM 1</text><text x="210" y="46" text-anchor="middle" class="t-acc">LLM 2</text><text x="375" y="46" text-anchor="middle" class="t-acc">LLM 3</text></svg>
+      </div>
+      <div class="card"><div class="k" style="color:var(--accent-2)">에이전트 (agent)</div><div class="h">모델이 순서를 정한다</div><div class="d">LLM이 <b>스스로 과정과 도구 사용을 결정</b>한다. 유연하지만 비싸고 예측이 어렵다.</div>
+        <svg viewBox="0 0 420 80" style="margin-top:12px"><rect x="160" y="18" width="100" height="44" rx="12" class="f-acc2"/><text x="210" y="46" text-anchor="middle" class="t-w">LLM</text><path d="M260 30 C330 -10 360 80 262 52" fill="none" stroke="var(--accent-2)" stroke-width="3"/><g class="t-sub"><text x="20" y="30">도구 A</text><text x="20" y="62">도구 B</text><text x="330" y="70">반복 ?회</text></g><path d="M75 26h80M75 58h80" stroke="var(--line)" stroke-width="3" stroke-dasharray="5 5"/></svg>
+      </div>
+    </div>
+    <div class="box think frag" style="margin-top:18px"><p class="box-title">멀티 에이전트에서의 의미</p><p style="margin:0">"여러 LLM을 엮었다"고 다 멀티 <b>에이전트</b>는 아니다. 고정된 순서로 부르면 <b>워크플로</b>다 — 그리고 대부분은 그걸로 충분하다.</p></div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">Anthropic의 구분을 그대로 쓴다: workflows = predefined code paths, agents = LLM이 스스로 프로세스를 지휘. 실무 조언도 같은 글에서: 가장 단순한 해법부터, 필요할 때만 복잡도를 올린다. 학생에게 "여러분 연구실 자동화 중 실제로 '에이전트'가 필요한 건 몇 개?" 질문.</aside>
+</section>
+
+<!-- 9. 하네스 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 에이전트 다시 보기</span></div>
+  <h2 style="margin-bottom:14px">에이전트 = 모델 + 하네스</h2>
+  <div class="body">
+    <div class="grid g2" style="align-items:center">
+      <div>
+        <p style="font-size:30px;font-weight:800;margin-bottom:14px">모델은 바꿀 수 없지만<br><span class="mark">하네스는 설계할 수 있다</span></p>
+        <p class="small muted">하네스(harness): 모델을 둘러싼 모든 것 — 시스템 프롬프트, 도구, 컨텍스트 관리, 권한, 검증, 기록</p>
+      </div>
+      <div class="tiles" style="grid-template-columns:1fr 1fr">
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h">지침</div><div class="d">시스템 프롬프트 · 규칙 파일</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-plug"/></svg></span><div><div class="h">도구</div><div class="d">무엇을 할 수 있나</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h">컨텍스트</div><div class="d">무엇을 보고 있나</div></div></div>
+        <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-lock"/></svg></span><div><div class="h">권한</div><div class="d">무엇을 하면 안 되나</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h">검증</div><div class="d">끝났다는 걸 어떻게 아나</div></div></div>
+        <div class="tile row"><span class="ic-badge g"><svg class="ic"><use href="#i-log"/></svg></span><div><div class="h">기록</div><div class="d">무슨 일이 있었나</div></div></div>
+      </div>
+    </div>
+    <div class="callout b frag" style="margin-top:12px;font-size:19px"><b>멀티 에이전트 = 하네스 여러 벌 + 그 사이의 연결을 설계하는 일.</b> 하나가 엉성하면 엉성함이 곱해진다.</div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">학부 특강에서 다룬 6부품. 오늘부터 각 부품이 '에이전트마다' 따로 있다는 점이 핵심: 워커마다 다른 지침, 다른 도구, 다른 권한. 그 사이의 연결(위임 브리프, 결과 형식)이 새 설계 대상.</aside>
+</section>
+
+<!-- 10. 한 에이전트의 한계 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 에이전트 다시 보기</span></div>
+  <h2>에이전트 하나로는 왜 부족해지나</h2>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h" style="margin-top:12px">컨텍스트 포화</div><div class="d">읽은 자료, 도구 결과, 시행착오가 한 창에 쌓인다. 길어질수록 앞의 지시를 놓치고, 결국 창이 넘친다.</div><div class="ex">예: 논문 40편 초록을 한 대화에서 비교</div></div>
+      <div class="card"><span class="ic-badge"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h" style="margin-top:12px">순차 실행</div><div class="d">한 번에 한 가지씩. 서로 독립적인 조사 10건도 줄을 서서 기다린다.</div><div class="ex">예: 데이터셋 10개 라이선스 확인</div></div>
+      <div class="card"><span class="ic-badge o"><svg class="ic"><use href="#i-scale"/></svg></span><div class="h" style="margin-top:12px">역할 혼재</div><div class="d">같은 창에서 쓰고, 검토하고, 채점한다. 자기 결과물에는 후해지기 쉽다.</div><div class="ex">예: 자기가 짠 실험 코드를 자기가 리뷰</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:18px"><p class="box-title">그래서 나눈다</p><p style="margin:0">컨텍스트를 <b>격리</b>하고, 독립 작업을 <b>병렬</b>로 돌리고, 역할을 <b>분리</b>한다 — 멀티 에이전트가 주는 이득은 정확히 이 세 가지다.</p></div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">세 가지 한계 ↔ 세 가지 이득(격리·병렬·분리)을 짝지어 칠판에 적어 두면 이후 판단 체크리스트와 연결된다. 반대로, 이 셋 중 어느 것도 필요 없으면 멀티 에이전트를 쓸 이유가 없다는 것도 미리 말해 둔다.</aside>
+</section>
+
+<!-- 11. 구간 ② -->
+<section class="slide section">
+  <div class="big">②</div>
+  <h2>대표 패턴</h2>
+  <p>워크플로 5가지 → 멀티 에이전트 배치 4가지</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1">패턴 이름은 업계 공통어가 되었으니 영어 이름도 같이 기억하게 한다.</aside>
+</section>
+
+<!-- 12. 다섯 패턴 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 대표 패턴</span></div>
+  <h2>LLM을 엮는 다섯 가지 기본 패턴</h2>
+  <div class="body">
+    <div class="grid g3" style="gap:14px">
+      <div class="card"><div class="k">1 · Prompt chaining</div><div class="h">체인</div><div class="d">앞 단계 출력이 다음 단계 입력. 사이에 코드 검사를 끼울 수 있다.</div><div class="ex">초록 요약 → 한국어 번역 → 용어 통일</div></div>
+      <div class="card"><div class="k">2 · Routing</div><div class="h">라우팅</div><div class="d">입력을 분류해 전문 처리기로 보낸다.</div><div class="ex">문의 → 장비 / 행정 / 연구 담당</div></div>
+      <div class="card"><div class="k">3 · Parallelization</div><div class="h">병렬화</div><div class="d">독립 부분을 동시에(분할) 또는 같은 일을 여러 번(투표).</div><div class="ex">한 코드를 보안·성능·가독성 관점에서 동시 검토</div></div>
+      <div class="card"><div class="k">4 · Orchestrator–workers</div><div class="h">오케스트레이터–워커</div><div class="d">중심 LLM이 <b>실행 중에</b> 일을 쪼개 맡기고 결과를 합친다.</div><div class="ex">연구 질문 → 하위 질문 n개 → 종합</div></div>
+      <div class="card"><div class="k">5 · Evaluator–optimizer</div><div class="h">작성–검토 루프</div><div class="d">하나가 만들고 하나가 평가·피드백, 기준을 넘을 때까지 반복.</div><div class="ex">논문 초안 ↔ 심사위원 역할</div></div>
+      <div class="card" style="background:var(--accent-soft);border-color:transparent"><div class="k">+ Autonomous agent</div><div class="h">자율 에이전트</div><div class="d">위 패턴들을 모델이 스스로 골라 쓰는 열린 루프.</div><div class="ex">코딩 에이전트, 리서치 에이전트</div></div>
+    </div>
+    <p class="ref">출처: Anthropic, <i>Building effective agents</i> (2024.12)</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="6">핵심 구분: 3번 병렬화는 하위 작업이 '미리 정해져' 있고, 4번 오케스트레이터–워커는 '입력을 보고 그때 정한다'. 모양은 비슷하지만 이 차이가 워크플로와 에이전트의 차이. 5번은 평가 기준이 분명할 때만 효과가 있다(3회에 실습).</aside>
+</section>
+
+<!-- 13. 직접 해 보기 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 대표 패턴 · 직접 해 보기 1</span></div>
+  <h2><svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> 패턴마다 메시지가 어떻게 흐르나</h2>
+  <div class="demo">
+    <div class="plot"><svg id="patSvg" viewBox="0 0 700 380" aria-label="패턴 흐름도"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label for="patSel">패턴 고르기</label>
+        <select id="patSel" class="sel" style="width:100%">
+          <option value="chain">체인</option><option value="route">라우팅</option><option value="par">병렬화</option>
+          <option value="orch">오케스트레이터–워커</option><option value="eval">작성–검토 루프</option>
+        </select></div>
+      <button class="btn" id="patRun" type="button"><svg class="ic"><use href="#i-play"/></svg> 실행해 보기</button>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">LLM 호출</div><div class="val" id="patCalls">0</div></div>
+        <div class="meter"><div class="lbl">기다리는 단계</div><div class="val o" id="patDepth">0</div></div>
+      </div>
+      <div class="callout b" id="patNote">패턴을 고르고 실행해 보세요. 점선 상자는 LLM이 아닌 코드입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회 · 개념 설명용 단순화 모형</span><span class="no"></span></div>
+  <aside class="notes" data-min="8">순서 추천: 체인 → 병렬화(호출 수는 같아도 기다리는 단계가 줄어든다) → 오케스트레이터–워커(실행할 때마다 워커 수가 바뀜: 입력에 따라 리드가 정한다는 뜻) → 작성–검토(반복 횟수가 기준에 따라 달라짐). "기다리는 단계"는 순서대로 기다려야 하는 단계 수 = 지연 시간의 대략적 척도.</aside>
+</section>
+
+<!-- 14. 토폴로지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 대표 패턴</span></div>
+  <h2>멀티 에이전트의 네 가지 배치</h2>
+  <div class="body">
+    <div class="grid g4" style="gap:14px">
+      <div class="card topo"><svg viewBox="0 0 200 180"><g stroke="var(--line)" stroke-width="3"><path d="M100 50 L40 140M100 50 L100 140M100 50 L160 140"/></g><circle cx="100" cy="45" r="26" class="f-acc"/><circle cx="40" cy="145" r="20" class="f-accs"/><circle cx="100" cy="145" r="20" class="f-accs"/><circle cx="160" cy="145" r="20" class="f-accs"/></svg><div class="h">중앙형</div><div class="d small">리드 1 + 워커 n. 워커끼리는 대화하지 않는다.</div></div>
+      <div class="card topo"><svg viewBox="0 0 200 180"><g stroke="var(--line)" stroke-width="3"><path d="M100 30 L55 90M100 30 L145 90M55 90 L30 155M55 90 L80 155M145 90 L120 155M145 90 L170 155"/></g><circle cx="100" cy="28" r="20" class="f-acc"/><circle cx="55" cy="90" r="17" class="f-acc2s"/><circle cx="145" cy="90" r="17" class="f-acc2s"/><g class="f-accs"><circle cx="30" cy="155" r="13"/><circle cx="80" cy="155" r="13"/><circle cx="120" cy="155" r="13"/><circle cx="170" cy="155" r="13"/></g></svg><div class="h">계층형</div><div class="d small">중간 관리자를 둔다. 규모가 클 때.</div></div>
+      <div class="card topo"><svg viewBox="0 0 200 180"><g stroke="var(--line)" stroke-width="3"><path d="M30 90H170"/></g><g class="f-accs"><circle cx="30" cy="90" r="20"/><circle cx="100" cy="90" r="20"/></g><circle cx="170" cy="90" r="20" class="f-acc"/><g class="t-sub"><text x="30" y="135" text-anchor="middle">조사</text><text x="100" y="135" text-anchor="middle">작성</text><text x="170" y="135" text-anchor="middle">검토</text></g></svg><div class="h">파이프라인</div><div class="d small">역할별로 넘겨준다. 체인의 에이전트 판.</div></div>
+      <div class="card topo"><svg viewBox="0 0 200 180"><rect x="70" y="70" width="60" height="40" rx="8" class="f-acc2s"/><text x="100" y="95" text-anchor="middle" class="t-acc2" style="font-size:12px">칠판</text><g stroke="var(--line)" stroke-width="3"><path d="M40 40 L72 72M160 40 L128 72M40 145 L72 108M160 145 L128 108M40 40 L160 40" stroke-dasharray="4 4"/></g><g class="f-accs"><circle cx="40" cy="40" r="18"/><circle cx="160" cy="40" r="18"/><circle cx="40" cy="145" r="18"/><circle cx="160" cy="145" r="18"/></g></svg><div class="h">피어 · 공유 칠판</div><div class="d small">대등한 에이전트가 메시지나 공유 메모로 협업.</div></div>
+    </div>
+    <div class="callout frag" style="margin-top:18px;font-size:20px">오른쪽으로 갈수록 <b>유연하지만 통제가 어렵다.</b> 실제 서비스로 쓰이는 시스템은 대부분 <b>중앙형</b>에서 시작한다.</div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">중앙형 = 오케스트레이터–워커의 에이전트 버전. 피어형의 대표가 '토론(debate)' 연구들과 Claude Code의 agent teams(실험 기능, 4회). 연구 주제로는 피어형이 흥미롭지만, 시스템을 '돌려야' 하는 입장이면 중앙형부터.</aside>
+</section>
+
+<!-- 15. Anthropic Research -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 대표 패턴 · 사례</span></div>
+  <h2>사례: 중앙형 리서치 시스템</h2>
+  <div class="body">
+    <div class="cols">
+      <div>
+        <div class="tiles" style="grid-template-columns:1fr;gap:12px">
+          <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-network"/></svg></span><div><div class="h">구조</div><div class="d">리드 에이전트가 계획을 세우고 하위 에이전트들을 <b>병렬로</b> 띄워 각자 다른 측면을 조사 → 리드가 종합</div></div></div>
+          <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div><div class="h">효과</div><div class="d">사내 리서치 평가에서 리드 Opus 4 + 하위 Sonnet 4 구성이 단일 Opus 4보다 <b>90.2%</b> 높은 점수</div></div></div>
+          <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-coins"/></svg></span><div><div class="h">대가</div><div class="d">에이전트는 일반 채팅의 약 <b>4배</b>, 멀티 에이전트는 약 <b>15배</b> 토큰 사용</div></div></div>
+        </div>
+      </div>
+      <div class="box key"><p class="box-title">왜 잘됐나</p><p style="font-size:22px;margin-bottom:10px">브라우징 평가에서 성능 차이의 약 <b>80%</b>가 <b>쓴 토큰 양</b>으로 설명됐다.</p><p class="small muted" style="margin:0">멀티 에이전트는 창을 여러 개 써서 <b>한 창으로는 못 쓰는 양의 토큰</b>을 문제에 쏟게 해 준다. 그래서 <b>폭넓게 병렬로 찾는 일</b>에 강하다.</p></div>
+    </div>
+    <p class="ref">출처: Anthropic Engineering, <i>How we built our multi-agent research system</i> (2025.6)</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">수치는 원문 그대로이고 '사내 평가'임을 분명히. 대학원생에게 강조할 해석: 성능 향상의 상당 부분은 '더 많은 계산(토큰)을 쓰게 해 준 것'이다 → 같은 예산의 단일 에이전트와 비교해야 공정한 실험이라는 연구 방법론 포인트로 연결.</aside>
+</section>
+
+<!-- 16. Cognition 반론 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 대표 패턴 · 반론</span></div>
+  <h2>반론: "멀티 에이전트를 만들지 마라"</h2>
+  <div class="body">
+    <div class="grid g2">
+      <div class="card"><div class="k">원칙 1</div><div class="h">컨텍스트를 공유하라</div><div class="d">하위 에이전트가 요약된 지시만 받으면 상위 맥락을 모른 채 일한다.</div><div class="ex">"플래피 버드 만들기" → 한쪽은 마리오풍 배경, 한쪽은 어울리지 않는 새</div></div>
+      <div class="card"><div class="k">원칙 2</div><div class="h">행동에는 암묵적 결정이 담긴다</div><div class="d">각자 내린 작은 결정(스타일, API, 가정)이 서로 부딪히면 결과가 나빠진다.</div><div class="ex">병렬로 쓴 코드 두 덩어리가 서로 다른 규칙을 따름</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:16px"><p class="box-title">10개월 뒤 같은 저자의 정리 (2026.4)</p><p style="margin:0">여러 에이전트가 <b>지능을 보태되, 쓰기(write)는 한 줄기로</b> 유지하는 좁은 패턴들은 실제로 작동한다. 여러 에이전트가 동시에 쓰는 '군단' 방식은 여전히 어렵다.</p></div>
+    <p class="ref">출처: W. Yan (Cognition), <i>Don't Build Multi-Agents</i> (2025.6) · <i>Multi-Agents: What's Actually Working</i> (2026.4)</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">Anthropic 글과 거의 같은 시기(2025년 6월)에 나와 대비가 화제가 됐다. 그런데 둘을 같이 읽으면 결론이 비슷하다 — 다음 장.</aside>
+</section>
+
+<!-- 17. 읽기는 여럿, 쓰기는 하나 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 대표 패턴 · 정리</span></div>
+  <div class="body" style="align-items:center;text-align:center">
+    <p class="quote" style="font-size:52px">읽기는 여럿이,<br><span style="color:var(--accent)">쓰기는 하나가</span></p>
+    <div class="grid g2" style="width:100%;max-width:980px;margin-top:20px;text-align:left">
+      <div class="card"><div class="k" style="color:var(--ok)">멀티 에이전트가 잘 맞는 일</div><div class="d">조사 · 검색 · 비교 · 검토처럼 <b>읽고 보고하는</b> 일, 하위 작업끼리 의존이 적은 일</div></div>
+      <div class="card"><div class="k" style="color:var(--bad)">아직 어려운 일</div><div class="d">같은 코드·문서를 <b>여럿이 동시에 고치는</b> 일, 모두가 같은 맥락을 알아야 하는 일</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">LangChain의 Harrison Chase도 두 글을 비교하며 같은 결론(읽기 위주 시스템이 쓰기 위주보다 쉽다)을 냈다. Anthropic 글도 "대부분의 코딩처럼 병렬화할 단계가 적은 일, 에이전트끼리 의존이 많은 일은 맞지 않는다"고 명시. 4회 코딩 에이전트 운용에서 worktree로 '쓰기 공간을 분리'하는 이유가 여기 있다.</aside>
+</section>
+
+<!-- 18. 휴식 -->
+<section class="slide section">
+  <div class="big" style="font-size:90px">휴식 10분</div>
+  <h2>다음: 왜 실패하고, 얼마나 드는가</h2>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="10">휴식 중에 API 키가 없는 학생은 콘솔에서 미리 발급하도록 안내.</aside>
+</section>
+
+<!-- 19. 구간 ③ -->
+<section class="slide section">
+  <div class="big">③</div>
+  <h2>실패 · 비용 · 판단</h2>
+  <p>만들기 전에 던져야 할 질문들</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1"></aside>
+</section>
+
+<!-- 20. MAST -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실패 · 비용 · 판단</span></div>
+  <h2>멀티 에이전트는 어떻게 실패하나</h2>
+  <div class="body">
+    <p class="small" style="margin-bottom:14px">7개 프레임워크의 실행 기록 1,600여 건을 분석해 <b>14가지 실패 유형</b>을 <b>3갈래</b>로 묶은 연구 (MAST)</p>
+    <div class="grid g3">
+      <div class="card"><span class="ic-badge"><svg class="ic"><use href="#i-file"/></svg></span><div class="h" style="margin-top:10px">명세 · 설계 문제</div><div class="d">과제 명세를 어김, 역할을 벗어남, 같은 단계 반복, 대화 기록을 잃음, 끝낼 조건을 모름</div></div>
+      <div class="card"><span class="ic-badge o"><svg class="ic"><use href="#i-users"/></svg></span><div class="h" style="margin-top:10px">에이전트 간 어긋남</div><div class="d">대화가 처음으로 되돌아감, 모르면서 묻지 않음, 정보를 넘기지 않음, 남의 의견 무시, 말과 행동이 다름</div></div>
+      <div class="card"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h" style="margin-top:10px">검증 · 종료 문제</div><div class="d">너무 일찍 끝냄, 검증을 안 하거나 대충 함, 틀린 검증</div></div>
+    </div>
+    <div class="callout b frag" style="margin-top:16px;font-size:20px">결론: 실패의 상당수는 <b>모델이 멍청해서가 아니라 시스템 설계 탓</b>이다 → 좋은 모델로 바꾸는 것만으로는 안 고쳐진다.</div>
+    <p class="ref">출처: M. Cemri et al., <i>Why Do Multi-Agent LLM Systems Fail?</i>, NeurIPS 2025 (arXiv:2503.13657)</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="6">연구 방법론 측면도 소개: 전문가 주석자 6명, 주석자 간 일치도 κ=0.88, LLM 심사 파이프라인으로 확장. 5회 평가에서 이 분류표를 '실패 분석 체크리스트'로 다시 쓴다. 유형 이름은 논문 표현을 우리말로 풀어 쓴 것.</aside>
+</section>
+
+<!-- 21. 비용 직관 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실패 · 비용 · 판단</span></div>
+  <h2>비용은 곱하기로 늘어난다</h2>
+  <div class="body">
+    <svg viewBox="0 0 1100 250" aria-label="토큰 사용량 비교 막대: 채팅 1, 에이전트 약 4, 멀티 에이전트 약 15">
+      <g class="t-main" style="font-size:20px"><text x="0" y="52">채팅</text><text x="0" y="132">에이전트</text><text x="0" y="212">멀티 에이전트</text></g>
+      <rect x="170" y="25" width="56" height="40" rx="8" class="f-muted"/>
+      <rect x="170" y="105" width="224" height="40" rx="8" class="f-acc"/>
+      <rect x="170" y="185" width="840" height="40" rx="8" class="f-acc2"/>
+      <g class="t-main" style="font-size:22px"><text x="240" y="54">×1</text><text x="408" y="134">약 ×4</text><text x="1024" y="214">약 ×15</text></g>
+    </svg>
+    <div class="grid g3" style="margin-top:10px">
+      <div class="card frag"><div class="k">왜</div><div class="d">워커마다 지침 + 과제 + 도구 결과를 <b>따로</b> 읽는다. 리드는 워커 보고를 또 읽는다.</div></div>
+      <div class="card frag"><div class="k">그래서</div><div class="d">결과의 가치가 <b>비용을 감당할 만한 일</b>에만 쓴다.</div></div>
+      <div class="card frag"><div class="k">줄이는 법</div><div class="d">워커는 작은 모델, 보고는 짧게, 같은 앞부분은 캐시 (5회)</div></div>
+    </div>
+    <p class="ref">배수 출처: Anthropic Engineering, <i>How we built our multi-agent research system</i> (2025.6)</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">배수는 한 회사의 측정값으로 '감'을 잡기 위한 것. 다음 장 계산기로 우리 상황을 직접 넣어 본다.</aside>
+</section>
+
+<!-- 22. 직접 해 보기 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실패 · 비용 · 판단 · 직접 해 보기 2</span></div>
+  <h2><svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> 워커를 늘리면 비용과 시간은?</h2>
+  <div class="demo">
+    <div class="plot" style="flex-direction:column;align-items:stretch;padding:16px 20px;gap:10px">
+      <svg id="costSvg" viewBox="0 0 640 250" aria-label="실행 시간 막대"></svg>
+      <div class="legend"><span><i class="dot" style="background:var(--accent)"></i>리드(계획·종합)</span><span><i class="dot" style="background:var(--accent-2)"></i>워커</span><span>막대 길이 = 기다리는 시간</span></div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>워커 수 <output id="cN">4</output></label><input type="range" id="cNr" min="0" max="10" value="4"></div>
+      <div class="ctrl"><label>워커 1명이 읽는 양 <output id="cT">30k</output></label><input type="range" id="cTr" min="5" max="100" step="5" value="30"></div>
+      <div class="ctrl"><label for="cM">워커 모델</label><select id="cM" class="sel" style="width:100%"><option value="h">Haiku 5.5 (입력 $0.10 · 출력 $0.50 /MTok~)</option><option value="s" selected>Sonnet 5.5 ($2 · $10)</option><option value="o">Opus 5.5 ($4 · $20)</option></select></div>
+      <label class="chk"><input type="checkbox" id="cP" checked> <span>워커를 병렬로 실행</span></label>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">1회 실행 비용</div><div class="val" id="cCost">$0</div></div>
+        <div class="meter"><div class="lbl">걸리는 시간</div><div class="val o" id="cTime">0초</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회 · 가격: Claude 모델 문서(2026.11) 기준, 토큰·시간은 가정값</span><span class="no"></span></div>
+  <aside class="notes" data-min="7">가정: 리드는 Sonnet, 계획 입력 8k/출력 1.5k, 종합 입력 = 8k + 워커 보고(각 1.5k)/출력 3k. 워커 출력 1.5k. 시간은 출력 토큰 초당 60개 + 호출당 2초로 단순 계산. 관찰 포인트: (1) 병렬을 끄면 시간이 워커 수에 비례, (2) 워커 모델을 Haiku로 바꾸면 비용이 크게 준다 — Anthropic 사례도 리드와 워커 모델을 달리했다. 가격은 바뀔 수 있으니 실제 계획은 문서 확인.</aside>
+</section>
+
+<!-- 23. 직접 해 보기 3 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실패 · 비용 · 판단 · 직접 해 보기 3</span></div>
+  <h2><svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> 판단 체크리스트: 내 과제에 맞을까?</h2>
+  <div class="demo" style="grid-template-columns:1fr 400px">
+    <div class="chk-grid" id="judge">
+      <label class="chk"><input type="checkbox" data-k="indep"> <span>하위 작업들이 서로 <b>독립적</b>이다 (동시에 해도 된다)</span></label>
+      <label class="chk"><input type="checkbox" data-k="big"> <span>자료가 많아 <b>한 컨텍스트에 다 안 들어간다</b></span></label>
+      <label class="chk"><input type="checkbox" data-k="read"> <span>결과물은 주로 <b>조사·검토(읽기)</b>이고, 쓰기는 한 곳에서 한다</span></label>
+      <label class="chk"><input type="checkbox" data-k="open"> <span>필요한 단계를 <b>미리 정할 수 없다</b> (탐색적이다)</span></label>
+      <label class="chk"><input type="checkbox" data-k="value"> <span>결과의 가치가 <b>몇 배~십수 배의 비용</b>을 감당한다</span></label>
+      <label class="chk"><input type="checkbox" data-k="verify"> <span>결과가 맞는지 <b>기준이나 테스트로 확인</b>할 수 있다</span></label>
+    </div>
+    <div class="side">
+      <div class="meter"><div class="lbl">추천 구조</div><div class="verdict" id="jV">—</div></div>
+      <div class="callout b" id="jWhy" style="font-size:17px">해당하는 항목을 체크해 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회 · 오늘 내용을 정리한 경험칙</span><span class="no"></span></div>
+  <aside class="notes" data-min="6">학생 한 명의 실제 연구 과제를 받아 함께 체크해 본다. 규칙은 오늘 근거(Anthropic 두 글, Cognition, MAST)를 정리한 경험칙이지 정답이 아님을 밝힌다. '가치' 항목이 빠지면 무조건 단순한 구조를 추천하도록 만들어 두었다.</aside>
+</section>
+
+<!-- 24. 연구실 예시 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실패 · 비용 · 판단</span></div>
+  <h2>연구실 일에 대 보기</h2>
+  <div class="body">
+    <table>
+      <tr><th>일</th><th style="width:320px">추천 구조</th><th>이유</th></tr>
+      <tr><td>새 주제의 관련 연구 30편 조사·비교</td><td><b style="color:var(--ok)">오케스트레이터–워커</b></td><td>독립 · 읽기 위주 · 자료가 많다</td></tr>
+      <tr><td>실험 로그 수백 개에서 이상 실행 찾기</td><td><b style="color:var(--ok)">병렬화 (분할)</b> + 코드 집계</td><td>나눌 방법이 미리 정해져 있다</td></tr>
+      <tr><td>논문 초안을 학회 형식에 맞게 다듬기</td><td><b>작성–검토 루프</b></td><td>평가 기준(형식 규정)이 분명하다</td></tr>
+      <tr><td>실험 코드 리팩터링</td><td><b style="color:var(--accent-2)">에이전트 하나</b> (+ 읽기 전용 조사 보조)</td><td>같은 코드를 여럿이 고치면 충돌 · 맥락 공유 필요</td></tr>
+      <tr><td>매주 장비 예약 메일 분류</td><td><b>라우팅</b> (에이전트 불필요)</td><td>분류 기준이 고정 · 값싸게</td></tr>
+    </table>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">학생들에게 "여기에 하나씩 추가해 보라"고 하고 2~3개를 같이 분류. 리팩터링 줄이 가장 논쟁적 — 4회에서 worktree로 '분리된 쓰기 공간'을 주면 일부 병렬화가 가능해진다는 예고.</aside>
+</section>
+
+<!-- 25. 휴식 -->
+<section class="slide section">
+  <div class="big" style="font-size:90px">휴식 10분</div>
+  <h2>다음: 실습 — API로 세 방식 비교하기</h2>
+  <p>Colab을 열고 API 키를 준비해 두세요</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="10"></aside>
+</section>
+
+<!-- 26. 구간 ④ -->
+<section class="slide section lab">
+  <div class="big">④</div>
+  <h2>실습: 한 번 · 체인 · 병렬</h2>
+  <p>같은 질문을 세 방식으로 풀고 토큰 · 시간 · 품질을 비교한다</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1"></aside>
+</section>
+
+<!-- 27. API 키 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-key"/></svg> 실습 준비</span></div>
+  <h2>API 키는 코드에 쓰지 않는다</h2>
+  <div class="body">
+    <div class="cols">
+      <ol class="steps">
+        <li><div>콘솔에서 API 키 발급<small>platform.claude.com → API Keys</small></div></li>
+        <li><div><b>사용 한도(spend limit)</b>를 먼저 정한다<small>실습용은 월 몇 달러 수준이면 충분</small></div></li>
+        <li><div>Colab 왼쪽 <b>🔑 보안 비밀(Secrets)</b>에 <code class="i">ANTHROPIC_API_KEY</code> 이름으로 저장 → 노트북 액세스 허용</div></li>
+        <li><div>코드는 이름으로만 불러 쓴다</div></li>
+      </ol>
+      <div>
+        <pre class="code sm">from google.colab import userdata
+import os
+os.environ['ANTHROPIC_API_KEY'] = userdata.get('ANTHROPIC_API_KEY')</pre>
+        <div class="box warn" style="margin-top:14px"><p class="box-title"><svg class="ic"><use href="#i-alert"/></svg> 하지 말 것</p><ul class="small" style="margin:0"><li>노트북·GitHub에 키 붙여 넣기</li><li>키를 단톡방·메일로 공유</li><li>한도 없이 반복문 돌리기</li></ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="6">키 유출은 실제로 자주 일어나는 사고. GitHub에 올라간 키는 자동으로 수집되는 경우가 있다. 연구실 공용 키를 쓰는 경우 사람별로 키를 따로 발급해 사용량을 구분하는 것을 권장. 메뉴 이름은 콘솔 개편에 따라 바뀔 수 있다.</aside>
+</section>
+
+<!-- 28. 첫 호출 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-code"/></svg> 실습 준비</span></div>
+  <h2>첫 호출과 토큰 확인</h2>
+  <div class="body">
+    <div class="cols">
+      <pre class="code sm">import anthropic
+client = anthropic.Anthropic()          # 환경 변수에서 키를 읽음
+MODEL = 'claude-sonnet-5-5'
+
+resp = client.messages.create(
+    model=MODEL, max_tokens=500,
+    system='너는 간결한 연구 조교다.',
+    messages=[{'role': 'user', 'content': '멀티 에이전트를 한 문장으로 정의해 줘.'}],
+)
+print(resp.content[0].text)
+print(resp.usage.input_tokens, resp.usage.output_tokens)</pre>
+      <div>
+        <pre class="out sm">여러 LLM 에이전트가 역할을 나눠 협력하며 하나의 목표를 이루는 시스템입니다.
+31 38</pre>
+        <ul class="small" style="margin-top:14px">
+          <li><code class="i">system</code>: 이 에이전트의 지침</li>
+          <li><code class="i">messages</code>: 대화 기록 = 컨텍스트</li>
+          <li><code class="i">usage</code>: 비용 계산의 근거 — <b>매번 기록한다</b></li>
+        </ul>
+        <p class="codecap">출력 문장과 토큰 수는 실행마다 다릅니다(예시).</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="6">모델 이름은 Claude 모델 문서(2026.11 기준) 그대로. 실습 노트북은 맨 위 MODEL 변수 하나만 바꾸면 되게 만들어 두었다. 'messages가 곧 컨텍스트'라는 것을 다시 강조 — 2회에 이 배열이 에이전트 루프에서 자라는 모습을 본다.</aside>
+</section>
+
+<!-- 29. 실습 1 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-flask"/></svg> 실습 1 · 30분</span></div>
+  <h2>같은 질문, 세 가지 방식</h2>
+  <div class="body">
+    <div class="grid g3" style="gap:14px">
+      <div class="card"><div class="k">A · 한 번 호출</div><div class="d">질문 하나를 그대로 묻는다.</div></div>
+      <div class="card"><div class="k">B · 체인 (3단계)</div><div class="d">관점 나열 → 관점별 분석 → 종합 보고서</div></div>
+      <div class="card"><div class="k">C · 병렬 + 종합</div><div class="d">관점 3개를 <b>동시에</b> 분석 → 종합 호출</div></div>
+    </div>
+    <div class="cols even" style="margin-top:16px;align-items:center">
+      <div class="box think" style="margin:0"><p class="box-title">기록할 것</p><p class="small" style="margin:0">방식별 LLM 호출 수 · 입력/출력 토큰 · 비용 · 걸린 시간 · 결과에 대한 <b>내 평가(1~5)</b></p></div>
+      <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+        <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/multi-agent/labs/lab01_three_ways.ipynb" target="_blank" rel="noopener">Colab에서 실습 1 열기</a>
+        <span class="small muted">예상 비용: Sonnet 기준 한 번 다 돌리면 수 센트</span>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="30">돌아다니며 막힌 곳 도와주기. 흔한 문제: Secrets 노트북 액세스 허용 안 함, 401(키 오타), 429(동시 호출 제한 — 노트북에 재시도 넣어 둠). 끝나면 2~3명에게 표를 보여 달라고 해서 "C가 B보다 빨랐나? 품질은?"을 묻는다. 대개 C가 빠르고 토큰은 비슷하거나 약간 많다. 질문 주제는 각자 연구 분야로 바꿔도 된다고 안내.</aside>
+</section>
+
+<!-- 30. 설계 과제 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-target"/></svg> 실습 2 · 12분</span></div>
+  <h2>내 연구 과제 하나로 구조 스케치</h2>
+  <div class="body">
+    <div class="cols">
+      <ol class="steps">
+        <li><div>자동화하고 싶은 연구 업무 하나를 고른다</div></li>
+        <li><div>판단 체크리스트 6문항에 답한다</div></li>
+        <li><div>패턴 · 배치를 고르고 그림으로 그린다<small>에이전트마다: 역할 · 도구 · 입력 · 출력 형식</small></div></li>
+        <li><div><b>쓰지 않는 이유</b>도 한 줄 적는다<small>예: "작성은 한 에이전트만 — 형식 충돌 방지"</small></div></li>
+      </ol>
+      <div class="box key"><p class="box-title">과정 끝까지 이어 가는 미니 프로젝트</p><p class="small" style="margin:0">이 스케치가 2·3회에 코드가 되고, 4회에 연구실 환경에 들어가고, 5회에 평가해서 발표한다. 주제는 다음 회까지 바꿔도 된다.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="12">2인 1조로 서로의 스케치를 체크리스트로 '공격'하게 하면 좋다: "이거 그냥 에이전트 하나로 되지 않아?" 마지막 2분에 한 조 발표.</aside>
+</section>
+
+<!-- 31. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 세 줄</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr;gap:14px">
+      <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h">멀티 에이전트가 주는 것은 격리 · 병렬 · 분리</div><div class="d">이 셋이 필요 없으면 워크플로나 에이전트 하나로 충분하다</div></div></div>
+      <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-network"/></svg></span><div><div class="h">읽기는 여럿이, 쓰기는 하나가</div><div class="d">조사·검토처럼 독립적인 읽기 작업에서 가장 잘 작동한다</div></div></div>
+      <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-coins"/></svg></span><div><div class="h">실패는 주로 설계 탓, 비용은 곱하기</div><div class="d">역할 명세 · 정보 전달 · 검증을 설계하고, 가치가 비용을 넘는 일에만 쓴다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="4"></aside>
+</section>
+
+<!-- 32. 확인 문제 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 (1/2)</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:16px;align-items:start">
+      <div class="q" data-answer="c" data-explain="하위 작업을 실행 중에 입력을 보고 정하는 것이 오케스트레이터–워커의 핵심입니다. 미리 정해 두면 병렬화(워크플로)입니다.">
+        <p class="q-title"><b>Q1.</b> 오케스트레이터–워커가 병렬화와 다른 점은?</p>
+        <div class="opts"><button data-v="a">워커가 동시에 실행된다</button><button data-v="b">LLM 호출 수가 더 적다</button><button data-v="c">하위 작업을 실행 중에 LLM이 정한다</button><button data-v="d">결과를 코드로 합친다</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="b" data-explain="Anthropic은 같은 코드·맥락을 모두가 알아야 하거나 의존이 많은 일(대부분의 코딩)은 맞지 않는다고 밝혔습니다.">
+        <p class="q-title"><b>Q2.</b> 멀티 에이전트가 <b>가장 덜</b> 맞는 일은?</p>
+        <div class="opts"><button data-v="a">경쟁 기술 20개의 최신 동향 조사</button><button data-v="b">하나의 모듈을 세 에이전트가 동시에 수정</button><button data-v="c">데이터셋 10개의 라이선스 확인</button><button data-v="d">한 논문을 세 관점에서 각각 검토</button></div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3"></aside>
+</section>
+
+<!-- 33. 확인 문제 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 (2/2)</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:16px;align-items:start">
+      <div class="q" data-answer="d" data-explain="MAST 연구는 실패의 상당수가 시스템 설계와 에이전트 간 어긋남에서 온다고 보고, 모델 교체만으로는 부족하다고 결론지었습니다.">
+        <p class="q-title"><b>Q3.</b> MAST 연구의 결론과 가장 가까운 것은?</p>
+        <div class="opts"><button data-v="a">더 큰 모델이면 실패가 사라진다</button><button data-v="b">에이전트 수를 늘릴수록 안정적이다</button><button data-v="c">실패는 대부분 도구 오류다</button><button data-v="d">실패의 상당수는 시스템 설계 문제다</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="a" data-explain="성능 차이의 상당 부분이 토큰 사용량으로 설명되었으므로, 같은 토큰 예산을 쓴 단일 에이전트와 비교해야 구조 자체의 효과를 볼 수 있습니다.">
+        <p class="q-title"><b>Q4.</b> 멀티 에이전트가 단일 에이전트보다 낫다고 <b>공정하게</b> 주장하려면?</p>
+        <div class="opts"><button data-v="a">비슷한 토큰 예산을 쓴 단일 에이전트와 비교한다</button><button data-v="b">에이전트 수가 많은 쪽을 기준으로 삼는다</button><button data-v="c">가장 어려운 문제 하나로만 비교한다</button><button data-v="d">출력이 더 긴 쪽을 높게 평가한다</button></div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">Q4는 대학원생용 질문. 논문을 쓸 때 리뷰어가 반드시 물어볼 지점.</aside>
+</section>
+
+<!-- 34. 다음 회 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 회 예고</span></div>
+    <div class="big">2회</div>
+    <h2>처음부터 만들기</h2>
+    <p>도구 사용 루프를 직접 짜고, 서브에이전트를 '도구'로 감싸 리드 + 워커 시스템을 만듭니다.</p>
+    <p class="small muted" style="margin-top:8px">읽어 올 것: Anthropic <i>Building effective agents</i>, <i>How we built our multi-agent research system</i> · Cognition <i>Don't Build Multi-Agents</i></p>
+    <p style="margin-top:16px;display:flex;gap:12px"><a class="btn ghost" href="../">☰ 강의 목록</a><a class="btn" href="../s02/">2회로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:200px;height:200px;font-size:120px;border-radius:46px;background:var(--surface)"><svg class="ic"><use href="#i-code"/></svg></span>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 1회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">과제: 미니 프로젝트 스케치를 한 장으로 정리해 다음 시간 시작 때 1분씩 공유.</aside>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">1회 · 왜 여러 에이전트인가</span>
+  <span class="spacer"></span>
+  <span class="hint">← → · N 노트 · T 시계 · O 목록 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="../../assets/js/notes.js"></script>
+<script src="demo.js"></script>
+</body>
+</html>

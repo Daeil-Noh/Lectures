@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "lab-papers": {
+      "command": "python",
+      "args": ["tools/papers_server.py"]
+    }
+  }
+}

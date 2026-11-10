@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하네스 엔지니어링 — AI에게 고삐를 채우는 기술 | 1학년 특강</title>
+<meta name="description" content="대학교 1학년을 위한 60분 특강: 하네스 엔지니어링(Harness Engineering) 입문">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --paper:#f7f4ed; --paper2:#efeae0; --ink:#1b1e25; --muted:#646a75; --line:#d9d3c6;
+  --guide:#d9480f; --guide-soft:#fde8dc;
+  --sensor:#1864ab; --sensor-soft:#dcebf8;
+  --ok:#2b8a3e; --ok-soft:#dff2e3; --bad:#c92a2a; --bad-soft:#fbe1e1;
+  --model:#5f3dc4; --model-soft:#ebe5fb;
+  --mono: "JetBrains Mono", "D2Coding", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#222;overflow:hidden}
+body{font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;word-break:keep-all}
+
+/* ---------- stage: fixed 1600x900 canvas scaled to viewport ---------- */
+#stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform-origin:center center}
+.slide{position:absolute;inset:0;background:var(--paper);padding:80px 110px 90px;display:none;overflow:hidden}
+.slide.active{display:block;animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* chrome */
+.kicker{font-size:22px;font-weight:700;letter-spacing:.08em;color:var(--guide);text-transform:uppercase;margin-bottom:14px}
+h1{font-size:92px;line-height:1.08;font-weight:800;letter-spacing:-.03em}
+h2{font-size:60px;line-height:1.15;font-weight:800;letter-spacing:-.025em;margin-bottom:34px}
+h3{font-size:32px;font-weight:700;margin-bottom:12px;letter-spacing:-.01em}
+p,li{font-size:30px;line-height:1.55}
+.lead{font-size:36px;line-height:1.5;color:#2d313a}
+.muted{color:var(--muted)}
+.small{font-size:24px}
+.tiny{font-size:20px}
+em.g{font-style:normal;color:var(--guide);font-weight:700}
+em.s{font-style:normal;color:var(--sensor);font-weight:700}
+em.m{font-style:normal;color:var(--model);font-weight:700}
+b{font-weight:700}
+code,.mono{font-family:var(--mono);font-size:.88em;background:var(--paper2);padding:2px 8px;border-radius:6px}
+.foot{position:absolute;left:110px;right:110px;bottom:34px;display:flex;justify-content:space-between;font-size:18px;color:var(--muted)}
+.part-tag{position:absolute;top:34px;right:110px;font-size:18px;color:var(--muted);font-weight:600}
+
+/* layout helpers */
+.row{display:flex;gap:40px}
+.col{flex:1}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.card{background:#fff;border:2px solid var(--line);border-radius:22px;padding:28px 30px}
+.card h3{font-size:30px}
+.card p{font-size:25px;line-height:1.5}
+.pill{display:inline-block;font-size:19px;font-weight:700;padding:5px 14px;border-radius:999px;margin-bottom:12px}
+.pill.g{background:var(--guide-soft);color:var(--guide)}
+.pill.s{background:var(--sensor-soft);color:var(--sensor)}
+.pill.m{background:var(--model-soft);color:var(--model)}
+.pill.k{background:#e9ecef;color:#495057}
+ul.clean{list-style:none}
+ul.clean li{padding-left:44px;position:relative;margin-bottom:14px}
+ul.clean li::before{content:"";position:absolute;left:8px;top:.62em;width:14px;height:14px;border-radius:50%;background:var(--guide)}
+.big-quote{font-size:52px;line-height:1.35;font-weight:700;letter-spacing:-.02em}
+.center{text-align:center}
+
+/* title slide */
+.title-slide{background:var(--ink);color:var(--paper)}
+.title-slide .kicker{color:#ff8a4c}
+.title-slide h1{color:#fff}
+.title-slide .sub{font-size:38px;color:#c9c4b8;margin-top:28px;line-height:1.45}
+.title-slide .meta{position:absolute;left:110px;bottom:80px;font-size:24px;color:#a8a296;line-height:1.6}
+.title-slide .hint{position:absolute;right:110px;bottom:80px;font-size:19px;color:#8a857a;text-align:right;line-height:1.7}
+.title-slide .hint kbd{font-family:var(--mono);background:#343842;color:#e6e1d6;border-radius:6px;padding:2px 9px;font-size:17px}
+.reins{position:absolute;right:90px;top:90px;opacity:.95}
+
+/* section divider */
+.divider{background:var(--paper2)}
+.divider .num{font-size:220px;font-weight:800;color:var(--guide);line-height:1;letter-spacing:-.05em}
+.divider h2{font-size:84px;margin:10px 0 18px}
+
+/* agenda */
+.agenda{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:10px}
+.agenda .card{padding:26px}
+.agenda .t{font-family:var(--mono);font-size:20px;color:var(--muted)}
+.agenda h3{font-size:30px;margin:10px 0 8px}
+.agenda p{font-size:22px;color:#444}
+.agenda .bar{height:10px;border-radius:5px;background:var(--guide);margin-top:16px}
+
+/* versus */
+.vs{display:grid;grid-template-columns:1fr 90px 1fr;align-items:stretch;gap:0}
+.vs .mid{display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:var(--muted)}
+.chat{font-size:23px;line-height:1.5}
+.bubble{padding:14px 20px;border-radius:18px;margin:10px 0;max-width:92%}
+.bubble.u{background:#e9ecef;margin-left:auto}
+.bubble.a{background:var(--model-soft)}
+.step{font-family:var(--mono);font-size:20px;padding:9px 14px;border-left:4px solid var(--sensor);background:#f3f7fb;margin:7px 0;border-radius:0 8px 8px 0}
+.step.act{border-color:var(--guide);background:#fdf3ee}
+.step.ok{border-color:var(--ok);background:var(--ok-soft)}
+
+/* timeline */
+.timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;position:relative;margin-top:30px}
+.timeline .card{position:relative;padding-top:64px}
+.timeline .yr{position:absolute;top:-22px;left:28px;background:var(--ink);color:#fff;font-family:var(--mono);font-size:20px;padding:8px 16px;border-radius:999px}
+.timeline .q{font-size:27px;font-weight:700;margin:8px 0 12px;line-height:1.4}
+.timeline .card.now{border-color:var(--guide);box-shadow:0 0 0 4px var(--guide-soft)}
+.nest{display:flex;align-items:center;justify-content:center;margin-top:34px}
+
+/* anatomy */
+.anatomy{display:grid;grid-template-columns:1fr 360px 1fr;grid-template-rows:repeat(3,auto);gap:22px 30px;align-items:center}
+.anatomy .core{grid-column:2;grid-row:1/4;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;aspect-ratio:1;background:var(--model-soft);border:4px dashed var(--model);text-align:center;padding:30px}
+.anatomy .core b{font-size:42px;color:var(--model)}
+.anatomy .core span{font-size:22px;color:#4a3a8a;margin-top:6px}
+.comp{background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px 24px;cursor:pointer;transition:.2s}
+.comp:hover,.comp.on{border-color:var(--guide);box-shadow:0 6px 0 var(--guide-soft)}
+.comp h3{font-size:28px;margin-bottom:4px}
+.comp p{font-size:21px;line-height:1.45;color:#444}
+.comp .ex{display:none;font-size:20px;color:var(--guide);margin-top:8px;font-weight:600}
+.comp.on .ex{display:block}
+
+/* guides / sensors */
+.gs-flow{display:flex;align-items:center;gap:18px;margin:6px 0 34px}
+.gs-box{flex:1;border-radius:20px;padding:22px 26px;font-size:26px;font-weight:700;text-align:center}
+.gs-arrow{font-size:40px;color:var(--muted)}
+.matrix{display:grid;grid-template-columns:200px 1fr 1fr;gap:14px}
+.matrix div{border-radius:14px;padding:18px 22px;font-size:22px;line-height:1.45}
+.matrix .h{background:transparent;font-weight:700;font-size:23px;color:var(--muted);display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.matrix .hg{background:var(--guide);color:#fff;font-weight:700;text-align:center}
+.matrix .hs{background:var(--sensor);color:#fff;font-weight:700;text-align:center}
+.matrix .cg{background:var(--guide-soft)}
+.matrix .cs{background:var(--sensor-soft)}
+
+/* simulator */
+.sim{display:grid;grid-template-columns:470px 1fr;gap:34px;height:640px}
+.toggles{display:flex;flex-direction:column;gap:12px}
+.tog{display:flex;align-items:center;gap:16px;background:#fff;border:2px solid var(--line);border-radius:16px;padding:13px 18px;cursor:pointer;user-select:none;transition:.15s}
+.tog .ic{font-size:30px;width:40px;text-align:center}
+.tog .nm{font-size:23px;font-weight:700;line-height:1.25}
+.tog .ds{font-size:17px;color:var(--muted);font-weight:500}
+.tog .sw{margin-left:auto;width:58px;height:32px;border-radius:16px;background:#ced4da;position:relative;flex:none;transition:.15s}
+.tog .sw::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.15s}
+.tog.on{border-color:var(--ok)}
+.tog.on .sw{background:var(--ok)}
+.tog.on .sw::after{left:30px}
+.simbtns{display:flex;gap:10px;margin-top:6px}
+.simbtns .btn{font-size:19px;padding:13px 16px}
+.btn{white-space:nowrap;font-family:inherit;font-size:22px;font-weight:700;border:none;border-radius:14px;padding:14px 22px;cursor:pointer;background:var(--ink);color:#fff}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:default}
+.console{background:#14161b;border-radius:20px;padding:24px 28px;color:#d7dae0;font-family:var(--mono);font-size:18px;line-height:1.5;overflow:hidden;display:flex;flex-direction:column}
+.console .task{color:#ffd8a8;border-bottom:1px dashed #3a3f4a;padding-bottom:12px;margin-bottom:12px;font-size:19px}
+.console .log{flex:1;overflow-y:auto}
+.console .ln{opacity:0;animation:fadein .3s forwards;margin:3px 0}
+@keyframes fadein{to{opacity:1}}
+.ln.sys{color:#8b93a1}
+.ln.ok{color:#8ce99a}
+.ln.warn{color:#ffd43b}
+.ln.bad{color:#ff8787}
+.ln.sess{color:#74c0fc;margin-top:12px}
+.result{margin-top:12px;border-top:1px dashed #3a3f4a;padding-top:14px;font-family:"Pretendard",sans-serif;font-size:24px;display:none}
+.result .score{font-size:44px;font-weight:800}
+
+/* case slides */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:10px 0 34px}
+.stat{background:#fff;border:2px solid var(--line);border-radius:20px;padding:24px 28px}
+.stat .n{font-size:66px;font-weight:800;letter-spacing:-.03em;color:var(--guide);line-height:1.1}
+.stat .l{font-size:22px;color:var(--muted);margin-top:6px}
+.src{font-size:18px;color:var(--muted);margin-top:18px}
+
+/* shift */
+.shift{display:flex;align-items:center;gap:14px;margin:24px 0}
+.shift .s{flex:1;background:#fff;border:2px solid var(--line);border-radius:18px;padding:18px;text-align:center}
+.shift .s .e{font-size:44px}
+.shift .s .t{font-size:20px;font-weight:700;margin-top:4px}
+.shift .s .d{font-size:17px;color:var(--muted)}
+.shift .h{font-size:30px;color:var(--muted)}
+.filecard{font-family:var(--mono);font-size:18px;background:#14161b;color:#d7dae0;border-radius:16px;padding:18px 22px;line-height:1.55}
+.filecard .fn{color:#ffd8a8;margin-bottom:6px}
+.filecard .k{color:#74c0fc}.filecard .v{color:#8ce99a}.filecard .x{color:#ff8787}
+
+/* principles */
+.princ{counter-reset:p;display:grid;grid-template-columns:1fr 1fr;gap:44px 40px;margin-top:20px}
+.princ .p.nonum::before{display:none}
+.princ .p{display:flex;gap:22px;align-items:flex-start}
+.princ .p::before{counter-increment:p;content:counter(p);flex:none;width:58px;height:58px;border-radius:16px;background:var(--ink);color:#fff;font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.princ h3{font-size:29px;margin-bottom:4px}
+.princ p{font-size:22px;color:#444;line-height:1.5}
+
+/* activity */
+.ws{width:100%;border-collapse:separate;border-spacing:0 10px}
+.ws th{font-size:20px;text-align:left;color:var(--muted);padding:0 18px}
+.ws td{background:#fff;border-top:2px solid var(--line);border-bottom:2px solid var(--line);padding:16px 18px;font-size:22px;vertical-align:top;line-height:1.45}
+.ws td:first-child{border-left:2px solid var(--line);border-radius:14px 0 0 14px;width:270px;font-weight:700}
+.ws td:last-child{border-right:2px solid var(--line);border-radius:0 14px 14px 0}
+.ws .q{color:#444}
+.ws .ans{color:var(--guide);font-weight:600;display:none}
+.reveal-on .ws .ans{display:block}
+.reveal-on .ws .blank{display:none}
+.blank{display:inline-block;width:100%;border-bottom:2px dotted #bbb;height:30px}
+.timerbox{font-family:var(--mono);font-size:44px;font-weight:700;background:var(--ink);color:#fff;border-radius:16px;padding:8px 22px;cursor:pointer;user-select:none}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.qz{background:#fff;border:2px solid var(--line);border-radius:20px;padding:24px}
+.qz .qq{font-size:24px;font-weight:700;line-height:1.45;margin-bottom:16px;min-height:140px}
+.qz button{display:block;width:100%;text-align:left;font-family:inherit;font-size:20px;background:var(--paper);border:2px solid transparent;border-radius:12px;padding:11px 14px;margin:8px 0;cursor:pointer;line-height:1.4}
+.qz button:hover{border-color:var(--line)}
+.qz button.right{background:var(--ok-soft);border-color:var(--ok)}
+.qz button.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.qz .why{font-size:19px;color:#333;margin-top:12px;display:none;line-height:1.5}
+.qz.done .why{display:block}
+
+/* refs */
+.refs li{font-size:22px;margin-bottom:12px;line-height:1.45}
+.refs a{color:var(--sensor);text-decoration:none;border-bottom:1px solid #a5c8ec}
+
+/* notes panel */
+#notes{position:fixed;left:0;right:0;bottom:0;max-height:38vh;overflow:auto;background:rgba(20,22,27,.96);color:#e9e6de;padding:18px 26px 22px;font-size:17px;line-height:1.65;display:none;z-index:20;border-top:3px solid var(--guide)}
+#notes.show{display:block}
+#notes .hd{display:flex;gap:24px;font-family:var(--mono);font-size:14px;color:#a8a296;margin-bottom:8px}
+#notes .hd b{color:#ffb38a}
+#progress{position:fixed;left:0;top:0;height:5px;background:var(--guide);z-index:15;transition:width .25s}
+#counter{position:fixed;right:16px;bottom:12px;font-family:var(--mono);font-size:13px;color:#999;z-index:15;background:rgba(0,0,0,.35);padding:3px 10px;border-radius:8px}
+#nav{position:fixed;left:16px;bottom:12px;z-index:15;display:flex;gap:6px;opacity:.25;transition:.2s}
+#nav:hover{opacity:1}
+#nav button{font-size:14px;border:none;background:#333;color:#eee;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:inherit}
+aside.notes{display:none}
+
+/* overview */
+body.overview{overflow:auto;background:#2a2c31}
+body.overview #stage{position:static;transform:none!important;width:auto;height:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding:24px}
+body.overview .slide{display:block;position:relative;inset:auto;width:1600px;height:900px;transform:scale(.215);transform-origin:top left;margin-bottom:-706px;margin-right:-1256px;cursor:pointer;animation:none;outline:6px solid transparent}
+body.overview .slide.active{outline-color:var(--guide)}
+body.overview #notes,body.overview #nav{display:none}
+
+/* print: one slide per page */
+@media print{
+  @page{size:1600px 900px;margin:0}
+  html,body{overflow:visible;background:#fff}
+  #stage{position:static;transform:none!important;width:1600px;height:auto}
+  .slide{display:block!important;position:relative;page-break-after:always;width:1600px;height:900px;animation:none}
+  #notes,#progress,#counter,#nav{display:none!important}
+  .ws .ans{display:block}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="stage">
+
+<!-- ============ 1. TITLE ============ -->
+<section class="slide title-slide" data-time="1">
+  <svg class="reins" width="520" height="420" viewBox="0 0 520 420" aria-hidden="true">
+    <defs><linearGradient id="gl" x1="0" x2="1"><stop offset="0" stop-color="#ff8a4c"/><stop offset="1" stop-color="#ffc078"/></linearGradient></defs>
+    <circle cx="300" cy="210" r="120" fill="#5f3dc4" opacity=".9"/>
+    <text x="300" y="203" text-anchor="middle" fill="#fff" font-size="34" font-weight="800" font-family="Pretendard,sans-serif">MODEL</text>
+    <text x="300" y="240" text-anchor="middle" fill="#d0bfff" font-size="20" font-family="Pretendard,sans-serif">힘 · 지능</text>
+    <rect x="150" y="60" width="300" height="300" rx="70" fill="none" stroke="url(#gl)" stroke-width="10"/>
+    <path d="M150 210 C 80 210, 60 300, 10 330" fill="none" stroke="url(#gl)" stroke-width="8" stroke-linecap="round"/>
+    <path d="M150 250 C 90 260, 70 360, 30 400" fill="none" stroke="url(#gl)" stroke-width="8" stroke-linecap="round"/>
+    <text x="450" y="390" text-anchor="end" fill="#ffc078" font-size="22" font-weight="700" font-family="Pretendard,sans-serif">HARNESS · 방향 · 안전</text>
+  </svg>
+  <div style="margin-top:120px">
+    <div class="kicker">1학년 특강 · 60분</div>
+    <h1>하네스 엔지니어링</h1>
+    <div class="sub">AI에게 '고삐'를 채우는 기술<br>— 똑똑한 모델을 <b style="color:#fff">믿을 수 있는 동료</b>로 만드는 법</div>
+  </div>
+  <div class="meta">동의대학교 인공지능학과 · 노대일<br>양자컴퓨팅·AI 융합연구실</div>
+  <div class="hint"><kbd>→</kbd> <kbd>Space</kbd> 다음 &nbsp; <kbd>←</kbd> 이전<br><kbd>N</kbd> 발표자 노트 &nbsp; <kbd>O</kbd> 전체 보기 &nbsp; <kbd>F</kbd> 전체 화면</div>
+  <aside class="notes">인사 후 바로 시작. "오늘 한 시간 동안, 요즘 AI 업계에서 가장 뜨거운 단어 중 하나인 '하네스 엔지니어링'을 이야기합니다. 코딩을 잘 몰라도 따라올 수 있게 준비했습니다." 노트(N)에 각 슬라이드의 예정 시간과 누적 시간이 나옵니다.</aside>
+</section>
+
+<!-- ============ 2. AGENDA ============ -->
+<section class="slide" data-time="1">
+  <div class="kicker">오늘의 지도</div>
+  <h2>60분 동안 이 네 가지를 알아갑니다</h2>
+  <div class="agenda">
+    <div class="card"><div class="t">0–15분</div><h3>① AI 에이전트란?</h3><p>챗봇과 에이전트는 무엇이 다른가</p><div class="bar" style="width:60%"></div></div>
+    <div class="card"><div class="t">15–35분</div><h3>② 하네스 해부</h3><p>하네스를 이루는 부품과 '가이드·센서'</p><div class="bar" style="width:100%"></div></div>
+    <div class="card"><div class="t">35–45분</div><h3>③ 실제 사례</h3><p>OpenAI · Anthropic은 어떻게 쓰나</p><div class="bar" style="width:50%"></div></div>
+    <div class="card"><div class="t">45–60분</div><h3>④ 직접 설계</h3><p>조별 활동 · 퀴즈 · 질의응답</p><div class="bar" style="width:75%"></div></div>
+  </div>
+  <p class="lead" style="margin-top:56px">오늘의 한 문장 — <b>"에이전트 = <em class="m">모델</em> + <em class="g">하네스</em>"</b></p>
+  <aside class="notes">목차는 빠르게. 마지막 한 문장만 강조하고 "오늘 끝날 때 이 식을 여러분 말로 설명할 수 있으면 성공입니다"라고 말한다.</aside>
+</section>
+
+<!-- ============ 3. OPENING QUESTION ============ -->
+<section class="slide" data-time="2">
+  <div class="kicker">생각해 봅시다</div>
+  <h2>똑같은 AI 모델인데,<br>왜 결과가 이렇게 다를까?</h2>
+  <div class="grid2" style="margin-top:20px">
+    <div class="card" style="border-color:var(--bad)">
+      <span class="pill k">친구 A의 AI</span>
+      <h3>"과제 다 했어요! 🎉"</h3>
+      <p>제출해 보니 코드는 실행도 안 되고, 원본 데이터 파일은 지워져 있다. 다음 날 물어보면 어제 한 일을 전혀 기억하지 못한다.</p>
+    </div>
+    <div class="card" style="border-color:var(--ok)">
+      <span class="pill k">친구 B의 AI</span>
+      <h3>"테스트 12개 모두 통과했습니다"</h3>
+      <p>규칙대로 작성했고, 스스로 실행해 검증했고, 위험한 명령은 막혔다. 어디까지 했는지 기록도 남겨 두었다.</p>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:40px">힌트: 두 사람은 <b>같은 모델</b>을 쓰고 있습니다. 다른 건 모델 <b>바깥</b>입니다.</p>
+  <aside class="notes">손들기 질문: "AI한테 과제 시켜 본 사람?" "AI가 다 했다고 했는데 실제로는 안 돼 있던 경험?" 2~3명 답을 듣는다. 정답을 말하지 말고 "오늘 이 차이의 정체를 알아봅니다"로 넘어간다.</aside>
+</section>
+
+<!-- ============ 4. ETYMOLOGY ============ -->
+<section class="slide" data-time="2">
+  <div class="kicker">단어부터</div>
+  <h2>Harness = 말에 채우는 <span style="color:var(--guide)">마구(馬具)</span></h2>
+  <div class="row" style="align-items:center;gap:60px">
+    <div class="col">
+      <ul class="clean">
+        <li><b>말</b>은 힘이 세고 빠르지만, 혼자서는 어디로 갈지 모릅니다.</li>
+        <li><b>마구</b>(고삐·안장·굴레)는 그 힘에 <b>방향</b>을 주고, 위험할 때 <b>멈추게</b> 합니다.</li>
+        <li>좋은 마구가 있어야 말의 힘이 <b>쓸모 있는 일</b>이 됩니다.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <div class="card" style="font-size:30px;line-height:2">
+        🐎 말 &nbsp;→&nbsp; <em class="m">AI 모델</em> (GPT, Claude, Gemini…)<br>
+        🪢 마구 &nbsp;→&nbsp; <em class="g">하네스</em> (도구·규칙·검사·기록)<br>
+        🧑‍🌾 마부 &nbsp;→&nbsp; <b>하네스 엔지니어 = 여러분</b>
+      </div>
+    </div>
+  </div>
+  <p class="small muted" style="margin-top:40px">※ 소프트웨어에서는 원래 '테스트 하네스'(테스트를 돌리는 틀)라는 말도 써 왔습니다. 오늘의 하네스는 그 개념을 AI 에이전트 전체로 넓힌 것입니다.</p>
+  <aside class="notes">비유를 확실히 심어 두면 나머지가 쉬워진다. "말을 더 빠른 말로 바꾸는 것(모델 교체)보다, 마구를 잘 채우는 것이 실제 농사에는 더 중요할 때가 많다."</aside>
+</section>
+
+<!-- ============ DIVIDER PART 1 ============ -->
+<section class="slide divider" data-time="0">
+  <div style="margin-top:150px">
+    <div class="num">01</div>
+    <h2>AI 에이전트란?</h2>
+    <p class="lead muted">말(모델)은 혼자서 무엇을 할 수 있고, 무엇을 못 할까</p>
+  </div>
+</section>
+
+<!-- ============ 5. LLM ALONE ============ -->
+<section class="slide" data-time="3">
+  <div class="part-tag">01 · AI 에이전트란?</div>
+  <div class="kicker">모델 혼자서는</div>
+  <h2>언어 모델(LLM)은 '다음 글자 예측기'입니다</h2>
+  <div class="row">
+    <div class="col">
+      <div class="card" style="text-align:center;padding:40px">
+        <div style="font-size:26px;color:var(--muted)">입력 (글)</div>
+        <div style="font-size:30px;margin:12px 0" class="mono">"평균을 구하는 함수를…"</div>
+        <div style="font-size:50px;color:var(--model)">↓ <span style="font-size:30px;font-weight:800">LLM</span> ↓</div>
+        <div style="font-size:30px;margin:12px 0" class="mono">"def mean(xs): ..."</div>
+        <div style="font-size:26px;color:var(--muted)">출력 (글)</div>
+      </div>
+      <p class="small muted" style="margin-top:18px">글이 들어가면 글이 나온다. 그게 전부입니다.</p>
+    </div>
+    <div class="col">
+      <h3>그래서 혼자서는…</h3>
+      <ul class="clean">
+        <li><b>손이 없다</b> — 파일을 열거나 코드를 실행할 수 없음</li>
+        <li><b>눈이 없다</b> — 자기가 쓴 코드가 진짜 되는지 확인 불가</li>
+        <li><b>기억이 없다</b> — 대화가 끝나면 다 잊음 (컨텍스트 창의 한계)</li>
+        <li><b>브레이크가 없다</b> — 무엇이 위험한지 스스로 막지 못함</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">핵심: 모델은 매우 똑똑하지만 '몸'이 없다. 컨텍스트 창 = 한 번에 볼 수 있는 글의 양, 사람의 작업 기억 같은 것이라고 짧게 설명. 이 4가지 결핍이 뒤에서 하네스 부품 4~6개로 그대로 대응된다는 걸 기억해 두라고 예고.</aside>
+</section>
+
+<!-- ============ 6. CHATBOT VS AGENT ============ -->
+<section class="slide" data-time="2">
+  <div class="part-tag">01 · AI 에이전트란?</div>
+  <div class="kicker">챗봇 vs 에이전트</div>
+  <h2>말해 주는 AI → <span style="color:var(--guide)">해 주는</span> AI</h2>
+  <div class="vs">
+    <div class="card chat">
+      <span class="pill m">챗봇</span>
+      <div class="bubble u">이 버그 어떻게 고쳐?</div>
+      <div class="bubble a">아마 7번째 줄이 문제 같아요. 이렇게 바꿔 보세요: …</div>
+      <div class="bubble u">(복사 → 붙여넣기 → 실행 → 에러 → 다시 질문…)</div>
+      <p class="small muted" style="margin-top:12px">실행·확인은 <b>사람</b>이 한다</p>
+    </div>
+    <div class="mid">vs</div>
+    <div class="card chat">
+      <span class="pill g">에이전트</span>
+      <div class="bubble u">이 버그 고쳐 줘.</div>
+      <div class="step act">▶ grade.py 파일 읽기</div>
+      <div class="step act">▶ python grade.py 실행 → 오류 확인</div>
+      <div class="step act">▶ 코드 수정</div>
+      <div class="step">▶ 테스트 실행 → 1개 실패 → 다시 수정</div>
+      <div class="step ok">✓ 테스트 3/3 통과. 수정 내용 보고</div>
+      <p class="small muted" style="margin-top:12px">실행·확인을 <b>AI가 스스로</b> 반복한다</p>
+    </div>
+  </div>
+  <aside class="notes">Claude Code, OpenAI Codex, Cursor 같은 '코딩 에이전트'가 오른쪽의 대표 예. 오른쪽에서 AI가 파일을 읽고 실행할 수 있는 건 모델이 아니라 '하네스'가 그 능력을 줬기 때문이라는 점을 미리 짚는다.</aside>
+</section>
+
+<!-- ============ 7. AGENT LOOP ============ -->
+<section class="slide" data-time="4">
+  <div class="part-tag">01 · AI 에이전트란?</div>
+  <div class="kicker">에이전트의 심장</div>
+  <h2>에이전트 루프: 생각 → 행동 → 관찰 → 반복</h2>
+  <div class="row" style="align-items:center">
+    <div style="flex:0 0 700px">
+      <svg viewBox="0 0 700 560" width="700" height="560" aria-label="에이전트 루프 다이어그램">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#646a75"/></marker>
+        </defs>
+        <circle id="loopPath" cx="350" cy="290" r="185" fill="none" stroke="#d9d3c6" stroke-width="4" stroke-dasharray="10 10"/>
+        <circle r="13" fill="#d9480f"><animateMotion dur="6s" repeatCount="indefinite" path="M350,105 A185,185 0 1,1 349.9,105"/></circle>
+        <g font-family="Pretendard,sans-serif" text-anchor="middle">
+          <rect x="250" y="62" width="200" height="86" rx="20" fill="#ebe5fb" stroke="#5f3dc4" stroke-width="3"/>
+          <text x="350" y="100" font-size="28" font-weight="800" fill="#5f3dc4">① 생각</text>
+          <text x="350" y="130" font-size="18" fill="#4a3a8a">모델: 다음에 뭘 할까?</text>
+          <rect x="480" y="245" width="210" height="90" rx="20" fill="#fde8dc" stroke="#d9480f" stroke-width="3"/>
+          <text x="585" y="283" font-size="28" font-weight="800" fill="#d9480f">② 행동</text>
+          <text x="585" y="314" font-size="18" fill="#a33a0b">도구 호출·코드 실행</text>
+          <rect x="250" y="430" width="200" height="90" rx="20" fill="#dcebf8" stroke="#1864ab" stroke-width="3"/>
+          <text x="350" y="468" font-size="28" font-weight="800" fill="#1864ab">③ 관찰</text>
+          <text x="350" y="499" font-size="18" fill="#0f4c84">결과·에러·테스트</text>
+          <rect x="10" y="245" width="210" height="90" rx="20" fill="#fff" stroke="#646a75" stroke-width="3"/>
+          <text x="115" y="283" font-size="28" font-weight="800" fill="#1b1e25">④ 판단</text>
+          <text x="115" y="314" font-size="18" fill="#646a75">끝났나? 아니면 다시</text>
+          <text x="350" y="282" font-size="22" fill="#646a75">목표를 이룰 때까지</text>
+          <text x="350" y="312" font-size="22" fill="#646a75">수십~수백 번 반복</text>
+        </g>
+      </svg>
+    </div>
+    <div class="col">
+      <p class="lead" style="margin-bottom:24px">모델이 하는 일은 <em class="m">①</em> 하나뿐.</p>
+      <p>②~④를 가능하게 하는 모든 것 — 도구를 연결하고, 결과를 다시 보여 주고, 언제 멈출지 정하는 것 — 이 바로 <em class="g">하네스</em>입니다.</p>
+      <p class="small muted" style="margin-top:24px">사람이 숙제할 때도 똑같죠: 계획 → 해 보기 → 채점해 보기 → 고치기.</p>
+    </div>
+  </div>
+  <aside class="notes">주황 점이 돌아가는 걸 보여 주며 설명. "모델은 이 원의 1/4만 담당한다. 나머지 3/4는 사람이 설계한 코드와 환경이다." 이 슬라이드가 오늘 강의의 개념적 중심.</aside>
+</section>
+
+<!-- ============ 8. AGENT = MODEL + HARNESS ============ -->
+<section class="slide" data-time="2">
+  <div class="part-tag">01 · AI 에이전트란?</div>
+  <div class="kicker">오늘의 공식</div>
+  <div class="center" style="margin-top:50px">
+    <div style="font-size:96px;font-weight:800;letter-spacing:-.03em">에이전트 = <span style="color:var(--model)">모델</span> + <span style="color:var(--guide)">하네스</span></div>
+    <p class="lead" style="margin-top:30px">하네스 = 에이전트에서 <b>모델을 뺀 나머지 전부</b></p>
+  </div>
+  <div class="grid3" style="margin-top:60px">
+    <div class="card"><span class="pill m">모델</span><p>원재료가 되는 지능. 회사가 만들어 제공. 우리가 직접 바꾸기는 어렵다.</p></div>
+    <div class="card"><span class="pill g">하네스</span><p>도구·규칙·검사·기록·권한. <b>우리가 설계하고 고칠 수 있는 부분.</b></p></div>
+    <div class="card"><span class="pill k">예시</span><p>Claude Code, OpenAI Codex, Cursor는 모두 모델 위에 씌운 '기성품 하네스'.</p></div>
+  </div>
+  <p class="src">출처: Birgitta Böckeler, "Harness engineering for coding agent users", martinfowler.com (2026.4)</p>
+  <aside class="notes">이 공식은 업계에서 널리 쓰이는 표현. 강조점: 모델은 우리가 못 바꾸지만 하네스는 우리가 바꿀 수 있다 → 그래서 '엔지니어링'의 대상이 된다. 같은 모델이라도 하네스에 따라 성능이 크게 달라진다는 것이 1번 질문(친구 A/B)의 답.</aside>
+</section>
+
+<!-- ============ DIVIDER PART 2 ============ -->
+<section class="slide divider" data-time="0">
+  <div style="margin-top:150px">
+    <div class="num">02</div>
+    <h2>하네스 해부</h2>
+    <p class="lead muted">무엇으로 만들어지고, 어떻게 작동하는가</p>
+  </div>
+</section>
+
+<!-- ============ 9. EVOLUTION ============ -->
+<section class="slide" data-time="3">
+  <div class="part-tag">02 · 하네스 해부</div>
+  <div class="kicker">짧은 역사</div>
+  <h2>질문이 바뀌어 왔습니다</h2>
+  <div class="timeline">
+    <div class="card"><span class="yr">2022–23</span><span class="pill k">프롬프트 엔지니어링</span><div class="q">"어떻게 <u>말해야</u> 잘 대답할까?"</div><p class="small">질문 문장을 다듬는 기술. 대상은 <b>한 번의 대화</b>.</p></div>
+    <div class="card"><span class="yr">2024–25</span><span class="pill k">컨텍스트 엔지니어링</span><div class="q">"무엇을 <u>보여 줘야</u> 잘 판단할까?"</div><p class="small">모델에게 넣어 줄 자료·문서·기억을 고르는 기술.</p></div>
+    <div class="card now"><span class="yr" style="background:var(--guide)">2026 –</span><span class="pill g">하네스 엔지니어링</span><div class="q">"어떤 <u>환경</u>에서 일하게 해야 믿을 수 있을까?"</div><p class="small">도구·검증·권한·기록까지 포함한 <b>작업 환경 전체</b>를 설계.</p></div>
+  </div>
+  <div class="nest">
+    <svg width="760" height="150" viewBox="0 0 760 150" font-family="Pretendard,sans-serif">
+      <rect x="2" y="2" width="756" height="146" rx="26" fill="#fde8dc" stroke="#d9480f" stroke-width="3"/>
+      <text x="30" y="40" font-size="22" font-weight="700" fill="#d9480f">하네스</text>
+      <rect x="170" y="22" width="570" height="108" rx="20" fill="#fff" stroke="#646a75" stroke-width="2"/>
+      <text x="195" y="56" font-size="20" font-weight="700" fill="#646a75">컨텍스트</text>
+      <rect x="360" y="40" width="360" height="72" rx="16" fill="#ebe5fb" stroke="#5f3dc4" stroke-width="2"/>
+      <text x="540" y="84" text-anchor="middle" font-size="20" font-weight="700" fill="#5f3dc4">프롬프트</text>
+    </svg>
+  </div>
+  <aside class="notes">세 개념은 대체가 아니라 '포함' 관계(아래 그림). 하네스 엔지니어링이 가장 바깥에서 나머지를 감싼다. 2026년 2월 무렵부터 이 용어가 업계에 퍼졌다는 점도 언급(다음 파트 사례에서 자세히).</aside>
+</section>
+
+<!-- ============ 10. ANATOMY ============ -->
+<section class="slide" data-time="5">
+  <div class="part-tag">02 · 하네스 해부</div>
+  <div class="kicker">하네스의 부품 (카드를 클릭하면 예시가 나옵니다)</div>
+  <h2 style="margin-bottom:24px">모델의 결핍을 하나씩 메운다</h2>
+  <div class="anatomy" id="anatomy">
+    <div class="comp" style="grid-column:1;grid-row:1"><h3>📘 지침서</h3><p>프로젝트 규칙과 작업 방법을 적은 문서</p><div class="ex">예) AGENTS.md / CLAUDE.md: "테스트는 pytest로", "data/ 폴더는 수정 금지"</div></div>
+    <div class="comp" style="grid-column:1;grid-row:2"><h3>🛠 도구</h3><p>파일 읽기·쓰기, 코드 실행, 검색 — 모델의 '손'</p><div class="ex">예) 터미널 명령 실행, 웹 브라우저 조작, 스크린샷 찍기</div></div>
+    <div class="comp" style="grid-column:1;grid-row:3"><h3>🧠 컨텍스트·기억</h3><p>필요한 자료만 골라 보여 주고, 진행 상황을 파일로 남김</p><div class="ex">예) progress.md, 기능 체크리스트, Git 커밋 기록</div></div>
+    <div class="core"><b>모델</b><span>생각만 담당<br>(다음 행동 결정)</span></div>
+    <div class="comp" style="grid-column:3;grid-row:1"><h3>🧪 검증</h3><p>결과가 맞는지 자동으로 확인 — 모델의 '눈'</p><div class="ex">예) 단위 테스트, 린터(코드 스타일 검사), AI 리뷰어</div></div>
+    <div class="comp" style="grid-column:3;grid-row:2"><h3>🔒 권한·샌드박스</h3><p>할 수 있는 일의 범위를 제한 — '브레이크'</p><div class="ex">예) 파일 삭제는 사람 승인 필요, 격리된 가상 컴퓨터에서만 실행</div></div>
+    <div class="comp" style="grid-column:3;grid-row:3"><h3>📊 관찰·기록</h3><p>에이전트가 무엇을 왜 했는지 로그로 남김</p><div class="ex">예) 실행 로그, 에러 메시지, 사용한 토큰·시간 측정</div></div>
+  </div>
+  <aside class="notes">5번 슬라이드의 결핍과 짝지어 설명: 손 없음→도구, 눈 없음→검증, 기억 없음→컨텍스트·기억, 브레이크 없음→권한. 지침서와 관찰·기록은 사람과 AI가 협업하기 위한 장치. 카드를 클릭해 예시를 하나씩 열어 가며 진행.</aside>
+</section>
+
+<!-- ============ 11. GUIDES & SENSORS ============ -->
+<section class="slide" data-time="4">
+  <div class="part-tag">02 · 하네스 해부</div>
+  <div class="kicker">가장 중요한 구분</div>
+  <h2>가이드(미리 이끌기)와 센서(나중에 잡기)</h2>
+  <div class="gs-flow">
+    <div class="gs-box" style="background:var(--guide-soft);color:var(--guide)">🧭 가이드<br><span style="font-size:20px;font-weight:500">행동 <b>전</b>에 방향 제시 (피드포워드)</span></div>
+    <div class="gs-arrow">→</div>
+    <div class="gs-box" style="background:var(--model-soft);color:var(--model)">🤖 에이전트가 작업</div>
+    <div class="gs-arrow">→</div>
+    <div class="gs-box" style="background:var(--sensor-soft);color:var(--sensor)">📡 센서<br><span style="font-size:20px;font-weight:500">행동 <b>후</b>에 오류 감지 (피드백)</span></div>
+    <div class="gs-arrow">↺</div>
+  </div>
+  <div class="matrix">
+    <div class="h"></div><div class="hg">🧭 가이드</div><div class="hs">📡 센서</div>
+    <div class="h">계산적<br><span class="tiny">(규칙·프로그램, 항상 같은 결과)</span></div>
+    <div class="cg">프로젝트 템플릿, 자동 설정 스크립트</div>
+    <div class="cs">테스트, 린터, 타입 검사 — 빠르고 정확</div>
+    <div class="h">추론적<br><span class="tiny">(AI가 의미를 판단)</span></div>
+    <div class="cg">AGENTS.md 같은 지침서, 스킬 문서</div>
+    <div class="cs">AI 코드 리뷰어, AI 채점자</div>
+  </div>
+  <p class="small" style="margin-top:22px">🚗 <b>가이드만</b> 있으면 핸들만 있고 브레이크 없는 차, <b>센서만</b> 있으면 같은 실수를 계속 반복. <b>둘 다</b> 필요합니다.</p>
+  <aside class="notes">Böckeler가 제어공학(사이버네틱스)에서 빌려 온 틀. 피드포워드/피드백은 이후 '제어공학', '신호와 시스템' 수업에서 다시 만나게 될 개념이라고 연결해 주면 좋다. 계산적 vs 추론적: 테스트는 매번 같은 결과(결정적), AI 리뷰어는 의미를 이해하지만 가끔 틀림.</aside>
+</section>
+
+<!-- ============ 12. SIMULATOR ============ -->
+<section class="slide" data-time="6">
+  <div class="part-tag">02 · 하네스 해부</div>
+  <div class="kicker">라이브 데모 · 하네스 시뮬레이터</div>
+  <h2 style="margin-bottom:22px;font-size:50px">부품을 끄고 켜면서 에이전트를 돌려 봅시다</h2>
+  <div class="sim">
+    <div class="toggles" id="toggles">
+      <div class="tog" data-k="guide"><span class="ic">📘</span><div><div class="nm">지침서 <span class="pill g" style="font-size:14px;padding:2px 8px;margin:0">가이드</span></div><div class="ds">AGENTS.md: 규칙·금지사항</div></div><span class="sw"></span></div>
+      <div class="tog" data-k="tool"><span class="ic">🛠</span><div><div class="nm">실행 도구</div><div class="ds">코드를 직접 실행해 볼 수 있음</div></div><span class="sw"></span></div>
+      <div class="tog" data-k="perm"><span class="ic">🔒</span><div><div class="nm">권한 제한</div><div class="ds">위험한 명령은 차단</div></div><span class="sw"></span></div>
+      <div class="tog" data-k="memory"><span class="ic">📝</span><div><div class="nm">진행 기록</div><div class="ds">progress.md로 다음 세션에 인수인계</div></div><span class="sw"></span></div>
+      <div class="tog" data-k="test"><span class="ic">🧪</span><div><div class="nm">자동 테스트 <span class="pill s" style="font-size:14px;padding:2px 8px;margin:0">센서</span></div><div class="ds">"완료"를 검증으로 판단</div></div><span class="sw"></span></div>
+      <div class="simbtns">
+        <button class="btn" id="runBtn">▶ 에이전트 실행</button>
+        <button class="btn ghost" id="allOn">모두 켜기</button>
+        <button class="btn ghost" id="allOff">모두 끄기</button>
+      </div>
+    </div>
+    <div class="console">
+      <div class="task">📋 과제: 성적 계산 프로그램 grade.py의 평균 계산 버그를 고치고 결과를 보고하라.</div>
+      <div class="log" id="log"><div class="ln sys">왼쪽에서 하네스 부품을 고르고 ▶ 실행을 누르세요.</div></div>
+      <div class="result" id="result"></div>
+    </div>
+  </div>
+  <aside class="notes">진행 순서 추천: (1) 모두 끄고 실행 → 학생들 반응 보기. "완료했다고 하는데 실제로는?" (2) 테스트만 켜고 실행 → 거짓 완료가 사라짐. (3) 모두 켜고 실행. 학생에게 "어떤 부품을 먼저 켜고 싶나?" 물어보며 참여 유도. 시뮬레이션은 개념 설명용으로 단순화한 것임을 밝혀 둔다.</aside>
+</section>
+
+<!-- ============ DIVIDER PART 3 ============ -->
+<section class="slide divider" data-time="0">
+  <div style="margin-top:150px">
+    <div class="num">03</div>
+    <h2>실제 사례</h2>
+    <p class="lead muted">현업은 하네스를 어떻게 만들고 있을까</p>
+  </div>
+</section>
+
+<!-- ============ 13. HASHIMOTO ============ -->
+<section class="slide" data-time="2">
+  <div class="part-tag">03 · 실제 사례</div>
+  <div class="kicker">용어의 탄생 · 2026년 2월</div>
+  <h2>"같은 실수를 두 번 하지 않게 만든다"</h2>
+  <div class="row" style="align-items:center;gap:60px">
+    <div class="col">
+      <p>Terraform을 만든 개발자 <b>미첼 하시모토</b>는 AI 활용기를 정리한 글에서, 에이전트가 실수할 때마다 <b>그 실수가 다시는 일어나지 않도록 환경을 고치는 습관</b>을 'Engineer the Harness'라고 불렀습니다.</p>
+      <p style="margin-top:22px">방법은 두 가지:</p>
+      <ul class="clean">
+        <li><em class="g">지침 보강</em> — AGENTS.md에 규칙 한 줄 추가</li>
+        <li><em class="s">도구 제작</em> — 스크린샷 스크립트, 필터링된 테스트 실행기 등</li>
+      </ul>
+    </div>
+    <div style="flex:0 0 520px">
+      <div class="card" style="background:var(--ink);color:#fff;border:none">
+        <p style="font-size:24px;color:#a8a296;margin-bottom:12px">❌ 보통의 대응</p>
+        <p style="font-size:28px">"아니 그거 말고… 다시 해 줘" <span style="color:#a8a296">(매번 반복)</span></p>
+        <p style="font-size:24px;color:#ffb38a;margin:26px 0 12px">✅ 하네스 엔지니어의 대응</p>
+        <p style="font-size:28px">"왜 틀렸지? → 규칙·테스트를 추가해서 <b>영원히</b> 막자"</p>
+      </div>
+    </div>
+  </div>
+  <p class="src">출처: Mitchell Hashimoto, "My AI Adoption Journey" (2026.2.5)</p>
+  <aside class="notes">핵심 메시지: 하네스는 한 번에 완성하는 게 아니라 실패를 관찰하며 '누적'되는 것. 프롬프트를 다시 치는 건 일회성, 환경을 고치는 건 영구적. 이 차이가 엔지니어링.</aside>
+</section>
+
+<!-- ============ 14. OPENAI ============ -->
+<section class="slide" data-time="3">
+  <div class="part-tag">03 · 실제 사례</div>
+  <div class="kicker">OpenAI Codex 팀 · 2026년 2월</div>
+  <h2>사람이 코드를 한 줄도 직접 쓰지 않은 제품</h2>
+  <div class="stat-row">
+    <div class="stat"><div class="n">3명</div><div class="l">에이전트를 운영한 엔지니어 (초기)</div></div>
+    <div class="stat"><div class="n">≈1,500</div><div class="l">병합된 Pull Request 수</div></div>
+    <div class="stat"><div class="n">≈100만</div><div class="l">줄의 코드 — 모두 에이전트가 작성</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>😮 처음엔 느렸다</h3><p>에이전트가 무능해서가 아니라 <b>환경이 덜 갖춰져서</b>. 도구도, 구조도, 문서도 부족했다. 그래서 엔지니어의 일이 '코드 작성'에서 <b>'에이전트가 일할 수 있게 만들기'</b>로 바뀌었다.</p></div>
+    <div class="card"><h3>🔧 그들이 만든 하네스</h3><p>앱 화면·로그·지표를 에이전트가 직접 볼 수 있게 연결 → 버그 재현과 수정 검증을 스스로 수행. 설계 문서와 품질 점수표를 저장소에 두고, 에이전트끼리 서로 리뷰.</p></div>
+  </div>
+  <p class="src">출처: Ryan Lopopolo, "Harness engineering: leveraging Codex in an agent-first world", OpenAI (2026.2.11)</p>
+  <aside class="notes">숫자에 놀라게 한 다음, 진짜 교훈은 왼쪽 카드: "처음엔 느렸다, 환경이 부족해서." 엔지니어의 역할 변화 — 코드를 쓰는 사람에서 환경을 설계하는 사람으로. 단, 이것은 최고 수준 팀의 실험적 사례이고 모든 현장이 이렇다는 뜻은 아니라고 균형을 잡아 준다.</aside>
+</section>
+
+<!-- ============ 15. ANTHROPIC ============ -->
+<section class="slide" data-time="3">
+  <div class="part-tag">03 · 실제 사례</div>
+  <div class="kicker">Anthropic · 장시간 작업하는 에이전트</div>
+  <h2>문제: 매 교대마다 기억을 잃는 엔지니어</h2>
+  <div class="shift">
+    <div class="s"><div class="e">👷</div><div class="t">1교대</div><div class="d">열심히 일함</div></div>
+    <div class="h">→</div>
+    <div class="s" style="border-color:var(--bad)"><div class="e">💤</div><div class="t">컨텍스트 창 가득</div><div class="d">기억 리셋</div></div>
+    <div class="h">→</div>
+    <div class="s"><div class="e">👷‍♀️</div><div class="t">2교대</div><div class="d">"여기 어디지?"</div></div>
+  </div>
+  <div class="row" style="gap:30px">
+    <div class="col">
+      <h3>해법: 사람 팀이 하는 인수인계를 그대로</h3>
+      <ul class="clean" style="margin-top:8px">
+        <li class="small"><b>초기화 에이전트</b>가 작업 환경·기능 목록·진행 파일을 먼저 준비</li>
+        <li class="small"><b>작업 에이전트</b>는 매 세션 한 기능씩 → 테스트 → 커밋 → 기록</li>
+        <li class="small">"완료"는 에이전트의 말이 아니라 <b>테스트 통과 여부</b>로 판단</li>
+      </ul>
+    </div>
+    <div style="flex:0 0 520px">
+      <div class="filecard">
+        <div class="fn">📄 feature_list.json</div>
+        [<br>
+        &nbsp;{ <span class="k">"기능"</span>: "로그인", <span class="k">"통과"</span>: <span class="v">true</span> },<br>
+        &nbsp;{ <span class="k">"기능"</span>: "성적 조회", <span class="k">"통과"</span>: <span class="x">false</span> },<br>
+        &nbsp;…<br>
+        ]
+        <div class="fn" style="margin-top:12px">📄 progress.txt</div>
+        <span style="color:#8b93a1"># 세션 7: 성적 조회 API 절반 완료.<br># 다음: 빈 목록일 때 오류 처리</span>
+      </div>
+    </div>
+  </div>
+  <p class="src">출처: Anthropic Engineering, "Effective harnesses for long-running agents" (2025.11) · 후속편 "Harness design for long-running application development" (2026.3)</p>
+  <aside class="notes">교대 근무 비유는 Anthropic 글의 비유. 에이전트는 기능 목록에서 '통과' 값만 바꿀 수 있고 항목을 지우거나 고칠 수 없게 했다 — 스스로 숙제를 줄이지 못하도록. 후속편에서는 만드는 에이전트와 평가하는 에이전트를 분리했는데, 에이전트가 자기 결과물을 너무 후하게 평가하는 경향이 있어서였다. "자기 답안을 자기가 채점하면 안 되는 이유"로 설명하면 1학년에게 잘 와닿는다.</aside>
+</section>
+
+<!-- ============ 16. PRINCIPLES ============ -->
+<section class="slide" data-time="2">
+  <div class="part-tag">03 · 실제 사례</div>
+  <div class="kicker">사례에서 뽑은 공통점</div>
+  <h2>좋은 하네스의 5가지 원칙</h2>
+  <div class="princ">
+    <div class="p"><div><h3>말을 믿지 말고, 검증하라</h3><p>"완료했습니다"는 테스트가 판단한다. 자기 채점 금지.</p></div></div>
+    <div class="p"><div><h3>실수는 환경을 고쳐서 막아라</h3><p>같은 지시를 반복하지 말고 규칙·도구를 영구히 추가.</p></div></div>
+    <div class="p"><div><h3>작게 나누고, 기록을 남겨라</h3><p>한 번에 하나씩. 다음 세션이 이어받을 수 있게.</p></div></div>
+    <div class="p"><div><h3>필요한 것만 보여 줘라</h3><p>컨텍스트는 귀한 자원. 거대한 지침서는 오히려 방해.</p></div></div>
+    <div class="p"><div><h3>사고의 범위를 제한하라</h3><p>위험한 행동엔 승인, 실험은 격리된 공간에서.</p></div></div>
+    <div class="p nonum" style="align-items:center"><div class="card" style="background:var(--guide-soft);border-color:var(--guide);padding:20px 26px"><p style="font-size:23px;color:var(--ink)">💡 전부 <b>좋은 사람 팀</b>이 이미 하던 일입니다.<br>신입에게 매뉴얼을 주고, 리뷰하고, 인수인계하듯이.</p></div></div>
+  </div>
+  <aside class="notes">마지막 박스가 포인트: 하네스 엔지니어링은 완전히 새로운 마법이 아니라, 좋은 소프트웨어 공학 습관을 AI 동료에게 적용한 것. 그래서 지금 배우는 기초(테스트, 문서화, 버전 관리)가 더 중요해진다.</aside>
+</section>
+
+<!-- ============ DIVIDER PART 4 ============ -->
+<section class="slide divider" data-time="0">
+  <div style="margin-top:150px">
+    <div class="num">04</div>
+    <h2>직접 설계해 보기</h2>
+    <p class="lead muted">여러분이 하네스 엔지니어라면?</p>
+  </div>
+</section>
+
+<!-- ============ 17. ACTIVITY ============ -->
+<section class="slide" id="activity" data-time="7">
+  <div class="part-tag">04 · 직접 설계</div>
+  <div class="row" style="align-items:flex-start;justify-content:space-between;gap:20px">
+    <div>
+      <div class="kicker">조별 활동 · 3~4명 · 5분</div>
+      <h2 style="margin-bottom:10px;font-size:50px">🍜 라면 끓이는 AI 로봇의 하네스를 설계하라</h2>
+      <p class="small muted" style="margin-bottom:6px">로봇의 '두뇌'(모델)는 이미 똑똑합니다. 하지만 처음 와 본 부엌에서, 혼자, 매일 일해야 합니다.</p>
+    </div>
+    <div style="text-align:center;flex:none">
+      <div class="timerbox" id="timer" title="클릭: 시작/정지 · 더블클릭: 초기화">05:00</div>
+      <div class="tiny muted" style="margin-top:6px">클릭 시작 · 더블클릭 리셋</div>
+    </div>
+  </div>
+  <table class="ws">
+    <tr><th>부품</th><th>질문</th><th>우리 조의 답</th></tr>
+    <tr><td>📘 지침서 <span class="pill g" style="font-size:14px;padding:2px 8px">가이드</span></td><td class="q">로봇이 시작 전에 알아야 할 규칙은?</td><td><span class="blank"></span><span class="ans">레시피(물 550ml, 4분 30초), 손님 취향 메모, "가스 불 켠 채 자리 비우지 않기"</span></td></tr>
+    <tr><td>🛠 도구</td><td class="q">로봇이 쓸 수 있어야 하는 것은?</td><td><span class="blank"></span><span class="ans">계량컵, 타이머, 가스레인지 제어, 냄비·집게</span></td></tr>
+    <tr><td>🧪 검증 <span class="pill s" style="font-size:14px;padding:2px 8px">센서</span></td><td class="q">"다 됐다"를 무엇으로 확인할까?</td><td><span class="blank"></span><span class="ans">물 온도 센서(끓는지), 면 익힘 카메라 확인, 손님의 별점 피드백</span></td></tr>
+    <tr><td>📝 기록</td><td class="q">내일의 로봇에게 무엇을 남길까?</td><td><span class="blank"></span><span class="ans">"3번 손님은 꼬들면 선호", 남은 재고, 어제 실패(물 넘침)와 원인</span></td></tr>
+    <tr><td>🔒 안전장치</td><td class="q">절대 일어나면 안 되는 일과 막는 방법은?</td><td><span class="blank"></span><span class="ans">10분 넘게 불 켜져 있으면 자동 소화, 칼 사용은 사람 승인, 아이 손 감지 시 정지</span></td></tr>
+  </table>
+  <div style="display:flex;gap:12px;margin-top:6px">
+    <button class="btn ghost" id="revealBtn">👀 예시 답안 보기</button>
+  </div>
+  <aside class="notes">5분 활동 + 2분 공유. 타이머 박스를 클릭해 시작. 2~3개 조의 답을 듣고 '예시 답안 보기'로 비교. 칭찬 포인트: 센서(검증)를 구체적으로 적은 조, 실패 기록을 남기자고 한 조. 질문 던지기: "이 로봇이 라면을 태웠다면, 여러분은 하네스의 어느 칸을 고치겠어요?" → 하시모토의 원칙으로 연결.</aside>
+</section>
+
+<!-- ============ 18. QUIZ ============ -->
+<section class="slide" data-time="3">
+  <div class="part-tag">04 · 직접 설계</div>
+  <div class="kicker">확인 퀴즈</div>
+  <h2>세 문제로 정리해 봅시다</h2>
+  <div class="quiz">
+    <div class="qz" data-a="c">
+      <div class="qq">Q1. 다음 중 '하네스'에 해당하지 <u>않는</u> 것은?</div>
+      <button data-o="a">A. 코드를 실행하는 도구</button>
+      <button data-o="b">B. 자동 테스트</button>
+      <button data-o="c">C. 모델 내부의 가중치(파라미터)</button>
+      <button data-o="d">D. AGENTS.md 지침서</button>
+      <div class="why">하네스 = 에이전트에서 <b>모델을 뺀 나머지</b>. 가중치는 모델 그 자체입니다.</div>
+    </div>
+    <div class="qz" data-a="b">
+      <div class="qq">Q2. 에이전트가 일을 <u>마친 후</u> 오류를 찾아내 스스로 고치게 하는 장치는?</div>
+      <button data-o="a">A. 가이드 (피드포워드)</button>
+      <button data-o="b">B. 센서 (피드백)</button>
+      <button data-o="c">C. 더 긴 프롬프트</button>
+      <button data-o="d">D. 더 큰 모델</button>
+      <div class="why">행동 <b>후</b>에 감지하는 것은 센서. 테스트·린터·AI 리뷰어가 대표적입니다.</div>
+    </div>
+    <div class="qz" data-a="c">
+      <div class="qq">Q3. 에이전트가 같은 실수를 반복합니다. 하네스 엔지니어다운 대응은?</div>
+      <button data-o="a">A. "제발 조심해"라고 다시 입력한다</button>
+      <button data-o="b">B. 그냥 내가 직접 고친다</button>
+      <button data-o="c">C. 그 실수를 막는 규칙·테스트를 환경에 추가한다</button>
+      <button data-o="d">D. AI는 원래 그러니 포기한다</button>
+      <div class="why">실수를 <b>환경 수준에서 영구히</b> 막는 것 — 하시모토가 말한 'Engineer the Harness'.</div>
+    </div>
+  </div>
+  <aside class="notes">학생들에게 손가락(1~4)으로 답하게 한 뒤 클릭해 정답 공개. 오답 선택지도 하나씩 왜 아닌지 짧게.</aside>
+</section>
+
+<!-- ============ 19. FOR YOU ============ -->
+<section class="slide" data-time="2">
+  <div class="kicker">1학년인 여러분에게</div>
+  <h2>AI가 코드를 쓰는 시대,<br>여러분은 '무엇이 옳은지'를 정의하는 사람</h2>
+  <div class="grid2" style="grid-template-columns:repeat(4,1fr);gap:20px">
+    <div class="card"><span class="pill g">글쓰기</span><h3>명확하게 쓰기</h3><p>좋은 지침서 = 모호하지 않은 문장. 보고서·주석부터 연습.</p></div>
+    <div class="card"><span class="pill s">테스트</span><h3>검증으로 생각하기</h3><p>"어떻게 만들까" 전에 "어떻게 확인할까"를 먼저.</p></div>
+    <div class="card"><span class="pill k">Git</span><h3>기록 남기기</h3><p>커밋 메시지·README는 사람과 AI 모두를 위한 인수인계.</p></div>
+    <div class="card"><span class="pill m">시스템</span><h3>전체를 보기</h3><p>부품 하나보다 부품 사이의 흐름과 고리(루프)를 보는 눈.</p></div>
+  </div>
+  <p class="lead" style="margin-top:44px">→ 전부 <b>지금 배우는 기초 과목</b>에서 시작됩니다. 기초가 곧 하네스입니다.</p>
+  <aside class="notes">동기부여 마무리. "AI가 다 해 주면 공부 안 해도 되나요?"라는 질문이 자주 나오는데, 오늘의 답: 오히려 '무엇이 맞는지 판단하는 능력'(테스트, 설계, 글쓰기)이 더 중요해졌다. 그 판단을 시스템으로 만드는 게 하네스 엔지니어링.</aside>
+</section>
+
+<!-- ============ 20. WRAP-UP & REFS ============ -->
+<section class="slide" data-time="3">
+  <div class="kicker">정리 · 질의응답</div>
+  <div class="row" style="gap:60px">
+    <div class="col">
+      <h2 style="font-size:52px">오늘의 세 줄 요약</h2>
+      <ul class="clean">
+        <li><b>에이전트 = 모델 + 하네스.</b> 하네스는 모델을 뺀 전부.</li>
+        <li>하네스는 <em class="g">가이드</em>로 미리 이끌고 <em class="s">센서</em>로 나중에 잡는다.</li>
+        <li>실수할 때마다 <b>환경을 고쳐</b> 하네스를 키운다.</li>
+      </ul>
+      <div class="card" style="margin-top:34px;background:var(--ink);color:#fff;border:none">
+        <p style="font-size:30px;font-weight:700">Q & A 🙋</p>
+        <p style="font-size:22px;color:#c9c4b8">궁금한 점은 연구실(산학협력관 804호)로도 언제든지.</p>
+      </div>
+    </div>
+    <div style="flex:0 0 640px">
+      <h3>더 읽어 보기</h3>
+      <ol class="refs" style="padding-left:28px;margin-top:10px">
+        <li>M. Hashimoto, <a href="https://mitchellh.com/writing/my-ai-adoption-journey" target="_blank" rel="noopener">My AI Adoption Journey</a> (2026.2)</li>
+        <li>R. Lopopolo, <a href="https://openai.com/index/harness-engineering/" target="_blank" rel="noopener">Harness engineering: leveraging Codex in an agent-first world</a>, OpenAI (2026.2)</li>
+        <li>B. Böckeler, <a href="https://martinfowler.com/articles/harness-engineering.html" target="_blank" rel="noopener">Harness engineering for coding agent users</a>, martinfowler.com (2026.4)</li>
+        <li>Anthropic, <a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" target="_blank" rel="noopener">Effective harnesses for long-running agents</a> (2025.11)</li>
+        <li>Anthropic, Harness design for long-running application development — <a href="https://www.anthropic.com/engineering" target="_blank" rel="noopener">anthropic.com/engineering</a> (2026.3)</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">세 줄 요약을 학생들과 함께 소리 내어 읽어도 좋다. 남은 시간 질의응답. 예상 질문: "AI가 개발자를 대체하나요?" → OpenAI 사례에서도 사람 3명이 '환경을 설계'했다. 역할이 바뀌는 것. "하네스 만들려면 뭘 배워야 하나요?" → 프로그래밍 기초, 테스트, Git, 리눅스 터미널.</aside>
+</section>
+
+</div><!-- /stage -->
+
+<div id="notes"><div class="hd"><span>슬라이드 <b id="nIdx">1</b></span><span>예정 <b id="nTime">-</b></span><span>누적 계획 <b id="nCum">-</b></span><span>실제 경과 <b id="nClock">00:00</b> <span style="color:#777">(T: 시작/정지)</span></span></div><div id="nBody"></div></div>
+<div id="counter"></div>
+<div id="nav"><button id="pv">◀</button><button id="nx">▶</button><button id="ov">전체</button><button id="nt">노트</button><button id="fs">⛶</button></div>
+
+<script>
+(function(){
+  const stage=document.getElementById('stage');
+  const slides=[...document.querySelectorAll('.slide')];
+  const notes=document.getElementById('notes');
+  let cur=0;
+
+  /* scale fixed canvas to viewport */
+  function fit(){
+    if(document.body.classList.contains('overview')) return;
+    const s=Math.min(window.innerWidth/1600, window.innerHeight/900);
+    stage.style.transform=`translate(-50%,-50%) scale(${s})`;
+  }
+  window.addEventListener('resize',fit); fit();
+
+  /* planned cumulative time */
+  const cum=[]; let acc=0;
+  slides.forEach((s,i)=>{ acc+=+(s.dataset.time||0); cum[i]=acc; });
+
+  function show(i){
+    cur=Math.max(0,Math.min(slides.length-1,i));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===cur));
+    document.getElementById('progress').style.width=((cur)/(slides.length-1)*100)+'%';
+    document.getElementById('counter').textContent=`${cur+1} / ${slides.length}`;
+    const n=slides[cur].querySelector('aside.notes');
+    document.getElementById('nBody').textContent=n?n.textContent.trim():'(노트 없음)';
+    document.getElementById('nIdx').textContent=cur+1;
+    document.getElementById('nTime').textContent=(slides[cur].dataset.time||0)+'분';
+    document.getElementById('nCum').textContent=cum[cur]+'분 / '+acc+'분';
+    if(location.hash!=='#'+(cur+1)) history.replaceState(null,'','#'+(cur+1));
+  }
+  const fromHash=parseInt(location.hash.slice(1));
+  show(isNaN(fromHash)?0:fromHash-1);
+
+  function toggleOverview(){
+    const on=document.body.classList.toggle('overview');
+    if(on){ stage.style.transform='none'; slides[cur].scrollIntoView({block:'center'}); }
+    else fit();
+  }
+  slides.forEach((s,i)=>s.addEventListener('click',e=>{
+    if(document.body.classList.contains('overview')){ toggleOverview(); show(i); }
+  }));
+  function fullscreen(){ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{}); }
+
+  /* lecture clock */
+  let clockOn=false, clockStart=0, clockAcc=0, clockInt=null;
+  function fmt(ms){const t=Math.floor(ms/1000);return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');}
+  function toggleClock(){
+    if(clockOn){ clockAcc+=Date.now()-clockStart; clearInterval(clockInt); clockOn=false; }
+    else { clockStart=Date.now(); clockOn=true; clockInt=setInterval(()=>{document.getElementById('nClock').textContent=fmt(clockAcc+Date.now()-clockStart)},500); }
+  }
+
+  document.addEventListener('keydown',e=>{
+    if(e.target.closest && e.target.closest('input,textarea')) return;
+    const k=e.key;
+    if(['ArrowRight','PageDown',' ','Enter'].includes(k)){ e.preventDefault(); show(cur+1); }
+    else if(['ArrowLeft','PageUp','Backspace'].includes(k)){ e.preventDefault(); show(cur-1); }
+    else if(k==='Home') show(0);
+    else if(k==='End') show(slides.length-1);
+    else if(k==='n'||k==='N') notes.classList.toggle('show');
+    else if(k==='o'||k==='O'||k==='Escape') { if(k!=='Escape'||document.body.classList.contains('overview')) toggleOverview(); }
+    else if(k==='f'||k==='F') fullscreen();
+    else if(k==='t'||k==='T') toggleClock();
+  });
+  /* touch swipe */
+  let tx=null;
+  document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+  document.addEventListener('touchend',e=>{ if(tx===null)return; const dx=e.changedTouches[0].clientX-tx; if(Math.abs(dx)>60) show(cur+(dx<0?1:-1)); tx=null; });
+  document.getElementById('pv').onclick=()=>show(cur-1);
+  document.getElementById('nx').onclick=()=>show(cur+1);
+  document.getElementById('ov').onclick=toggleOverview;
+  document.getElementById('nt').onclick=()=>notes.classList.toggle('show');
+  document.getElementById('fs').onclick=fullscreen;
+
+  /* stop key events from interactive widgets advancing slides when clicking buttons */
+  document.querySelectorAll('.slide button').forEach(b=>b.addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter') e.stopPropagation(); }));
+
+  /* anatomy cards */
+  document.querySelectorAll('#anatomy .comp').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('on')));
+
+  /* ---------- harness simulator ---------- */
+  const st={guide:false,tool:false,perm:false,memory:false,test:false};
+  const togs=[...document.querySelectorAll('#toggles .tog')];
+  function paint(){ togs.forEach(t=>t.classList.toggle('on',st[t.dataset.k])); }
+  togs.forEach(t=>t.addEventListener('click',()=>{ st[t.dataset.k]=!st[t.dataset.k]; paint(); }));
+  document.getElementById('allOn').onclick=()=>{Object.keys(st).forEach(k=>st[k]=true);paint();};
+  document.getElementById('allOff').onclick=()=>{Object.keys(st).forEach(k=>st[k]=false);paint();};
+  const logEl=document.getElementById('log'), resEl=document.getElementById('result'), runBtn=document.getElementById('runBtn');
+  let timers=[];
+  function script(){
+    const L=[];
+    L.push(['sess','── 세션 1 시작 ──']);
+    L.push(['sys','[목표 수신] grade.py 평균 계산 버그 수정']);
+    L.push(st.guide?['ok','📘 AGENTS.md 읽음 → "테스트는 pytest", "data/ 폴더 수정 금지" 확인']
+                   :['warn','⚠ 프로젝트 규칙을 모름 → 추측으로 작업 시작']);
+    L.push(st.tool?['ok','🛠 python grade.py 실행 → ZeroDivisionError 발견 (학생이 0명일 때)']
+                  :['warn','⚠ 코드를 실행할 수 없음 → 눈으로만 읽고 "아마 12번째 줄?" 추측']);
+    L.push(['sys','🤖 "임시 파일 정리할게요" → rm -rf data/ 실행 시도']);
+    if(st.perm) L.push(['ok','🔒 샌드박스가 차단: data/ 삭제는 사람 승인 필요']);
+    else if(st.guide) L.push(['warn','⚠ 지침서의 금지 규칙을 보고 멈춤 (하지만 규칙은 강제가 아님)']);
+    else L.push(['bad','💥 data/scores.csv 삭제됨 — 원본 성적 데이터 손실!']);
+    L.push(['sys','… 컨텍스트 창이 가득 참 → 세션 종료']);
+    L.push(['sess','── 세션 2 시작 (새 기억) ──']);
+    L.push(st.memory?['ok','📝 progress.md 읽음 → "원인 찾음, 수정 50%" → 이어서 작업']
+                    :['warn','⚠ 지난 세션 기억 없음 → 처음부터 다시 분석 (시간 2배)']);
+    if(st.test){
+      L.push(['sys','🧪 pytest 실행 → 3개 중 1개 실패 (빈 목록 처리)']);
+      L.push(['sys','🤖 빈 목록이면 0을 반환하도록 수정']);
+      L.push(['ok','🧪 pytest 재실행 → 3/3 통과 ✓']);
+      L.push(['ok','✅ 보고: "테스트로 확인된 수정 완료"']);
+    } else {
+      L.push(['bad','🤖 "완료했습니다! 🎉" (검증 없음)']);
+      L.push(['bad','🔍 실제로는 빈 목록에서 여전히 오류 → 거짓 완료']);
+    }
+    return L;
+  }
+  runBtn.onclick=()=>{
+    timers.forEach(clearTimeout); timers=[];
+    logEl.innerHTML=''; resEl.style.display='none'; runBtn.disabled=true;
+    const L=script();
+    L.forEach((l,i)=>timers.push(setTimeout(()=>{
+      const d=document.createElement('div'); d.className='ln '+l[0]; d.textContent=l[1]; logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight;
+    }, i*650)));
+    timers.push(setTimeout(()=>{
+      const on=Object.values(st).filter(Boolean).length;
+      const pct=Math.round(on/5*100);
+      let verdict, color;
+      if(on===5){verdict='믿고 맡길 수 있는 동료';color='var(--ok)';}
+      else if(st.test && st.perm){verdict='느리지만 안전하고 정직함';color='#2f9e44';}
+      else if(on>=3){verdict='쓸 만하지만 아직 감시가 필요';color='#e67700';}
+      else {verdict='데모용… 실전 투입 금지';color='var(--bad)';}
+      resEl.innerHTML=`<span style="color:#a8a296">신뢰도</span> <span class="score" style="color:${color}">${pct}%</span> &nbsp; <b style="color:${color}">${verdict}</b><br><span style="font-size:18px;color:#8b93a1">모델은 그대로 — 바뀐 것은 하네스뿐입니다.</span>`;
+      resEl.style.display='block'; runBtn.disabled=false;
+    }, L.length*650+200));
+  };
+
+  /* ---------- activity ---------- */
+  document.getElementById('revealBtn').onclick=function(){
+    const a=document.getElementById('activity'); const on=a.classList.toggle('reveal-on');
+    this.textContent=on?'🙈 예시 답안 숨기기':'👀 예시 답안 보기';
+  };
+  let tLeft=300, tOn=false, tInt=null; const tEl=document.getElementById('timer');
+  function tPaint(){ tEl.textContent=fmt(tLeft*1000); tEl.style.background=tLeft===0?'var(--bad)':(tOn?'var(--guide)':'var(--ink)'); }
+  tEl.addEventListener('click',()=>{
+    if(tOn){clearInterval(tInt);tOn=false;}
+    else if(tLeft>0){tOn=true;tInt=setInterval(()=>{tLeft--; if(tLeft<=0){tLeft=0;clearInterval(tInt);tOn=false;} tPaint();},1000);}
+    tPaint();
+  });
+  tEl.addEventListener('dblclick',()=>{clearInterval(tInt);tOn=false;tLeft=300;tPaint();});
+
+  /* ---------- quiz ---------- */
+  document.querySelectorAll('.qz').forEach(q=>{
+    q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+      if(q.classList.contains('done')) return;
+      const ok=b.dataset.o===q.dataset.a;
+      b.classList.add(ok?'right':'wrong');
+      if(!ok) q.querySelector(`button[data-o="${q.dataset.a}"]`).classList.add('right');
+      q.classList.add('done');
+    }));
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ma">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2회 · 처음부터 만들기 | 멀티 에이전트 시스템 구축</title>
+<meta name="description" content="멀티 에이전트 시스템 구축 2회: Messages API 도구 사용 루프, 서브에이전트를 도구로 감싸기, 위임 브리프, 병렬 실행과 결과 합치기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<link rel="stylesheet" href="../../assets/css/ma.css">
+<style>
+  .tr { display: flex; flex-direction: column; gap: 8px; overflow: auto; height: 100%; width: 100%; padding: 6px; }
+  .tr .m { border-radius: 12px; padding: 8px 12px; font-size: 15px; line-height: 1.45; border: 1px solid var(--line); background: var(--surface); }
+  .tr .m .r { font-size: 11.5px; font-weight: 800; color: var(--muted); letter-spacing: .03em; display: block; margin-bottom: 2px; }
+  .tr .m.user { background: var(--surface-2); }
+  .tr .m.tu { border-color: var(--accent); background: var(--accent-soft); }
+  .tr .m.tres { border-color: var(--ok); background: var(--ok-soft); }
+  .tr .m.fin { border: 2px solid var(--accent); }
+  .tr code { font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+  .tr .m.new { animation: pop .35s ease; }
+  @keyframes pop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips button { font: inherit; font-size: 16px; font-weight: 700; border-radius: 999px; padding: 6px 14px; border: 2px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
+  .chips button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .brief { font-size: 15.5px; line-height: 1.55; white-space: pre-wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; width: 100%; }
+  .brief .add { background: var(--accent-soft); border-radius: 4px; }
+  .fails { display: grid; gap: 8px; }
+  .fails div { font-size: 15px; line-height: 1.45; border-radius: 10px; padding: 8px 12px; background: var(--bad-soft); }
+  .fails div.ok { background: var(--ok-soft); }
+  .seq text { font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">멀티 에이전트 시스템 구축 · 2회</p>
+    <h1>처음부터<br>만들기</h1>
+    <p class="lead" style="font-size:25px">도구 사용 루프에서 리드 + 워커 시스템까지</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>중급</span><span>180분</span><span>직접 해 보기 3개</span><span>실습 2</span></div>
+  </div>
+  <svg viewBox="0 0 500 420" style="width:500px;flex:none" aria-hidden="true">
+    <rect x="40" y="40" width="420" height="340" rx="22" fill="#1f2430"/>
+    <g font-family="ui-monospace,Menlo,monospace" font-size="17" fill="#e6e9ef">
+      <text x="70" y="90"><tspan fill="#ffb86c" font-weight="700">while</tspan> resp.stop_reason ==</text>
+      <text x="100" y="118" fill="#a5d6a7">'tool_use'</text>
+      <text x="100" y="152"><tspan fill="#8ab4f8">run</tspan>(tool_calls)</text>
+      <text x="100" y="186">messages += results</text>
+      <text x="100" y="220">resp = <tspan fill="#8ab4f8">call</tspan>(messages)</text>
+      <text x="70" y="262" fill="#8a93a6" font-style="italic"># 도구 하나가</text>
+      <text x="70" y="290" fill="#8a93a6" font-style="italic"># 또 다른 에이전트라면?</text>
+      <text x="70" y="330"><tspan fill="#8ab4f8">delegate</tspan>(task) → <tspan fill="#a5d6a7">worker</tspan></text>
+    </g>
+    <rect x="68" y="232" width="8" height="18" fill="#5fcfbd" class="spin"><animate attributeName="opacity" values="1;0;1" dur="1.2s" repeatCount="indefinite"/></rect>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+  <aside class="notes" data-min="2">지난 시간 미니 프로젝트 스케치를 2~3명에게 1분씩 듣고 시작해도 좋다(시간이 남으면). 오늘은 프레임워크 없이 순수 API로 만든다 — 프레임워크가 뒤에서 해 주는 일을 알아야 3회에 프레임워크를 제대로 고를 수 있다.</aside>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span><span class="lv l2">중급</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">도구 루프</div><div class="d">tool_use ↔ tool_result 왕복으로 에이전트 루프를 직접 짠다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-split"/></svg></span><div class="h">서브에이전트</div><div class="d">에이전트를 '도구'로 감싸 리드가 위임하게 만든다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-file"/></svg></span><div class="h">위임 브리프</div><div class="d">목표 · 출력 형식 · 도구 안내 · 경계를 갖춘 지시를 쓴다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-merge"/></svg></span><div class="h">병렬과 합치기</div><div class="d">워커를 동시에 돌리고 결과를 출처와 함께 합친다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2"></aside>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:4;background:var(--accent-soft)"><b>① 도구 사용 루프</b><small>직접 해 보기 1</small></div>
+      <div style="flex:3;background:var(--accent-soft)"><b>② 에이전트를 도구로</b><small>직접 해 보기 2</small></div>
+      <div style="flex:1.2;background:var(--surface-2)"><b>휴식</b></div>
+      <div style="flex:3;background:var(--accent-soft)"><b>③ 병렬과 합치기</b><small>직접 해 보기 3</small></div>
+      <div style="flex:1.2;background:var(--surface-2)"><b>휴식</b></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>④ 실습</b><small>루프 · 리드 + 워커</small></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2"></aside>
+</section>
+
+<!-- 4. 오늘 만들 것 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘 만들 것</span></div>
+  <h2>문헌 조사용 리드 + 워커 시스템</h2>
+  <div class="body">
+    <svg viewBox="0 0 1120 330" aria-label="사용자 질문이 리드로 가고, 리드가 워커 셋에 위임하고, 워커는 문헌 검색 도구를 쓰고, 리드가 출처 달린 보고서를 쓴다">
+      <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <rect x="0" y="130" width="170" height="70" rx="14" class="f-s2"/><text x="85" y="160" text-anchor="middle" class="t-main">연구 질문</text><text x="85" y="182" text-anchor="middle" class="t-sub">"예지보전 방법 비교"</text>
+      <path d="M172 165H232" stroke="var(--muted)" stroke-width="3" marker-end="url(#a4)"/>
+      <rect x="240" y="115" width="190" height="100" rx="18" class="f-acc"/><text x="335" y="158" text-anchor="middle" class="t-w" style="font-size:20px">리드</text><text x="335" y="184" text-anchor="middle" class="t-w" style="font-size:13px;font-weight:600">계획 · 위임 · 종합</text>
+      <g stroke="var(--muted)" stroke-width="3" fill="none"><path d="M432 145 L560 55" marker-end="url(#a4)"/><path d="M432 165 L560 165" marker-end="url(#a4)"/><path d="M432 185 L560 275" marker-end="url(#a4)"/></g>
+      <text x="470" y="88" class="t-acc" style="font-size:13px">delegate()</text>
+      <g><rect x="570" y="25" width="190" height="62" rx="14" class="f-acc2s"/><text x="665" y="52" text-anchor="middle" class="t-main">워커 1</text><text x="665" y="72" text-anchor="middle" class="t-sub">고전 ML 계열</text></g>
+      <g><rect x="570" y="134" width="190" height="62" rx="14" class="f-acc2s"/><text x="665" y="161" text-anchor="middle" class="t-main">워커 2</text><text x="665" y="181" text-anchor="middle" class="t-sub">딥러닝 계열</text></g>
+      <g><rect x="570" y="243" width="190" height="62" rx="14" class="f-acc2s"/><text x="665" y="270" text-anchor="middle" class="t-main">워커 3</text><text x="665" y="290" text-anchor="middle" class="t-sub">양자 계열</text></g>
+      <g stroke="var(--line)" stroke-width="3" stroke-dasharray="5 5" fill="none"><path d="M762 56 H830 V150"/><path d="M762 165 H830"/><path d="M762 274 H830 V180"/></g>
+      <rect x="835" y="125" width="150" height="80" rx="14" class="f-surface" stroke="var(--ok)" stroke-width="2"/><text x="910" y="158" text-anchor="middle" class="t-main">문헌 검색</text><text x="910" y="180" text-anchor="middle" class="t-sub">search · read</text>
+      <path d="M335 217 V300 H1040 V215" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="2 6"/>
+      <rect x="990" y="125" width="130" height="80" rx="14" class="f-surface" stroke="var(--accent)" stroke-width="2"/><text x="1055" y="158" text-anchor="middle" class="t-main">보고서</text><text x="1055" y="180" text-anchor="middle" class="t-sub">출처 id 포함</text>
+    </svg>
+    <p class="small muted" style="margin-top:6px">자료: 실습용 <b>가상</b> 논문 초록 12편 (실제로 존재하지 않는 논문). 웹 검색 없이 돌아가서 비용이 적고 결과를 확인하기 쉽다.</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">워커 수와 담당 계열은 '리드가 정한다' — 그림은 한 예. 가상 문헌을 쓰는 이유: (1) 웹 검색 도구는 비용·변동성이 커서 비교 실험이 어렵다, (2) 정답(어느 논문이 무엇을 말하는지)을 우리가 알아 검증이 쉽다. 자기 연구용으로는 이 자리를 실제 검색 도구로 바꾸면 된다.</aside>
+</section>
+
+<!-- 5. 구간 ① -->
+<section class="slide section">
+  <div class="big">①</div>
+  <h2>도구 사용 루프</h2>
+  <p>에이전트의 심장: 모델이 도구를 요청하고, 코드가 실행해 돌려준다</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1"></aside>
+</section>
+
+<!-- 6. 메시지 구조 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 도구 사용 루프</span></div>
+  <h2>메시지는 '내용 블록'의 목록이다</h2>
+  <div class="body">
+    <div class="cols">
+      <pre class="code sm">messages = [
+  {'role': 'user', 'content': '예지보전 논문을 찾아 줘'},
+  {'role': 'assistant', 'content': [
+      {'type': 'text', 'text': '검색해 보겠습니다.'},
+      {'type': 'tool_use', 'id': 'toolu_01', 'name': 'search_papers',
+       'input': {'query': '예지보전'}},
+  ]},
+  {'role': 'user', 'content': [
+      {'type': 'tool_result', 'tool_use_id': 'toolu_01',
+       'content': 'P03, P07, P11'},
+  ]},
+]</pre>
+      <div class="tiles" style="grid-template-columns:1fr;gap:10px">
+        <div class="tile row"><span class="ic-badge g" style="font-size:16px;font-weight:800">text</span><div class="d">일반 글</div></div>
+        <div class="tile row"><span class="ic-badge" style="font-size:13px;font-weight:800">tool_use</span><div class="d"><b>모델</b>이 "이 도구를 이 입력으로 실행해 달라"고 요청</div></div>
+        <div class="tile row"><span class="ic-badge" style="font-size:12px;font-weight:800;background:var(--ok-soft);color:var(--ok)">tool_result</span><div class="d"><b>우리 코드</b>가 실행 결과를 <b>같은 id</b>로 돌려줌 (role은 user)</div></div>
+      </div>
+    </div>
+    <p class="ref">Claude Messages API의 도구 사용 형식. 모델은 도구를 직접 실행하지 않는다 — 실행은 언제나 우리 코드(하네스)의 몫이다.</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">가장 중요한 한 줄: 모델은 도구를 '요청'만 한다. 그래서 권한·검증·기록을 끼워 넣을 자리가 생긴다(하네스). tool_result를 user 역할로 보낸다는 점이 처음엔 어색하니 짚어 준다.</aside>
+</section>
+
+<!-- 7. 도구 정의 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 도구 사용 루프</span></div>
+  <h2>도구 = 이름 + 설명 + 입력 스키마</h2>
+  <div class="body">
+    <div class="cols">
+      <pre class="code sm">SEARCH = {
+  'name': 'search_papers',
+  'description': (
+    '연구실 문헌 모음에서 키워드로 논문을 찾는다. '
+    '제목·초록에 키워드가 많이 들어간 순으로 '
+    '최대 5편의 id·제목·연도를 돌려준다. '
+    '본문이 필요하면 read_paper 를 쓴다.'),
+  'input_schema': {
+    'type': 'object',
+    'properties': {
+      'query': {'type': 'string',
+                'description': '한두 단어 키워드'}},
+    'required': ['query']},
+}</pre>
+      <div>
+        <div class="box key" style="margin-bottom:14px"><p class="box-title">설명이 곧 프롬프트다</p><p class="small" style="margin:0">모델은 <b>설명만 보고</b> 언제 · 어떻게 쓸지 정한다. 무엇을 돌려주는지, 언제 다른 도구를 써야 하는지까지 적는다.</p></div>
+        <ul class="small" style="margin:0">
+          <li><code class="i">input_schema</code>는 JSON Schema</li>
+          <li>호출할 때 <code class="i">tools=[SEARCH, READ]</code>로 넘긴다</li>
+          <li>모델이 고른 입력은 <code class="i">block.input</code>(dict)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">Anthropic 리서치 시스템 글의 교훈: 도구 설명이 나쁘면 에이전트가 엉뚱한 길로 간다. 그들은 모델에게 도구 사용 실패 사례를 보여 주고 설명을 고쳐 쓰게 해서 이후 과제 시간을 40% 줄였다고 보고했다. 실습에서 설명을 일부러 나쁘게 바꿔 보는 연습 과제가 있다.</aside>
+</section>
+
+<!-- 8. 왕복 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 도구 사용 루프</span></div>
+  <h2>한 번의 '도구 왕복'</h2>
+  <div class="body">
+    <svg class="seq" viewBox="0 0 1120 360" aria-label="코드와 모델 사이의 도구 왕복 순서도">
+      <defs><marker id="a8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker><marker id="a8b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ok)"/></marker></defs>
+      <rect x="70" y="0" width="220" height="48" rx="12" class="f-accs"/><text x="180" y="30" text-anchor="middle" class="t-acc" style="font-size:18px">우리 코드 (하네스)</text>
+      <rect x="830" y="0" width="220" height="48" rx="12" class="f-acc"/><text x="940" y="30" text-anchor="middle" class="t-w" style="font-size:18px">모델 (API)</text>
+      <path d="M180 50V350M940 50V350" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 6"/>
+      <path d="M185 85H932" stroke="var(--accent)" stroke-width="3" marker-end="url(#a8)"/><text x="560" y="75" text-anchor="middle" class="t-main" style="font-size:15px">① messages + tools 보냄</text>
+      <path d="M935 140H188" stroke="var(--accent)" stroke-width="3" marker-end="url(#a8)"/><text x="560" y="130" text-anchor="middle" class="t-main" style="font-size:15px">② stop_reason = "tool_use", tool_use 블록(들)</text>
+      <rect x="40" y="160" width="290" height="58" rx="12" class="f-oks"/><text x="185" y="186" text-anchor="middle" class="t-main" style="font-size:15px">③ 도구 실행 (권한 확인 · 기록)</text><text x="185" y="206" text-anchor="middle" class="t-sub">여러 개면 동시에 실행해도 된다</text>
+      <path d="M185 255H932" stroke="var(--ok)" stroke-width="3" marker-end="url(#a8b)"/><text x="560" y="245" text-anchor="middle" class="t-main" style="font-size:15px">④ assistant 응답 + tool_result 를 덧붙여 다시 보냄</text>
+      <path d="M935 315H188" stroke="var(--accent)" stroke-width="3" marker-end="url(#a8)"/><text x="560" y="305" text-anchor="middle" class="t-main" style="font-size:15px">⑤ 또 tool_use 이면 ③으로 · "end_turn" 이면 끝</text>
+    </svg>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">②에서 tool_use 블록이 여러 개 올 수 있다(병렬 도구 호출). 그때 tool_result도 같은 메시지 안에 모두 넣어 돌려줘야 한다. API는 상태를 기억하지 않으므로 매번 전체 messages를 다시 보낸다 → 대화가 길어질수록 입력 토큰이 늘어나는 이유.</aside>
+</section>
+
+<!-- 9. 직접 해 보기 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 도구 사용 루프 · 직접 해 보기 1</span></div>
+  <h2><svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> 루프를 한 단계씩: 컨텍스트가 자란다</h2>
+  <div class="demo">
+    <div class="plot" style="align-items:stretch"><div class="tr" id="trace"></div></div>
+    <div class="side">
+      <div class="grid g2" style="gap:10px">
+        <button class="btn" id="stepBtn" type="button"><svg class="ic"><use href="#i-play"/></svg> 다음 단계</button>
+        <button class="btn ghost" id="stepReset" type="button"><svg class="ic"><use href="#i-reset"/></svg> 처음부터</button>
+      </div>
+      <div class="meter"><div class="lbl">stop_reason</div><div class="val" id="stopR" style="font-size:28px">—</div></div>
+      <div class="meter"><div class="lbl">이번 호출의 입력 토큰 (누적 대화)</div><div class="val o" id="ctxT">0</div><div class="track"><i id="ctxBar"></i></div></div>
+      <div class="callout b" id="stepNote">「다음 단계」를 눌러 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회 · 토큰 수는 설명용 예시값</span><span class="no"></span></div>
+  <aside class="notes" data-min="7">관찰 포인트 세 가지: (1) 모델 호출은 3번, 도구 실행은 3번(두 번째 응답에서 read_paper 2개를 한꺼번에 요청), (2) 매 호출마다 입력 토큰이 커진다 — 앞의 기록을 전부 다시 보내기 때문, (3) 이 대화 기록 전체가 한 에이전트의 컨텍스트. 워커를 따로 두면 이 기록이 리드의 창에 쌓이지 않는다는 점이 ②로 이어진다.</aside>
+</section>
+
+<!-- 10. 루프 코드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 도구 사용 루프</span></div>
+  <h2>에이전트 루프, 열다섯 줄</h2>
+  <div class="body">
+    <div class="cols">
+      <pre class="code sm">def run_agent(system, task, tools, impl, max_turns=10):
+    messages = [{'role': 'user', 'content': task}]
+    for turn in range(max_turns):
+        resp = client.messages.create(model=MODEL, max_tokens=2000,
+            system=system, tools=tools, messages=messages)
+        messages.append({'role': 'assistant', 'content': resp.content})
+        if resp.stop_reason != 'tool_use':
+            return text_of(resp), messages          # 끝
+        results = []
+        for b in resp.content:
+            if b.type == 'tool_use':
+                out = call_tool(impl, b.name, b.input)
+                results.append({'type': 'tool_result',
+                                'tool_use_id': b.id, **out})
+        messages.append({'role': 'user', 'content': results})
+    return '[중단] 최대 반복 횟수 초과', messages</pre>
+      <div>
+        <ul class="small">
+          <li><code class="i">impl</code>: 도구 이름 → 파이썬 함수 사전</li>
+          <li>모델 응답을 <b>그대로</b> assistant 메시지로 붙인다</li>
+          <li>tool_result 는 <b>한 메시지에 모아서</b></li>
+          <li><code class="i">max_turns</code>: 무한 루프 방지</li>
+        </ul>
+        <div class="box think" style="margin:12px 0 0"><p class="box-title">프레임워크가 하는 일</p><p class="small" style="margin:0">Agent SDK · LangGraph 등은 이 루프에 권한 · 기록 · 재시도 · 컨텍스트 압축을 얹은 것이다 (3회).</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">한 줄씩 읽어 준다. call_tool은 다음 장. 이 함수 하나가 오늘의 모든 것의 부품 — 워커도 이 함수, 리드도 이 함수(도구만 다름).</aside>
+</section>
+
+<!-- 11. 안전장치 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 도구 사용 루프</span></div>
+  <h2>루프에 꼭 넣을 안전장치</h2>
+  <div class="body">
+    <div class="cols">
+      <pre class="code sm">def call_tool(impl, name, args):
+    if name not in impl:                         # 없는 도구
+        return {'content': f'알 수 없는 도구: {name}',
+                'is_error': True}
+    try:
+        out = impl[name](**args)
+        text = json.dumps(out, ensure_ascii=False)
+        return {'content': text[:4000]}           # 너무 긴 결과 자르기
+    except Exception as e:                       # 실패도 '결과'로 돌려준다
+        return {'content': f'{type(e).__name__}: {e}',
+                'is_error': True}</pre>
+      <div class="tiles" style="grid-template-columns:1fr;gap:10px">
+        <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h">오류를 숨기지 않는다</div><div class="d"><code class="i">is_error</code>로 돌려주면 모델이 다른 방법을 시도한다</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h">결과 길이 제한</div><div class="d">긴 결과 하나가 컨텍스트를 다 잡아먹는다</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h">횟수 · 예산 상한</div><div class="d">max_turns, 누적 토큰 상한, 시간 제한</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">멀티 에이전트에서는 이 상한들이 '에이전트 수만큼' 곱해진다. 워커 하나가 폭주하면 전체 비용이 튄다 → 워커마다 max_turns를 리드보다 작게 두는 것이 보통.</aside>
+</section>
+
+<!-- 12. 도구 설계 원칙 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 도구 사용 루프</span></div>
+  <h2>좋은 도구의 네 가지 조건</h2>
+  <div class="body">
+    <div class="grid g2">
+      <div class="card"><div class="k">1 · 목적이 겹치지 않는다</div><div class="d"><code class="i">search</code>와 <code class="i">find</code>가 둘 다 있으면 모델이 헷갈린다. 하나로 합치거나 차이를 설명에 쓴다.</div></div>
+      <div class="card"><div class="k">2 · 결과는 짧고 다음 행동에 필요한 것만</div><div class="d">검색은 id · 제목 · 연도만, 본문은 따로. 큰 결과는 요약하거나 쪽 나누기.</div></div>
+      <div class="card"><div class="k">3 · 실패 메시지가 고칠 방법을 알려 준다</div><div class="d">"P99 없음" 보다 "P99 없음. 있는 id: P01~P12"</div></div>
+      <div class="card"><div class="k">4 · 위험한 일은 좁게</div><div class="d">"아무 SQL 실행" 대신 "읽기 전용 질의". 쓰기 · 삭제는 따로 두고 승인을 받는다.</div></div>
+    </div>
+    <p class="ref">참고: Anthropic Engineering, <i>How we built our multi-agent research system</i> (2025.6) — 도구 설계·선택 휴리스틱</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">4번은 5회 안전에서 다시. 3번은 실습에서 바로 확인 가능 — read_paper에 없는 id를 넣으면 무엇이 돌아오게 만들었는지 보라.</aside>
+</section>
+
+<!-- 13. 구간 ② -->
+<section class="slide section">
+  <div class="big">②</div>
+  <h2>에이전트를 도구로</h2>
+  <p>서브에이전트 = 새 컨텍스트에서 도는 run_agent</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1"></aside>
+</section>
+
+<!-- 14. 아이디어 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 에이전트를 도구로</span></div>
+  <h2>리드에게 워커는 '도구 하나'일 뿐</h2>
+  <div class="body">
+    <svg viewBox="0 0 1120 300" aria-label="리드의 컨텍스트에는 위임 요청과 짧은 보고만 남고, 워커의 긴 작업 기록은 워커 컨텍스트에 갇힌다">
+      <rect x="0" y="20" width="430" height="260" rx="18" class="f-accs"/>
+      <text x="20" y="50" class="t-acc" style="font-size:16px">리드의 컨텍스트</text>
+      <g class="t-main" style="font-size:15px">
+        <rect x="20" y="66" width="390" height="38" rx="8" class="f-surface"/><text x="34" y="91">user: 예지보전 방법을 계열별로 비교해 줘</text>
+        <rect x="20" y="112" width="390" height="38" rx="8" class="f-surface" stroke="var(--accent)"/><text x="34" y="137">tool_use: delegate(「고전 ML 계열 조사…」)</text>
+        <rect x="20" y="158" width="390" height="38" rx="8" class="f-oks"/><text x="34" y="183">tool_result: 보고 1,500토큰 (요약 · 출처)</text>
+        <rect x="20" y="204" width="390" height="38" rx="8" class="f-surface"/><text x="34" y="229">… 워커 2 · 3 도 같은 모양</text>
+      </g>
+      <path d="M432 131 C 520 131, 520 90, 600 90" stroke="var(--accent)" stroke-width="3" fill="none"/>
+      <path d="M600 210 C 520 210, 520 177, 432 177" stroke="var(--ok)" stroke-width="3" fill="none"/>
+      <rect x="600" y="20" width="520" height="260" rx="18" class="f-acc2s"/>
+      <text x="620" y="50" class="t-acc2" style="font-size:16px">워커의 컨텍스트 (새로 시작, 끝나면 버림)</text>
+      <g class="t-sub" style="font-size:14px">
+        <text x="620" y="82">user: 고전 ML 계열 조사. 출력 형식… 경계…</text>
+        <text x="620" y="108">tool_use: search_papers("SVM") → 결과 3편</text>
+        <text x="620" y="134">tool_use: read_paper("P02") → 초록 전체</text>
+        <text x="620" y="160">tool_use: read_paper("P05") → 초록 전체</text>
+        <text x="620" y="186">tool_use: search_papers("랜덤 포레스트") …</text>
+        <text x="620" y="212">… 30,000토큰 분량의 시행착오</text>
+        <text x="620" y="250" class="t-acc2" style="font-size:15px">→ 마지막 답(보고)만 리드에게 돌아간다</text>
+      </g>
+    </svg>
+    <p class="small" style="margin-top:8px"><b>컨텍스트 격리</b>: 리드의 창에는 <b>위임과 보고만</b> 쌓인다. 워커의 긴 탐색은 워커 창에서 끝난다.</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회 · 토큰 수는 설명용 예시값</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">이게 서브에이전트의 본질. Claude Code의 하위 에이전트도, Agent SDK의 subagents도 같은 원리(자기 컨텍스트 창을 쓰고 결과만 돌려준다). 반대급부: 워커는 리드가 아는 것을 모른다 → 브리프에 다 써 줘야 한다(16번 장).</aside>
+</section>
+
+<!-- 15. 코드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 에이전트를 도구로</span></div>
+  <h2>delegate 도구 만들기</h2>
+  <div class="body">
+    <div class="cols even">
+      <div>
+        <p class="fileh">리드가 보는 도구</p>
+        <pre class="code sm">DELEGATE = {
+  'name': 'delegate',
+  'description': '하위 조사 하나를 워커에게 맡긴다. '
+    '워커는 대화 기록을 모르므로 필요한 것을 모두 쓴다. '
+    '서로 독립적인 조사는 한 번에 여러 개 요청한다.',
+  'input_schema': {'type': 'object', 'properties': {
+      'objective': {'type': 'string'},
+      'output_format': {'type': 'string'},
+      'boundaries': {'type': 'string'}},
+    'required': ['objective', 'output_format', 'boundaries']}}</pre>
+      </div>
+      <div>
+        <p class="fileh">실제로 실행되는 함수</p>
+        <pre class="code sm">def delegate(objective, output_format, boundaries):
+    brief = (f'목표: {objective}\n'
+             f'출력 형식: {output_format}\n'
+             f'하지 말 것: {boundaries}')
+    report, _ = run_agent(WORKER_SYSTEM, brief,
+                          tools=[SEARCH, READ],
+                          impl=PAPER_TOOLS, max_turns=6)
+    return report            # 리드에게는 이것만
+
+LEAD_TOOLS = {'delegate': delegate}</pre>
+        <p class="codecap">워커의 messages 는 반환하지 않는다 → 격리</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="6">입력 스키마에 브리프의 필수 요소를 '필드'로 강제한 것이 요령: 리드가 목표만 던지고 형식·경계를 빼먹지 못한다. 하네스로 프롬프트 품질을 강제하는 예. 실습에서는 비동기 버전(async)을 쓴다 — ③에서 설명.</aside>
+</section>
+
+<!-- 16. 위임 브리프 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 에이전트를 도구로</span></div>
+  <h2>위임 브리프의 네 요소</h2>
+  <div class="body">
+    <div class="grid g4" style="gap:14px">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">목표</div><div class="d">무엇을, 왜. 상위 질문의 맥락 한 줄.</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-file"/></svg></span><div class="h">출력 형식</div><div class="d">길이, 항목, 출처 표기법. 리드가 합치기 쉬운 모양.</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-plug"/></svg></span><div class="h">도구 · 자료 안내</div><div class="d">어디서부터 찾을지, 어떤 도구가 유용한지.</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-x"/></svg></span><div class="h">경계</div><div class="d">하지 말 것, 다른 워커의 몫, 언제 멈출지.</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:18px"><p class="box-title">왜 이렇게까지</p><p style="margin:0">짧은 지시("반도체 부족 문제를 조사해")를 받은 하위 에이전트들은 <b>같은 검색을 반복</b>하거나 <b>엉뚱한 범위</b>를 조사했다 — 리서치 시스템 개발 초기에 실제로 겪은 일.</p></div>
+    <p class="ref">출처: Anthropic Engineering, <i>How we built our multi-agent research system</i> (2025.6)</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">사람에게 일을 맡길 때와 똑같다. 대학원생에게 익숙한 비유: 지도교수가 "관련 연구 좀 찾아봐"라고만 하면 생기는 일. MAST의 '명세 문제' 실패 유형과 직접 연결된다.</aside>
+</section>
+
+<!-- 17. 직접 해 보기 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 에이전트를 도구로 · 직접 해 보기 2</span></div>
+  <h2><svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> 브리프에서 빠진 것이 만드는 실패</h2>
+  <div class="demo" style="grid-template-columns:1fr 420px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px;padding:16px">
+      <div class="chips" id="briefChips">
+        <button type="button" data-k="goal" aria-pressed="true">목표</button>
+        <button type="button" data-k="fmt" aria-pressed="false">출력 형식</button>
+        <button type="button" data-k="tool" aria-pressed="false">도구 · 자료 안내</button>
+        <button type="button" data-k="bound" aria-pressed="false">경계</button>
+      </div>
+      <div class="brief" id="briefText"></div>
+    </div>
+    <div class="side">
+      <div class="meter"><div class="lbl">예상되는 문제</div></div>
+      <div class="fails" id="briefFails"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회 · 실패 유형은 MAST 분류를 참고한 예시</span><span class="no"></span></div>
+  <aside class="notes" data-min="6">요소를 하나씩 켜 가며 오른쪽 문제가 사라지는 것을 본다. 질문: "다 켜도 남는 실패는?" → 워커가 리드의 '암묵적 결정'(예: 어떤 기준으로 비교표를 만들지)을 모르는 문제. 출력 형식에 비교 기준을 넣어 주는 게 해결책.</aside>
+</section>
+
+<!-- 18. 노력 조절 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 에이전트를 도구로</span></div>
+  <h2>워커를 몇 명 쓸지도 리드에게 알려 준다</h2>
+  <div class="body">
+    <table>
+      <tr><th>질문 유형</th><th style="width:260px">에이전트</th><th style="width:300px">도구 호출</th></tr>
+      <tr><td>단순 사실 확인</td><td>1개 (리드 혼자)</td><td>3~10회</td></tr>
+      <tr><td>직접 비교</td><td>하위 에이전트 2~4개</td><td>각 10~15회</td></tr>
+      <tr><td>복잡한 조사</td><td>10개 이상, 역할을 명확히 나눔</td><td>필요한 만큼</td></tr>
+    </table>
+    <div class="box key frag" style="margin-top:18px"><p class="box-title">리드 시스템 프롬프트에 넣는 규칙</p><p class="small" style="margin:0">이런 기준이 없으면 리드는 단순한 질문에도 워커를 여럿 띄워 <b>비용을 낭비</b>했다. 질문의 크기에 맞게 <b>노력을 조절하는 규칙</b>을 프롬프트에 명시한다.</p></div>
+    <p class="ref">출처: Anthropic Engineering, <i>How we built our multi-agent research system</i> (2025.6)</p>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">표의 숫자는 그 회사 시스템의 규칙이고 우리 문헌 12편 실습에는 훨씬 작은 수가 맞다(워커 2~3, 호출 3~6). 실습 리드 프롬프트에 이 규칙을 우리 규모로 바꿔 넣어 두었다.</aside>
+</section>
+
+<!-- 19. 휴식 -->
+<section class="slide section">
+  <div class="big" style="font-size:90px">휴식 10분</div>
+  <h2>다음: 워커를 동시에 돌리고 결과 합치기</h2>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="10"></aside>
+</section>
+
+<!-- 20. 구간 ③ -->
+<section class="slide section">
+  <div class="big">③</div>
+  <h2>병렬과 합치기</h2>
+  <p>빠르게, 그러나 요청 한도와 비용 안에서</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1"></aside>
+</section>
+
+<!-- 21. 병렬 코드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 병렬과 합치기</span></div>
+  <h2>한 응답 속 여러 tool_use → 동시에 실행</h2>
+  <div class="body">
+    <div class="cols">
+      <pre class="code sm">aclient = anthropic.AsyncAnthropic()
+
+async def run_tools(blocks, impl):
+    calls = [b for b in blocks if b.type == 'tool_use']
+    outs = await asyncio.gather(*[           # 동시에
+        acall_tool(impl, b.name, b.input) for b in calls])
+    return [{'type': 'tool_result', 'tool_use_id': b.id, **o}
+            for b, o in zip(calls, outs)]
+
+# 루프 안에서
+results = await run_tools(resp.content, impl)</pre>
+      <div>
+        <ul class="small">
+          <li>리드가 delegate 를 <b>한 응답에 3번</b> 부르면 워커 3개가 동시에 돈다</li>
+          <li>리드 프롬프트에 "독립적인 조사는 <b>한 번에</b> 여러 개 맡겨라"</li>
+          <li>워커 안에서도 검색 여러 개를 동시에 할 수 있다</li>
+        </ul>
+        <div class="callout b" style="margin-top:10px">리서치 시스템에서는 리드가 하위 에이전트 3~5개를 동시에, 하위 에이전트가 도구 3개 이상을 동시에 쓰게 바꾸자 복잡한 질의의 조사 시간이 최대 90% 줄었다.</div>
+        <p class="ref">출처: Anthropic Engineering (2025.6)</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">Colab/Jupyter는 이미 이벤트 루프가 돌고 있으므로 셀에서 바로 await를 쓴다(asyncio.run을 쓰면 오류). 스크립트로 옮길 때는 asyncio.run(main())으로.</aside>
+</section>
+
+<!-- 22. 동시성 제한 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 병렬과 합치기</span></div>
+  <h2>무작정 동시에? 요청 한도를 지킨다</h2>
+  <div class="body">
+    <div class="cols">
+      <pre class="code sm">LIMIT = asyncio.Semaphore(3)        # 동시에 최대 3개
+
+async def ask(**kw):
+    async with LIMIT:
+        return await aclient.messages.create(**kw)
+
+aclient = anthropic.AsyncAnthropic(max_retries=4)
+# 429(요청 과다) · 529(과부하)는 SDK가
+# 점점 길게 기다리며 자동 재시도한다</pre>
+      <div class="tiles" style="grid-template-columns:1fr;gap:10px">
+        <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-gauge"/></svg></span><div><div class="h">요청 한도</div><div class="d">계정 등급마다 분당 요청 수 · 토큰 수 상한이 있다</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-coins"/></svg></span><div><div class="h">비용 상한</div><div class="d">동시 실행은 <b>시간</b>을 줄일 뿐 <b>비용</b>은 그대로다</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div><div class="h">기록</div><div class="d">어느 워커의 호출인지 이름표를 붙여 기록</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">대학원생이 실험을 대량으로 돌릴 때 가장 자주 부딪히는 문제. 실험용으로는 Batch API(비동기 대량 처리, 할인)도 선택지라는 것만 언급(5회 비용에서 다시).</aside>
+</section>
+
+<!-- 23. 직접 해 보기 3 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 병렬과 합치기 · 직접 해 보기 3</span></div>
+  <h2><svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> 동시 실행 수를 바꾸면</h2>
+  <div class="demo">
+    <div class="plot"><svg id="schedSvg" viewBox="0 0 680 330" aria-label="워커 실행 일정표"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>동시 실행 상한 <output id="semO">3</output></label><input type="range" id="semR" min="1" max="6" value="3"></div>
+      <div class="meter"><div class="lbl">전체 걸리는 시간</div><div class="val" id="schedT">0초</div><div class="track"><i id="schedBar"></i></div></div>
+      <div class="meter"><div class="lbl">비용 (워커 6개)</div><div class="val o" id="schedC" style="font-size:28px">언제나 같다</div></div>
+      <div class="callout b" id="schedNote"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회 · 워커별 소요 시간은 예시값 (14 · 9 · 22 · 11 · 17 · 8초)</span><span class="no"></span></div>
+  <aside class="notes" data-min="6">관찰: 상한 1 → 81초(합), 상한 6 → 22초(가장 느린 워커). 상한 3 근처에서 이미 대부분의 이득을 본다. 가장 느린 워커가 전체를 붙잡는다(동기식 실행의 병목) — Anthropic도 리드가 하위 에이전트 묶음이 다 끝날 때까지 기다리는 구조가 병목이라고 밝혔다.</aside>
+</section>
+
+<!-- 24. 결과 합치기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 병렬과 합치기</span></div>
+  <h2>합치기 쉽게 보고받는다</h2>
+  <div class="body">
+    <div class="cols even">
+      <div>
+        <p class="fileh">워커 출력 형식 (브리프에 넣는다)</p>
+        <pre class="code sm" data-hl="off">## 찾은 것
+- 주장 한 줄 [P05]
+- 주장 한 줄 [P02, P09]
+## 확신이 낮은 것
+- … (이유)
+## 찾지 못한 것
+- …</pre>
+      </div>
+      <div class="tiles" style="grid-template-columns:1fr;gap:10px">
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div><div class="h">출처 id를 끝까지</div><div class="d">리드가 종합할 때도 [P05]를 유지 → 나중에 검증 가능</div></div></div>
+        <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h">모르는 것도 보고</div><div class="d">"찾지 못함"이 빠지면 리드는 빈칸을 상상으로 메운다</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-merge"/></svg></span><div><div class="h">충돌은 드러낸다</div><div class="d">워커끼리 다르면 리드가 고르지 말고 표시하게 한다</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">Anthropic 리서치 시스템은 종합 뒤에 출처를 맞추는 별도 인용 에이전트를 두었다. 우리는 처음부터 id를 들고 다니게 해서 같은 효과를 싸게 얻는다. 5회 평가에서 "인용 정확도"를 자동으로 채점할 수 있는 것도 이 덕분.</aside>
+</section>
+
+<!-- 25. 흔한 버그 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 병렬과 합치기</span></div>
+  <h2>처음 만들 때 거의 반드시 만나는 다섯 가지</h2>
+  <div class="body">
+    <table>
+      <tr><th style="width:300px">증상</th><th>원인</th><th style="width:360px">고치는 곳</th></tr>
+      <tr><td>리드가 직접 다 조사한다</td><td>리드에게도 검색 도구를 줬다</td><td>리드 도구는 delegate 만</td></tr>
+      <tr><td>워커가 또 워커를 부른다</td><td>워커에게 delegate 를 줬다</td><td>워커 도구 목록 확인</td></tr>
+      <tr><td>워커 둘이 같은 일을 한다</td><td>경계가 없는 브리프</td><td>delegate 스키마의 boundaries</td></tr>
+      <tr><td>리드 컨텍스트가 터진다</td><td>워커가 원문을 통째로 보고</td><td>출력 형식 · 길이 제한</td></tr>
+      <tr><td>tool_result 오류 400</td><td>tool_use 에 대응하는 결과 누락 · id 불일치</td><td>run_tools 에서 모든 블록에 결과</td></tr>
+    </table>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">실습 중 이 표를 띄워 두면 질문의 절반이 해결된다. 마지막 줄은 API 형식 오류: 모델이 요청한 tool_use 모두에 tool_result를 돌려줘야 한다.</aside>
+</section>
+
+<!-- 26. 휴식 -->
+<section class="slide section">
+  <div class="big" style="font-size:90px">휴식 10분</div>
+  <h2>다음: 실습 — 루프와 리드 + 워커</h2>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="10"></aside>
+</section>
+
+<!-- 27. 구간 ④ -->
+<section class="slide section lab">
+  <div class="big">④</div>
+  <h2>실습</h2>
+  <p>실습 2 · 에이전트 루프 → 실습 3 · 리드 + 워커 → 단일 에이전트와 비교</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1"></aside>
+</section>
+
+<!-- 28. 실습 2 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-flask"/></svg> 실습 2 · 22분</span></div>
+  <h2>에이전트 루프 직접 짜기</h2>
+  <div class="body">
+    <div class="cols">
+      <ol class="steps">
+        <li><div>가상 문헌 12편과 도구 2개(search · read) 불러오기</div></li>
+        <li><div><code class="i">run_agent</code> · <code class="i">call_tool</code> 완성하고 실행</div></li>
+        <li><div>대화 기록(messages)을 출력해 루프를 눈으로 따라가기</div></li>
+        <li><div><b>도구 설명을 일부러 나쁘게</b> 바꿔 행동이 어떻게 변하는지 보기<small>예: read_paper 설명을 "논문 관련 도구"로</small></div></li>
+      </ol>
+      <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">
+        <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/multi-agent/labs/lab02_agent_loop.ipynb" target="_blank" rel="noopener">Colab에서 실습 2 열기</a>
+        <div class="box think" style="margin:0"><p class="box-title">확인 질문</p><p class="small" style="margin:0">모델 호출은 몇 번이었나? 마지막 호출의 입력 토큰은 첫 호출의 몇 배인가?</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="22">4번이 핵심 체험. 나쁜 설명이면 모델이 read_paper를 안 쓰고 검색 결과의 제목만 보고 추측해 답하는 경우가 많다 → '도구 설명 = 프롬프트'를 몸으로 느낀다. 결과는 실행마다 다를 수 있음을 알려 준다.</aside>
+</section>
+
+<!-- 29. 실습 3 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-flask"/></svg> 실습 3 · 25분</span></div>
+  <h2>리드 + 워커 시스템</h2>
+  <div class="body">
+    <div class="cols">
+      <ol class="steps">
+        <li><div>워커 = 실습 2의 루프 (비동기 판)</div></li>
+        <li><div>리드 = delegate 도구 하나만 가진 루프</div></li>
+        <li><div>질문: <i>"예지보전 방법을 계열별로 비교하는 표, 모든 주장에 논문 id"</i></div></li>
+        <li><div>호출 기록에서 <b>누가 · 언제 · 몇 토큰</b>을 썼는지 표로 보기</div></li>
+        <li><div>보고서의 [P..] 인용이 실제 초록과 맞는지 <b>코드로 검사</b></div></li>
+      </ol>
+      <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">
+        <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/multi-agent/labs/lab03_lead_workers.ipynb" target="_blank" rel="noopener">Colab에서 실습 3 열기</a>
+        <div class="callout b">예상 비용: Sonnet 리드 + Haiku 워커로 한 번 실행에 수 센트~십수 센트</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="25">5번의 인용 검사기는 간단한 규칙(인용된 id가 존재하는가, 그 워커가 실제로 읽은 논문인가)이다. 5회 평가로 이어지는 씨앗. 잘 안 되는 학생에게는 25번 장 버그 표를 보게 한다.</aside>
+</section>
+
+<!-- 30. 비교 과제 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-scale"/></svg> 과제</span></div>
+  <h2>공정한 비교를 해 보자</h2>
+  <div class="body">
+    <div class="grid g2">
+      <div class="card"><div class="k">비교 대상</div><div class="d">같은 도구(search · read)를 가진 <b>에이전트 하나</b> vs <b>리드 + 워커</b></div></div>
+      <div class="card"><div class="k">기록할 것</div><div class="d">총 토큰 · 비용 · 시간 · 인용 검사 통과율 · 내 평가</div></div>
+    </div>
+    <div class="box key" style="margin-top:16px"><p class="box-title">다음 시간까지</p><p class="small" style="margin:0">미니 프로젝트 주제로 리드 + 워커를 한 번 돌려 오기. 실패한 실행 기록 하나를 골라 <b>어느 단계에서 왜</b> 틀렸는지 한 문단으로 적어 오기 (1회 MAST 분류 참고).</p></div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">12편짜리 작은 문헌에서는 단일 에이전트가 더 싸고 비슷하게 잘하는 경우가 흔하다 — 그게 정상이고 1회의 판단 기준이 맞다는 증거. 문헌을 수백 편으로 늘리면 판도가 바뀐다는 것을 말로만 짚어 둔다.</aside>
+</section>
+
+<!-- 31. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 세 줄</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr;gap:14px">
+      <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div><div class="h">에이전트 = tool_use ↔ tool_result 를 끝날 때까지 반복하는 루프</div><div class="d">실행 · 권한 · 기록 · 상한은 언제나 우리 코드의 몫</div></div></div>
+      <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-split"/></svg></span><div><div class="h">서브에이전트 = 새 컨텍스트에서 도는 루프를 도구로 감싼 것</div><div class="d">격리 덕분에 리드 창은 깨끗하지만, 워커는 브리프에 쓴 것만 안다</div></div></div>
+      <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-merge"/></svg></span><div><div class="h">병렬은 시간을, 형식은 품질을 지킨다</div><div class="d">동시 실행 상한 · 출처 id · "찾지 못한 것" 보고</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3"></aside>
+</section>
+
+<!-- 32. 확인 문제 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 (1/2)</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:16px;align-items:start">
+      <div class="q" data-answer="b" data-explain="모델은 도구 사용을 요청(tool_use)할 뿐이고, 실행과 결과 반환(tool_result)은 우리 코드가 합니다.">
+        <p class="q-title"><b>Q1.</b> 도구를 실제로 실행하는 것은?</p>
+        <div class="opts"><button data-v="a">모델이 서버에서 직접</button><button data-v="b">tool_use 를 받은 우리 코드</button><button data-v="c">API가 자동으로</button><button data-v="d">tool_result 블록</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="c" data-explain="API는 상태를 기억하지 않으므로 매번 전체 대화 기록을 다시 보냅니다. 그래서 반복할수록 입력 토큰이 늘어납니다.">
+        <p class="q-title"><b>Q2.</b> 루프를 돌수록 입력 토큰이 늘어나는 이유는?</p>
+        <div class="opts"><button data-v="a">모델이 점점 길게 생각해서</button><button data-v="b">도구 설명이 매번 길어져서</button><button data-v="c">매 호출마다 지금까지의 대화 전체를 보내서</button><button data-v="d">tool_result 가 압축되지 않아서</button></div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2"></aside>
+</section>
+
+<!-- 33. 확인 문제 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 (2/2)</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:16px;align-items:start">
+      <div class="q" data-answer="a" data-explain="워커는 새 컨텍스트에서 시작하므로 리드의 대화를 모릅니다. 필요한 맥락·형식·경계를 브리프에 모두 써 줘야 합니다.">
+        <p class="q-title"><b>Q3.</b> 위임 브리프를 자세히 써야 하는 가장 큰 이유는?</p>
+        <div class="opts"><button data-v="a">워커는 리드의 대화 기록을 보지 못한다</button><button data-v="b">긴 프롬프트가 언제나 성능이 좋다</button><button data-v="c">API가 짧은 입력을 거부한다</button><button data-v="d">워커 모델이 더 작기 때문이다</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="d" data-explain="동시 실행은 기다리는 시간을 줄이지만, 처리하는 토큰 양은 같으므로 비용은 그대로입니다.">
+        <p class="q-title"><b>Q4.</b> 워커 6개를 순차 실행에서 동시 실행으로 바꾸면?</p>
+        <div class="opts"><button data-v="a">시간과 비용이 모두 준다</button><button data-v="b">비용만 준다</button><button data-v="c">시간은 같고 비용이 준다</button><button data-v="d">시간은 주고 비용은 그대로다</button></div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2"></aside>
+</section>
+
+<!-- 34. 다음 회 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 회 예고</span></div>
+    <div class="big">3회</div>
+    <h2>컨텍스트 · 상태 · 검토 루프</h2>
+    <p>무엇을 넘기고 무엇을 감출지, 작성–검토 루프를 언제 멈출지, 그리고 MCP와 프레임워크로 옮기기.</p>
+    <p style="margin-top:16px;display:flex;gap:12px"><a class="btn ghost" href="../s01/">← 1회</a><a class="btn" href="../s03/">3회로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:200px;height:200px;font-size:120px;border-radius:46px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 2회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2"></aside>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">2회 · 처음부터 만들기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → · N 노트 · T 시계 · O 목록 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="../../assets/js/notes.js"></script>
+<script src="demo.js"></script>
+</body>
+</html>

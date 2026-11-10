@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ma">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4회 · 코딩 에이전트 여럿 운용하기 | 멀티 에이전트 시스템 구축</title>
+<meta name="description" content="멀티 에이전트 시스템 구축 4회: Claude Code로 연구실 저장소에 규칙 파일, 서브에이전트, git worktree 병렬 작업, 권한과 훅, 헤드리스 자동화를 갖춘 에이전트 개발 환경 만들기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<link rel="stylesheet" href="../../assets/css/ma.css">
+<style>
+  .stack { display: grid; gap: 6px; }
+  .stack div { display: flex; align-items: center; gap: 14px; border-radius: 10px; padding: 7px 16px; font-size: 18px; background: var(--surface); border: 1px solid var(--line); }
+  .stack div b { width: 220px; flex: none; }
+  .stack div span { color: var(--muted); font-size: 16px; }
+  .stack div.hl { background: var(--accent-soft); border-color: var(--accent); }
+  .tree { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; line-height: 1.55; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; white-space: pre; }
+  .tree .c { color: var(--muted); }
+  .opt-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opt-row label { font-size: 14px; display: inline-flex; gap: 4px; align-items: center; padding: 3px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: pointer; }
+  .opt-row input { accent-color: var(--accent); }
+  #agentMd { font-size: 13.5px; line-height: 1.5; height: 100%; margin: 0; overflow: auto; }
+  .warnlist div { font-size: 14.5px; line-height: 1.45; border-radius: 8px; padding: 6px 10px; background: var(--bad-soft); margin-bottom: 6px; }
+  .warnlist div.ok { background: var(--ok-soft); }
+</style>
+</head>
+<body>
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">멀티 에이전트 시스템 구축 · 4회</p>
+    <h1>코딩 에이전트<br>여럿 운용하기</h1>
+    <p class="lead" style="font-size:25px">연구실 저장소를 '에이전트가 일하기 좋은 곳'으로</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>고급</span><span>180분</span><span>직접 해 보기 2개</span><span>실습 3</span></div>
+  </div>
+  <svg viewBox="0 0 500 420" style="width:500px;flex:none" aria-hidden="true">
+    <g stroke="var(--muted)" stroke-width="5" fill="none" stroke-linecap="round">
+      <path d="M60 210 H440"/>
+      <path d="M140 210 C 170 210, 180 110, 230 110 H 330 C 380 110, 390 210, 420 210"/>
+      <path d="M180 210 C 210 210, 220 310, 270 310 H 340 C 380 310, 390 210, 410 210"/>
+    </g>
+    <g><circle cx="60" cy="210" r="16" class="f-acc"/><circle cx="440" cy="210" r="18" class="f-acc"/><circle cx="270" cy="110" r="14" class="f-acc2"/><circle cx="300" cy="310" r="14" class="f-acc2"/></g>
+    <g class="t-sub" style="font-size:15px"><text x="250" y="88" text-anchor="middle">worktree-feature-peak</text><text x="300" y="345" text-anchor="middle">worktree-fix-threshold</text><text x="60" y="250" text-anchor="middle">main</text><text x="440" y="250" text-anchor="middle">merge</text></g>
+    <g style="color:var(--accent-2)"><use href="#i-bot" x="254" y="94" width="32" height="32"/><use href="#i-bot" x="284" y="294" width="32" height="32"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+  <aside class="notes" data-min="2">오늘은 로컬 터미널을 쓴다. 준비물(git, Node.js, Python, Claude Code 로그인) 확인부터. 준비가 안 된 학생은 옆 사람과 짝을 지어 진행하게 한다. 오늘 다루는 Claude Code 기능 이름·옵션은 2026년 11월 공식 문서 기준이며, 버전에 따라 바뀔 수 있음을 미리 말한다.</aside>
+</section>
+
+<!-- 2. 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span><span class="lv l3">고급</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">규칙 파일</div><div class="d">저장소의 규칙·명령을 에이전트가 읽게 적는다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-users"/></svg></span><div class="h">서브에이전트 세트</div><div class="d">역할별로 도구·모델·권한을 나눈 에이전트를 정의한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-git"/></svg></span><div class="h">병렬 작업</div><div class="d">worktree로 쓰기 공간을 나눠 여러 에이전트를 동시에 돌린다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">가드레일 · 자동화</div><div class="d">권한·훅으로 막고, 헤드리스 실행으로 반복 작업을 맡긴다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2"></aside>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--accent-soft)"><b>① 환경의 층</b><small>규칙 · 서브에이전트 · 직접 해 보기 1</small></div>
+      <div style="flex:3;background:var(--accent-soft)"><b>② 쓰기 공간 나누기</b><small>worktree · 직접 해 보기 2</small></div>
+      <div style="flex:1.2;background:var(--surface-2)"><b>휴식</b></div>
+      <div style="flex:2.6;background:var(--accent-soft)"><b>③ 가드레일 · 자동화</b><small>권한 · 훅 · 헤드리스</small></div>
+      <div style="flex:1.2;background:var(--surface-2)"><b>휴식</b></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>④ 실습</b><small>연구실 저장소 템플릿으로 6-1 · 6-2 · 6-3</small></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2"></aside>
+</section>
+
+<!-- 4. 구간 ① -->
+<section class="slide section">
+  <div class="big">①</div>
+  <h2>에이전트 개발 환경의 층</h2>
+  <p>모델은 하나여도, 환경은 여러 겹으로 설계한다</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1"></aside>
+</section>
+
+<!-- 5. 층 구조 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 환경의 층</span></div>
+  <h2>코딩 에이전트 환경은 일곱 겹</h2>
+  <div class="body">
+    <div class="cols">
+      <div class="stack">
+        <div><b>모델</b><span>Opus · Sonnet · Haiku — 역할별로 다르게</span></div>
+        <div><b>하네스</b><span>Claude Code — 루프 · 내장 도구 · 압축</span></div>
+        <div class="hl"><b>규칙 파일</b><span>CLAUDE.md · AGENTS.md — 저장소의 상식</span></div>
+        <div class="hl"><b>서브에이전트</b><span>.claude/agents/*.md — 역할 · 도구 · 모델</span></div>
+        <div class="hl"><b>권한 · 훅</b><span>.claude/settings.json — 막기 · 검사</span></div>
+        <div><b>MCP 서버</b><span>.mcp.json — 문헌 DB · 실험 기록 등</span></div>
+        <div><b>CI · 자동화</b><span>claude -p · GitHub Actions — 사람 없이</span></div>
+      </div>
+      <div>
+        <div class="box key"><p class="box-title">모두 저장소 안의 파일이다</p><p class="small" style="margin:0">→ git으로 버전 관리하고, 리뷰하고, 연구실 사람들이 <b>같은 환경</b>을 쓴다. 에이전트 설정도 연구 재현성의 일부다.</p></div>
+        <p class="small muted">색칠한 세 층이 오늘의 중심. 하네스 엔지니어링 특강의 6부품(지침 · 도구 · 컨텍스트 · 권한 · 검증 · 기록)이 각 층에 흩어져 들어 있다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">2·3회는 '시스템을 만드는' 쪽, 오늘은 '만들어진 에이전트를 여럿 부리는' 쪽. 같은 원리(격리·병렬·분리, 권한, 검증)가 파일 설정으로 나타난다는 점을 연결해 준다.</aside>
+</section>
+
+<!-- 6. 규칙 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 환경의 층</span></div>
+  <h2>CLAUDE.md: 새로 온 연구원에게 주는 한 장</h2>
+  <div class="body">
+    <div class="cols">
+      <div>
+        <p class="fileh">CLAUDE.md (실습 템플릿에서 발췌)</p>
+        <pre class="code xs" data-hl="off"># vibelab — 설비 진동 이상탐지 연구 코드
+
+## 명령
+- 테스트: python -m unittest -v
+- 예제 실행: python -m vibelab.run data/sample_vibration.csv
+
+## 규칙
+- 표준 라이브러리만 쓴다 (설치 없이 돌아가야 함)
+- 임계값은 '훈련 구간'으로만 정한다 (시험 구간 누설 금지)
+- data/ 의 원본 파일은 수정 · 삭제하지 않는다
+- 함수를 바꾸면 tests/ 에 테스트를 함께 추가한다
+
+## 결정 기록
+- 2026-11: 이상 점수는 z-점수, 기본 k = 3</pre>
+      </div>
+      <div>
+        <ul class="small">
+          <li>세션이 시작될 때 자동으로 읽힌다 → <b>매번 설명할 필요가 없다</b></li>
+          <li>짧게. 명령 · 규칙 · 결정만. 긴 설명은 문서 링크로</li>
+          <li><b>AGENTS.md</b>: 여러 코딩 에이전트가 함께 읽는 공통 규칙 파일 관례 (AAIF가 관리)</li>
+          <li>3회의 <b>결정 로그</b>가 여기 산다</li>
+        </ul>
+        <div class="callout b">에이전트가 같은 실수를 두 번 하면 → 여기에 한 줄 추가. 하네스는 실패를 관찰하며 <b>쌓아 가는</b> 것.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="6">'시험 구간 누설 금지' 규칙은 템플릿 코드에 일부러 넣어 둔 버그와 연결된다(실습 6-1에서 리뷰어가 찾는지 본다). AGENTS.md는 OpenAI가 시작해 AAIF 출범 때 기증한 관례. 두 파일을 다 둘 때는 한쪽에서 다른 쪽을 가리키게 하면 중복이 없다.</aside>
+</section>
+
+<!-- 7. 서브에이전트 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 환경의 층</span></div>
+  <h2>서브에이전트 = 마크다운 파일 하나</h2>
+  <div class="body">
+    <div class="cols">
+      <div>
+        <p class="fileh">.claude/agents/code-reviewer.md</p>
+        <pre class="code sm" data-hl="off">---
+name: code-reviewer
+description: 코드 변경을 검토할 때 쓴다. 버그, 데이터 누설,
+  테스트 누락을 찾는다. 수정은 하지 않는다.
+tools: Read, Grep, Glob
+model: sonnet
+---
+너는 연구 코드 리뷰어다. CLAUDE.md 의 규칙을 기준으로
+검토하고, 문제마다 파일:줄 · 이유 · 고칠 방법을 적는다.
+확신이 낮은 지적은 따로 표시한다.</pre>
+      </div>
+      <div>
+        <table style="font-size:17px">
+          <tr><th>항목</th><th>뜻</th></tr>
+          <tr><td><code class="i">description</code></td><td>언제 맡길지 — <b>라우터 역할</b></td></tr>
+          <tr><td><code class="i">tools</code></td><td>쓸 수 있는 도구 (생략하면 전부 상속)</td></tr>
+          <tr><td><code class="i">model</code></td><td>haiku · sonnet · opus · inherit</td></tr>
+          <tr><td><code class="i">isolation</code></td><td><code class="i">worktree</code> 면 격리된 사본에서 작업</td></tr>
+          <tr><td>본문</td><td>그 서브에이전트의 시스템 프롬프트</td></tr>
+        </table>
+        <p class="ref">이 밖에 permissionMode · maxTurns · hooks · mcpServers 등. 필수는 name · description (Claude Code 문서, 2026.11)</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">3회 Agent SDK의 AgentDefinition과 같은 구조가 파일로 표현된 것. 위치: 프로젝트(.claude/agents/)는 저장소와 함께 공유, 사용자(~/.claude/agents/)는 개인용. 이름이 겹치면 프로젝트 쪽이 우선. 리뷰어에 Edit을 주지 않는 이유 → 다음 장.</aside>
+</section>
+
+<!-- 8. 연구실 세트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 환경의 층</span></div>
+  <h2>연구실 저장소용 서브에이전트 네 명</h2>
+  <div class="body">
+    <table>
+      <tr><th>이름</th><th>하는 일</th><th>도구</th><th>모델</th><th>설계 이유</th></tr>
+      <tr><td><b>repo-scout</b></td><td>구조 · 흐름 조사 후 요약 보고</td><td>Read · Grep · Glob</td><td>haiku</td><td>읽기만, 많이 읽으니 싸게</td></tr>
+      <tr><td><b>code-reviewer</b></td><td>변경 검토, 누설 · 버그 찾기</td><td>Read · Grep · Glob</td><td>sonnet</td><td>쓰기 금지 = 자기 채점 방지</td></tr>
+      <tr><td><b>experiment-runner</b></td><td>테스트 · 예제 실행, 결과 표</td><td>Read · Bash</td><td>haiku</td><td>Bash는 훅으로 명령 제한</td></tr>
+      <tr><td><b>doc-writer</b></td><td>README · 결정 기록 갱신</td><td>Read · Edit · Write</td><td>sonnet</td><td>문서 폴더만 쓰기 (권한 규칙)</td></tr>
+    </table>
+    <div class="callout b frag" style="margin-top:16px;font-size:20px">1회 원칙이 그대로: <b>읽는 에이전트는 여럿</b>, 코드를 <b>쓰는 것은 메인 세션 하나</b>. 쓰는 서브에이전트가 필요하면 worktree로 쓰기 공간을 나눈다(②).</div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">실습 템플릿에 이 네 파일이 들어 있다. 학생 미니 프로젝트 저장소에는 이 표를 각자 고쳐서 넣게 한다. Cognition 2026 글의 결론(지능은 여럿이 보태고 쓰기는 한 줄기)과 같은 설계.</aside>
+</section>
+
+<!-- 9. 직접 해 보기 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 환경의 층 · 직접 해 보기 1</span></div>
+  <h2><svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> 서브에이전트 정의 만들기</h2>
+  <div class="demo" style="grid-template-columns:1fr 1fr">
+    <div class="side" style="gap:8px">
+      <div class="ctrl"><label for="roleSel">역할</label><select id="roleSel" class="sel" style="width:100%"><option value="scout">저장소 조사 (repo-scout)</option><option value="review">코드 리뷰 (code-reviewer)</option><option value="run">실험 실행 (experiment-runner)</option><option value="refactor">리팩터링 (refactorer)</option></select></div>
+      <div class="ctrl"><label>도구</label><div class="opt-row" id="toolOpts"></div></div>
+      <div class="ctrl"><label for="modelSel">모델</label><select id="modelSel" class="sel" style="width:100%"><option>haiku</option><option>sonnet</option><option>opus</option><option>inherit</option></select></div>
+      <label class="chk" style="font-size:16px"><input type="checkbox" id="isoChk"> <span>isolation: worktree</span></label>
+      <div class="warnlist" id="agentWarn"></div>
+    </div>
+    <div class="plot" style="align-items:stretch;padding:0;background:#1f2430;border:0"><pre class="code" id="agentMd" data-hl="off"></pre></div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · 점검 규칙은 오늘 강의 내용을 정리한 예시</span><span class="no"></span></div>
+  <aside class="notes" data-min="7">역할을 바꿔 가며 기본 설정을 보고, 일부러 리뷰어에 Edit을 켜거나 조사 역할에 opus를 고르면 경고가 뜨는 것을 보여 준다. 리팩터링 역할은 쓰기 도구가 있으니 worktree 격리를 권한다는 경고가 나온다. 오른쪽 결과를 그대로 복사해 .claude/agents/에 넣을 수 있다.</aside>
+</section>
+
+<!-- 10. 구간 ② -->
+<section class="slide section">
+  <div class="big">②</div>
+  <h2>쓰기 공간 나누기</h2>
+  <p>여럿이 동시에 고치려면, 책상부터 따로</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1"></aside>
+</section>
+
+<!-- 11. worktree 개념 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 쓰기 공간 나누기</span></div>
+  <h2>git worktree: 한 저장소, 여러 작업 폴더</h2>
+  <div class="body">
+    <div class="cols">
+      <svg viewBox="0 0 600 300" aria-label="하나의 .git 저장소에 세 작업 폴더가 각자 다른 브랜치로 연결된다">
+        <rect x="220" y="120" width="160" height="70" rx="14" class="f-acc"/><text x="300" y="152" text-anchor="middle" class="t-w" style="font-size:18px">.git</text><text x="300" y="174" text-anchor="middle" class="t-w" style="font-size:13px;font-weight:600">기록 · 브랜치 공유</text>
+        <g stroke="var(--muted)" stroke-width="3"><path d="M220 145 L130 70"/><path d="M380 145 L470 70"/><path d="M300 190 V230"/></g>
+        <g><rect x="20" y="20" width="220" height="60" rx="12" class="f-surface" stroke="var(--line)" stroke-width="2"/><text x="130" y="46" text-anchor="middle" class="t-main" style="font-size:15px">vibelab/</text><text x="130" y="66" text-anchor="middle" class="t-sub">main · 메인 세션</text></g>
+        <g><rect x="360" y="20" width="230" height="60" rx="12" class="f-acc2s"/><text x="475" y="46" text-anchor="middle" class="t-main" style="font-size:15px">.claude/worktrees/feature-peak/</text><text x="475" y="66" text-anchor="middle" class="t-sub">worktree-feature-peak · 에이전트 A</text></g>
+        <g><rect x="170" y="230" width="260" height="60" rx="12" class="f-acc2s"/><text x="300" y="256" text-anchor="middle" class="t-main" style="font-size:15px">.claude/worktrees/fix-threshold/</text><text x="300" y="276" text-anchor="middle" class="t-sub">worktree-fix-threshold · 에이전트 B</text></g>
+      </svg>
+      <div>
+        <ul class="small">
+          <li>폴더마다 <b>다른 브랜치</b>가 체크아웃된다 → 서로의 파일을 덮어쓰지 않는다</li>
+          <li>기록(.git)은 하나라 <b>합치기(merge)</b>가 쉽다</li>
+          <li>복제(clone)보다 가볍고 빠르다</li>
+        </ul>
+        <div class="box warn" style="margin:12px 0 0"><p class="box-title">나뉘지 않는 것</p><p class="small" style="margin:0">데이터베이스 · 포트 · GPU · 외부 파일 등 <b>저장소 밖의 자원</b>은 여전히 공유된다.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">경로 .claude/worktrees/&lt;이름&gt;과 브랜치 이름 worktree-&lt;이름&gt;은 Claude Code의 --worktree 기본값(문서 기준). 연구실에서 흔한 함정: 두 에이전트가 같은 GPU에 동시에 학습을 띄우거나 같은 결과 폴더(/data/results)에 쓰는 것 — worktree로는 안 막힌다.</aside>
+</section>
+
+<!-- 12. 명령 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 쓰기 공간 나누기</span></div>
+  <h2>병렬로 띄우는 세 가지 방법</h2>
+  <div class="body">
+    <div class="grid g3" style="gap:14px">
+      <div class="card"><div class="k">① 터미널 여러 개</div><pre class="term xs" style="margin-top:8px"><span class="p">$</span> claude -w feature-peak
+<span class="p">$</span> claude -w fix-threshold</pre><div class="d small" style="margin-top:8px">사람이 세션마다 지시 · 확인. 가장 투명하다.</div></div>
+      <div class="card"><div class="k">② 서브에이전트 격리</div><pre class="code xs" data-hl="off" style="margin-top:8px">---
+name: refactorer
+tools: Read, Edit, Bash
+isolation: worktree
+---</pre><div class="d small" style="margin-top:8px">메인 세션이 쓰기 작업을 맡기면 사본에서 일하고 브랜치로 돌려준다.</div></div>
+      <div class="card"><div class="k">③ 직접 git 명령</div><pre class="term xs" style="margin-top:8px"><span class="p">$</span> git worktree add ../vl-fft -b fft
+<span class="p">$</span> cd ../vl-fft && claude</pre><div class="d small" style="margin-top:8px">어떤 에이전트 도구에서나 통하는 기본기.</div></div>
+    </div>
+    <div class="callout b frag" style="margin-top:16px">끝나면: 각 브랜치를 <b>사람이 리뷰</b> → main에 merge → <code class="i">git worktree remove</code>. 변경이 없는 서브에이전트 worktree는 자동으로 정리된다.</div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · 옵션 이름은 Claude Code 문서(2026.11) 기준</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">실습 6-2는 ①로 진행(가장 눈에 잘 보임). ②는 시간 남는 학생용 도전 과제. 'isolation: worktree'의 서브에이전트는 기본적으로 기본 브랜치에서 갈라진다는 점(메인 세션의 현재 HEAD가 아닐 수 있음)을 짚는다.</aside>
+</section>
+
+<!-- 13. 직접 해 보기 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 쓰기 공간 나누기 · 직접 해 보기 2</span></div>
+  <h2><svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> 세 에이전트가 동시에 고치면</h2>
+  <div class="demo">
+    <div class="plot"><svg id="wtSvg" viewBox="0 0 680 330" aria-label="에이전트별 수정 파일과 충돌"></svg></div>
+    <div class="side">
+      <label class="chk"><input type="checkbox" id="wtOn"> <span>worktree로 나누기</span></label>
+      <label class="chk"><input type="checkbox" id="wtSplit"> <span>맡길 때 <b>파일 범위</b>를 나눠 준다</span></label>
+      <button class="btn" id="wtRun" type="button"><svg class="ic"><use href="#i-play"/></svg> 동시에 작업 시작</button>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">작업 중 덮어쓰기</div><div class="val o" id="wtLive" style="font-size:30px">–</div></div>
+        <div class="meter"><div class="lbl">합칠 때 충돌</div><div class="val" id="wtMerge" style="font-size:30px">–</div></div>
+      </div>
+      <div class="callout b" id="wtNote" style="font-size:15px">설정을 고르고 시작해 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · 개념 설명용 모형</span><span class="no"></span></div>
+  <aside class="notes" data-min="7">네 경우를 차례로: (1) 둘 다 끔 → 같은 폴더에서 detect.py를 둘이 고쳐 작업 중 덮어쓰기(가장 나쁨, 에러도 안 남). (2) worktree만 → 작업 중엔 안전, 합칠 때 같은 파일에서 충돌. (3) 범위 나누기만 → 겹치는 파일은 없지만 공유 파일(CLAUDE.md, tests) 동시 수정 위험은 남음. (4) 둘 다 → 충돌 최소. 결론: worktree는 '작업 중' 문제를, 범위 나누기는 '합칠 때' 문제를 줄인다.</aside>
+</section>
+
+<!-- 14. 운용 방식 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 쓰기 공간 나누기</span></div>
+  <h2>여럿을 부리는 네 가지 방식</h2>
+  <div class="body">
+    <table>
+      <tr><th style="width:200px">방식</th><th>구조</th><th style="width:250px">맞는 일</th><th style="width:230px">주의</th></tr>
+      <tr><td><b>서브에이전트</b></td><td>메인 세션이 맡기고 보고를 받는다 (중앙형)</td><td>조사 · 리뷰 · 테스트 실행</td><td>보고만 돌아온다</td></tr>
+      <tr><td><b>세션 여러 개 + worktree</b></td><td>사람이 오케스트레이터</td><td>독립된 기능 2~4개 동시 개발</td><td>사람의 리뷰가 병목</td></tr>
+      <tr><td><b>agent teams</b> <span class="lv l3">실험</span></td><td>리더 + 팀원 세션, 공유 작업 목록 · 서로 메시지</td><td>큰 작업을 팀처럼 나눠 협업</td><td>토큰 비용 큼, 기본 꺼짐</td></tr>
+      <tr><td><b>헤드리스 일괄</b></td><td>스크립트가 <code class="i">claude -p</code>를 여러 번</td><td>파일 수십 개에 같은 작업</td><td>권한을 좁게, 결과 검증 필수</td></tr>
+    </table>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · Claude Code 문서(2026.11) 기준 정리</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">1회의 토폴로지와 대응: 서브에이전트=중앙형, 세션 여러 개=사람이 리드인 중앙형, agent teams=피어 · 공유 칠판형, 헤드리스 일괄=병렬화 워크플로. 이 밖에 여러 세션을 한 화면에서 보는 기능, 대규모 이전 작업용 일괄 명령 등도 있으나 오늘은 생략.</aside>
+</section>
+
+<!-- 15. agent teams -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 쓰기 공간 나누기</span></div>
+  <h2>agent teams: 서로 말하는 팀 (실험 기능)</h2>
+  <div class="body">
+    <div class="cols">
+      <div>
+        <ul class="small">
+          <li>리더 세션 하나 + 팀원 세션 여럿, 각자 <b>독립된 컨텍스트</b></li>
+          <li><b>공유 작업 목록</b>에서 일을 집어 가고, 팀원끼리 <b>직접 메시지</b></li>
+          <li>서브에이전트는 위임(보고만), 팀은 협업(서로 대화)</li>
+        </ul>
+        <p class="fileh">켜는 법 — 설정 파일 또는 환경 변수</p>
+        <pre class="code sm" data-hl="off">// ~/.claude/settings.json
+{ "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" } }</pre>
+      </div>
+      <div class="box warn"><p class="box-title">언제 아직 쓰지 않나</p><ul class="small" style="margin:0"><li>비용 예측이 중요한 일 — 세션 수만큼 토큰이 든다</li><li>같은 파일을 여럿이 고치는 일 — 1회의 '쓰기는 하나' 원칙</li><li>결과를 사람이 다 검토할 시간이 없을 때</li></ul><p class="small" style="margin:10px 0 0">연구 주제로는 매력적이다: 피어형 협업이 언제 중앙형보다 나은가?</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · 실험 기능이라 이름·동작이 바뀔 수 있음 (2026.11 기준)</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">2026년 2월 연구 미리보기로 나온 기능. 실습에서는 다루지 않는다(비용). 관심 있는 학생에게는 미니 프로젝트로 '같은 과제를 서브에이전트 vs agent teams로 풀고 비용·품질 비교'를 권한다 — 1회 Q4의 공정한 비교 원칙을 지켜서.</aside>
+</section>
+
+<!-- 16. 휴식 -->
+<section class="slide section">
+  <div class="big" style="font-size:90px">휴식 10분</div>
+  <h2>다음: 가드레일과 자동화</h2>
+  <p>쉬는 동안 실습 템플릿을 받아 두세요 (다음 장의 명령)</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="10"></aside>
+</section>
+
+<!-- 17. 구간 ③ -->
+<section class="slide section">
+  <div class="big">③</div>
+  <h2>가드레일과 자동화</h2>
+  <p>여럿이 돌수록, 사람 대신 규칙이 지켜야 한다</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1"></aside>
+</section>
+
+<!-- 18. 권한 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 가드레일과 자동화</span></div>
+  <h2>권한 규칙: 허용 · 질문 · 거부</h2>
+  <div class="body">
+    <div class="cols">
+      <div>
+        <p class="fileh">.claude/settings.json (발췌)</p>
+        <pre class="code sm" data-hl="off">{
+  "permissions": {
+    "allow": ["Bash(python -m unittest *)",
+              "Bash(python -m vibelab.run *)",
+              "Bash(git status)", "Bash(git diff *)"],
+    "ask":   ["Bash(git push *)"],
+    "deny":  ["Read(./.env)", "Edit(./data/**)",
+              "Bash(rm *)", "Bash(curl *)"]
+  }
+}</pre>
+      </div>
+      <div>
+        <ul class="small">
+          <li>형식: <code class="i">도구(패턴)</code>, <code class="i">*</code>는 와일드카드</li>
+          <li>우선순위: <b>거부 &gt; 질문 &gt; 허용</b> — 넓은 거부를 좁은 허용으로 뚫을 수 없다</li>
+          <li><code class="i">Bash</code> 통째 허용 대신 <b>명령 단위로</b></li>
+          <li>개인 설정은 <code class="i">settings.local.json</code> (git에 안 올림)</li>
+        </ul>
+        <div class="callout">비밀(키 · 개인정보 데이터)은 <b>읽기부터</b> 막는다. 에이전트가 읽은 것은 로그와 모델 입력으로 흘러간다.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · 규칙 문법은 Claude Code 문서(2026.11) 기준</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">연구실 특유의 보호 대상: 원본 실험 데이터(수정·삭제 금지), 개인정보가 담긴 데이터(읽기 금지), 공용 서버 계정 정보. 문서 예시처럼 Edit 규칙이 파일 수정 도구 전체에 적용된다는 점도 짚는다.</aside>
+</section>
+
+<!-- 19. 훅 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 가드레일과 자동화</span></div>
+  <h2>훅: 도구를 쓰기 직전 · 직후에 내 코드를</h2>
+  <div class="body">
+    <div class="cols">
+      <div>
+        <p class="fileh">.claude/hooks/guard_bash.py — PreToolUse(Bash)</p>
+        <pre class="code xs">import json, re, sys
+cmd = json.load(sys.stdin)['tool_input'].get('command', '')
+BLOCK = [r'\brm\s+-rf?\b', r'data/raw', r'git\s+push\s+.*--force']
+for pat in BLOCK:
+    if re.search(pat, cmd):
+        print(f'차단: {pat} 에 걸림. 원본 데이터는 건드리지 말고 '
+              '결과는 results/ 에 쓰세요.', file=sys.stderr)
+        sys.exit(2)          # 2 = 막고, 이유를 에이전트에게 전달
+sys.exit(0)</pre>
+        <pre class="code xs" data-hl="off" style="margin-top:8px">"hooks": { "PreToolUse": [{ "matcher": "Bash",
+   "hooks": [{ "type": "command",
+     "command": "python3 .claude/hooks/guard_bash.py" }] }] }</pre>
+      </div>
+      <div>
+        <ul class="small">
+          <li>입력: 표준 입력으로 JSON (도구 이름 · 입력)</li>
+          <li><b>종료 코드 2</b> → 실행을 막고 stderr를 에이전트에게 보여 준다 → 에이전트가 방법을 바꾼다</li>
+          <li><b>PostToolUse</b>: 파일을 고친 뒤 테스트 자동 실행 → 결과를 다시 알려 준다</li>
+          <li>훅은 <b>서브에이전트에도</b> 똑같이 걸린다 — 여럿이 돌 때의 공통 안전망</li>
+        </ul>
+        <div class="callout b">규칙 파일(CLAUDE.md)은 <b>부탁</b>, 권한과 훅은 <b>강제</b>다.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · 훅 형식은 Claude Code 문서(2026.11) 기준</span><span class="no"></span></div>
+  <aside class="notes" data-min="6">하네스 특강의 '가이드(피드포워드)와 센서(피드백)'에 대응: 규칙 파일·권한 = 가이드, PostToolUse 테스트 = 센서. 정규식 차단은 우회될 수 있는 얕은 방어라는 점도 말해 둔다(5회 안전 — 다층 방어와 샌드박스).</aside>
+</section>
+
+<!-- 20. 헤드리스 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 가드레일과 자동화</span></div>
+  <h2>사람 없이 돌리기: <code style="font-size:.85em">claude -p</code></h2>
+  <div class="body">
+    <div class="cols">
+      <div>
+        <p class="fileh">scripts/review_diff.sh — 커밋 전 자동 리뷰</p>
+        <pre class="term sm">git diff main...HEAD &gt; /tmp/diff.txt
+claude -p "$(cat .claude/review_prompt.md) $(cat /tmp/diff.txt)" \
+  --allowedTools "Read,Grep,Glob" \
+  --max-turns 8 \
+  --output-format json \
+  | jq -r '.result' &gt; review.md</pre>
+      </div>
+      <div>
+        <ul class="small">
+          <li><code class="i">-p</code>: 질문 하나 처리하고 끝 (대화 없음)</li>
+          <li><code class="i">--allowedTools</code>: 묻지 않고 쓸 도구 — <b>읽기 전용</b>으로</li>
+          <li><code class="i">--output-format json</code>: 결과 · 비용 · 세션 id를 기계가 읽게</li>
+          <li><code class="i">--max-turns</code>, 비용 상한 옵션으로 폭주 방지</li>
+        </ul>
+        <div class="callout b">반복문으로 여러 번 부르면 <b>병렬화 워크플로</b>, GitHub Actions에 넣으면 PR마다 도는 <b>리뷰어 에이전트</b>.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · 옵션은 Claude Code 문서(2026.11) 기준</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">2026년 6월부터 구독 요금제에서 Agent SDK와 claude -p 사용량은 대화형 한도와 분리된 별도 크레딧에서 차감된다는 점(요금제 이용자에게 해당). 연구실 자동화는 API 키 + 비용 상한을 권한다.</aside>
+</section>
+
+<!-- 21. 저장소 배치 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 가드레일과 자동화</span></div>
+  <h2>실습 템플릿 저장소의 모양</h2>
+  <div class="body">
+    <div class="cols">
+      <div class="tree">vibelab/
+├─ CLAUDE.md            <span class="c"># 명령 · 규칙 · 결정</span>
+├─ .mcp.json            <span class="c"># 가상 문헌 MCP 서버 연결</span>
+├─ .claude/
+│  ├─ settings.json     <span class="c"># 권한 · 훅</span>
+│  ├─ agents/           <span class="c"># 서브에이전트 4명</span>
+│  ├─ hooks/            <span class="c"># guard_bash.py · run_tests.py</span>
+│  └─ review_prompt.md
+├─ src/vibelab/         <span class="c"># 진동 이상탐지 코드</span>
+├─ tests/
+├─ data/                <span class="c"># 원본 (수정 금지)</span>
+├─ tools/papers_server.py
+└─ scripts/review_diff.sh</div>
+      <div>
+        <p class="fileh">받기</p>
+        <pre class="term sm"><span class="p">$</span> git clone https://github.com/Daeil-Noh/Lectures
+<span class="p">$</span> cp -r Lectures/multi-agent/labs/lab-repo-template ~/vibelab
+<span class="p">$</span> cd ~/vibelab && git init && git add -A \
+    && git commit -m "start"
+<span class="p">$</span> python -m unittest     <span class="c"># 테스트가 도는지</span>
+<span class="p">$</span> claude</pre>
+        <p class="small muted" style="margin-top:10px">코드에는 리뷰어가 찾을 만한 <b>문제가 일부러</b> 들어 있다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">표준 라이브러리만 쓰므로 설치가 필요 없다. 숨겨 둔 문제: (1) 임계값을 전체 구간으로 계산(시험 구간 누설), (2) 이동 창 함수가 마지막 창을 빠뜨림. 학생에게는 '문제가 있다'까지만 말한다.</aside>
+</section>
+
+<!-- 22. 운영 수칙 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 가드레일과 자동화</span></div>
+  <h2>연구실 운영 수칙 다섯 줄</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr;gap:12px">
+      <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div><div class="h">merge와 실험 결론은 사람이 한다</div><div class="d">에이전트는 브랜치와 보고까지</div></div></div>
+      <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-lock"/></svg></span><div><div class="h">원본 데이터 · 비밀은 읽기부터 막는다</div><div class="d">권한 거부 + 훅, 개인정보 데이터는 저장소 밖에</div></div></div>
+      <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-git"/></svg></span><div><div class="h">에이전트 설정도 커밋한다</div><div class="d">규칙 · 서브에이전트 · 훅의 변경 이력 = 실험 조건의 일부</div></div></div>
+      <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-coins"/></svg></span><div><div class="h">사람마다 키, 키마다 한도</div><div class="d">누가 얼마나 썼는지 알 수 있게</div></div></div>
+      <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-file"/></svg></span><div><div class="h">AI가 만든 코드 · 글은 표시한다</div><div class="d">커밋 메시지 · 논문의 AI 사용 고지</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">마지막 줄: 학회·학술지마다 AI 사용 고지 규정이 다르니 투고처 규정을 따르라고만 안내.</aside>
+</section>
+
+<!-- 23. 휴식 -->
+<section class="slide section">
+  <div class="big" style="font-size:90px">휴식 10분</div>
+  <h2>다음: 실습 — 연구실 저장소 꾸리기</h2>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="10"></aside>
+</section>
+
+<!-- 24. 구간 ④ -->
+<section class="slide section lab">
+  <div class="big">④</div>
+  <h2>실습 6: 연구실 저장소 꾸리기</h2>
+  <p>6-1 서브에이전트로 조사·리뷰 → 6-2 worktree 병렬 → 6-3 훅과 헤드리스</p>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="1"></aside>
+</section>
+
+<!-- 25. 준비 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-terminal"/></svg> 실습 준비 · 8분</span></div>
+  <h2>템플릿 받고 설정 훑어보기</h2>
+  <div class="body">
+    <div class="cols">
+      <ol class="steps">
+        <li><div>21번 장의 명령으로 <code class="i">~/vibelab</code> 만들기, 테스트 실행</div></li>
+        <li><div><code class="i">claude</code> 실행 후 <code class="i">/agents</code> 로 서브에이전트 4명 확인</div></li>
+        <li><div><code class="i">/permissions</code> 로 권한 규칙 확인</div></li>
+        <li><div><code class="i">/mcp</code> 로 lab-papers 서버 연결 확인<small>처음 쓸 때 프로젝트 MCP 서버를 승인하라는 질문이 나온다</small></div></li>
+      </ol>
+      <div class="box think"><p class="box-title">확인 질문</p><p class="small" style="margin:0">CLAUDE.md의 규칙 중 권한 · 훅으로 <b>강제되는 것</b>과 <b>부탁에 그치는 것</b>을 하나씩 찾아보자.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · 슬래시 명령 이름은 Claude Code 버전에 따라 다를 수 있음</span><span class="no"></span></div>
+  <aside class="notes" data-min="8">확인 질문 답: 강제 — data/ 수정 금지(Edit 거부 + 훅), 부탁 — "함수를 바꾸면 테스트 추가", "표준 라이브러리만". 부탁을 강제로 바꾸는 방법(예: PostToolUse로 테스트 자동 실행)을 생각해 보게 한다.</aside>
+</section>
+
+<!-- 26. 6-1 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-flask"/></svg> 실습 6-1 · 20분</span></div>
+  <h2>서브에이전트로 조사하고 리뷰받기</h2>
+  <div class="body">
+    <div class="cols">
+      <div>
+        <div class="prompt"><div class="prompt-h">메인 세션에 입력<button class="copy" type="button">복사</button></div><pre>repo-scout 에이전트로 이 저장소의 구조와 데이터 흐름을 조사해서 10줄로 보고해 줘. 그다음 code-reviewer 에이전트로 src/vibelab/ 전체를 CLAUDE.md 규칙 기준으로 검토해 줘. 둘 다 끝나면 발견한 문제를 우선순위로 정리하고, 아직 고치지는 마.</pre></div>
+        <p class="small muted" style="margin-top:10px">시간이 남으면: "lab-papers 도구로 우리 접근(z-점수)과 관련된 문헌을 찾아 근거로 붙여 줘"</p>
+      </div>
+      <div>
+        <ul class="small">
+          <li>화면에서 <b>서브에이전트가 따로 도는 것</b>을 확인</li>
+          <li>리뷰어가 숨겨 둔 문제 두 가지를 찾았나?</li>
+          <li>메인 세션의 컨텍스트에는 무엇이 남았나? (보고만)</li>
+          <li>리뷰어가 파일을 고치려 하면? → 도구가 없어서 못 한다</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="20">누설 문제는 대부분 찾는다(CLAUDE.md에 규칙이 있으므로). 이동 창 버그는 못 찾는 경우가 있다 — 그럴 때 "규칙에 없는 문제는 덜 찾는다"는 관찰로 연결하고, 테스트를 추가하는 것이 더 확실한 센서라는 점을 짚는다.</aside>
+</section>
+
+<!-- 27. 6-2 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-git"/></svg> 실습 6-2 · 20분</span></div>
+  <h2>worktree 두 개로 동시에 고치기</h2>
+  <div class="body">
+    <div class="cols even">
+      <div>
+        <p class="fileh">터미널 A</p>
+        <pre class="term sm"><span class="p">$</span> claude -w fix-threshold
+<span class="c">› 임계값을 훈련 구간으로만 계산하도록 고치고,
+  누설을 잡는 테스트를 추가해. 커밋까지.</span></pre>
+        <p class="fileh" style="margin-top:10px">터미널 B</p>
+        <pre class="term sm"><span class="p">$</span> claude -w feature-peak
+<span class="c">› features.py 에 crest factor(피크/RMS) 특징을
+  추가하고 테스트를 붙여. detect.py 는 건드리지 마.</span></pre>
+      </div>
+      <div>
+        <p class="fileh">끝나면 메인 폴더에서</p>
+        <pre class="term sm"><span class="p">$</span> git log --oneline --all --graph | head
+<span class="p">$</span> git diff main...worktree-fix-threshold
+<span class="p">$</span> git merge worktree-fix-threshold
+<span class="p">$</span> git merge worktree-feature-peak
+<span class="p">$</span> python -m unittest</pre>
+        <div class="callout" style="margin-top:10px">B의 지시에 <b>파일 범위</b>를 준 이유? 지웠을 때 합칠 때 충돌이 나는지 시험해 보자.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="20">merge는 반드시 사람이 diff를 읽고 한다. 충돌이 나면 Claude에게 충돌 해결을 맡겨도 되지만 결과를 테스트로 확인. 빨리 끝난 학생: refactorer 서브에이전트(isolation: worktree)를 만들어 메인 세션에서 맡겨 보기.</aside>
+</section>
+
+<!-- 28. 6-3 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-shield"/></svg> 실습 6-3 · 10분</span></div>
+  <h2>훅이 막는 것 보기, 헤드리스 리뷰 돌리기</h2>
+  <div class="body">
+    <div class="cols even">
+      <div>
+        <div class="prompt"><div class="prompt-h">메인 세션에 입력 (막혀야 정상)<button class="copy" type="button">복사</button></div><pre>data/raw 폴더의 오래된 파일을 rm -rf 로 정리해 줘.</pre></div>
+        <ul class="small" style="margin-top:10px"><li>훅의 차단 메시지를 에이전트가 어떻게 받아들이나?</li><li>권한 거부와 훅 중 무엇이 먼저 걸렸나?</li></ul>
+      </div>
+      <div>
+        <pre class="term sm"><span class="p">$</span> git checkout -b try-review
+<span class="p">$</span> <span class="c"># 아무 함수나 하나 고치고 커밋</span>
+<span class="p">$</span> bash scripts/review_diff.sh
+<span class="p">$</span> cat review.md</pre>
+        <p class="small muted" style="margin-top:8px">jq가 없으면 스크립트 안내대로 python으로 결과를 꺼낸다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="10">rm은 권한 규칙(Bash(rm *) 거부)에서 먼저 막히는 경우가 많다. 훅 동작을 보려면 "data/raw 를 tar로 묶고 원본을 지워 줘"처럼 우회하는 표현을 써 보게 한다 — 정규식 훅이 잡는지, 못 잡는지가 5회 안전의 좋은 도입.</aside>
+</section>
+
+<!-- 29. 과제 -->
+<section class="slide lab">
+  <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-target"/></svg> 과제</span></div>
+  <h2>내 연구 저장소에 들이기</h2>
+  <div class="body">
+    <div class="grid g2">
+      <div class="card"><div class="k">할 것</div><ul class="small" style="margin:6px 0 0"><li>자기 연구 저장소(또는 사본)에 CLAUDE.md · 서브에이전트 2명 이상 · 권한 규칙 · 훅 1개</li><li>실제 작업 하나를 맡겨 보고 실행 기록 남기기</li></ul></div>
+      <div class="card"><div class="k">5회 발표 준비</div><ul class="small" style="margin:6px 0 0"><li>미니 프로젝트: 설계서 v1 + 실행 결과</li><li>실패 사례 1개와 그것을 막으려고 바꾼 설정</li></ul></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">'실패 → 설정 변경'이 하네스 엔지니어링의 핵심 습관. 5회 발표에서 이 부분을 가장 비중 있게 평가한다고 미리 알린다.</aside>
+</section>
+
+<!-- 30. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 세 줄</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr;gap:14px">
+      <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-file"/></svg></span><div><div class="h">에이전트 환경은 저장소 안의 파일이다</div><div class="d">규칙 · 서브에이전트 · 권한 · 훅을 커밋하고 리뷰한다</div></div></div>
+      <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-git"/></svg></span><div><div class="h">읽기는 서브에이전트에, 쓰기는 worktree로 나눠서</div><div class="d">worktree는 작업 중 충돌을, 범위 나누기는 합칠 때 충돌을 줄인다</div></div></div>
+      <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div><div class="h">규칙 파일은 부탁, 권한과 훅은 강제</div><div class="d">여럿이 돌수록 강제하는 장치가 필요하다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="3"></aside>
+</section>
+
+<!-- 31. 확인 문제 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 (1/2)</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:16px;align-items:start">
+      <div class="q" data-answer="b" data-explain="리뷰어가 수정까지 하면 자기가 고친 것을 자기가 평가하게 됩니다. 읽기 도구만 주면 검토와 수정이 분리됩니다.">
+        <p class="q-title"><b>Q1.</b> code-reviewer 에 Edit 도구를 주지 않는 가장 큰 이유는?</p>
+        <div class="opts"><button data-v="a">Edit 도구가 비싸서</button><button data-v="b">검토와 수정을 분리해 자기 채점을 막으려고</button><button data-v="c">Edit 는 서브에이전트에서 쓸 수 없어서</button><button data-v="d">리뷰 속도를 높이려고</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="c" data-explain="worktree는 저장소 파일의 작업 공간만 나눕니다. GPU·데이터베이스·포트 같은 바깥 자원은 여전히 공유됩니다.">
+        <p class="q-title"><b>Q2.</b> worktree로 나눠도 <b>여전히 충돌할 수 있는</b> 것은?</p>
+        <div class="opts"><button data-v="a">같은 파일의 작업 중 덮어쓰기</button><button data-v="b">서로 다른 브랜치의 커밋</button><button data-v="c">같은 GPU · 결과 폴더 같은 저장소 밖 자원</button><button data-v="d">각 폴더의 작업 파일</button></div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2"></aside>
+</section>
+
+<!-- 32. 확인 문제 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 (2/2)</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:16px;align-items:start">
+      <div class="q" data-answer="a" data-explain="PreToolUse 훅이 종료 코드 2로 끝나면 도구 실행이 막히고, stderr 내용이 에이전트에게 전달되어 다른 방법을 찾게 됩니다.">
+        <p class="q-title"><b>Q3.</b> PreToolUse 훅이 종료 코드 2로 끝나면?</p>
+        <div class="opts"><button data-v="a">실행이 막히고 stderr 가 에이전트에게 전달된다</button><button data-v="b">세션 전체가 종료된다</button><button data-v="c">사용자에게 허용 여부를 묻는다</button><button data-v="d">경고만 하고 실행한다</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="d" data-explain="거부 규칙이 허용 규칙보다 우선합니다. 넓은 거부를 좁은 허용으로 예외 처리할 수 없습니다.">
+        <p class="q-title"><b>Q4.</b> deny 에 Bash(git *), allow 에 Bash(git status) 가 있으면 git status 는?</p>
+        <div class="opts"><button data-v="a">허용 — 더 구체적인 규칙이 이긴다</button><button data-v="b">매번 사용자에게 묻는다</button><button data-v="c">파일 안의 순서에 따라 다르다</button><button data-v="d">거부 — 거부가 언제나 우선한다</button></div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2"></aside>
+</section>
+
+<!-- 33. 다음 회 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 회 예고</span></div>
+    <div class="big">5회</div>
+    <h2>평가 · 관측 · 안전 · 비용</h2>
+    <p>돌아가는 시스템을 믿을 수 있게: 추적 기록, 평가 기준표, 프롬프트 인젝션 방어, 비용 줄이기 — 그리고 미니 프로젝트 발표.</p>
+    <p style="margin-top:16px;display:flex;gap:12px"><a class="btn ghost" href="../s03/">← 3회</a><a class="btn" href="../s05/">5회로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:200px;height:200px;font-size:120px;border-radius:46px;background:var(--surface)"><svg class="ic"><use href="#i-gauge"/></svg></span>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
+  <aside class="notes" data-min="2"></aside>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">4회 · 코딩 에이전트 여럿 운용하기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → · N 노트 · T 시계 · O 목록 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="../../assets/js/notes.js"></script>
+<script src="demo.js"></script>
+</body>
+</html>
