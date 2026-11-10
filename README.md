@@ -6,7 +6,7 @@
 
 | 강의 | 주소 |
 |---|---|
-| [AX 공통 AI 교과](ax-microdegree/) — AI와 데이터 분석 · 생성형AI 활용 실무 | https://daeil-noh.github.io/Lectures/ax-microdegree/ |
+| [AX 공통 AI 교과](ax-microdegree/)<br>AI와 데이터 분석 · 생성형AI 활용 실무 | https://daeil-noh.github.io/Lectures/ax-microdegree/ |
 | [멀티 에이전트 시스템 구축](multi-agent/) | https://daeil-noh.github.io/Lectures/multi-agent/ |
 | [하네스 엔지니어링](harness-engineering/) | https://daeil-noh.github.io/Lectures/harness-engineering/ |
 
