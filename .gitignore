@@ -2,3 +2,4 @@
 ax-microdegree/graph*.png
 ax-microdegree/my_graphs.png
 __pycache__/
+traces.jsonl
