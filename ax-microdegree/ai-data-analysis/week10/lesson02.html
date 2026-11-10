@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10주 2차시 · 공정 조건으로 품질 예측하기 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 10주 2차시 교안: 공정 조건 5개로 인장강도를 예측하는 다중 선형회귀, train_test_split, 계수 해석, 새 제품 예측, 온도의 곡선 관계와 특성 추가">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .knob { transform-box: fill-box; transform-origin: center; animation: knob 4s ease-in-out infinite; }
+  @keyframes knob { 0%, 100% { transform: rotate(-35deg); } 50% { transform: rotate(35deg); } }
+  .needle { transform-origin: 400px 300px; animation: needle 4s ease-in-out infinite; }
+  @keyframes needle { 0%, 100% { transform: rotate(-30deg); } 50% { transform: rotate(28deg); } }
+  @media (prefers-reduced-motion: reduce) { .knob, .needle { animation: none; } }
+
+  /* 열 고르기 표 */
+  .ctab { font-size: 15px; }
+  .ctab th, .ctab td { padding: 6px 8px; text-align: center; white-space: nowrap; }
+  .ctab .x { background: var(--accent-soft); color: var(--accent); }
+  .ctab th.x, .ctab th.y { color: #fff; }
+  .ctab th.x { background: var(--accent); } .ctab th.y { background: var(--accent-2); }
+  .ctab .y { background: var(--accent-2-soft); color: var(--accent-2); font-weight: 800; }
+  .ctab .no { color: var(--muted); opacity: .55; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; padding: 4px 12px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+
+  /* 계수 막대 */
+  .cbars { width: 100%; display: grid; gap: 12px; padding: 8px 18px; }
+  .crow { display: grid; grid-template-columns: 150px 1fr 96px; align-items: center; gap: 12px; font-size: 17px; }
+  .crow .nm { font-weight: 800; line-height: 1.25; }
+  .crow .nm small { display: block; font-weight: 600; color: var(--muted); font-size: 13.5px; }
+  .crow .trk { position: relative; height: 34px; background: var(--surface-2); border-radius: 8px; }
+  .crow .trk::after { content: ""; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 2px; background: var(--muted); opacity: .6; }
+  .crow .trk i { position: absolute; top: 4px; bottom: 4px; border-radius: 6px; transition: left .35s, width .35s; }
+  .crow .v { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+  .crow .v.pos { color: var(--accent); } .crow .v.neg { color: var(--accent-2); }
+
+  /* what-if */
+  .wi { width: 100%; display: grid; gap: 6px; padding: 4px 12px; }
+  .wrow { display: grid; grid-template-columns: 210px 1fr; gap: 14px; align-items: center; }
+  .wrow .ctrl { padding: 6px 12px; }
+  .wrow .ctrl label { font-size: 15px; margin-bottom: 0; }
+  .wrow input[type=range] { height: 22px; }
+  .wrow .trk { position: relative; height: 26px; background: var(--surface-2); border-radius: 8px; }
+  .wrow .trk::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--muted); opacity: .6; }
+  .wrow .trk i { position: absolute; top: 3px; bottom: 3px; border-radius: 5px; transition: left .15s, width .15s; }
+  .wrow .trk b { position: absolute; top: 2px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .whead { display: grid; grid-template-columns: 210px 1fr; gap: 14px; font-size: 13.5px; color: var(--muted); font-weight: 700; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--surface-2); border-radius: 12px; padding: 4px; }
+  .seg button { font: inherit; font-size: 15px; font-weight: 700; border: 0; border-radius: 9px; padding: 7px 6px; background: transparent; color: var(--muted); cursor: pointer; line-height: 1.3; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+  .goal { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; color: var(--muted); }
+  .goal.ok { color: var(--ok); }
+  .promptbox { font-size: 17px; line-height: 1.55; background: var(--surface); border: 2px dashed var(--accent); border-radius: 16px; padding: 16px 20px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 10주차 2차시</p>
+    <h1>공정 조건으로<br>품질 예측하기</h1>
+    <p class="lead" style="font-size:25px">압력·두께·습도·속도·온도로<br>인장강도를 미리 알아내기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>코드 실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="20" y="40" width="200" height="360" rx="24" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <g>
+      <text x="50" y="92" class="t-sub" style="font-size:15px">압력</text><rect x="50" y="102" width="140" height="8" rx="4" class="f-line"/><circle cx="150" cy="106" r="11" class="f-acc"/>
+      <text x="50" y="152" class="t-sub" style="font-size:15px">두께</text><rect x="50" y="162" width="140" height="8" rx="4" class="f-line"/><circle cx="110" cy="166" r="11" class="f-acc"/>
+      <text x="50" y="212" class="t-sub" style="font-size:15px">습도</text><rect x="50" y="222" width="140" height="8" rx="4" class="f-line"/><circle cx="90" cy="226" r="11" class="f-acc"/>
+      <text x="50" y="272" class="t-sub" style="font-size:15px">속도</text><rect x="50" y="282" width="140" height="8" rx="4" class="f-line"/><circle cx="125" cy="286" r="11" class="f-acc"/>
+      <text x="50" y="332" class="t-sub" style="font-size:15px">온도</text><rect x="50" y="342" width="140" height="8" rx="4" class="f-line"/><circle cx="105" cy="346" r="11" class="f-acc2"/>
+    </g>
+    <path d="M226 220 H276" stroke="var(--muted)" stroke-width="3" stroke-dasharray="5 6"/>
+    <circle cx="400" cy="300" r="112" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <path d="M310 300 A90 90 0 0 1 490 300" fill="none" stroke="var(--line)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M336 236 A90 90 0 0 1 464 236" fill="none" stroke="var(--accent-soft)" stroke-width="16"/>
+    <path d="M372 215 A90 90 0 0 1 428 215" fill="none" stroke="var(--accent)" stroke-width="16"/>
+    <g class="needle"><line x1="400" y1="300" x2="400" y2="222" stroke="var(--accent-2)" stroke-width="6" stroke-linecap="round"/></g>
+    <circle cx="400" cy="300" r="12" class="f-acc2"/>
+    <text x="400" y="352" text-anchor="middle" class="t-main" style="font-size:26px">41 MPa</text>
+    <text x="400" y="378" text-anchor="middle" class="t-sub" style="font-size:15px">예측 인장강도</text>
+    <g transform="translate(330 60)"><rect width="140" height="90" rx="20" class="f-accs"/><g transform="translate(46 21) scale(2)" style="color:var(--accent)"><use href="#i-bot" width="24" height="24"/></g></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">X 와 y 정하기</div><div class="d">입력으로 쓸 열과 쓰면 안 되는 열을 구분한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div class="h">나누고 학습</div><div class="d">train_test_split 과 fit 으로 회귀 모델을 만든다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">계수 읽기</div><div class="d">coef_ 를 단위와 함께 해석하고 주의점을 말한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">예측과 개선</div><div class="d">새 제품을 예측하고, 직선이 놓친 곡선을 특성으로 보완한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>① 학습 준비</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>② 학습과 계수 해석</b><small>직접 해 보기 1</small></div>
+      <div style="flex:10;background:var(--accent-2-soft)"><b>③ 예측하고 개선하기</b><small>직접 해 보기 2</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-code"/></svg> 코드 실습 차시입니다. 슬라이드의 코드는 실습 파일과 <strong>같은 코드·같은 결과</strong> — 영상을 보며 Colab에서 함께 실행해 보세요.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>압력 하나로는 설명하지 못한 흩어짐</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <svg viewBox="0 0 560 400" style="width:540px;flex:none" role="img" aria-label="압력 직선 주변에 흩어진 점들. 남은 흩어짐에는 다른 조건의 영향이 섞여 있다">
+      <rect x="0" y="0" width="560" height="400" rx="18" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <line x1="50" y1="350" x2="530" y2="350" stroke="var(--line)" stroke-width="2"/><line x1="50" y1="350" x2="50" y2="30" stroke="var(--line)" stroke-width="2"/>
+      <text x="290" y="382" text-anchor="middle" class="t-sub" style="font-size:15px">압력 →</text>
+      <text x="26" y="190" text-anchor="middle" class="t-sub" style="font-size:15px" transform="rotate(-90 26 190)">강도 →</text>
+      <line x1="60" y1="300" x2="520" y2="80" stroke="var(--accent-2)" stroke-width="4"/>
+      <g stroke="var(--accent-2)" stroke-width="2" opacity=".55"><path d="M100 240 V281 M150 300 V257 M190 205 V238 M240 250 V214 M290 160 V190 M330 210 V171 M380 120 V147 M420 168 V128 M470 80 V104"/></g>
+      <g class="f-acc"><circle cx="100" cy="240" r="8"/><circle cx="150" cy="300" r="8"/><circle cx="190" cy="205" r="8"/><circle cx="240" cy="250" r="8"/><circle cx="290" cy="160" r="8"/><circle cx="330" cy="210" r="8"/><circle cx="380" cy="120" r="8"/><circle cx="420" cy="168" r="8"/><circle cx="470" cy="80" r="8"/></g>
+      <text x="300" y="320" class="t-acc2" style="font-size:16px">10-1: 강도 = 0.36 × 압력 + 10.0</text>
+    </svg>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="muted" style="font-size:18px;font-weight:700">강도와의 상관계수 (전체 494개)</div>
+      <div class="tile row frag show" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h" style="flex:1;font-size:21px">압력</div><b style="font-size:24px;color:var(--accent)">0.70</b></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h" style="flex:1;font-size:21px">두께</div><b style="font-size:24px;color:var(--accent)">0.32</b></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-activity"/></svg></span><div class="h" style="flex:1;font-size:21px">습도 · 속도</div><b style="font-size:24px;color:var(--accent-2)">−0.23 · −0.14</b></div>
+      <div class="tile row frag" style="padding:12px 18px;border:2px solid var(--accent-2)"><span class="ic-badge o"><svg class="ic"><use href="#i-thermo"/></svg></span><div style="flex:1"><div class="h" style="font-size:21px">온도</div><div class="d" style="font-size:15px">약해 보이지만 곡선 관계 (7주 3차시)</div></div><b style="font-size:24px;color:var(--accent-2)">−0.11</b></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · 오늘의 질문: 조건 다섯 개를 모두 쓰면 더 잘 맞힐까?</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>학습 준비</h2><p>무엇으로(X) 무엇을(y) 예측할지 정하고, 시험용 데이터를 떼어 둡니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-filter"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. X / y 고르기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 학습 준비</span></div>
+  <h2>입력 X 와 목표 y 고르기</h2>
+  <div class="body" style="justify-content:flex-start;gap:18px">
+    <table class="ctab">
+      <thead><tr><th class="no">product_id</th><th class="no">date</th><th class="no">shift</th><th class="no">line</th><th class="x">temp</th><th class="x">pressure</th><th class="x">speed</th><th class="x">humidity</th><th class="x">thickness</th><th class="y">strength</th><th class="no">defect</th></tr></thead>
+      <tbody>
+        <tr><td class="no">P00001</td><td class="no">2026-03-02</td><td class="no">주간</td><td class="no">1라인</td><td class="x">211.7</td><td class="x">68.6</td><td class="x">1312</td><td class="x">60.7</td><td class="x">1.980</td><td class="y">34.57</td><td class="no">0</td></tr>
+        <tr><td class="no">P00002</td><td class="no">2026-03-02</td><td class="no">주간</td><td class="no">3라인</td><td class="x">208.4</td><td class="x">84.3</td><td class="x">1241</td><td class="x">54.4</td><td class="x">1.994</td><td class="y">41.44</td><td class="no">0</td></tr>
+        <tr><td class="no">P00003</td><td class="no">2026-03-02</td><td class="no">주간</td><td class="no">2라인</td><td class="x">210.2</td><td class="x">83.3</td><td class="x">1190</td><td class="x">42.6</td><td class="x">1.967</td><td class="y">42.13</td><td class="no">0</td></tr>
+      </tbody>
+    </table>
+    <div class="grid g3" style="gap:16px">
+      <div class="tile frag show" style="border:2px solid var(--accent)"><div class="h" style="color:var(--accent)">X · 공정 조건 5개</div><div class="d">생산할 때 <strong>미리 알 수 있는</strong> 숫자 값</div></div>
+      <div class="tile frag" style="border:2px solid var(--accent-2)"><div class="h" style="color:var(--accent-2)">y · 인장강도</div><div class="d">맞히고 싶은 값. 지금은 파괴 시험을 해야만 알 수 있다</div></div>
+      <div class="tile frag"><div class="h" style="color:var(--muted)">이번엔 빼는 열</div><div class="d"><b>defect</b>: 강도를 잰 <strong>뒤에</strong> 정해지는 결과 — 예측 시점엔 모른다. 번호·날짜·글자 열(shift·line·machine)도 제외</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · process.csv 처음 3행 (machine, defect_type 열은 생략) · 글자 열을 숫자로 바꿔 쓰는 방법도 있다</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 코드: 나누기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 학습 준비</span></div>
+  <h2>코드 ① X, y 정하고 훈련용·시험용으로 나누기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1.8;display:flex;flex-direction:column;gap:12px">
+<pre class="code" style="font-size:17px">from sklearn.model_selection import train_test_split
+
+features = ['pressure', 'thickness', 'humidity',
+            'speed', 'temp']
+X = df[features]       # 입력: 공정 조건 5개
+y = df['strength']     # 목표: 인장강도
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42)  # 8:2
+print(X_train.shape, X_test.shape)</pre>
+<pre class="out">(395, 5) (99, 5)</pre>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show row"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h" style="font-size:21px">훈련용 395개</div><div class="d">모델이 보고 배우는 데이터 (교과서)</div></div></div>
+      <div class="tile frag row"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:21px">시험용 99개</div><div class="d">학습에 쓰지 않고 남겨 둔 데이터 (시험 문제) → 다음 차시 평가에 사용</div></div></div>
+      <div class="tile frag row"><span class="ic-badge g"><svg class="ic"><use href="#i-reset"/></svg></span><div><div class="h" style="font-size:21px">random_state=42</div><div class="d">나누는 방식을 고정 — 누가 실행해도 같은 결과</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · 훈련·시험 데이터 나누기는 9주 2차시 · (395, 5) = 395행 5열</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>학습과 계수 해석</h2><p>모델이 찾은 숫자 다섯 개에는 어떤 뜻이 있을까요?</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 코드: 학습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 학습과 계수 해석</span></div>
+  <h2>코드 ② 학습하고 계수 꺼내 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1.5;display:flex;flex-direction:column;gap:10px">
+<pre class="code" style="font-size:17px">from sklearn.linear_model import LinearRegression
+
+model = LinearRegression()
+model.fit(X_train, y_train)   # 훈련용으로만 학습
+
+coef = pd.Series(model.coef_, index=features)
+print(coef.round(4))          # 입력별 계수
+print('절편 b =', round(model.intercept_, 2))</pre>
+<pre class="out" style="font-size:15px;line-height:1.4">pressure      0.3525
+thickness    13.3215
+humidity     -0.0580
+speed        -0.0052
+temp         -0.0562
+dtype: float64
+절편 b = 5.26</pre>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show" style="background:var(--accent-soft);border-color:transparent"><div class="h" style="font-size:20px">찾아낸 규칙</div><div style="font-size:18px;font-weight:700;line-height:1.55;font-variant-numeric:tabular-nums">강도 = 0.3525×압력 + 13.32×두께<br>− 0.058×습도 − 0.0052×속도<br>− 0.056×온도 + 5.26</div></div>
+      <div class="tile frag"><div class="h" style="font-size:20px">부호 읽기</div><div class="d"><b style="color:var(--accent)">+</b> 그 조건이 커지면 강도 ↑ · <b style="color:var(--accent-2)">−</b> 커지면 강도 ↓</div></div>
+      <div class="tile frag"><div class="h" style="font-size:20px">크기는 단위에 따라 다르다</div><div class="d">두께 13.32 는 “1 mm 당”. 두께는 보통 0.1 mm도 잘 안 변한다 → 다음 장</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · pd.Series(…, index=features): 계수에 열 이름을 붙여 보기 좋게</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 계수 막대 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 학습과 계수 해석 · 직접 해 보기 1</span></div>
+  <h2>어떤 조건의 영향이 가장 클까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:8px">
+      <div class="crow" style="font-size:14px;color:var(--muted);font-weight:700;padding:0 18px"><span></span><span style="display:flex;justify-content:space-between"><span>← 강도 감소</span><span>강도 증가 →</span></span><span style="text-align:right">MPa</span></div>
+      <div class="cbars" id="cb"></div>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">조건을 얼마만큼 바꿀 때로 볼까?</div>
+      <div class="seg" id="cb-seg">
+        <button type="button" data-m="unit" aria-pressed="true">읽기 쉬운 단위만큼</button>
+        <button type="button" data-m="std" aria-pressed="false">보통 변하는 폭만큼</button>
+      </div>
+      <div class="callout b" id="cb-msg"></div>
+      <div class="callout" style="font-size:15px">어느 경우든 <strong>다른 조건은 그대로 두고</strong> 하나만 바꿨을 때의 강도 변화입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · 학습한 모델의 계수 × 변화량 · 보통 변하는 폭 = 전체 데이터의 표준편차(6주차)</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 계수 해석 주의 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 학습과 계수 해석</span></div>
+  <h2>계수를 읽을 때 지킬 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">다른 조건은 그대로</div><div class="d">“압력 +1 bar → +0.35 MPa” 는 두께·습도·속도·온도가 <strong>같을 때</strong>의 이야기</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">데이터 범위 안에서만</div><div class="d">압력 62~98 bar 사이에서 배운 규칙. 150 bar 를 넣으면 숫자는 나오지만 <strong>믿을 근거가 없다</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">원인이라는 증거는 아니다</div><div class="d">계수는 데이터 속 <strong>함께 변하는 관계</strong>. 원인인지는 실험·전공 지식으로 확인 (7주 3차시)</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:22px"><p style="font-size:21px;margin:0">그리고 <strong>온도 −0.056</strong> — “온도는 낮을수록 좋다”? 직선 모델이라 그렇게 보일 뿐입니다. ③에서 확인합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>예측하고 개선하기</h2><p>아직 만들지 않은 제품의 강도를 미리 알아봅니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-trend"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 코드: 새 제품 예측 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 예측하고 개선하기</span></div>
+  <h2>코드 ③ 새 제품의 강도 예측하기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1.8;display:flex;flex-direction:column;gap:12px">
+<pre class="code" style="font-size:17px"># 생산 예정 제품의 공정 조건 (열 이름은 학습 때와 같게)
+new = pd.DataFrame({
+    'pressure': [85], 'thickness': [2.02],
+    'humidity': [55], 'speed': [1200], 'temp': [210]})
+pred = model.predict(new)
+print('예측 강도:', pred.round(2), 'MPa')</pre>
+<pre class="out">예측 강도: [40.93] MPa</pre>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show row"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:21px">predict = 예측</div><div class="d">학습한 계수에 새 조건을 넣어 계산한 값</div></div></div>
+      <div class="tile frag row"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:21px">열 이름·순서 그대로</div><div class="d">학습 때 쓴 5개 열이 모두 있어야 한다. 하나라도 빠지면 오류</div></div></div>
+      <div class="tile frag row"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:21px">여러 제품도 한 번에</div><div class="d">리스트에 값을 여러 개 넣으면 예측값도 여러 개</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · pred 는 값이 여러 개 들어가는 배열이라 대괄호로 출력된다</span><span class="no"></span></div>
+</section>
+
+<!-- 14. what-if 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 예측하고 개선하기 · 직접 해 보기 2</span></div>
+  <h2>공정 조건을 바꾸면 강도는? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;padding:10px 6px">
+      <div class="whead" style="padding:0 12px"><span>공정 조건</span><span style="display:flex;justify-content:space-between"><span>← 강도 감소</span><span>보통 조건 대비 변화</span><span>강도 증가 →</span></span></div>
+      <div class="wi" id="wi"></div>
+    </div>
+    <div class="side">
+      <div class="seg" id="wi-seg">
+        <button type="button" data-m="f5" aria-pressed="true">직선 모델<br><small>입력 5개</small></button>
+        <button type="button" data-m="f6" aria-pressed="false">곡선 보완 모델<br><small>+ 온도 특성</small></button>
+      </div>
+      <div class="meter"><div class="lbl">예측 인장강도</div><div class="val" id="wi-y">-</div><div class="track"><i id="wi-bar"></i></div></div>
+      <div class="goal" id="wi-goal"><svg class="ic"><use href="#i-target"/></svg> 도전: 예측 강도 42 MPa 이상 만들기</div>
+      <div class="callout b" id="wi-msg">보통 조건(데이터 평균 근처)에서 시작합니다. 막대 = 보통 조건보다 강도를 얼마나 올리고 내리는지.</div>
+      <button class="btn ghost" id="wi-reset" type="button"><svg class="ic"><use href="#i-reset"/></svg> 보통 조건으로</button>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · 학습한 모델의 계수를 그대로 옮겨 계산 · 슬라이더 범위 = 데이터에 있는 범위</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 온도 곡선 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 예측하고 개선하기 · 직접 해 보기 3</span></div>
+  <h2>직선이 놓친 것: 온도의 곡선 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="tc-plot" viewBox="0 0 620 430" aria-label="온도와 인장강도 산점도 494개와 직선 또는 곡선 예측"></svg></div>
+    <div class="side">
+      <div class="seg" id="tc-seg">
+        <button type="button" data-m="lin" aria-pressed="true">직선으로 맞추기</button>
+        <button type="button" data-m="quad" aria-pressed="false">곡선으로 맞추기</button>
+      </div>
+      <div class="eq" id="tc-eq" style="font-size:16px;font-weight:700;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-variant-numeric:tabular-nums"></div>
+      <div class="meter"><div class="lbl">오차 제곱합 (494개)</div><div class="val o" id="tc-sse">-</div><div class="track"><i id="tc-bar" style="background:var(--accent-2)"></i></div></div>
+      <div class="callout b" id="tc-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · 온도 하나만으로 맞춘 그림 · process.csv 494개 (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 코드: 특성 추가 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 예측하고 개선하기</span></div>
+  <h2>코드 ④ 특성 하나 만들어 넣기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:26px">
+    <div style="flex:1.8;display:flex;flex-direction:column;gap:10px">
+<pre class="code" style="font-size:16px"># 210℃에서 벗어난 정도의 제곱을 새 열로
+df['temp_gap2'] = (df['temp'] - 210) ** 2
+features2 = features + ['temp_gap2']
+
+X2_train, X2_test, y_train, y_test = train_test_split(
+    df[features2], y, test_size=0.2, random_state=42)
+model2 = LinearRegression().fit(X2_train, y_train)
+print(pd.Series(model2.coef_, index=features2).round(4))</pre>
+<pre class="out" style="font-size:15px;line-height:1.45">pressure      0.3468
+thickness    14.8691
+humidity     -0.0491
+speed        -0.0048
+temp          0.0025
+temp_gap2    -0.0193
+dtype: float64</pre>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show"><div class="h" style="font-size:20px">temp_gap2 = (온도 − 210)²</div><div class="d">210℃에서 위로든 아래로든 <strong>멀어질수록 커지는</strong> 새 열</div></div>
+      <div class="tile frag"><div class="h" style="font-size:20px">계수 −0.0193</div><div class="d">210℃에서 10℃ 벗어나면 강도 약 1.9 MPa 감소 (100 × 0.0193)</div></div>
+      <div class="tile frag" style="background:var(--accent-soft);border-color:transparent"><div class="h" style="font-size:20px">여전히 “선형” 회귀</div><div class="d">모델은 그대로, 입력 열만 하나 더 — 이렇게 쓸모 있는 열을 만드는 일을 <strong>특성 공학</strong>이라 한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · 210℃: 7주차 산점도에서 강도가 가장 높았던 온도 부근 · 같은 random_state 라 같은 제품끼리 나뉜다</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 생성형AI 활용 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 예측하고 개선하기 · 생성형AI 활용</span></div>
+  <h2>AI에게 계수 해석을 부탁할 때</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:30px">
+    <div style="flex:1.2;display:flex;flex-direction:column;gap:12px;justify-content:center">
+      <div class="muted" style="font-size:17px;font-weight:700"><svg class="ic"><use href="#i-chat"/></svg> 이렇게 물어보기</div>
+      <div class="promptbox">사출 성형 공정 데이터로 인장강도(MPa)를 예측하는 선형회귀를 만들었어. 계수는 pressure 0.3525 (bar), thickness 13.3215 (mm), humidity −0.0580 (%), speed −0.0052 (rpm), temp −0.0562 (℃) 야.<br><strong>각 계수를 단위와 함께 한 문장씩 해석</strong>해 주고, 이 해석을 <strong>인과관계로 말하면 안 되는 이유</strong>도 알려 줘.</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;justify-content:center">
+      <div class="muted" style="font-size:17px;font-weight:700"><svg class="ic"><use href="#i-shield"/></svg> 답을 받은 뒤 검증하기</div>
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="d" style="color:var(--text)"><b>부호·단위</b>가 내 출력과 같은가?</div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div class="d" style="color:var(--text)">“압력 +10 bar → +3.5 MPa” 를 <b>predict 로 직접 계산</b>해 확인</div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="d" style="color:var(--text)">“온도를 낮추세요” 같은 <b>단정적 처방</b>이 있으면 의심</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · 공정 데이터가 기밀이면 숫자 대신 형태만 설명해서 물어본다 (1주 3차시)</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">실습 파일</span></div>
+  <h2>Colab에서 직접 해 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div style="flex:1">
+      <div class="tiles" style="grid-template-columns:1fr 1fr">
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h" style="font-size:20px">나누고 학습하기</div><div class="d">train_test_split → fit</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:20px">계수 막대그래프</div><div class="d">coef_ 를 그림으로</div></div></div>
+        <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-hand"/></svg></span><div><div class="h" style="font-size:20px">내 제품 예측</div><div class="d">조건을 바꿔 predict</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-thermo"/></svg></span><div><div class="h" style="font-size:20px">온도 특성 추가</div><div class="d">temp_gap2 로 다시 학습</div></div></div>
+      </div>
+      <p style="margin-top:24px"><a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week10/lesson02.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a></p>
+    </div>
+    <span class="ic-badge lg" style="width:200px;height:200px;font-size:110px;border-radius:46px;background:var(--surface)"><svg class="ic"><use href="#i-code"/></svg></span>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시 · 실습 파일: week10/lesson02.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">나누고 → 학습 → 예측</div><div style="font-size:21px">train_test_split → <strong>fit</strong>(훈련용) → <strong>predict</strong>(새 조건)</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">계수 = 조건 하나의 효과</div><div style="font-size:21px">다른 조건은 그대로, <strong>단위와 함께</strong>, 데이터 범위 안에서 읽는다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-thermo"/></svg></span><div class="h">곡선은 특성으로</div><div style="font-size:21px">직선이 놓친 관계는 <strong>(온도 − 210)²</strong> 같은 새 열로 보완</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="defect(불량 여부)는 강도를 측정한 뒤에야 정해지는 결과입니다. 생산 전에 강도를 예측하려는 상황에서는 알 수 없는 값이므로 입력에 넣으면 안 됩니다.">
+      <p class="q-title"><b>Q1.</b> 강도 예측 모델의 입력 X 로 쓰기에 <u>알맞지 않은</u> 열은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">pressure (압력)</button>
+        <button type="button" data-v="b">thickness (두께)</button>
+        <button type="button" data-v="c">defect (불량 여부)</button>
+        <button type="button" data-v="d">humidity (습도)</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="계수 0.3525 는 다른 조건이 같을 때 압력 1 bar 당 강도 변화입니다. 10 bar 면 약 3.5 MPa 높아집니다.">
+      <p class="q-title"><b>Q2.</b> pressure 계수가 0.3525 일 때, 다른 조건은 그대로 두고 압력만 10 bar 올리면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">예측 강도가 약 3.5 MPa 높아진다</button>
+        <button type="button" data-v="b">예측 강도가 약 0.35 MPa 높아진다</button>
+        <button type="button" data-v="c">예측 강도가 35% 높아진다</button>
+        <button type="button" data-v="d">압력은 강도의 원인임이 증명된다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="훈련 데이터의 압력은 62~98 bar 범위입니다. 그 밖의 값을 넣으면 계산은 되지만, 그 범위에서도 같은 규칙이 통한다는 근거가 없습니다.">
+      <p class="q-title"><b>Q3.</b> 압력 150 bar 를 넣었더니 예측 강도 약 64 MPa 가 나왔다. 가장 알맞은 판단은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">압력을 150 bar 로 올리면 강도가 크게 오른다</button>
+        <button type="button" data-v="b">모델에 오류가 있으니 다시 학습한다</button>
+        <button type="button" data-v="c">계수를 모두 두 배로 바꾼다</button>
+        <button type="button" data-v="d">훈련 데이터 범위 밖이라 믿을 근거가 없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="강도는 210℃ 부근에서 가장 높고 양쪽으로 갈수록 낮아지는 곡선 관계입니다. 직선은 이것을 기울기 하나로 표현하지 못합니다. (온도 − 210)² 열을 넣으면 곡선을 표현할 수 있습니다.">
+      <p class="q-title"><b>Q4.</b> 직선 모델에서 온도 계수가 작은 음수로 나온 이유로 가장 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">온도는 강도와 전혀 관계가 없어서</button>
+        <button type="button" data-v="b">온도와 강도가 곡선 관계라 직선으로 잘 표현되지 않아서</button>
+        <button type="button" data-v="c">온도 센서가 고장 나서</button>
+        <button type="button" data-v="d">온도의 단위가 ℃ 라서</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">10-3</div>
+    <h2>예측 오차로 성능 평가하기</h2>
+    <p>떼어 둔 시험용 99개로 모델을 채점합니다. “평균 몇 MPa 틀리나?”를 MAE·RMSE·R² 로 말해 봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">10주 2차시 · 공정 조건으로 품질 예측하기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

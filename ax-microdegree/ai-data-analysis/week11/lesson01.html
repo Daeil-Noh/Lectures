@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11주 1차시 · 분류의 개념: 의사결정나무와 과적합 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 11주 1차시 교안: 분류의 뜻, 의사결정나무가 질문을 고르는 방법, 나무가 깊어질 때 생기는 과적합">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .flowdot { display: none; } .pulse { animation: none !important; } }
+
+  /* 나무 그림 공통 */
+  .tn-q rect { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+  .tn-q text { fill: var(--text); font-size: 15px; font-weight: 800; }
+  .tn-leaf rect { stroke-width: 2; }
+  .tn-leaf.ok rect { fill: var(--accent-soft); stroke: var(--accent); }
+  .tn-leaf.ng rect { fill: var(--accent-2-soft); stroke: var(--accent-2); }
+  .tn-leaf .v { font-size: 15px; font-weight: 800; }
+  .tn-leaf.ok .v { fill: var(--accent); } .tn-leaf.ng .v { fill: var(--accent-2); }
+  .tn-leaf .n { fill: var(--muted); font-size: 12.5px; }
+  .t-edge { stroke: var(--line); stroke-width: 2.5; fill: none; }
+  .t-edge.on { stroke: var(--accent); stroke-width: 5; }
+  .t-yn { fill: var(--muted); font-size: 12.5px; font-weight: 700; }
+  .tn-q.on rect, .tn-leaf.on rect { stroke: var(--accent); stroke-width: 4; }
+  .tn-q.cur rect { stroke: var(--accent-2); stroke-width: 4; }
+  .pulse { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .55; } }
+
+  /* 점 그림(494개) */
+  .dots { display: grid; grid-template-columns: repeat(38, 1fr); gap: 3px; width: 100%; }
+  .dots i { aspect-ratio: 1; border-radius: 3px; background: var(--accent-soft); }
+  .dots i.b { background: var(--accent-2); }
+
+  /* 나무 따라가기 */
+  .pcard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 14px; font-size: 16px; }
+  .pcard .id { font-weight: 800; font-size: 15px; color: var(--muted); display: flex; justify-content: space-between; }
+  .pcard table { border: 0; font-size: 16px; background: transparent; }
+  .pcard td { padding: 1px 6px; border: 0; }
+  .pcard td.k { color: var(--muted); }
+  .pcard td.v { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+  .pcard tr.ask td { background: var(--accent-2-soft); }
+  .qbox { background: var(--accent-2-soft); border-radius: 14px; padding: 10px 14px; font-size: 19px; font-weight: 800; text-align: center; }
+  .yn { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); } .status.info { background: var(--accent-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); } .status.info b.k { color: var(--accent); }
+
+  /* 첫 질문 고르기 */
+  .vbtns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .vbtns button { font: inherit; font-size: 15px; font-weight: 700; padding: 7px 0; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .vbtns button[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .grp { display: grid; grid-template-columns: 150px 1fr 92px; align-items: center; gap: 10px; font-size: 15px; }
+  .grp .nm { font-weight: 800; }
+  .grp .bar2 { height: 26px; border-radius: 8px; overflow: hidden; display: flex; background: var(--surface-2); }
+  .grp .bar2 i { display: block; height: 100%; transition: width .2s; }
+  .grp .rt { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* 비교 카드 */
+  .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .cmp .tile { padding: 18px 22px; gap: 8px; }
+  .gbar { display: flex; height: 28px; border-radius: 8px; overflow: hidden; background: var(--surface-2); }
+  .gbar i { display: block; height: 100%; }
+  .gline { display: flex; justify-content: space-between; font-size: 16px; color: var(--muted); }
+  .gline b { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 11주차 1차시</p>
+    <h1>분류의 개념:<br>의사결정나무와 과적합</h1>
+    <p class="lead" style="font-size:25px">예/아니오 질문 몇 개로<br>불량을 가려낼 수 있을까?</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>개념 + 실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <path id="cv-path" d="M260,70 L260,92 L150,168 L150,192 L95,266 L95,300" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" opacity=".35"/>
+    <g stroke="var(--line)" stroke-width="3" fill="none">
+      <path d="M260,92 L150,168 M260,92 L370,168 M150,192 L95,266 M150,192 L205,266 M370,192 L315,266 M370,192 L425,266"/>
+    </g>
+    <rect x="190" y="40" width="140" height="52" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2.5"/>
+    <text x="260" y="73" text-anchor="middle" class="t-main">습도 ≤ 76?</text>
+    <rect x="90" y="140" width="120" height="52" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2.5"/>
+    <text x="150" y="173" text-anchor="middle" class="t-main">온도 ≤ 223?</text>
+    <rect x="310" y="140" width="120" height="52" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2.5"/>
+    <text x="370" y="173" text-anchor="middle" class="t-main">두께 ≤ 2.04?</text>
+    <rect x="50" y="266" width="90" height="70" rx="14" class="f-accs" stroke="var(--accent)" stroke-width="2.5"/>
+    <text x="95" y="308" text-anchor="middle" class="t-acc" style="font-size:18px">정상</text>
+    <rect x="160" y="266" width="90" height="70" rx="14" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2.5"/>
+    <text x="205" y="308" text-anchor="middle" class="t-acc2" style="font-size:18px">불량</text>
+    <rect x="270" y="266" width="90" height="70" rx="14" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2.5"/>
+    <text x="315" y="308" text-anchor="middle" class="t-acc2" style="font-size:18px">불량</text>
+    <rect x="380" y="266" width="90" height="70" rx="14" class="f-accs" stroke="var(--accent)" stroke-width="2.5"/>
+    <text x="425" y="308" text-anchor="middle" class="t-acc" style="font-size:18px">정상</text>
+    <g class="flowdot"><rect x="-14" y="-14" width="28" height="28" rx="6" class="f-acc"><animateMotion dur="4s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.7;1" calcMode="linear"><mpath href="#cv-path"/></animateMotion></rect></g>
+    <text x="260" y="400" text-anchor="middle" class="t-sub" style="font-size:16px">제품 하나가 질문을 따라 내려가 판정을 받는다</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">분류</div><div class="d">회귀(숫자 예측)와 분류(범주 판정)의 차이를 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">의사결정나무</div><div class="d">예/아니오 질문을 따라 내려가 제품 하나를 판정한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">좋은 질문</div><div class="d">나무가 “더 순수한 그룹”을 만드는 질문을 고른다는 것을 안다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">과적합</div><div class="d">나무가 깊어지면 왜 시험 정확도가 떨어지는지 말한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>① 분류란?</b></div>
+      <div style="flex:10;background:var(--accent-soft)"><b>② 의사결정나무</b><small>직접 해 보기 2</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 과적합</b><small>직접 해 보기 1</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>정리·확인</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘의 질문: <strong>“공정 조건만 보고, 이 제품이 불량인지 판정할 수 있을까?”</strong></p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입: 회귀 vs 분류 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>지난주는 “얼마나?”, 이번 주는 “어느 쪽?”</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile frag show" style="padding:26px">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg g"><svg class="ic"><use href="#i-trend"/></svg></span><div><div class="muted" style="font-size:17px;font-weight:700">10주 · 회귀</div><div class="h" style="font-size:28px">숫자를 예측</div></div></div>
+        <div style="font-size:21px;background:var(--surface-2);border-radius:10px;padding:12px 16px">“이 조건이면 인장강도는 <strong>몇 MPa</strong>?”</div>
+        <div class="d">답: 38.2, 41.7 … 연속된 숫자. 평가는 “얼마나 빗나갔나”(오차)</div>
+      </div>
+      <div class="tile frag" style="padding:26px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="muted" style="font-size:17px;font-weight:700">11주 · 분류</div><div class="h" style="font-size:28px">범주를 판정</div></div></div>
+        <div style="font-size:21px;background:var(--accent-soft);border-radius:10px;padding:12px 16px">“이 조건이면 <strong>정상</strong>일까, <strong>불량</strong>일까?”</div>
+        <div class="d">답: 정해진 몇 가지 중 하나. 평가는 “맞혔나 틀렸나”</div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:21px">둘 다 <strong style="color:var(--text)">지도학습</strong>(9주) — 정답이 붙은 과거 데이터로 배운다. 다른 것은 <strong style="color:var(--text)">정답의 종류</strong>뿐.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>분류란?</h2><p>정해진 범주 가운데 하나로 판정하는 일.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 분류 정의 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 분류란?</span></div>
+  <h2>분류 = 입력을 보고 <span class="mark">범주</span>를 고르는 모델</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h">입력 (특성)</div><div class="d">온도·압력·속도<br>습도·두께</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">분류 모델</div><div class="d">과거 데이터에서<br>배운 판정 규칙</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">범주 (정답)</div><div class="d">정상(0) 또는 불량(1)</div></div>
+    </div>
+    <div class="tiles frag" style="grid-template-columns:repeat(3,1fr);margin-top:22px">
+      <div class="tile row" style="padding:16px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-factory"/></svg></span><div><div class="h" style="font-size:20px">이진 분류</div><div class="d">정상/불량, 고장/정상 — 범주 2개</div></div></div>
+      <div class="tile row" style="padding:16px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:20px">다중 분류</div><div class="d">불량 유형: 치수불량·찍힘·스크래치</div></div></div>
+      <div class="tile row" style="padding:16px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h" style="font-size:20px">비전 검사</div><div class="d">1주 2차시의 그 검사도 분류</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 오늘의 데이터 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 분류란?</span></div>
+  <h2>오늘의 문제: 제품 494개 중 불량 68개</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <div style="flex:1">
+      <div class="dots" id="dots494" role="img" aria-label="process.csv 제품 494개 중 불량 68개를 주황색으로 표시한 그림"></div>
+      <div class="legend" style="margin-top:12px"><span><i class="dot" style="background:var(--accent-soft);border:1px solid var(--accent)"></i>정상 426개</span><span><i class="dot" style="background:var(--accent-2)"></i>불량 68개 (13.8%)</span><span>제품번호 순서대로 한 칸씩</span></div>
+    </div>
+    <div style="width:390px;flex:none;display:grid;gap:14px">
+      <div class="tile" style="padding:16px 20px;gap:6px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent)"><use href="#i-gauge"/></svg> 입력: 공정 조건 5개</div><div class="d">temp(온도) · pressure(압력) · speed(속도) · humidity(습도) · thickness(두께)</div></div>
+      <div class="tile" style="padding:16px 20px;gap:6px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-target"/></svg> 정답: defect</div><div class="d">0 = 정상, 1 = 불량</div></div>
+      <div class="callout frag">strength(인장강도)는 제품을 <strong>당겨서 끊어 봐야</strong> 아는 값 — 생산 직후 판정에는 쓸 수 없어 입력에서 뺍니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시 · process.csv (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>의사결정나무</h2><p>스무고개처럼, 예/아니오 질문으로 판정합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-filter"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 나무의 생김새 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 의사결정나무</span></div>
+  <h2>의사결정나무 = 예/아니오 질문의 연속</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:26px">
+    <div class="box" style="flex:1;margin:0;padding:10px;display:flex;align-items:center"><svg id="tree2" viewBox="0 0 700 400" role="img" aria-label="훈련 데이터로 배운 깊이 2의 의사결정나무. 습도 76.2 이하인지 먼저 묻고, 온도 또는 두께를 묻는다"></svg></div>
+    <div style="width:330px;flex:none;display:grid;gap:12px;align-content:center">
+      <div class="tile row frag show" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div><div class="h" style="font-size:19px">질문 (마디)</div><div class="d" style="font-size:16px">특성 하나와 기준값 하나: “습도 ≤ 76.2?”</div></div></div>
+      <div class="tile row frag" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div><div class="h" style="font-size:19px">가지</div><div class="d" style="font-size:16px">예는 왼쪽, 아니오는 오른쪽으로 내려간다</div></div></div>
+      <div class="tile row frag" style="padding:14px 16px"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:19px">잎 (판정)</div><div class="d" style="font-size:16px">도착한 훈련 데이터 제품 중 <strong>많은 쪽</strong>으로 판정</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시 · 훈련 데이터 345개로 실제로 학습한 나무 (max_depth=2) · 숫자는 훈련 데이터 제품 수</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 직접 해 보기 1: 나무 따라가기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 의사결정나무 · 직접 해 보기 1</span></div>
+  <h2>내가 나무가 되어 판정해 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot"><svg id="play" viewBox="0 0 700 420" aria-label="깊이 3의 의사결정나무. 현재 질문이 강조되고 지나온 길이 표시된다"></svg></div>
+    <div class="side">
+      <div class="pcard" id="pl-card"></div>
+      <div class="qbox" id="pl-q">질문</div>
+      <div class="yn"><button class="btn" type="button" id="pl-yes">예</button><button class="btn" type="button" id="pl-no">아니오</button></div>
+      <div class="status info" id="pl-st"><b class="k">시작</b>제품 카드의 값을 보고 질문에 답하세요.</div>
+      <button class="btn ghost" type="button" id="pl-next"><svg class="ic"><use href="#i-reset"/></svg> 다른 제품</button>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시 · 시험 데이터에 있는 실제 제품 6개 · 나무는 max_depth=3</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 좋은 질문이란 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 의사결정나무</span></div>
+  <h2>첫 질문은 어떻게 정할까? 더 <span class="mark">순수한</span> 그룹을 만드는 질문</h2>
+  <div class="body">
+    <div class="cmp">
+      <div class="tile frag show">
+        <div class="muted" style="font-size:16px;font-weight:700">질문 A</div>
+        <div class="h">압력 ≤ 79.15?</div>
+        <div class="gline"><span>예 <b>133개</b></span><span>불량 <b>31개 (23%)</b></span></div>
+        <div class="gbar"><i style="width:76.7%;background:var(--accent-soft)"></i><i style="width:23.3%;background:var(--accent-2)"></i></div>
+        <div class="gline"><span>아니오 <b>212개</b></span><span>불량 <b>16개 (8%)</b></span></div>
+        <div class="gbar"><i style="width:92.5%;background:var(--accent-soft)"></i><i style="width:7.5%;background:var(--accent-2)"></i></div>
+        <div class="d">두 그룹 모두 정상과 불량이 <strong>여전히 섞여 있다</strong> → 섞임 정도 <b>0.224</b></div>
+      </div>
+      <div class="tile frag" style="border:2px solid var(--accent)">
+        <div class="muted" style="font-size:16px;font-weight:700">질문 B</div>
+        <div class="h">습도 ≤ 76.2?</div>
+        <div class="gline"><span>예 <b>330개</b></span><span>불량 <b>36개 (11%)</b></span></div>
+        <div class="gbar"><i style="width:89.1%;background:var(--accent-soft)"></i><i style="width:10.9%;background:var(--accent-2)"></i></div>
+        <div class="gline"><span>아니오 <b>15개</b></span><span>불량 <b>11개 (73%)</b></span></div>
+        <div class="gbar"><i style="width:26.7%;background:var(--accent-soft)"></i><i style="width:73.3%;background:var(--accent-2)"></i></div>
+        <div class="d">불량이 한쪽 그룹에 <strong>몰렸다</strong> → 섞임 정도 <b>0.203</b> (더 낮음 = 더 좋은 질문)</div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:18px;font-size:19px">나누기 전 섞임 정도 <strong style="color:var(--text)">0.235</strong>. 나무는 가능한 모든 질문을 시험해 보고 섞임 정도를 <strong style="color:var(--text)">가장 많이 줄이는 질문</strong>을 고른다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시 · 섞임 정도 = 지니 불순도 = 1 − (정상 비율² + 불량 비율²), 두 그룹은 제품 수로 가중 평균 · 0이면 한 종류만, 0.5면 반반</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 2: 첫 질문 고르기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 의사결정나무 · 직접 해 보기 2</span></div>
+  <h2>첫 질문을 직접 골라 보자: 컴퓨터를 이길 수 있을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 350px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:10px;padding:12px 18px">
+      <svg id="sp-hist" viewBox="0 0 700 270" aria-label="선택한 특성 값에 따라 훈련 데이터 제품 345개를 쌓은 점 그림과 기준선"></svg>
+      <div class="grp"><span class="nm" id="sp-ln">예 (≤ 기준)</span><span class="bar2"><i id="sp-l0" style="background:var(--accent-soft)"></i><i id="sp-l1" style="background:var(--accent-2)"></i></span><span class="rt" id="sp-lr">-</span></div>
+      <div class="grp"><span class="nm" id="sp-rn">아니오 (&gt; 기준)</span><span class="bar2"><i id="sp-r0" style="background:var(--accent-soft)"></i><i id="sp-r1" style="background:var(--accent-2)"></i></span><span class="rt" id="sp-rr">-</span></div>
+    </div>
+    <div class="side">
+      <div class="vbtns" id="sp-vars"></div>
+      <div class="ctrl"><label><span id="sp-lab">기준값</span> <output id="sp-o">-</output></label><input id="sp-t" type="range" min="0" max="1" step="0.1" value="0" aria-label="질문의 기준값"></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">나누기 전</div><div class="val" style="font-size:32px;color:var(--muted)">0.235</div></div>
+        <div class="meter"><div class="lbl">나눈 뒤 섞임 정도</div><div class="val o" id="sp-g" style="font-size:32px">-</div></div>
+      </div>
+      <button class="btn ghost" type="button" id="sp-best"><svg class="ic"><use href="#i-bot"/></svg> 컴퓨터의 선택 보기</button>
+      <div class="callout b" id="sp-msg">특성을 고르고 기준값을 움직여 <strong>섞임 정도를 가장 낮게</strong> 만들어 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시 · 훈련 데이터 345개 · 섞임 정도 = 지니 불순도 (두 그룹 가중 평균)</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 반복해서 자란다 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 의사결정나무</span></div>
+  <h2>같은 방법을 그룹마다 반복 → 나무가 자란다</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">① 전체에서</div><div class="d">가장 좋은 질문 하나<br>“습도 ≤ 76.2?”</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">② 그룹마다 다시</div><div class="d">예 그룹: “온도 ≤ 223.35?”<br>아니오 그룹: “두께 ≤ 2.04?”</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">③ 또 반복</div><div class="d">나뉜 그룹을<br>다시 나눈다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-x"/></svg></span><div class="h">④ 멈춤</div><div class="d">정한 깊이에 닿거나<br>그룹이 한 종류뿐일 때</div></div>
+    </div>
+    <div class="grid frag" style="margin-top:22px;gap:24px;align-items:center;grid-template-columns:1.25fr 1fr">
+      <pre class="code">from sklearn.tree import DecisionTreeClassifier
+model = DecisionTreeClassifier(max_depth=3)
+model.fit(X_train, y_train)   # 학습 = 질문 고르기</pre>
+      <p class="muted" style="margin:0;font-size:20px"><strong style="color:var(--text)">max_depth</strong> = 질문을 최대 몇 번까지 연달아 할지. 이 숫자가 나무의 크기를 정합니다 — 다음 구간의 주인공.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>과적합</h2><p>질문을 많이 할수록 더 똑똑해질까요?</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 직접 해 보기 3: 깊이 슬라이더 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 과적합 · 직접 해 보기 3</span></div>
+  <h2>나무를 깊게 키우면? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot"><svg id="grow" viewBox="0 0 700 430" aria-label="최대 깊이에 따라 자라는 의사결정나무"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>최대 깊이 (max_depth) <output id="gr-o">1</output></label><input id="gr-d" type="range" min="1" max="11" step="1" value="1" aria-label="최대 깊이"></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">훈련 정확도</div><div class="val" id="gr-tr" style="font-size:32px">-</div></div>
+        <div class="meter"><div class="lbl">시험 정확도</div><div class="val o" id="gr-te" style="font-size:32px">-</div></div>
+      </div>
+      <div class="plot" style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px"><svg id="gr-curve" viewBox="0 0 340 170" aria-label="깊이별 훈련·시험 정확도 그래프"></svg></div>
+      <div class="callout b" id="gr-msg" style="font-size:15.5px">-</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시 · 훈련 345개·시험 149개 (test_size=0.3, stratify, random_state=42) · 깊이 11에서 더 자라지 않음</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 과적합이란 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 과적합</span></div>
+  <h2>과적합 = 기출문제 답만 외운 학생</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg g"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">과소적합 · 깊이 1</div><div class="d">질문이 너무 적어 <strong>덜 배운</strong> 상태</div><div style="font-size:19px">훈련 <b>88.4%</b> · 시험 <b>85.9%</b></div></div>
+      <div class="tile frag" style="border:2px solid var(--accent)"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">적당 · 깊이 2~3</div><div class="d">공통된 <strong>규칙</strong>만 배워 새 제품에도 통한다</div><div style="font-size:19px">훈련 <b>90.1~91.0%</b> · 시험 <b style="color:var(--accent)">90.6%</b></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">과적합 · 깊이 11</div><div class="d">훈련 데이터 제품 하나하나의 <strong>우연까지 외웠다</strong></div><div style="font-size:19px">훈련 <b>100%</b> · 시험 <b style="color:var(--accent-2)">86.6%</b></div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:22px"><p style="font-size:21px;margin:0">훈련 정확도는 <strong>“외운 문제를 다시 푼 점수”</strong>. 모델의 실력은 처음 보는 <strong>시험 데이터</strong>(9주 2차시의 시험 데이터)로 재야 합니다 — 데이터를 나눈 이유.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시 · 직접 해 보기 3과 같은 계산 결과</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 과적합 막기 + 질문 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 과적합</span></div>
+  <h2>과적합을 막는 방법</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile row"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h">깊이 제한 · max_depth</div><div class="d">질문 횟수의 상한. 오늘 데이터에서는 2~3이 가장 좋았다</div></div></div>
+      <div class="tile row"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h">잎 크기 제한 · min_samples_leaf</div><div class="d">잎 하나에 제품이 최소 몇 개는 있어야 한다 → 한두 개짜리 “외운 규칙” 방지</div></div></div>
+      <div class="tile row"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h">처음 보는 데이터로 고르기</div><div class="d">설정은 훈련이 아닌 <b>검증 데이터</b> 정확도로 고르고, 시험 데이터는 마지막에 한 번 (오늘 실습은 데이터가 작아 시험 데이터로 비교)</div></div></div>
+      <div class="tile row"><span class="ic-badge lg o"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h">데이터 더 모으기</div><div class="d">제품이 많을수록 우연과 규칙을 구별하기 쉬워진다</div></div></div>
+    </div>
+    <div class="box think frag" style="margin-top:20px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-bulb"/></svg> 그런데 시험 정확도 <strong>90.6%</strong>, 잘한 걸까요? 모든 제품을 그냥 “정상”이라고만 해도 시험 데이터에서 <strong>85.9%</strong>가 나옵니다. → 다음 차시</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 과적합 · 실습</span></div>
+  <h2>실습 파일: 오늘 본 나무를 직접 만들어 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:36px">
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h" style="font-size:20px">1~3. 불러오고 나누기</div><div class="d">process.csv → X(공정 조건 5개), y(defect) → 훈련 70% · 시험 30%</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h" style="font-size:20px">4~6. 나무 학습·그리기</div><div class="d">max_depth=2 나무 → plot_tree 그림, export_text 규칙</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">7. 섞임 정도 계산</div><div class="d">질문 A·B의 지니 불순도를 직접 계산해 비교</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:20px">8~9. 깊이별 정확도 그래프</div><div class="d">max_depth 1~11 → 훈련·시험 정확도 → 과적합 확인</div></div></div>
+    </div>
+    <div style="width:380px;flex:none;display:grid;gap:16px;justify-items:start">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week11/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <div class="callout b">맨 위 셀부터 <strong>순서대로 실행</strong>하세요. 마지막의 <strong>직접 바꿔 보기</strong>에서 max_depth와 질문 기준값을 바꿔 봅니다.</div>
+      <div class="callout">plot_tree 그림이 작으면 figsize 숫자를 키우세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시 · lesson01.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">분류 = 범주 판정</div><div style="font-size:21px">숫자가 아니라 <strong>정상/불량</strong> 같은 범주를 고른다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">의사결정나무</div><div style="font-size:21px">섞임 정도를 가장 줄이는 <strong>예/아니오 질문</strong>을 반복해 만든 규칙</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">과적합 주의</div><div style="font-size:21px">깊은 나무는 훈련 100%도 가능. 실력은 <strong>시험 데이터</strong>로 잰다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="정상/불량처럼 정해진 범주 중 하나를 고르는 것은 분류입니다. 강도·수율·시간처럼 연속된 숫자를 맞히는 것은 회귀입니다.">
+      <p class="q-title"><b>Q1.</b> 다음 중 <u>분류</u> 문제는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">공정 조건으로 인장강도(MPa) 예측</button>
+        <button type="button" data-v="b">실험 조건으로 수율(%) 예측</button>
+        <button type="button" data-v="c">공정 조건으로 제품이 불량인지 판정</button>
+        <button type="button" data-v="d">진동 크기로 남은 수명(일) 예측</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="나무는 가능한 질문을 모두 시험해 보고, 나뉜 두 그룹의 섞임 정도(지니 불순도)를 가장 많이 줄이는 질문을 고릅니다. 불량이 한쪽에 몰릴수록 좋은 질문입니다.">
+      <p class="q-title"><b>Q2.</b> 의사결정나무가 첫 질문을 고르는 기준은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">표에서 맨 왼쪽에 있는 열을 먼저 묻는다</button>
+        <button type="button" data-v="b">나뉜 그룹이 가장 순수해지는(덜 섞이는) 질문</button>
+        <button type="button" data-v="c">기준값이 가장 큰 질문</button>
+        <button type="button" data-v="d">사람이 미리 정해 준 순서</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="훈련 데이터는 거의 다 맞히는데 처음 보는 시험 데이터에서 정확도가 떨어지는 것은 훈련 데이터의 우연까지 외운 과적합의 전형적인 신호입니다.">
+      <p class="q-title"><b>Q3.</b> 훈련 정확도 100%, 시험 정확도 86.6%인 나무에 대한 설명으로 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">완벽한 모델이므로 그대로 쓴다</button>
+        <button type="button" data-v="b">시험 데이터에 오류가 있다</button>
+        <button type="button" data-v="c">질문이 너무 적어 덜 배웠다</button>
+        <button type="button" data-v="d">훈련 데이터를 외워 버린 과적합이다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="max_depth로 질문 횟수를 제한하거나 min_samples_leaf로 잎을 너무 작게 만들지 못하게 하면 나무가 우연한 규칙을 외우는 것을 줄일 수 있습니다.">
+      <p class="q-title"><b>Q4.</b> 의사결정나무의 과적합을 줄이는 방법으로 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">max_depth를 작게 제한한다</button>
+        <button type="button" data-v="b">시험 데이터도 학습에 넣는다</button>
+        <button type="button" data-v="c">훈련 정확도가 100%가 될 때까지 키운다</button>
+        <button type="button" data-v="d">입력 특성을 최대한 많이 만든다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">11-2</div>
+    <h2>불량품 판정 실습</h2>
+    <p>나무를 직접 학습시켜 새 제품을 판정하고, “전부 정상” 기준선과 비교해 봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week10/lesson03.html">← 10-3 예측 오차로 성능 평가하기</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-factory"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">11주 1차시 · 분류의 개념: 의사결정나무와 과적합</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

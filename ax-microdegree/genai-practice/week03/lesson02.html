@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3주 2차시 · 같은 질문, 다른 결과 비교하기 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 3주 2차시 교안: 같은 프롬프트에도 답이 달라지는 이유, Gemini와 Claude의 결과 비교, 정확성·구체성·목적 적합·톤 기준 채점, 고르기와 합치기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  .flowdot { }
+  @media (prefers-reduced-motion: reduce) { .flowdot, .bob { display: none; } }
+  .bob { animation: bob 3s ease-in-out infinite; transform-box: fill-box; }
+  @keyframes bob { 50% { transform: translateY(-8px); } }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+  .switch { margin-bottom: 0; display: flex; }
+  .switch button { flex: 1; font-size: 15px; padding: 6px 10px; }
+
+  /* 다시 보내기 */
+  .cands { display: grid; gap: 8px; }
+  .cand { display: grid; grid-template-columns: 92px 1fr 52px; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; }
+  .cand .tr { height: 26px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+  .cand .tr i { display: block; height: 100%; background: var(--accent-soft); border-radius: 8px; transition: background .2s; }
+  .cand .pc { font-size: 15px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  .cand.pick { color: var(--accent); }
+  .cand.pick .tr i { background: var(--accent); }
+  .hist { display: grid; gap: 5px; font-size: 16px; }
+  .hist div { background: var(--surface-2); border-radius: 10px; padding: 5px 12px; display: flex; gap: 10px; }
+  .hist div b { color: var(--muted); font-size: 13px; min-width: 34px; }
+  .hist div.dup { opacity: .55; }
+  .hist div.new { animation: pop .35s ease; }
+  @keyframes pop { from { transform: scale(.96); opacity: .3; } to { transform: none; opacity: 1; } }
+
+  /* 채점기 */
+  .ans2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; height: 100%; }
+  .ans2 .chat { min-height: 0; }
+  .ans2 .msg { font-size: 15px; line-height: 1.6; max-width: 100%; }
+  .ans2 .chat-h b { color: var(--accent); font-size: 15px; }
+  .hl { border-radius: 4px; transition: background .25s, box-shadow .25s; }
+  .reveal .hl.badf { background: var(--bad-soft); box-shadow: 0 0 0 2px var(--bad); }
+  .reveal .hl.miss { background: var(--accent-2-soft); box-shadow: 0 0 0 2px var(--accent-2); }
+  .reveal .hl.good { background: var(--ok-soft); box-shadow: 0 0 0 2px var(--ok); }
+  .reveal .tagged::after { content: attr(data-tag); font-size: 11.5px; font-weight: 800; color: #fff; background: var(--accent-2); border-radius: 6px; padding: 0 6px; margin-left: 4px; white-space: nowrap; }
+  .reveal .hl.badf.tagged::after { background: var(--bad); }
+  .reveal .hl.good.tagged::after { background: var(--ok); }
+  .rub { width: 100%; border-collapse: separate; border-spacing: 0 4px; font-size: 15px; background: transparent; border: 0; }
+  .rub th, .rub td { padding: 2px 4px; border: 0; background: transparent; vertical-align: middle; }
+  .rub th { font-size: 13px; color: var(--muted); text-align: center; }
+  .rub td.c { font-weight: 800; white-space: nowrap; }
+  .sc { display: inline-flex; gap: 3px; }
+  .sc button { font: inherit; font-size: 14px; font-weight: 800; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; padding: 0; }
+  .sc button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .sc button.ref { box-shadow: 0 0 0 3px var(--accent-2); }
+  .tot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tot .meter .val { font-size: 30px; }
+  .why { font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+
+  /* 합치기 */
+  .slots { display: grid; gap: 6px; }
+  .slot { display: grid; grid-template-columns: 64px 1fr; gap: 8px; align-items: center; font-size: 14px; font-weight: 800; color: var(--muted); }
+  .mini4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .mini4 .meter { padding: 6px 8px; text-align: center; }
+  .mini4 .meter .lbl { font-size: 12px; }
+  .mini4 .meter .val { font-size: 26px; }
+  .merged { white-space: pre-wrap; }
+  .merged span.l { display: block; }
+  .merged span.l.long { text-decoration: underline wavy var(--accent-2); text-underline-offset: 4px; }
+  .merged span.l.wrong { background: var(--bad-soft); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 3주차 2차시</p>
+    <h1>같은 질문,<br>다른 결과 비교하기</h1>
+    <p class="lead" style="font-size:25px">“느낌” 대신 기준으로<br>고르고, 합친다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span><span>Gemini · Claude</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:500px;flex:none" aria-hidden="true">
+    <rect x="170" y="20" width="180" height="70" rx="18" class="f-acc"/>
+    <text x="260" y="62" text-anchor="middle" style="font-size:20px;font-weight:800;fill:var(--surface)">같은 프롬프트</text>
+    <path id="pA" d="M230 92 C 200 140, 140 140, 130 180" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="5 7"/>
+    <path id="pB" d="M290 92 C 320 140, 380 140, 390 180" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="5 7"/>
+    <circle r="6" class="f-acc flowdot"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#pA"/></animateMotion></circle>
+    <circle r="6" class="f-acc2 flowdot"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite"><mpath href="#pB"/></animateMotion></circle>
+    <g class="bob"><rect x="30" y="184" width="200" height="200" rx="20" class="f-surface" stroke="var(--accent)" stroke-width="3"/>
+      <text x="54" y="220" style="font-size:18px;font-weight:800;fill:var(--accent)">답 A</text>
+      <rect x="54" y="238" width="150" height="10" rx="5" class="f-line"/><rect x="54" y="258" width="120" height="10" rx="5" class="f-line"/><rect x="54" y="278" width="140" height="10" rx="5" class="f-line"/>
+      <g style="font-size:14px;font-weight:800"><text x="54" y="324" class="t-sub">정확성</text><text x="54" y="350" class="t-sub">톤</text></g>
+      <g class="f-acc"><circle cx="150" cy="319" r="7"/><circle cx="170" cy="345" r="7"/><circle cx="190" cy="345" r="7"/><circle cx="170" cy="319" r="7" class="f-line"/><circle cx="190" cy="319" r="7" class="f-line"/><circle cx="150" cy="345" r="7"/></g>
+    </g>
+    <g class="bob" style="animation-delay:1.5s"><rect x="290" y="184" width="200" height="200" rx="20" class="f-surface" stroke="var(--accent-2)" stroke-width="3"/>
+      <text x="314" y="220" style="font-size:18px;font-weight:800;fill:var(--accent-2)">답 B</text>
+      <rect x="314" y="238" width="140" height="10" rx="5" class="f-line"/><rect x="314" y="258" width="150" height="10" rx="5" class="f-line"/><rect x="314" y="278" width="100" height="10" rx="5" class="f-line"/>
+      <g style="font-size:14px;font-weight:800"><text x="314" y="324" class="t-sub">정확성</text><text x="314" y="350" class="t-sub">톤</text></g>
+      <g class="f-acc2"><circle cx="410" cy="319" r="7"/><circle cx="430" cy="319" r="7"/><circle cx="450" cy="319" r="7"/><circle cx="410" cy="345" r="7"/><circle cx="430" cy="345" r="7" class="f-line"/><circle cx="450" cy="345" r="7" class="f-line"/></g>
+    </g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">답이 달라지는 이유</div><div class="d">같은 질문에도 매번 다른 답이 나오는 까닭을 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">도구별 차이</div><div class="d">Gemini와 Claude의 답을 같은 조건에서 나란히 비교한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">기준으로 채점</div><div class="d">정확성·구체성·목적 적합·톤 채점표로 답을 평가한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">고르고 합치기</div><div class="d">두 답의 장점을 합쳐 더 나은 결과를 만든다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 왜 매번 다를까</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>② 기준으로 비교하기</b><small>직접 해 보기 1 · 실습</small></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>③ 고르기와 합치기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 지난 차시 실습에서 Gemini와 Claude가 만든 회의 안내문, <strong>어느 쪽을 쓰겠습니까? 그 이유를 한 문장으로 말할 수 있나요?</strong></p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>같은 프롬프트를 두 번 보냈더니</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:center">
+    <div class="chat" style="flex:1.3">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">바다결 ‘미역귀 현미칩 매콤맛’ 한 줄 광고 문구 써 줘. 20~30대 대상, 15자 안팎.</div>
+      <div class="msg ai"><span class="who">첫 번째 답 — 예시</span>맵다, 그런데 멈출 수 없다.</div>
+      <div class="msg user" style="opacity:.75">(같은 프롬프트를 새 채팅에서 다시)</div>
+      <div class="msg ai"><span class="who">두 번째 답 — 예시</span>오늘 밤 야식은 가볍게, 매콤하게.</div>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile frag show" style="padding:16px 20px"><div class="h" style="font-size:21px">어느 쪽이 더 좋나요?</div><div class="d">손을 들어 보면 반쯤 갈립니다. 이유도 제각각 — “그냥 이게 더 끌려요.”</div></div>
+      <div class="tile frag" style="padding:16px 20px"><div class="h" style="font-size:21px">업무에서는 곤란하다</div><div class="d">팀장에게 “느낌이 좋아서요”라고 보고할 수는 없습니다. 같은 기준이면 누가 봐도 같은 답을 골라야 합니다.</div></div>
+      <div class="box think frag" style="margin:0;padding:16px 20px"><p style="margin:0;font-size:20px">오늘의 목표: <strong>느낌 → 기준</strong>으로 바꾸기</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시 · 예시 답변은 미리 써 둔 것, 실제 답은 매번 다름</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>왜 매번 다를까</h2><p>다른 답은 고장이 아니라 설계입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-reset"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 직접 해 보기 1: 다시 보내기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 왜 매번 다를까 · 직접 해 보기 1</span></div>
+  <h2>같은 질문을 여러 번 보내 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:14px;padding:18px 24px">
+      <div style="font-size:20px;font-weight:800">“바다결 현미칩은 <span style="color:var(--accent)">[ ? ]</span>” 다음에 올 말의 확률</div>
+      <div class="cands" id="r-cands"></div>
+      <div class="muted" style="font-size:14px;font-weight:700;margin-top:4px">지금까지 받은 답</div>
+      <div class="hist" id="r-hist"></div>
+    </div>
+    <div class="side">
+      <div class="switch" id="r-mode"><button type="button" data-v="sample" aria-pressed="true">확률대로</button><button type="button" data-v="top" aria-pressed="false">늘 1등만</button></div>
+      <button class="btn" id="r-go" type="button"><svg class="ic"><use href="#i-play"/></svg> 같은 질문 다시 보내기</button>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">보낸 횟수</div><div class="val" id="r-n">0</div></div>
+        <div class="meter"><div class="lbl">서로 다른 답</div><div class="val o" id="r-u">0</div></div>
+      </div>
+      <div class="callout b" id="r-msg">2주차에 배운 대로 LLM은 다음 말을 <strong>확률에 따라</strong> 고릅니다. 버튼을 여러 번 눌러 보세요.</div>
+      <button class="btn ghost" id="r-reset" type="button"><svg class="ic"><use href="#i-reset"/></svg> 처음부터</button>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시 · 확률은 원리를 보여 주는 설명용 가상 값</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 달라도 되는 것 / 안 되는 것 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 왜 매번 다를까</span></div>
+  <h2>달라도 되는 것, 달라지면 안 되는 것</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile" style="padding:24px;border:2px solid var(--ok)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg" style="background:var(--ok-soft);color:var(--ok)"><svg class="ic"><use href="#i-sparkles"/></svg></span><div><div class="h" style="font-size:27px">표현은 달라도 된다</div><div class="muted" style="font-size:17px">오히려 고를 거리가 생긴다</div></div></div>
+        <ul style="font-size:19px;margin:6px 0 0"><li>단어 선택, 문장 순서, 비유</li><li>강조하는 장점, 첫 문장의 느낌</li><li>목록이냐 문단이냐 같은 구성</li></ul>
+      </div>
+      <div class="tile frag" style="padding:24px;border:2px solid var(--bad)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg" style="background:var(--bad-soft);color:var(--bad)"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:27px">사실은 같아야 한다</div><div class="muted" style="font-size:17px">다르면 적어도 하나는 틀렸다</div></div></div>
+        <ul style="font-size:19px;margin:6px 0 0"><li>가격, 날짜, 할인율, 수량</li><li>사람·회사 이름, 법·규정</li><li>주어진 자료에 있는 숫자</li></ul>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">두 번 물었는데 숫자가 다르게 나왔다면 — 2-3에서 본 <strong style="color:var(--text)">환각의 신호</strong>입니다. 원래 자료와 대조하세요.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 8. Gemini vs Claude -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 왜 매번 다를까</span></div>
+  <h2>도구가 다르면? Gemini와 Claude 나란히 쓰기</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">만든 회사·학습이 다르다</div><div class="d">같은 프롬프트에도 답의 <b>길이·구성·말투</b>가 다르게 나오는 경우가 많다. 먼저 질문하는지, 바로 쓰는지도 다를 수 있다.</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">기능도 다르다</div><div class="d">이미지 생성은 Gemini로 한다(Claude는 이미지를 만들지 않는다). 그 밖의 기능·사용량 한도는 <b>요금제·설정마다 다르고 자주 바뀐다.</b></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">“항상 더 나은 쪽”은 없다</div><div class="d">과제마다 결과가 갈리고, 업데이트되면 경향도 바뀐다. 그래서 <b>중요한 일은 둘 다 물어보고 기준으로 비교</b>한다.</div></div>
+    </div>
+    <div class="callout b frag" style="margin-top:20px;font-size:18px">이 수업의 방식: 같은 프롬프트를 <strong>두 도구에 똑같이</strong> 넣는다 → 같은 채점표로 채점한다. 한쪽이 한도에 걸리면 같은 도구의 <strong>새 채팅</strong>에서 한 번 더 받아 비교한다.</div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시 · 서비스 기능·화면은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>기준으로 비교하기</h2><p>네 가지 질문, 1~3점, 근거 한 줄.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 네 기준 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 기준으로 비교하기</span></div>
+  <h2>“느낌” 대신 던질 네 가지 질문</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg" style="background:var(--bad-soft);color:var(--bad)"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">정확성</div><div class="d"><b>틀린 것은 없나?</b><br>가격·날짜·숫자가 주어진 자료와 같은가</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">구체성</div><div class="d"><b>빠진 것은 없나?</b><br>읽는 사람이 행동하는 데 필요한 정보가 다 있는가</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">목적 적합</div><div class="d"><b>그대로 쓸 수 있나?</b><br>요청한 형식·분량·쓰일 곳에 맞는가</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">톤</div><div class="d"><b>읽는 사람에게 맞나?</b><br>대상에게 어울리는 말투·단어인가</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">네 기준은 3-1의 프롬프트 요소와 짝을 이룹니다: <strong style="color:var(--text)">맥락 → 정확성·구체성, 지시·형식 → 목적 적합, 역할·대상 → 톤</strong>.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 채점표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 기준으로 비교하기</span></div>
+  <h2>채점표(루브릭): 점수마다 뜻을 정해 둔다</h2>
+  <div class="body">
+    <table style="font-size:17px">
+      <thead><tr><th style="width:130px">기준</th><th>3점</th><th>2점</th><th>1점</th></tr></thead>
+      <tbody>
+        <tr><td><b>정확성</b></td><td>주어진 정보와 모두 일치</td><td>사소한 표현 차이</td><td style="color:var(--bad);font-weight:700">틀린 사실·숫자가 있음</td></tr>
+        <tr><td><b>구체성</b></td><td>필요한 정보(가격·날짜·조건) 모두</td><td>하나가 빠지거나 모호</td><td>여러 개가 빠짐</td></tr>
+        <tr><td><b>목적 적합</b></td><td>요청한 형식·분량을 지킴</td><td>한 군데가 어긋남</td><td>형식·분량이 크게 어긋남</td></tr>
+        <tr><td><b>톤</b></td><td>대상에 맞는 말투</td><td>대체로 맞지만 어색한 곳</td><td>대상과 맞지 않는 말투</td></tr>
+      </tbody>
+    </table>
+    <div class="grid g2 frag" style="margin-top:16px;gap:16px">
+      <div class="callout b" style="font-size:17px"><strong>왜 1~3점?</strong> 10점 만점은 7점과 8점의 차이를 설명하기 어렵습니다. 세 단계면 <strong>누가 채점해도 비슷</strong>해집니다.</div>
+      <div class="callout" style="font-size:17px"><strong>점수 + 근거 한 줄.</strong> “정확성 1 — 할인율이 20%로 틀림”처럼 써야 고칠 곳이 보입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시 · 실습 자료 rubric_3-2.txt와 같은 표</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 2: 채점기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 기준으로 비교하기 · 직접 해 보기 2</span></div>
+  <h2>두 답을 채점해 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot" style="padding:12px;align-items:stretch">
+      <div class="ans2" id="s-ans">
+        <div class="chat"><div class="chat-h"><b>답 A</b> 예시 답변 — 미리 써 둔 것</div><div class="msg ai"><span class="hl good tagged" data-tag="20~30대 말투">드디어 나왔다, 맵지만 멈출 수 없는 그 맛!</span>
+바다결 미역귀 현미칩 매콤맛, 튀기지 않고 구워 가볍게!<span class="hl miss tagged" data-tag="가격 없음"></span>
+출시 기념 <span class="hl miss tagged" data-tag="끝나는 날?">11월 20일부터 일주일</span>, 2봉 이상 사면 <span class="hl badf tagged" data-tag="정보는 10%">20% 할인</span>!
+지금 자사몰에서 만나 보세요.</div></div>
+        <div class="chat"><div class="chat-h"><b style="color:var(--accent-2)">답 B</b> 예시 답변 — 미리 써 둔 것</div><div class="msg ai"><span class="hl badf tagged" data-tag="공문 말투">안녕하십니까, 바다결입니다.</span>
+<span class="hl miss tagged" data-tag="83자">11월 20일(금) 출시하는 ‘미역귀 현미칩 매콤맛’은 튀기지 않고 구운 현미칩에 청양고추로 매운맛을 더한 제품이며, 가격은 1봉 6,900원입니다.</span>
+<span class="hl miss tagged" data-tag="61자">출시를 기념하여 11월 20일(금)부터 26일(목)까지 2봉 이상 구매하시는 고객께 10% 할인을 제공합니다.</span>
+회원 여러분의 많은 관심 부탁드립니다. 감사합니다.</div></div>
+      </div>
+    </div>
+    <div class="side">
+      <table class="rub" id="s-rub"><thead><tr><th></th><th>답 A</th><th>답 B</th></tr></thead><tbody></tbody></table>
+      <div class="tot">
+        <div class="meter"><div class="lbl">답 A 합계</div><div class="val" id="s-ta">- / 12</div></div>
+        <div class="meter"><div class="lbl">답 B 합계</div><div class="val o" id="s-tb">- / 12</div></div>
+      </div>
+      <button class="btn ghost" id="s-ref" type="button"><svg class="ic"><use href="#i-eye"/></svg> 예시 채점과 비교하기</button>
+      <div class="status mid" id="s-st"><b class="k">먼저 채점해 보세요</b>프롬프트 조건: 20~30대 대상 친근한 말투, 4줄 이내·한 줄 40자 안팎, 가격·출시일·할인 기간·조건 포함. 할인은 <strong>11/20~26, 2봉 이상 10%</strong>.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시 · 가상 신제품 · 두 답 모두 미리 써 둔 예시(실제 도구의 답이 아님)</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 판정 규칙 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 기준으로 비교하기</span></div>
+  <h2>합계만 보면 속는다: 판정 규칙 세 가지</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg" style="background:var(--bad-soft);color:var(--bad)"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">① 정확성 1점은 탈락</div><div class="d">합계가 높아도 틀린 숫자가 있으면<br><b>그대로 내보내지 않는다</b><br>(답 A의 20% 할인)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">② 동점이면 목적 적합</div><div class="d">“이걸 지금 그대로<br>보낼 수 있는가?”를<br>먼저 본다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">③ 장점이 갈리면 합친다</div><div class="d">A는 말투, B는 정보 —<br>고르지 말고<br><b>합쳐 달라고</b> 한다</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:22px"><p style="margin:0;font-size:21px">답 A 8점, 답 B 8점. 동점이지만 이유는 정반대입니다. <strong>점수는 결론이 아니라, 무엇을 고칠지 알려 주는 지도</strong>입니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시 · 점수는 앞 장의 예시 채점 기준</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 실습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 기준으로 비교하기 · 실습</span></div>
+  <h2>실습: 같은 프롬프트를 Gemini와 Claude에</h2>
+  <div class="body" style="flex-direction:row;gap:24px;align-items:stretch">
+    <div style="flex:1.45;display:flex;flex-direction:column;gap:10px">
+      <div class="prompt"><div class="prompt-h">프롬프트 — 두 도구에 똑같이 붙여 넣기<button class="copy" type="button">복사</button></div><pre style="font-size:16px">너는 바다결 자사몰의 회원 마케팅 담당자야.
+아래 [신제품 정보]로 자사몰 회원에게 보낼 신제품 출시 안내 문자를 써 줘.
+회원은 20~30대가 많아. 말투는 친근하게.
+형식: 4줄 이내, 한 줄 40자 안팎.
+가격·출시일·할인 기간·할인 조건을 빠짐없이 넣고, 정보에 없는 내용은 지어내지 마.
+
+[신제품 정보]
+· 제품: 미역귀 현미칩 매콤맛 (튀기지 않고 구운 현미칩, 청양고추로 매운맛)
+· 가격: 1봉 6,900원
+· 출시: 11월 20일(금), 자사몰
+· 출시 기념: 11월 20일(금)~26일(목), 2봉 이상 구매 시 10% 할인</pre></div>
+      <p style="margin:0;display:flex;gap:12px"><a class="btn" href="materials/rubric_3-2.txt" download><svg class="ic"><use href="#i-log"/></svg> 채점표 받기</a><a class="btn ghost" href="materials/launch_prompt_3-2.txt" download>프롬프트·실습 방법</a></p>
+    </div>
+    <div style="flex:1;display:grid;gap:10px;align-content:center">
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge"><b style="font-size:24px">1</b></span><div class="d" style="font-size:17px;color:var(--text)"><b>Gemini</b>에 붙여 넣고 답을 받는다</div></div>
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge o"><b style="font-size:24px">2</b></span><div class="d" style="font-size:17px;color:var(--text)"><b>Claude</b>에 똑같이 — 한 글자도 바꾸지 않는다</div></div>
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge"><b style="font-size:24px">3</b></span><div class="d" style="font-size:17px;color:var(--text)">채점표에 <b>점수 + 근거 한 줄</b>. 숫자는 정보와 한 글자씩 대조</div></div>
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge"><b style="font-size:24px">4</b></span><div class="d" style="font-size:17px;color:var(--text)">같은 도구로 <b>한 번 더</b> 받아 보면 점수가 같을까?</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시 · 가상 회사의 가상 제품 정보라 붙여 넣어도 됩니다</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>고르기와 합치기</h2><p>둘 중 하나가 아니라, 둘의 장점을.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-link"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 고르기 vs 합치기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 고르기와 합치기</span></div>
+  <h2>언제 고르고, 언제 합칠까?</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile" style="padding:24px">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h" style="font-size:27px">고르기</div></div>
+        <ul style="font-size:19px;margin:4px 0 0"><li>한쪽이 <strong>모든 기준에서</strong> 같거나 낫다</li><li>다른 쪽에 치명적 결함(정확성 1점)이 있다</li><li>시간이 없고, 고를 답이 이미 충분히 좋다</li></ul>
+      </div>
+      <div class="tile" style="padding:24px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-link"/></svg></span><div class="h" style="font-size:27px">합치기</div></div>
+        <ul style="font-size:19px;margin:4px 0 0"><li>두 답의 <strong>강한 기준이 서로 다르다</strong> (A는 톤, B는 정보)</li><li>각 답에서 살릴 부분을 말로 짚을 수 있다</li><li>합친 뒤 <strong>다시 채점</strong>할 시간이 있다</li></ul>
+      </div>
+    </div>
+    <div class="flow frag" style="margin-top:22px">
+      <div class="stepbox" style="padding:12px 8px"><div class="h" style="font-size:19px">① 채점</div><div class="d">기준별 강점 찾기</div></div><div class="arrow">›</div>
+      <div class="stepbox" style="padding:12px 8px"><div class="h" style="font-size:19px">② 살릴 것 짚기</div><div class="d">“A의 말투, B의 정보”</div></div><div class="arrow">›</div>
+      <div class="stepbox" style="padding:12px 8px"><div class="h" style="font-size:19px">③ 합쳐 달라고 요청</div><div class="d">사실은 원자료 기준</div></div><div class="arrow">›</div>
+      <div class="stepbox goal" style="padding:12px 8px"><div class="h" style="font-size:19px">④ 다시 채점</div><div class="d">합친 답도 검증</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 직접 해 보기 3: 합치기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 고르기와 합치기 · 직접 해 보기 3</span></div>
+  <h2>잘라 붙이기 vs 합쳐 달라고 하기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:12px;padding:16px 20px">
+      <div class="muted" style="font-size:15px;font-weight:700" id="m-cap">내가 줄마다 골라 붙인 문자</div>
+      <div class="chat"><div class="chat-h" id="m-h"><svg class="ic"><use href="#i-log"/></svg> 잘라 붙인 결과</div><div class="msg ai merged" id="m-out" style="font-size:17px;max-width:100%"></div></div>
+      <div class="mini4" id="m-sc"></div>
+      <div class="legend"><span><span style="text-decoration:underline wavy var(--accent-2);text-underline-offset:4px">밑줄</span> 한 줄이 너무 김(45자 넘음)</span><span><i class="dot" style="background:var(--bad-soft);border:1px solid var(--bad)"></i>정보와 다른 사실</span></div>
+    </div>
+    <div class="side">
+      <div class="slots" id="m-slots"></div>
+      <button class="btn" id="m-ai" type="button"><svg class="ic"><use href="#i-sparkles"/></svg> AI에게 합쳐 달라고 하기</button>
+      <div class="meter"><div class="lbl">합계</div><div class="val" id="m-tot">- / 12</div></div>
+      <div class="status mid" id="m-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시 · 점수는 앞 채점표 규칙으로 계산 · 합친 답은 미리 써 둔 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 합치기 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 고르기와 합치기</span></div>
+  <h2>합치기 프롬프트: 무엇을 살릴지 말로 정한다</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:center">
+    <div style="flex:1.3">
+      <div class="prompt"><div class="prompt-h">프롬프트 — 실습에서 받은 두 답으로 해 보기<button class="copy" type="button">복사</button></div><pre>아래 두 답을 하나로 합쳐 줘.
+· 말투는 <mark>답 A</mark>처럼 친근하게
+· 정보는 <mark>답 B</mark>처럼 빠짐없이
+· 가격·날짜·할인율은 반드시 [신제품 정보]와 같게
+· 4줄 이내, 한 줄 40자 안팎
+합친 뒤, 각 줄이 어느 답에서 왔는지 괄호로 알려 줘.
+
+[신제품 정보] <mark>(붙여 넣기)</mark>
+[답 A] <mark>(붙여 넣기)</mark>
+[답 B] <mark>(붙여 넣기)</mark></pre></div>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">“좋은 점 합쳐 줘”는 약하다</div><div class="d">무엇이 좋은지는 채점한 내가 압니다. <b>기준을 말로</b> 넘깁니다.</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div><div class="h" style="font-size:20px">사실의 기준은 원자료</div><div class="d">두 답이 아니라 <b>[신제품 정보]</b>를 함께 넣어야 틀린 숫자가 섞이지 않습니다.</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:20px">합친 답도 다시 채점</div><div class="d">합치는 과정에서 새 실수가 생길 수 있습니다. 마지막 확인은 <b>사람</b>.</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시 · Gemini·Claude 어느 쪽에서도 같은 방식</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">답은 매번 다르다</div><div style="font-size:21px">표현은 달라도 되지만, <strong>사실이 다르면</strong> 하나는 틀렸다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">느낌 대신 네 기준</div><div style="font-size:21px">정확성·구체성·목적 적합·톤을 <strong>1~3점 + 근거 한 줄</strong>로</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">고르거나 합친다</div><div style="font-size:21px">정확성 1점은 탈락, 장점이 갈리면 <strong>기준을 말해 합치고 다시 채점</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="생성형AI는 다음에 올 말을 확률에 따라 고르기 때문에 같은 질문에도 답이 달라질 수 있습니다. 고장이나 오류가 아닙니다.">
+      <p class="q-title"><b>Q1.</b> 같은 프롬프트를 다시 보냈더니 다른 문장이 나왔다. 가장 알맞은 설명은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 고장 나서 생긴 오류다</button>
+        <button type="button" data-v="b">다음 말을 확률에 따라 고르기 때문에 자연스러운 일이다</button>
+        <button type="button" data-v="c">처음 답이 무조건 정답이다</button>
+        <button type="button" data-v="d">두 번째 답이 무조건 더 정확하다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="표현은 달라도 되지만, 주어진 자료에 있는 가격·날짜 같은 사실은 같아야 합니다. 두 답의 숫자가 다르면 적어도 하나는 틀린 것이니 원자료와 대조합니다.">
+      <p class="q-title"><b>Q2.</b> 두 답에서 <u>달라지면 반드시 확인해야</u> 하는 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">첫 문장의 단어 선택</button>
+        <button type="button" data-v="b">문장의 순서</button>
+        <button type="button" data-v="c">목록이냐 문단이냐</button>
+        <button type="button" data-v="d">할인율과 할인 기간</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="정확성 1점(틀린 사실)은 합계와 관계없이 그대로 쓸 수 없습니다. 틀린 곳을 고치거나, 정확한 답을 바탕으로 다시 만듭니다.">
+      <p class="q-title"><b>Q3.</b> 답 A는 합계 10점이지만 할인율이 틀렸고, 답 B는 9점이다. 올바른 판단은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">A는 정확성 1점이므로 그대로 쓰지 않고 고치거나 B를 바탕으로 한다</button>
+        <button type="button" data-v="b">합계가 높은 A를 그대로 보낸다</button>
+        <button type="button" data-v="c">점수 차이가 작으니 아무거나 보낸다</button>
+        <button type="button" data-v="d">둘 다 버리고 직접 처음부터 쓴다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="무엇을 살릴지(말투는 A, 정보는 B)와 사실의 기준(원자료)을 말로 정해 주어야 합친 결과가 좋아집니다. 합친 답도 다시 채점합니다.">
+      <p class="q-title"><b>Q4.</b> 두 답을 합쳐 달라고 할 때 가장 좋은 프롬프트는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">두 개 중에 좋은 거 골라 줘</button>
+        <button type="button" data-v="b">둘 다 별로야, 다시 써 줘</button>
+        <button type="button" data-v="c">말투는 A처럼, 정보는 B처럼, 숫자는 [신제품 정보]와 같게 합쳐 줘</button>
+        <button type="button" data-v="d">좋은 점만 합쳐 줘</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">3-3</div>
+    <h2>대화로 결과 다듬기</h2>
+    <p>첫 답은 초안입니다. “더 짧게, 20대 대상으로, 숫자 근거를 넣어서” — 피드백 한 마디로 답을 원하는 쪽으로 끌고 가는 법을 배웁니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chat"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">3주 2차시 · 같은 질문, 다른 결과 비교하기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

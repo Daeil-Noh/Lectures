@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7주 2차시 · 차트 만들기와 해석 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 7주 2차시 교안: 목적에 맞는 차트 고르기, AI로 차트 만들기, 차트 읽기와 잘린 축, 한 문장 인사이트">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  .draw { stroke-dasharray: 900; stroke-dashoffset: 900; animation: draw 3.2s ease-out forwards infinite; }
+  @keyframes draw { 0% { stroke-dashoffset: 900; } 60%, 100% { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) { .draw { animation: none; stroke-dashoffset: 0; } }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+  .ex-tag { display: inline-block; font-size: 12px; font-weight: 800; color: var(--accent-2); background: var(--accent-2-soft); border-radius: 6px; padding: 1px 8px; margin-left: 6px; }
+  .pick { display: grid; gap: 6px; }
+  .pick .lb { font-size: 14px; font-weight: 800; color: var(--muted); }
+  .pick .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pick button { font: inherit; font-size: 15.5px; font-weight: 700; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .pick button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .pick.col button { width: 100%; text-align: left; }
+  /* 인사이트 카드 */
+  .ins { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 7px 12px; font-size: 15px; line-height: 1.45; }
+  .ins:hover { border-color: var(--accent); }
+  .ins .v { display: none; font-weight: 800; font-size: 13.5px; }
+  .ins .a { display: none; font-size: 13.5px; color: var(--muted); }
+  .ins.open .v, .ins.open .a { display: block; }
+  .ins.open.good { background: var(--ok-soft); border-color: var(--ok); } .ins.open.good .v { color: var(--ok); }
+  .ins.open.bad { background: var(--bad-soft); border-color: var(--bad); } .ins.open.bad .v { color: var(--bad); }
+  .ins.open.mid { background: var(--accent-2-soft); border-color: var(--accent-2); } .ins.open.mid .v { color: var(--accent-2); }
+  .mini { font-size: 15px; } .mini td, .mini th { padding: 5px 10px; text-align: right; font-variant-numeric: tabular-nums; } .mini td:first-child, .mini th:first-child { text-align: left; }
+  .mini tr.hot td { background: var(--accent-2-soft); font-weight: 700; }
+  .seen li { margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 7주차 2차시</p>
+    <h1>차트 만들기와<br>해석</h1>
+    <p class="lead" style="font-size:25px">목적에 맞게 그리고,<br>한 문장으로 말하기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>Gemini · Claude</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="30" y="40" width="460" height="330" rx="24" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <line x1="80" y1="320" x2="450" y2="320" stroke="var(--line)" stroke-width="3"/>
+    <g class="f-accs"><rect x="96" y="210" width="36" height="110" rx="6"/><rect x="152" y="228" width="36" height="92" rx="6"/><rect x="208" y="236" width="36" height="84" rx="6"/><rect x="264" y="220" width="36" height="100" rx="6"/><rect x="320" y="200" width="36" height="120" rx="6"/></g>
+    <rect x="376" y="150" width="36" height="170" rx="6" class="f-acc"/>
+    <path class="draw" d="M114 170 L170 186 L226 196 L282 178 L338 160 L394 104" fill="none" stroke="var(--accent-2)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="394" cy="104" r="9" class="f-acc2"/>
+    <rect x="260" y="56" width="210" height="40" rx="12" class="f-acc2s"/>
+    <text x="365" y="82" text-anchor="middle" style="font-size:16px;font-weight:800;fill:var(--accent-2)">“9월에 가장 높다”</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">차트 고르기</div><div class="d">비교·추이·구성 비율 목적에 맞는 차트를 고른다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">AI로 만들기</div><div class="d">AI에게 차트나 스프레드시트 차트 만드는 방법을 요청한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">바르게 읽기</div><div class="d">차트가 보여 주는 것과 보여 주지 않는 것, 잘린 축을 구분한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="h">한 문장 인사이트</div><div class="d">숫자 + 의미 + 다음 행동이 담긴 문장으로 정리한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 차트 고르기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② AI로 차트 만들기</b></div>
+      <div style="flex:8;background:var(--accent-2-soft)"><b>③ 차트 읽고 해석하기</b><small>직접 해 보기 2</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 차트를 볼 때마다 질문 하나: <strong>“이 차트는 무엇을 보여 주려고 그렸나?”</strong></p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입: 표 vs 차트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>같은 숫자 9개, 어느 쪽이 더 빨리 보이나요?</h2>
+  <div class="body" style="flex-direction:row;gap:30px;align-items:center">
+    <div style="width:330px;flex:none">
+      <table class="mini">
+        <tr><th>월</th><th>오픈마켓 광고비</th></tr>
+        <tr><td>1월</td><td>6,670,463</td></tr><tr><td>2월</td><td>6,899,640</td></tr><tr><td>3월</td><td>6,856,542</td></tr>
+        <tr><td>4월</td><td>7,251,863</td></tr><tr><td>5월</td><td>6,894,632</td></tr><tr><td>6월</td><td>7,083,674</td></tr>
+        <tr><td>7월</td><td>8,870,021</td></tr><tr><td>8월</td><td>9,175,566</td></tr><tr><td>9월</td><td>6,955,071</td></tr>
+      </table>
+    </div>
+    <div class="frag" style="flex:1;display:flex;flex-direction:column;gap:10px">
+      <svg id="intro" viewBox="0 0 640 360" aria-label="월별 오픈마켓 광고비 선 차트. 7월과 8월이 높다"></svg>
+      <p class="muted" style="font-size:20px;margin:0">표에서는 숫자를 하나씩 읽어야 하지만, 차트에서는 <strong style="color:var(--text)">7~8월이 튀어 오른 것</strong>이 한눈에 보입니다.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시 · sales_2026.csv(가상 데이터) 오픈마켓 행의 ad_spend 월별 합계(원)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>목적에 맞는 차트 고르기</h2><p>차트 종류는 “예쁜 것”이 아니라 “말하려는 것”으로 고릅니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 목적 → 차트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 차트 고르기</span></div>
+  <h2>무엇을 말하고 싶은가 → 어떤 차트인가</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show" style="align-items:center;text-align:center">
+        <svg viewBox="0 0 220 120" style="width:220px" aria-hidden="true"><line x1="20" y1="104" x2="200" y2="104" stroke="var(--line)" stroke-width="2"/><rect x="36" y="24" width="40" height="80" rx="5" class="f-acc"/><rect x="92" y="50" width="40" height="54" rx="5" class="f-acc" opacity=".7"/><rect x="148" y="70" width="40" height="34" rx="5" class="f-acc" opacity=".45"/></svg>
+        <div class="h">비교 → 막대</div><div class="d">항목끼리 크기 비교<br>“어느 채널 매출이 가장 큰가?”</div>
+      </div>
+      <div class="tile frag" style="align-items:center;text-align:center">
+        <svg viewBox="0 0 220 120" style="width:220px" aria-hidden="true"><line x1="20" y1="104" x2="200" y2="104" stroke="var(--line)" stroke-width="2"/><path d="M28 70 L56 76 L84 86 L112 84 L140 72 L168 64 L196 34" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="196" cy="34" r="6" class="f-acc"/></svg>
+        <div class="h">추이 → 선</div><div class="d">시간에 따른 변화<br>“월별 매출이 어떻게 변했나?”</div>
+      </div>
+      <div class="tile frag" style="align-items:center;text-align:center">
+        <svg viewBox="0 0 220 120" style="width:220px" aria-hidden="true"><circle cx="110" cy="60" r="50" fill="var(--accent)" opacity=".35"/><path d="M110 60 L110 10 A50 50 0 0 1 157 76 Z" class="f-acc"/><path d="M110 60 L157 76 A50 50 0 0 1 88 105 Z" class="f-acc2"/></svg>
+        <div class="h">구성 비율 → 원 · 100% 막대</div><div class="d">전체 중 각 부분의 몫<br>“매출에서 제품별 비중은?”</div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">두 숫자의 <strong style="color:var(--text)">관계</strong>(예: 광고비가 많을수록 매출도 많은가?)는 점으로 찍는 <strong style="color:var(--text)">산점도</strong>를 씁니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 차트 종류 바꾸기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 차트 고르기 · 직접 해 보기 1</span></div>
+  <h2>질문에 맞는 차트는? 바꿔 가며 비교하기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot"><svg id="sw" viewBox="0 0 640 420" aria-label="선택한 질문과 차트 종류로 그린 바다결 매출 차트"></svg></div>
+    <div class="side">
+      <div class="pick col" id="sw-q"><span class="lb">① 대표님의 질문</span>
+        <button type="button" data-q="cmp" aria-pressed="true">어느 채널 매출이 가장 큰가?</button>
+        <button type="button" data-q="trend" aria-pressed="false">월별 전체 매출은 어떻게 변했나?</button>
+        <button type="button" data-q="share" aria-pressed="false">매출에서 제품별 비중은?</button>
+      </div>
+      <div class="pick" id="sw-c"><span class="lb">② 차트 종류</span>
+        <div class="row">
+          <button type="button" data-c="bar" aria-pressed="true"><svg class="ic"><use href="#i-chart"/></svg> 막대</button>
+          <button type="button" data-c="line" aria-pressed="false"><svg class="ic"><use href="#i-trend"/></svg> 선</button>
+          <button type="button" data-c="pie" aria-pressed="false"><svg class="ic"><use href="#i-target"/></svg> 원</button>
+        </div>
+      </div>
+      <div class="status ok" id="sw-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시 · sales_2026.csv(가상 데이터) 1~9월 135행으로 계산한 실제 값</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>AI로 차트 만들기</h2><p>AI에게 그려 달라고 하거나, 스프레드시트에서 만드는 방법을 물어봅니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-sparkles"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. AI에게 차트 요청 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI로 차트 만들기</span></div>
+  <h2>방법 A: AI에게 차트를 요청하기</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:stretch">
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;min-width:0">
+      <div class="prompt"><div class="prompt-h">프롬프트 ① 차트 요청<button class="copy" type="button">복사</button></div><pre>첨부한 sales_2026.csv에서 channel이 '오픈마켓'인 행만 골라
+<mark>월별 ad_spend 합계와 revenue 합계</mark>를 구하고, 두 값을 <mark>선 차트</mark> 하나에 그려 줘.
+- x축: 월(1~9월), y축: 금액(만 원)
+- 두 선은 색을 다르게, 범례 표시
+- 차트 아래에 그린 숫자 표도 함께 보여 줘</pre></div>
+      <div class="callout" style="font-size:16px">도구와 상황에 따라 <b>차트 그림을 바로 만들어 주기도</b> 하고, <b>만드는 방법만 알려 주기도</b> 합니다. 어느 쪽이든 괜찮습니다 — 함께 받은 <b>숫자 표</b>를 7-1처럼 확인하세요.</div>
+    </div>
+    <div class="chat" style="width:430px;flex:none">
+      <div class="chat-h">AI 채팅 (화면은 단순화한 예시) <span class="ex-tag">예시 답변</span></div>
+      <div class="msg ai" style="max-width:100%;font-size:15px;white-space:normal">오픈마켓 월별 광고비와 매출을 선 차트로 그렸습니다.
+        <svg id="req" viewBox="0 0 400 230" style="margin-top:6px;background:var(--surface);border-radius:10px" aria-label="예시 답변 속 오픈마켓 월별 광고비와 매출 선 차트"></svg>
+        <span style="display:block;margin-top:6px">7~8월에 광고비가 크게 늘었지만 매출 선은 거의 평평합니다.</span>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시 · 차트 속 숫자는 실제 파일로 계산한 값</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 스프레드시트에서 만들기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI로 차트 만들기</span></div>
+  <h2>방법 B: 요약표를 받아 스프레드시트에서 직접 그리기</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">요약표 요청</div><div class="d">“채널별 revenue 합계를<br>표로 만들어 줘”</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">숫자 확인</div><div class="d">필터 + 합계로<br>한두 개 검증 (7-1)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">붙여 넣고 선택</div><div class="d">스프레드시트 빈 시트에<br>표를 붙여 넣고 범위 선택</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">차트 넣기</div><div class="d">삽입 메뉴의 차트 →<br>차트 종류 고르기</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">다듬기</div><div class="d">제목·축 이름·단위<br>범례 정리</div></div>
+    </div>
+    <div class="prompt frag" style="margin-top:22px"><div class="prompt-h">프롬프트 ② 만드는 방법 묻기<button class="copy" type="button">복사</button></div><pre>아래 요약표로 <mark>구글 스프레드시트</mark>에서 <mark>막대 차트</mark>를 만들고 싶어. 스프레드시트를 처음 쓰는 사람도 따라 할 수 있게 단계별로 알려 줘.
+<mark>[여기에 요약표 붙여 넣기]</mark></pre></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시 · 엑셀을 쓰면 “엑셀에서”로 바꾸기. 메뉴 이름·위치는 프로그램 버전에 따라 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 좋은 차트 체크리스트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI로 차트 만들기</span></div>
+  <h2>AI가 그린 차트도, 내가 그린 차트도 이것부터 확인</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(5,1fr)">
+      <div class="tile frag show" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-book"/></svg></span><div class="h" style="font-size:21px">제목</div><div class="d">무엇을, 언제의 데이터로?<br>“1~9월 채널별 매출”</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h" style="font-size:21px">축과 단위</div><div class="d">원? 만 원? 개?<br>단위가 없으면 읽을 수 없다</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h" style="font-size:21px">0에서 시작</div><div class="d">막대 차트의 세로축은<br>0부터 (③에서 직접 확인)</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h" style="font-size:21px">범례·색</div><div class="d">선·막대가 여러 개면<br>무엇이 무엇인지 표시</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-link"/></svg></span><div class="h" style="font-size:21px">출처</div><div class="d">어떤 파일, 어떤 기간인지<br>차트 아래에 적기</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>차트 읽고 해석하기</h2><p>차트는 보여 주는 것만큼 <strong>보여 주지 않는 것</strong>도 있습니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-eye"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 보여 주는 것 / 보여 주지 않는 것 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 차트 읽고 해석하기</span></div>
+  <h2>이 차트가 보여 주는 것, 보여 주지 않는 것</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:stretch">
+    <div class="tile" style="flex:1;padding:12px;min-width:0"><svg id="read" viewBox="0 0 640 400" aria-label="오픈마켓 월별 광고비와 매출 선 차트"></svg></div>
+    <div style="width:380px;flex:none;display:grid;gap:12px;align-content:center">
+      <div class="tile frag show" style="padding:14px 18px;border:2px solid var(--ok)"><div class="h" style="font-size:20px;color:var(--ok)"><svg class="ic"><use href="#i-eye"/></svg> 보여 주는 것</div>
+        <ul class="seen" style="font-size:16.5px;margin:0">
+          <li>7·8월 광고비: 1~6월 평균보다 <b>+28%</b>, <b>+32%</b></li>
+          <li>같은 달 매출: 1~6월 평균보다 <b>+1.8%</b>, <b>+3.0%</b></li>
+          <li>9월에 광고비가 다시 평소 수준으로</li>
+        </ul></div>
+      <div class="tile frag" style="padding:14px 18px;border:2px solid var(--accent-2)"><div class="h" style="font-size:20px;color:var(--accent-2)"><svg class="ic"><use href="#i-x"/></svg> 보여 주지 않는 것</div>
+        <ul class="seen" style="font-size:16.5px;margin:0">
+          <li><b>왜</b> 광고비를 늘렸는지, 매출이 왜 그대로인지</li>
+          <li><b>수익</b> — 원가 데이터가 없다</li>
+          <li>광고를 안 했다면 매출이 어땠을지</li>
+        </ul></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시 · sales_2026.csv(가상 데이터) 오픈마켓 45행, 월별 합계</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 직접 해 보기 2: 잘린 축 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 차트 읽고 해석하기 · 직접 해 보기 2</span></div>
+  <h2>세로축을 잘라 보자: 같은 숫자, 다른 인상 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="cut" viewBox="0 0 640 420" aria-label="오픈마켓 월별 매출 막대 차트. 세로축 시작값에 따라 막대 길이가 달라진다"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>세로축 시작값 <output id="cut-o">0만 원</output></label><input id="cut-s" type="range" min="0" max="1550" step="50" value="0" aria-label="세로축 시작값"></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">실제 값의 차이</div><div class="val" style="font-size:32px">1.24배</div></div>
+        <div class="meter"><div class="lbl">막대 길이 차이</div><div class="val o" id="cut-r" style="font-size:32px">1.24배</div></div>
+      </div>
+      <div class="muted" style="font-size:14.5px">1월(가장 높음) ÷ 4월(가장 낮음)</div>
+      <div class="status ok" id="cut-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시 · sales_2026.csv(가상 데이터) 오픈마켓 월별 revenue 합계</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 직접 해 보기 3: 한 문장 인사이트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 차트 읽고 해석하기 · 직접 해 보기 3</span></div>
+  <h2>어떤 문장이 좋은 인사이트일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 420px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;gap:6px">
+      <div class="switch" id="ins-sw" style="margin:0 0 0 6px">
+        <button type="button" data-k="ad" aria-pressed="true">오픈마켓 광고비 vs 매출</button>
+        <button type="button" data-k="gift" aria-pressed="false">선물 세트 월별 매출</button>
+      </div>
+      <svg id="ins-svg" viewBox="0 0 640 380" style="flex:1;min-height:0" aria-label="선택한 바다결 차트"></svg>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:14.5px;font-weight:700">후보 문장을 눌러 판정을 확인하세요</div>
+      <div id="ins-list" style="display:grid;gap:8px"></div>
+      <div class="muted" id="ins-score" style="font-size:14.5px">0 / 4 확인</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시 · sales_2026.csv(가상 데이터)로 계산한 실제 값</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 인사이트 공식 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 차트 읽고 해석하기</span></div>
+  <h2>한 문장 인사이트 = 사실(숫자) + 의미 + 다음 행동</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">사실 + 숫자</div><div class="d">선물 세트 1·2·9월 매출은<br>3~8월 평균의 약 1.8~2.1배</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="h">의미</div><div class="d">설·추석 명절 시기와 겹친다<br><b>(원인은 추정 — 확인 필요)</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">다음 행동</div><div class="d">명절 한 달 전부터<br>재고·홍보를 준비하자</div></div>
+    </div>
+    <div class="prompt frag" style="margin-top:22px"><div class="prompt-h">프롬프트 ③ 인사이트 요청<button class="copy" type="button">복사</button></div><pre>이 차트(또는 표)에서 확인되는 사실만 근거로, 바다결 대표에게 보고할 <mark>한 문장 인사이트 3개</mark>를 써 줘.
+각 문장에 근거 숫자를 넣고, 데이터에 없는 추측이 들어가면 문장 끝에 <mark>(추측)</mark>이라고 표시해 줘.</pre></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시 · 4주차 “단계별 지시”처럼 조건을 붙이면 과장이 줄어든다</span><span class="no"></span></div>
+</section>
+
+<!-- 17. AI 해석 검증 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 차트 읽고 해석하기</span></div>
+  <h2>AI의 차트 해석도 검증한다</h2>
+  <div class="body" style="flex-direction:row;gap:28px;align-items:stretch">
+    <div class="chat" style="flex:1">
+      <div class="chat-h">AI 채팅 (화면은 단순화한 예시) <span class="ex-tag">예시 답변 — 잘못된 해석의 예</span></div>
+      <div class="msg user" style="font-size:16px">오픈마켓 광고비·매출 차트를 해석해 줘.</div>
+      <div class="msg ai warn" style="font-size:16px"><span class="who">AI</span>7~8월 광고비를 늘린 덕분에 오픈마켓 매출이 약 15% 성장했습니다. 광고비를 계속 늘리면 매출도 계속 늘 것으로 보입니다.</div>
+      <div class="msg user" style="font-size:16px">1~6월 평균 대비 7·8월 매출 증가율을 계산식과 함께 다시 보여 줘. 원인은 단정하지 말고.</div>
+      <div class="msg ai" style="font-size:16px"><span class="who">AI</span>1~6월 평균 18,185,267원 → 7월 +1.8%, 8월 +3.0%입니다. 같은 기간 광고비는 +28%, +32% 늘었습니다. 이 데이터만으로 원인은 알 수 없습니다.</div>
+    </div>
+    <div style="width:360px;flex:none;display:grid;gap:12px;align-content:center">
+      <div class="tile frag show" style="padding:14px 18px"><div class="h" style="font-size:19px"><svg class="ic" style="color:var(--bad)"><use href="#i-x"/></svg> 숫자가 틀렸다</div><div class="d">“약 15%”는 근거 없는 값. 실제는 2~3%</div></div>
+      <div class="tile frag" style="padding:14px 18px"><div class="h" style="font-size:19px"><svg class="ic" style="color:var(--bad)"><use href="#i-x"/></svg> 원인을 단정했다</div><div class="d">“덕분에” — 함께 변한 것과 원인은 다르다</div></div>
+      <div class="tile frag" style="padding:14px 18px"><div class="h" style="font-size:19px"><svg class="ic" style="color:var(--bad)"><use href="#i-x"/></svg> 데이터 밖을 예측했다</div><div class="d">“계속 늘 것” — 9개월 기록으로 미래를 장담할 수 없다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">목적이 차트를 정한다</div><div style="font-size:21px">비교 → <strong>막대</strong>, 추이 → <strong>선</strong>, 구성 비율 → <strong>원·100% 막대</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">축과 범위를 의심한다</div><div style="font-size:21px">막대는 <strong>0부터</strong>. 차트가 보여 주지 않는 것(원인·수익·미래)을 구분</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="h">한 문장으로 말한다</div><div style="font-size:21px"><strong>사실(숫자) + 의미 + 다음 행동</strong>. AI의 해석도 숫자부터 확인</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="시간에 따른 변화(추이)는 선 차트가 가장 잘 보여 줍니다. 미역귀 현미칩은 6~8월에 매출이 늘었는데, 선으로 그리면 여름에 솟는 모양이 한눈에 보입니다.">
+      <p class="q-title"><b>Q1.</b> “미역귀 현미칩의 1~9월 매출이 어떻게 변했나?”를 보여 줄 차트로 가장 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">원 차트</button>
+        <button type="button" data-v="b">선 차트</button>
+        <button type="button" data-v="c">제품별 막대 차트 한 장</button>
+        <button type="button" data-v="d">차트 없이 숫자 135개 표</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="막대의 세로축을 0이 아닌 값에서 시작하면 작은 차이가 실제보다 훨씬 크게 보입니다. 직접 해 보기 2에서 1.24배 차이가 몇 배로 보였는지 떠올려 보세요.">
+      <p class="q-title"><b>Q2.</b> 막대 차트의 세로축을 0이 아니라 1,500만 원에서 시작하면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">실제 값이 바뀐다</button>
+        <button type="button" data-v="b">차이가 실제보다 작아 보인다</button>
+        <button type="button" data-v="c">차이가 실제보다 훨씬 커 보인다</button>
+        <button type="button" data-v="d">아무 변화가 없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="좋은 인사이트는 근거 숫자(사실) + 의미 + 다음 행동을 담고, 데이터로 확인되지 않는 원인은 단정하지 않습니다.">
+      <p class="q-title"><b>Q3.</b> 가장 좋은 한 문장 인사이트는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">7·8월 광고비는 약 30% 늘었지만 매출은 2~3% 증가에 그쳐, 광고비 증액 효과를 점검할 필요가 있다</button>
+        <button type="button" data-v="b">광고비를 늘렸더니 매출이 크게 늘었다</button>
+        <button type="button" data-v="c">7월에 광고비가 있었다</button>
+        <button type="button" data-v="d">오픈마켓 광고는 효과가 전혀 없으니 모두 중단해야 한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="sales_2026.csv에는 원가가 없어 수익(이익)은 계산할 수 없습니다. 매출·광고비·반품은 차트로 보여 줄 수 있습니다.">
+      <p class="q-title"><b>Q4.</b> 바다결 판매 데이터로 만든 차트가 보여 줄 수 <u>없는</u> 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">채널별 매출 크기</button>
+        <button type="button" data-v="b">월별 광고비 변화</button>
+        <button type="button" data-v="c">제품별 매출 비중</button>
+        <button type="button" data-v="d">오픈마켓의 월별 수익(이익)</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">7-3</div>
+    <h2>전반부 핵심 정리</h2>
+    <p>1~7주에 배운 원리·프롬프트·문서·리서치·데이터를 한 장의 지도로 묶고, 8주 중간고사를 준비합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-map"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">7주 2차시 · 차트 만들기와 해석</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

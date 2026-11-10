@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12주 1차시 · 비슷한 것끼리 묶기: 군집 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 12주 1차시 교안: 정답 없는 비지도 학습, k-평균 군집의 원리, k 고르기(엘보), 표준화의 필요성, 군집을 공정 조건 패턴으로 해석하기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  /* 군집 색 (밝은·어두운 화면 모두) */
+  :root { --k1: var(--accent); --k2: var(--accent-2); --k3: var(--ok); --k4: #7b4fb5; --k5: #a07800; --k6: #c23b7a; }
+  @media (prefers-color-scheme: dark) { :root { --k4: #b99af0; --k5: #e0c060; --k6: #f08ab8; } }
+  .mv { animation: mv 5s ease-in-out infinite alternate; }
+  .mv2 { animation: mv2 6s ease-in-out infinite alternate; }
+  .mv3 { animation: mv3 5.5s ease-in-out infinite alternate; }
+  @keyframes mv { from { transform: translate(60px, 70px); } to { transform: translate(0, 0); } }
+  @keyframes mv2 { from { transform: translate(-80px, 40px); } to { transform: translate(0, 0); } }
+  @keyframes mv3 { from { transform: translate(40px, -90px); } to { transform: translate(0, 0); } }
+  @media (prefers-reduced-motion: reduce) { .mv, .mv2, .mv3 { animation: none; } }
+  .tgl { font: inherit; font-size: 16px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .klist { display: grid; gap: 2px; font-size: 14px; line-height: 1.3; font-variant-numeric: tabular-nums; }
+  .klist div { display: flex; align-items: center; gap: 8px; }
+  .klist i { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .demo .meter.sm .val { font-size: 28px; }
+  /* 거리 비교 */
+  .pcard3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .prod { background: var(--surface-2); border-radius: 14px; padding: 14px 18px; font-size: 19px; line-height: 1.45; border: 2px solid transparent; }
+  .prod .nm { font-weight: 800; font-size: 20px; }
+  .prod .v { font-variant-numeric: tabular-nums; }
+  .prod.near { border-color: var(--accent-2); background: var(--accent-2-soft); }
+  .dbar { display: grid; grid-template-columns: 120px 1fr 90px; align-items: center; gap: 10px; font-size: 19px; font-weight: 700; }
+  .dbar .track { height: 32px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+  .dbar .track i { display: block; height: 100%; border-radius: 8px; transition: width .35s; }
+  .dbar .num { text-align: right; font-variant-numeric: tabular-nums; }
+  /* 군집 카드 */
+  .ccards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .ccard { font: inherit; text-align: left; cursor: pointer; border: 2px solid var(--line); background: var(--surface); color: var(--text); border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; transition: background .2s, border-color .2s; }
+  .ccard:hover { border-color: var(--accent); }
+  .ccard .hd { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 800; }
+  .ccard .hd i { width: 18px; height: 18px; border-radius: 50%; }
+  .ccard .st { font-size: 17px; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1.5; }
+  .ccard .rv { display: none; border-top: 1px dashed var(--line); padding-top: 8px; font-size: 17px; line-height: 1.5; }
+  .ccard .rv b.big { font-size: 30px; display: block; line-height: 1.2; }
+  .ccard .nm { display: none; font-weight: 800; font-size: 19px; }
+  .ccard.open .rv, .ccard.open .nm { display: block; }
+  .ccard.open { background: var(--surface-2); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 12주차 1차시</p>
+    <h1>비슷한 것끼리<br>묶기: 군집</h1>
+    <p class="lead" style="font-size:25px">정답이 없어도 데이터는<br>스스로 무리를 짓는다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>이론 + 실습 파일</span><span>직접 해 보기 5개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="20" y="20" width="480" height="400" rx="28" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <g style="fill:var(--k1)" opacity=".75"><circle cx="130" cy="130" r="9"/><circle cx="160" cy="105" r="9"/><circle cx="105" cy="160" r="9"/><circle cx="150" cy="160" r="9"/><circle cx="120" cy="95" r="9"/><circle cx="175" cy="140" r="9"/><circle cx="95" cy="125" r="9"/></g>
+    <g style="fill:var(--k2)" opacity=".75"><circle cx="370" cy="150" r="9"/><circle cx="400" cy="120" r="9"/><circle cx="345" cy="120" r="9"/><circle cx="390" cy="175" r="9"/><circle cx="420" cy="155" r="9"/><circle cx="360" cy="185" r="9"/><circle cx="385" cy="95" r="9"/></g>
+    <g style="fill:var(--k3)" opacity=".75"><circle cx="250" cy="320" r="9"/><circle cx="220" cy="300" r="9"/><circle cx="280" cy="300" r="9"/><circle cx="240" cy="350" r="9"/><circle cx="275" cy="345" r="9"/><circle cx="210" cy="335" r="9"/><circle cx="300" cy="325" r="9"/></g>
+    <g class="mv"><path d="M120 120 l20 20 M140 120 l-20 20" stroke="var(--k1)" stroke-width="7" stroke-linecap="round"/></g>
+    <g class="mv2"><path d="M372 128 l20 20 M392 128 l-20 20" stroke="var(--k2)" stroke-width="7" stroke-linecap="round"/></g>
+    <g class="mv3"><path d="M243 313 l20 20 M263 313 l-20 20" stroke="var(--k3)" stroke-width="7" stroke-linecap="round"/></g>
+    <text x="260" y="404" text-anchor="middle" class="t-sub" style="font-size:16px">× = 각 무리의 중심</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">비지도 학습</div><div class="d">정답 없이 데이터를 묶는 군집이 분류와 어떻게 다른지 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">k-평균</div><div class="d">중심 배정 → 중심 이동의 반복을 그림으로 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">k와 표준화</div><div class="d">k를 고르는 기준과 단위를 맞춰야 하는 이유를 말한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-factory"/></svg></span><div class="h">군집 해석</div><div class="d">묶음을 공정 조건 패턴으로 읽고 이름을 붙인다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:3;background:var(--accent-soft)"><b>① 군집이란?</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② k-평균의 원리</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>③ k 고르기·표준화</b><small>직접 해 보기 2</small></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>④ 해석·실습</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0">오늘의 질문: <strong>“불량 여부를 알려 주지 않아도, 공정 기록만으로 의미 있는 무리를 찾을 수 있을까?”</strong></p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입: 정답 지우기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입 · 직접 해 보기 1</span></div>
+  <h2>지난주엔 정답이 있었다. 이번엔? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="intro" viewBox="0 0 640 420" aria-label="제품 494개의 온도와 두께 산점도"></svg></div>
+    <div class="side">
+      <div class="switch" role="group" aria-label="보기 방식" style="align-self:stretch;margin:0">
+        <button type="button" id="in-sup" aria-pressed="true" style="flex:1">분류 (11주)</button>
+        <button type="button" id="in-uns" aria-pressed="false" style="flex:1">군집 (오늘)</button>
+      </div>
+      <div class="legend" id="in-leg"></div>
+      <div class="tile" style="padding:16px;gap:8px">
+        <div class="h" id="in-h" style="font-size:20px">정답(불량 여부)이 있는 데이터</div>
+        <div id="in-d" style="font-size:17px">점마다 <strong>양품/불량 표시</strong>가 붙어 있습니다. 모델은 이 정답을 보고 <strong>판정 규칙</strong>을 배웠습니다. (지도 학습)</div>
+      </div>
+      <div class="callout b" id="in-msg">오른쪽 버튼을 눌러 <strong>정답 표시를 지워 보세요.</strong></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시 · process.csv 제품 494개 (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>군집이란?</h2><p>정답 없이, 비슷한 것끼리 묶는 비지도 학습</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 정의 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 군집이란?</span></div>
+  <h2>군집 = 정답 없이 <span class="mark">비슷한 것끼리</span> 묶기</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg g"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">정답 없는 데이터</div><div class="d">온도·두께 같은<br>측정값만 있다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">비슷함 = 가까움</div><div class="d">값이 비슷하면<br>그래프에서 가깝다 (거리)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">k개의 묶음</div><div class="d">가까운 점끼리<br>같은 무리로</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">사람이 해석</div><div class="d">“이 무리는 고온 조건”<br>이름 붙이기</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">9주차에 배운 구분: 정답을 보고 배우면 <strong style="color:var(--text)">지도 학습</strong>(회귀·분류), 정답 없이 구조를 찾으면 <strong style="color:var(--text)">비지도 학습</strong>(군집).</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 쓰임새 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 군집이란?</span></div>
+  <h2>현장에서 군집을 쓰는 곳</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile row frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-thermo"/></svg></span><div><div class="h">공정 조건 패턴 찾기</div><div class="d">수백 개 생산 기록을 몇 가지 “운전 조건 묶음”으로 정리한다 — 오늘의 예제</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-gauge"/></svg></span><div><div class="h">설비 운전 상태 구분</div><div class="d">전류·진동 기록을 묶어 가동·대기·과부하 같은 상태를 나눈다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-flask"/></svg></span><div><div class="h">실험·시료 묶기</div><div class="d">측정 결과가 비슷한 시료끼리 묶어, 대표 시료만 골라 정밀 분석한다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h">이상 후보 찾기</div><div class="d">어느 무리와도 멀리 떨어진 점은 “평소와 다른” 후보 → 다음 차시 이상탐지</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>k-평균의 원리</h2><p>가장 널리 쓰이는 군집 방법. 규칙은 단 두 가지입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 알고리즘 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② k-평균의 원리</span></div>
+  <h2>k-평균(k-means): 배정하고, 옮기고, 반복</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-hand"/></svg></span><div class="h">0. k 정하기</div><div class="d">몇 개로 묶을지<br><b>사람이 정한다</b></div>
+        <svg viewBox="0 0 160 90" style="width:150px" aria-hidden="true"><text x="80" y="58" text-anchor="middle" class="t-acc" style="font-size:40px">k=3</text></svg></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">1. 중심 놓기</div><div class="d">중심 k개를<br>아무 데나 놓는다</div>
+        <svg viewBox="0 0 160 90" style="width:150px" aria-hidden="true"><g class="f-muted" opacity=".5"><circle cx="30" cy="30" r="5"/><circle cx="45" cy="50" r="5"/><circle cx="110" cy="25" r="5"/><circle cx="130" cy="45" r="5"/><circle cx="70" cy="70" r="5"/><circle cx="90" cy="75" r="5"/></g><path d="M52 20 l10 10 M62 20 l-10 10" stroke="var(--k1)" stroke-width="4"/><path d="M74 36 l10 10 M84 36 l-10 10" stroke="var(--k2)" stroke-width="4"/><path d="M100 54 l10 10 M110 54 l-10 10" stroke="var(--k3)" stroke-width="4"/></svg></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">2. 배정</div><div class="d">각 점을 <b>가장 가까운</b><br>중심의 무리에 넣는다</div>
+        <svg viewBox="0 0 160 90" style="width:150px" aria-hidden="true"><circle cx="30" cy="30" r="5" style="fill:var(--k1)"/><circle cx="45" cy="50" r="5" style="fill:var(--k1)"/><circle cx="110" cy="25" r="5" style="fill:var(--k2)"/><circle cx="130" cy="45" r="5" style="fill:var(--k3)"/><circle cx="70" cy="70" r="5" style="fill:var(--k2)"/><circle cx="90" cy="75" r="5" style="fill:var(--k3)"/><path d="M52 20 l10 10 M62 20 l-10 10" stroke="var(--k1)" stroke-width="4"/><path d="M74 36 l10 10 M84 36 l-10 10" stroke="var(--k2)" stroke-width="4"/><path d="M100 54 l10 10 M110 54 l-10 10" stroke="var(--k3)" stroke-width="4"/></svg></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge o"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">3. 이동</div><div class="d">중심을 자기 무리의<br><b>평균 위치</b>로 옮긴다</div>
+        <svg viewBox="0 0 160 90" style="width:150px" aria-hidden="true"><circle cx="30" cy="30" r="5" style="fill:var(--k1)"/><circle cx="45" cy="50" r="5" style="fill:var(--k1)"/><circle cx="110" cy="25" r="5" style="fill:var(--k2)"/><circle cx="130" cy="45" r="5" style="fill:var(--k3)"/><circle cx="70" cy="70" r="5" style="fill:var(--k2)"/><circle cx="90" cy="75" r="5" style="fill:var(--k3)"/><path d="M57 25 L37 40" stroke="var(--k1)" stroke-dasharray="3 3"/><path d="M32 35 l10 10 M42 35 l-10 10" stroke="var(--k1)" stroke-width="4"/><path d="M85 43 l10 10 M95 43 l-10 10" stroke="var(--k2)" stroke-width="4"/><path d="M105 55 l10 10 M115 55 l-10 10" stroke="var(--k3)" stroke-width="4"/></svg></div>
+      <div class="arrow">↺</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">끝</div><div class="d">2·3을 반복하다<br>배정이 더 이상<br>바뀌지 않으면 멈춤</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:21px">이름의 뜻: <strong style="color:var(--text)">k</strong>개 무리, 중심 = 무리의 <strong style="color:var(--text)">평균</strong>. 다음 장에서 실제 데이터로 한 단계씩 돌려 봅니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. k-평균 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② k-평균의 원리 · 직접 해 보기 2</span></div>
+  <h2>k-평균을 한 단계씩 돌려 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 372px">
+    <div class="plot"><svg id="km" viewBox="0 0 640 420" aria-label="제품 494개의 온도와 두께에 k-평균을 적용하는 애니메이션"></svg></div>
+    <div class="side">
+      <div style="display:flex;gap:8px"><button class="btn" id="km-step" type="button" style="flex:1;padding:10px 12px"><svg class="ic"><use href="#i-play"/></svg> 한 단계</button><button class="btn ghost" id="km-auto" type="button" style="padding:10px 12px">끝까지</button><button class="btn ghost" id="km-reset" type="button" aria-label="처음으로" style="padding:10px 12px"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <div class="ctrl"><label>무리 개수 k <output id="km-k-o">3</output></label><input id="km-k" type="range" min="2" max="6" step="1" value="3" aria-label="무리 개수 k"></div>
+      <button class="tgl" type="button" id="km-sc" aria-pressed="true"><span class="chk"></span>표준화 적용 (단위 맞추기)</button>
+      <div class="meter" style="display:flex;align-items:baseline;gap:10px;padding:6px 16px"><span class="lbl">반복</span><span class="val" id="km-it" style="font-size:26px">0회</span><span class="lbl" style="margin-left:auto">다음</span><span class="val o" id="km-ph" style="font-size:22px">배정</span></div>
+      <div class="callout b" id="km-msg">× 표시가 무리의 중심입니다. <strong>한 단계</strong>를 눌러 보세요.</div>
+      <div class="klist" id="km-list"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시 · process.csv 제품 494개 (가상 데이터) · 시작 중심은 데이터 점 중에서 고정해 골랐음</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>k 고르기와 표준화</h2><p>몇 개로 묶을까? 단위가 다른 변수는 어떻게 비교할까?</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 엘보 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ k 고르기·표준화 · 직접 해 보기 3</span></div>
+  <h2>k를 늘리면 무리 안이 얼마나 촘촘해질까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="elbow" viewBox="0 0 640 420" aria-label="k에 따른 무리 안 흩어짐 그래프"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>무리 개수 k <output id="eb-k-o">1</output></label><input id="eb-k" type="range" min="1" max="8" step="1" value="1" aria-label="무리 개수 k"></div>
+      <div class="meter"><div class="lbl">무리 안 흩어짐 (중심까지 거리² 합)</div><div class="val" id="eb-v">988</div></div>
+      <div class="meter"><div class="lbl">k를 하나 늘려서 줄어든 비율</div><div class="val o" id="eb-d">-</div></div>
+      <div class="callout b" id="eb-msg">k = 1이면 전체가 한 무리 — 흩어짐이 가장 큽니다. k를 하나씩 늘려 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시 · 표준화한 온도·두께, KMeans(n_init=10, random_state=0) 실제 계산값 · 이 그래프를 ‘엘보(팔꿈치) 그래프’라 부름</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 엔지니어 기준 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ k 고르기·표준화</span></div>
+  <h2>마지막 기준: 엔지니어가 납득할 수 있는 k인가?</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><div class="k" style="color:var(--muted);font-weight:800;font-size:17px">k = 2</div><div class="h">저온 / 고온</div><div class="d">205℃ 무리 · 217℃ 무리<br>→ 온도만 보이고 <b>두께 문제가 묻힌다</b></div><div style="font-weight:800;color:var(--muted)">너무 뭉뚱그림</div></div>
+      <div class="tile frag" style="border:2px solid var(--accent)"><div class="k" style="color:var(--accent);font-weight:800;font-size:17px">k = 3</div><div class="h">저온 · 고온 · 얇은 제품</div><div class="d">무리마다 <b>원인이 다르고</b><br>조치(냉각·금형 점검)도 다르다</div><div style="font-weight:800;color:var(--accent)">이름 붙이고 조치할 수 있음</div></div>
+      <div class="tile frag"><div class="k" style="color:var(--muted);font-weight:800;font-size:17px">k = 6</div><div class="h">여섯 무리</div><div class="d">“조금 더 뜨겁고 조금 얇은” 식의<br>미세한 구분 → <b>조치가 겹친다</b></div><div style="font-weight:800;color:var(--muted)">너무 잘게 쪼갬</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:22px"><p style="font-size:21px;margin:0">엘보 그래프는 <strong>후보</strong>를 좁혀 줄 뿐. 이 데이터처럼 팔꿈치가 뚜렷하지 않으면, <strong>현장에서 설명되고 행동으로 이어지는 k</strong>를 고릅니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시 · 표준화한 온도·두께로 실제 군집한 결과 요약</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 단위 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ k 고르기·표준화 · 직접 해 보기 4</span></div>
+  <h2>제품 A와 더 “비슷한” 제품은 B일까, C일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="body" style="justify-content:center;gap:22px">
+    <div class="pcard3" id="sc-cards"></div>
+    <div class="grid" style="grid-template-columns:1fr 340px;gap:22px;align-items:start">
+      <div style="display:grid;gap:12px">
+        <div class="switch" role="group" aria-label="거리 계산 방식" style="margin:0">
+          <button type="button" id="sc-raw" aria-pressed="true">원래 단위 그대로 (℃, mm)</button>
+          <button type="button" id="sc-std" aria-pressed="false">표준화한 뒤 (표준편차 단위)</button>
+        </div>
+        <div class="dbar"><span>A ↔ B 거리</span><div class="track"><i id="sc-bb" style="background:var(--accent)"></i></div><span class="num" id="sc-b">-</span></div>
+        <div class="dbar"><span>A ↔ C 거리</span><div class="track"><i id="sc-bc" style="background:var(--accent)"></i></div><span class="num" id="sc-c">-</span></div>
+        <div class="muted" id="sc-calc" style="font-size:16px;font-family:ui-monospace,Menlo,monospace"></div>
+      </div>
+      <div class="callout" id="sc-msg" style="font-size:17px"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시 · process.csv의 실제 제품 3개 · 온도 표준편차 7.39℃, 두께 표준편차 0.065mm</span><span class="no"></span></div>
+</section>
+
+<!-- 15. StandardScaler -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ k 고르기·표준화</span></div>
+  <h2>표준화: 모든 변수를 “표준편차 몇 개”로 바꾼다</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:28px">
+    <div style="flex:1;display:grid;gap:16px">
+      <div class="box key" style="margin:0;text-align:center"><p class="def" style="margin:0;font-size:28px">표준화 값 = <span style="color:var(--accent)">(값 − 평균)</span> ÷ <span style="color:var(--accent-2)">표준편차</span></p></div>
+      <table style="font-size:17px">
+        <thead><tr><th></th><th>평균</th><th>표준편차</th><th>제품 B → 표준화</th></tr></thead>
+        <tbody>
+          <tr><td><b>온도</b></td><td>211.4℃</td><td>7.39℃</td><td>212.5℃ → <b>+0.14</b></td></tr>
+          <tr><td><b>두께</b></td><td>1.999mm</td><td>0.065mm</td><td>1.856mm → <b style="color:var(--accent-2)">−2.20</b></td></tr>
+        </tbody>
+      </table>
+      <p class="muted frag" style="font-size:19px;margin:0">이제 두께가 평균보다 <strong style="color:var(--text)">표준편차 2개 넘게</strong> 얇다는 사실이 온도와 같은 무게로 거리에 반영됩니다.</p>
+    </div>
+    <div style="width:540px;flex:none;display:grid;gap:10px">
+<pre class="code" style="font-size:16.5px">from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+X = df[['temp', 'thickness']]   # 묶을 변수 2개
+# 표준화: 열마다 평균 0, 표준편차 1로
+X_s = StandardScaler().fit_transform(X)
+
+km = KMeans(n_clusters=3, n_init=10,
+            random_state=0)
+df['cluster'] = km.fit_predict(X_s)   # 무리 번호</pre>
+      <p class="codecap">n_init=10: 시작 위치를 10번 바꿔 가장 촘촘한 결과를 고른다 · random_state=0: 매번 같은 결과</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시 · 평균·표준편차는 process.csv 494개로 계산 · 직접 해 보기 2에서 표준화를 끄면 무리가 세로 띠로 나뉨</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 군집 해석 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 해석·실습 파일 · 직접 해 보기 5</span></div>
+  <h2>세 무리에 이름 붙이기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 짐작하고 카드를 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start;gap:18px">
+    <div class="ccards" id="ccards"></div>
+    <div class="callout b" style="font-size:18px">군집할 때 <strong>불량 여부(defect)는 쓰지 않았습니다.</strong> 묶은 뒤에 불량률을 붙여 보면, 무리가 <strong>품질과 관련된 공정 패턴</strong>인지 확인할 수 있습니다. 전체 불량률은 <strong>13.8%</strong>.</div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시 · 표준화한 온도·두께, KMeans(k=3) 실제 결과 · 무리 번호 순서는 실행 환경에 따라 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 주의 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 해석·실습 파일</span></div>
+  <h2>군집 결과를 쓸 때 기억할 것</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">항상 k개로 나눈다</div><div class="d">뚜렷한 덩어리가 없어도 k-평균은 k개를 만든다. 이 데이터도 사실은 한 덩어리에 가깝다 (엘보가 완만했던 이유)</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">시작 위치에 따라 달라진다</div><div class="d">경계 근처 점은 실행마다 무리가 바뀔 수 있다 → <b>n_init</b>으로 여러 번 시작하고 <b>random_state</b>로 고정</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="h">무리는 “가설”이다</div><div class="d">“얇은 제품 무리에 치수불량이 많다”는 <b>원인 확인 전의 단서</b>. 금형·설비 점검으로 확인한다 (7주 상관≠인과)</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">어떤 변수를 넣을지가 결과를 정합니다. 변수를 고르는 일 — <strong style="color:var(--text)">전공 지식</strong>이 필요한 곳입니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 해석·실습 파일</span></div>
+  <h2>실습 파일: 직접 묶어 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div style="flex:1">
+      <ol class="agenda" style="counter-reset:none">
+        <li><span class="n">1</span>process.csv 불러와 온도·두께 산점도 그리기</li>
+        <li><span class="n">2</span>표준화 없이 k-평균 → 세로 띠 확인</li>
+        <li><span class="n">3</span>StandardScaler로 표준화 후 다시 k-평균</li>
+        <li><span class="n">4</span>k = 1~8 엘보 그래프 그리기</li>
+        <li><span class="n">5</span>무리별 평균·불량률 표로 해석하기</li>
+      </ol>
+    </div>
+    <div style="width:380px;flex:none;display:grid;gap:16px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week12/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <div class="callout b">직접 바꿔 보기: <strong>k를 4로</strong> 바꾸면 무리 이름이 어떻게 달라질까? <strong>습도(humidity)</strong>를 변수에 더하면?</div>
+      <div class="muted" style="font-size:16px">코드 셀 9개 · 위에서부터 차례로 ▶ 실행</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">k-평균 = 배정 ↔ 이동</div><div style="font-size:21px">가까운 중심에 <strong>배정</strong>, 중심을 평균으로 <strong>이동</strong>, 바뀌지 않을 때까지 반복</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">k와 단위는 사람 몫</div><div style="font-size:21px">엘보로 후보를 좁히고 <strong>해석 가능한 k</strong>를 고른다. 단위가 다르면 <strong>표준화</strong>가 먼저</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-factory"/></svg></span><div class="h">무리는 공정 패턴의 단서</div><div style="font-size:21px">정답 없이 묶은 뒤 <strong>불량률을 붙여 보며</strong> 의미를 확인한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="군집은 정답(라벨) 없이 값이 비슷한 것끼리 묶는 비지도 학습입니다. 불량 여부는 묶은 뒤 해석할 때만 붙여 봤습니다.">
+      <p class="q-title"><b>Q1.</b> 군집(k-평균)이 분류(의사결정나무)와 가장 다른 점은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">더 많은 데이터가 필요하다</button>
+        <button type="button" data-v="b">숫자가 아닌 데이터만 다룬다</button>
+        <button type="button" data-v="c">학습할 때 정답(라벨)을 쓰지 않는다</button>
+        <button type="button" data-v="d">항상 100% 정확하다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="배정 다음 단계에서 각 중심은 자기 무리에 속한 점들의 평균 위치로 옮겨집니다. 이 두 단계를 배정이 바뀌지 않을 때까지 반복합니다.">
+      <p class="q-title"><b>Q2.</b> k-평균에서 점을 무리에 배정한 다음 단계는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">k를 하나 늘린다</button>
+        <button type="button" data-v="b">각 중심을 자기 무리 점들의 평균 위치로 옮긴다</button>
+        <button type="button" data-v="c">가장 먼 점을 지운다</button>
+        <button type="button" data-v="d">정답과 비교해 정확도를 계산한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="온도는 ℃ 단위로 수 ℃씩, 두께는 mm 단위로 0.0x씩 차이 납니다. 그대로 거리를 재면 온도 차이가 거리를 거의 결정해 두께가 무시됩니다. 표준화로 단위를 맞춥니다.">
+      <p class="q-title"><b>Q3.</b> 온도(℃)와 두께(mm)를 표준화하지 않고 k-평균을 하면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">숫자 범위가 큰 온도만 보고 묶여, 두께가 거의 무시된다</button>
+        <button type="button" data-v="b">두께만 보고 묶인다</button>
+        <button type="button" data-v="c">결과가 표준화했을 때와 똑같다</button>
+        <button type="button" data-v="d">오류가 나서 실행되지 않는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="흩어짐은 k를 늘릴수록 항상 줄어들어 그 자체로는 기준이 되지 않습니다. 엘보로 후보를 좁힌 뒤, 무리에 이름을 붙이고 조치로 이어질 수 있는지 현장 지식으로 판단합니다.">
+      <p class="q-title"><b>Q4.</b> k를 고르는 방법으로 가장 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">흩어짐이 0이 될 때까지 k를 늘린다</button>
+        <button type="button" data-v="b">항상 k = 2를 쓴다</button>
+        <button type="button" data-v="c">불량률이 가장 높게 나오는 k를 고른다</button>
+        <button type="button" data-v="d">엘보로 후보를 좁히고, 해석·조치가 가능한 k를 고른다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">12-2</div>
+    <h2>이상탐지와 설비 예지보전</h2>
+    <p>어느 무리와도 다른 “평소와 다른 날”을 찾습니다. 실제 진동 기록으로 3호기 고장을 며칠 전에 알아챌 수 있을지 확인합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week11/lesson03.html">← 11-3 정확도·정밀도·재현율</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-activity"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">12주 1차시 · 비슷한 것끼리 묶기: 군집</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

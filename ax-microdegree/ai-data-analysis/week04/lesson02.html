@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4주 2차시 · AI로 오류 메시지 읽고 해결하기 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 4주 2차시 교안: 파이썬 오류 메시지(트레이스백) 읽는 순서, 자주 만나는 오류 여섯 가지, 생성형AI에게 오류를 묻는 방법">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-bad { fill: var(--bad); } .f-bads { fill: var(--bad-soft); } .f-ok { fill: var(--ok); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  .mono { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; }
+  .lens { animation: lens 5s ease-in-out infinite; }
+  @keyframes lens { 0%, 100% { transform: translate(0, 0); } 45%, 60% { transform: translate(-40px, -150px); } }
+  @media (prefers-reduced-motion: reduce) { .lens, .flowdot { animation: none; display: none; } }
+  pre.code.sm { font-size: 15px; line-height: 1.5; padding: 10px 14px; }
+  pre.out.sm { font-size: 14.5px; line-height: 1.45; padding: 8px 14px; }
+
+  /* 토글 */
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 16px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 트레이스백 */
+  .tb { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; font-size: 14px; line-height: 1.45; background: var(--bad-soft); border: 1px solid var(--bad); border-radius: 14px; padding: 8px 10px; width: 100%; white-space: pre; overflow: hidden; }
+  .tb .part { display: block; border-radius: 8px; padding: 3px 8px; cursor: pointer; border: 2px solid transparent; transition: background .2s, border-color .2s, opacity .2s; }
+  .tb .part:hover { border-color: var(--accent); }
+  .tb .part:focus { outline: none; } .tb .part:focus-visible { border-color: var(--accent); }
+  .tb .part.seen { border-style: dashed; border-color: var(--muted); }
+  .tb .part.on { background: var(--surface); border: 2px solid var(--accent); border-style: solid; }
+  .tb .part .no { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: var(--surface); font-size: 12px; font-weight: 800; margin-right: 6px; font-family: inherit; vertical-align: 1px; opacity: 0; }
+  .tb.order .part .no { opacity: 1; }
+  .tb.order .part.skip { opacity: .35; }
+  .tb .ar { color: var(--bad); font-weight: 800; }
+  .tb .ek { color: var(--bad); font-weight: 800; }
+  .tb .dim { color: var(--muted); }
+
+  /* 해석 공식 */
+  .formula { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 10px 14px; align-items: center; }
+  .formula .m { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; font-size: 18px; background: var(--bad-soft); border: 1px solid var(--bad); border-radius: 12px; padding: 10px 14px; }
+  .formula .m b { color: var(--bad); }
+  .formula .a { text-align: center; font-size: 28px; color: var(--muted); }
+  .formula .t { font-size: 19px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+
+  /* 짝 맞추기 */
+  .match { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 26px; }
+  .match .col { display: grid; gap: 8px; align-content: start; }
+  .mc { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 7px 12px; font-size: 15.5px; line-height: 1.4; min-height: 50px; transition: background .2s, border-color .2s, transform .2s; }
+  .mc.err { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; }
+  .mc.err b { color: var(--bad); }
+  .mc:hover:not(:disabled) { border-color: var(--accent); }
+  .mc.sel { border: 2px solid var(--accent); background: var(--accent-soft); }
+  .mc.done { background: var(--ok-soft); border-color: var(--ok); cursor: default; color: var(--text); }
+  .mc.done .tag2 { display: inline-block; }
+  .mc .tag2 { display: none; font-family: "Pretendard Variable", Pretendard, sans-serif; font-size: 12px; font-weight: 800; color: var(--surface); background: var(--ok); border-radius: 6px; padding: 0 6px; margin-right: 6px; }
+  .mc.no { animation: shake .35s; border-color: var(--bad); background: var(--bad-soft); }
+  @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+  /* 채팅 */
+  .bubble { background: var(--surface-2); border-radius: 16px 16px 4px 16px; padding: 10px 14px; font-size: 15px; line-height: 1.5; border: 1px solid var(--line); }
+  .bubble .who, .ai-who { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: var(--muted); margin-bottom: 2px; }
+  .ai-who { color: var(--accent); }
+  .bubble .pp { display: block; border-left: 4px solid var(--accent); padding-left: 8px; margin: 3px 0; }
+  .bubble .pp.mono { font-size: 13.5px; white-space: pre-wrap; }
+  .bubble .pp.vague { border-color: var(--line); color: var(--muted); }
+  .ai-say { background: var(--accent-soft); border-radius: 16px 16px 16px 4px; padding: 10px 14px; font-size: 15.5px; line-height: 1.55; }
+  .ai-say pre.code { margin-top: 6px; font-size: 14px; padding: 8px 12px; }
+  .segs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; }
+  .segs i { height: 10px; border-radius: 99px; background: var(--surface-2); transition: background .2s; }
+  .segs i.on { background: var(--accent); }
+
+  /* 셀 실행 순서 */
+  .cells-run { display: grid; gap: 8px; }
+  .cr { display: grid; grid-template-columns: 54px 1fr; gap: 10px; align-items: center; }
+  .cr .n { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 14px; color: var(--muted); text-align: right; }
+  .cr pre.code { font-size: 14px; padding: 6px 12px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 4주차 2차시</p>
+    <h1>AI로 오류 메시지<br>읽고 해결하기</h1>
+    <p class="lead" style="font-size:25px">빨간 글씨는 실패가 아니라<br>어디서 왜 멈췄는지 알려 주는 힌트</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="30" y="40" width="440" height="330" rx="22" class="f-bads" stroke="var(--bad)" stroke-width="2.5"/>
+    <rect x="60" y="72" width="150" height="14" rx="7" class="f-bad"/>
+    <g fill="var(--muted)" opacity=".45"><rect x="60" y="110" width="300" height="10" rx="5"/><rect x="80" y="132" width="250" height="10" rx="5"/><rect x="60" y="170" width="330" height="10" rx="5"/><rect x="80" y="192" width="210" height="10" rx="5"/><rect x="60" y="230" width="280" height="10" rx="5"/></g>
+    <rect x="60" y="270" width="80" height="12" rx="6" class="f-bad"/><rect x="152" y="270" width="140" height="12" rx="6" class="f-text" opacity=".7"/>
+    <rect x="48" y="258" width="300" height="36" rx="10" fill="none" stroke="var(--accent)" stroke-width="3"/>
+    <path d="M410 290 V110" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M396 128 L410 108 L424 128" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="428" y="210" style="font-size:16px;font-weight:800;fill:var(--accent);writing-mode:vertical-rl">아래부터 읽기</text>
+    <g class="lens"><circle cx="240" cy="276" r="42" fill="var(--surface)" fill-opacity=".35" stroke="var(--text)" stroke-width="7"/><path d="M270 306 L310 346" stroke="var(--text)" stroke-width="12" stroke-linecap="round"/></g>
+    <circle cx="420" cy="380" r="46" class="f-acc"/>
+    <g transform="translate(393 353) scale(2.25)" style="color:var(--surface)"><use href="#i-sparkles" width="24" height="24"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">오류 메시지 읽기</div><div class="d">트레이스백을 아래에서부터 읽고 오류 종류·메시지·문제 줄을 찾는다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">자주 만나는 오류</div><div class="d">NameError·KeyError 등 여섯 가지 오류의 흔한 원인을 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">AI에게 묻기</div><div class="d">오류 메시지 전체·코드·하려던 것을 함께 넣어 질문한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">고친 뒤 확인</div><div class="d">고친 이유를 이해하고 다시 실행해 결과를 확인한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>① 오류 메시지 읽기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>② 자주 만나는 오류</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ AI에게 묻고 고치기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘의 습관: 오류가 나면 바로 AI에게 붙여 넣기 전에, <strong>30초만 직접 읽어 본다.</strong> 무엇을 물어야 할지가 보입니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>지난 시간의 그 코드, 실행해 보면?</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1.15;display:flex;flex-direction:column;gap:10px">
+      <div class="bubble"><div class="who"><svg class="ic"><use href="#i-user"/></svg> 막연한 요청</div>불량 분석 코드 짜 줘.</div>
+<pre class="code sm">import pandas as pd
+df = pd.read_csv(DATA + 'process.csv')
+print(df['불량'].value_counts())</pre>
+<pre class="out err sm">KeyError     Traceback (most recent call last)
+… (중간 생략) …
+KeyError: '불량'</pre>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:21px">오류는 누구나 만난다</div><div class="d">전문 개발자도 매일 본다. 부끄러운 일이 아니다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div><div class="h" style="font-size:21px">어디서·왜 멈췄는지 알려 준다</div><div class="d">파이썬이 남긴 사고 보고서</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h" style="font-size:21px">맨 아래 한 줄이 핵심</div><div class="d"><code>KeyError: '불량'</code> → “‘불량’이라는 열이 없다”</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시 · 오류 메시지는 Colab 화면을 줄여 옮긴 것</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>오류 메시지 읽기</h2><p>긴 빨간 글씨에서 꼭 볼 곳은 두 군데뿐입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-eye"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 구조 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 오류 메시지 읽기</span></div>
+  <h2>트레이스백(Traceback)은 <span class="mark">아래에서부터</span> 읽는다</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <svg viewBox="0 0 560 420" style="width:560px;flex:none" role="img" aria-label="트레이스백의 구조: 맨 아래 오류 종류와 메시지, 화살표가 가리키는 내 코드의 줄, 그 사이의 라이브러리 내부 경로">
+      <rect x="10" y="10" width="540" height="400" rx="18" class="f-bads" stroke="var(--bad)" stroke-width="2"/>
+      <text x="30" y="44" class="mono" style="font-size:15px;font-weight:800;fill:var(--bad)">KeyError</text><text x="130" y="44" class="mono" style="font-size:13px;fill:var(--muted)">Traceback (most recent call last)</text>
+      <rect x="24" y="64" width="380" height="86" rx="10" class="f-surface" stroke="var(--accent)" stroke-width="3"/>
+      <text x="38" y="88" class="mono" style="font-size:13px;fill:var(--muted)">&lt;cell line: 0&gt;()  ← 내 셀</text>
+      <text x="38" y="112" class="mono" style="font-size:13px;fill:var(--muted)">      3 # 불량 여부별 개수</text>
+      <text x="38" y="136" class="mono" style="font-size:13px;fill:var(--text);font-weight:700"><tspan fill="var(--bad)">----&gt;</tspan> 4 print(df['불량']…)</text>
+      <g opacity=".45"><rect x="24" y="168" width="380" height="74" rx="10" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 5"/>
+      <text x="38" y="194" class="mono" style="font-size:13px;fill:var(--muted)">…/pandas/core/frame.py …</text>
+      <text x="38" y="220" class="mono" style="font-size:13px;fill:var(--muted)">…/pandas/core/indexes/base.py …</text></g>
+      <rect x="24" y="300" width="380" height="50" rx="10" class="f-surface" stroke="var(--accent-2)" stroke-width="3.5"/>
+      <text x="40" y="332" class="mono" style="font-size:17px;font-weight:800;fill:var(--bad)">KeyError: <tspan fill="var(--text)">'불량'</tspan></text>
+      <path d="M480 340 V90" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/><path d="M466 108 L480 88 L494 108" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="440" cy="325" r="18" class="f-acc2"/><text x="440" y="331" text-anchor="middle" style="font-size:17px;font-weight:800;fill:var(--surface)">1</text>
+      <circle cx="440" cy="107" r="18" class="f-acc"/><text x="440" y="113" text-anchor="middle" style="font-size:17px;font-weight:800;fill:var(--surface)">2</text>
+      <circle cx="440" cy="205" r="18" class="f-muted"/><text x="440" y="211" text-anchor="middle" style="font-size:17px;font-weight:800;fill:var(--surface)">3</text>
+    </svg>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:12px 16px;border-left:6px solid var(--accent-2)"><div><div class="h" style="font-size:21px">① 맨 아래 줄: 오류 종류 + 메시지</div><div class="d"><b>무엇이</b> 잘못됐나. 가장 먼저, 가장 중요하게</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px;border-left:6px solid var(--accent)"><div><div class="h" style="font-size:21px">② 화살표 ----&gt; 가 가리키는 내 코드</div><div class="d"><b>어디서</b> 멈췄나. 내 셀의 몇 번째 줄인가</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px;border-left:6px solid var(--muted)"><div><div class="h" style="font-size:21px">③ 그 사이: 라이브러리 내부 경로</div><div class="d">pandas 안쪽 코드. 내가 고칠 곳이 아니므로 <b>건너뛴다</b></div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시 · most recent call last = 가장 최근에 실행된 곳이 맨 아래</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 트레이스백 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 오류 메시지 읽기 · 직접 해 보기 1</span></div>
+  <h2>오류 메시지 해부하기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 덩어리를 눌러 보세요</span></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="padding:12px"><div class="tb" id="tb" role="group" aria-label="KeyError 트레이스백. 각 덩어리를 누르면 설명이 나온다"></div></div>
+    <div class="side">
+      <div class="tile" style="flex:1;padding:16px 18px;gap:8px">
+        <span class="ic-badge" id="tb-ic"><svg class="ic"><use href="#i-hand"/></svg></span>
+        <div class="h" id="tb-h" style="font-size:21px">어디부터 읽을까요?</div>
+        <div id="tb-d" style="font-size:17px;line-height:1.5">왼쪽 오류 메시지의 덩어리를 하나씩 눌러 보세요.</div>
+      </div>
+      <div class="meter"><div class="lbl">살펴본 덩어리</div><div class="val" id="tb-n" style="font-size:30px">0 / 5</div></div>
+      <button class="btn" id="tb-order" type="button"><svg class="ic"><use href="#i-eye"/></svg> 읽는 순서 보기</button>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시 · Colab 화면을 단순화한 예 — 경로·줄 번호는 환경마다 다름</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 한 줄 해석 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 오류 메시지 읽기</span></div>
+  <h2>맨 아래 한 줄을 우리말로 옮겨 보기</h2>
+  <div class="body">
+    <div class="formula">
+      <div class="m frag show"><b>KeyError</b>: '불량'</div><div class="a frag show">›</div><div class="t frag show">‘불량’이라는 <b>열(키)을 찾을 수 없다</b></div>
+      <div class="m frag"><b>NameError</b>: name 'rate' is not defined</div><div class="a frag">›</div><div class="t frag">‘rate’라는 <b>이름을 모른다</b> (아직 만든 적 없다)</div>
+      <div class="m frag"><b>FileNotFoundError</b>: … 'data.csv'</div><div class="a frag">›</div><div class="t frag">‘data.csv’라는 <b>파일이 없다</b></div>
+    </div>
+    <div class="box think frag" style="margin-top:24px"><p style="font-size:20px;margin:0"><b>읽는 공식:</b> <span class="mono" style="color:var(--bad);font-weight:800">오류종류</span>: <span class="mono">메시지</span> → “<b>무엇</b>(메시지 속 이름·값)이 <b>어떻게</b>(오류 종류) 잘못됐다.” 영어가 어려우면 이 한 줄만 번역기·AI에 물어도 됩니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>자주 만나는 오류</h2><p>초보자가 만나는 오류는 대부분 여섯 가지 안에 있습니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 여섯 가지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 자주 만나는 오류</span></div>
+  <h2>이것만 알아도 절반은 해결: 오류 여섯 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);gap:14px">
+      <div class="tile frag show" style="padding:16px 18px;gap:6px"><div class="h mono" style="color:var(--bad);font-size:21px">NameError</div><div style="font-size:18px">모르는 <b>이름</b>(변수)</div><div class="d" style="font-size:16px">오타, 또는 그 변수를 만든 셀을 아직 실행하지 않음</div></div>
+      <div class="tile frag show" style="padding:16px 18px;gap:6px"><div class="h mono" style="color:var(--bad);font-size:21px">KeyError</div><div style="font-size:18px">없는 <b>열 이름</b>(키)</div><div class="d" style="font-size:16px">열 이름 오타·대소문자, AI가 추측한 열 이름</div></div>
+      <div class="tile frag show" style="padding:16px 18px;gap:6px"><div class="h mono" style="color:var(--bad);font-size:21px">TypeError</div><div style="font-size:18px">맞지 않는 <b>자료형</b>끼리 계산</div><div class="d" style="font-size:16px">글자 + 숫자, 숫자 자리에 글자 열</div></div>
+      <div class="tile frag show" style="padding:16px 18px;gap:6px"><div class="h mono" style="color:var(--bad);font-size:21px">ValueError</div><div style="font-size:18px">자료형은 맞는데 <b>값</b>이 이상함</div><div class="d" style="font-size:16px">'2.01mm'처럼 숫자로 바꿀 수 없는 글자</div></div>
+      <div class="tile frag show" style="padding:16px 18px;gap:6px"><div class="h mono" style="color:var(--bad);font-size:21px">FileNotFoundError</div><div style="font-size:18px">없는 <b>파일</b></div><div class="d" style="font-size:16px">파일 이름 오타, 경로(DATA 주소) 빠짐</div></div>
+      <div class="tile frag show" style="padding:16px 18px;gap:6px"><div class="h mono" style="color:var(--bad);font-size:21px">IndentationError</div><div style="font-size:18px"><b>들여쓰기</b>가 맞지 않음</div><div class="d" style="font-size:16px">for·if 다음 줄을 안 들여 씀, 복사하다 칸이 어긋남</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시 · 이 밖에 AttributeError(없는 기능 이름)는 4-3에서</span><span class="no"></span></div>
+</section>
+
+<!-- 11. KeyError 상세 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 자주 만나는 오류</span></div>
+  <h2>가장 흔한 오류: 열 이름이 틀렸다 <span class="mono" style="color:var(--bad);font-size:32px">KeyError</span></h2>
+  <div class="body">
+    <div class="flow" style="gap:0">
+      <div class="stepbox frag show" style="align-items:stretch;text-align:left;padding:14px"><div class="h" style="text-align:center">문제의 코드</div>
+<pre class="code sm">rate = df.groupby('Shift')['defect'].mean()</pre>
+<pre class="out err sm">KeyError: 'Shift'</pre></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag" style="align-items:stretch;text-align:left;padding:14px"><div class="h" style="text-align:center">실제 열 이름 확인</div>
+<pre class="code sm">print(df.columns.tolist())</pre>
+<pre class="out sm">['product_id', 'date', 'shift', 'line', …]</pre></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag" style="align-items:stretch;text-align:left;padding:14px"><div class="h" style="text-align:center">고친 코드</div>
+<pre class="code sm">rate = df.groupby('shift')['defect'].mean()</pre>
+<div class="d" style="font-size:16px">대문자 S → 소문자 s. 파이썬은 <b>대소문자를 구분</b>한다</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">AI가 쓴 코드에서 KeyError가 나면 열 이름을 <strong style="color:var(--text)">추측</strong>했을 가능성이 큽니다. 다음부터는 프롬프트에 <strong style="color:var(--text)">열 이름을 넣어</strong> 요청하세요(4-1).</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시 · groupby에서 열을 못 찾을 때의 메시지는 pandas 버전에 따라 조금 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 실행 순서와 자료형 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 자주 만나는 오류</span></div>
+  <h2>Colab에서 특히 자주: 실행 순서와 자료형</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:24px">
+      <div class="tile frag show" style="padding:18px 20px;gap:10px">
+        <div class="h"><span class="mono" style="color:var(--bad)">NameError</span> — 셀을 건너뛰었다</div>
+        <div class="cells-run">
+          <div class="cr"><span class="n">[ ]</span><pre class="code">df = pd.read_csv(DATA + 'process.csv')</pre></div>
+          <div class="cr"><span class="n">[1]</span><pre class="code">print(df.shape)</pre></div>
+        </div>
+<pre class="out err sm">NameError: name 'df' is not defined</pre>
+        <div class="d" style="font-size:16px">[ ] = 아직 실행 안 한 셀. <b>위 셀부터 차례로</b> 실행한다. 런타임을 다시 시작해도 변수가 모두 사라진다</div>
+      </div>
+      <div class="tile frag" style="padding:18px 20px;gap:10px">
+        <div class="h"><span class="mono" style="color:var(--bad)">TypeError</span> · <span class="mono" style="color:var(--bad)">ValueError</span> — 자료형</div>
+<pre class="code sm">print('평균 강도: ' + df['strength'].mean())</pre>
+<pre class="out err sm">TypeError: can only concatenate str (not "numpy.float64") to str</pre>
+<pre class="code sm">print('평균 강도:', df['strength'].mean())  # 쉼표</pre>
+        <div class="d" style="font-size:16px">글자와 숫자는 +로 이을 수 없다. <span class="mono">float('2.01mm')</span>처럼 숫자로 못 바꾸는 값은 <b>ValueError</b> → 정리 방법은 5주차</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시 · 오류 메시지는 process.csv로 직접 실행해 확인한 것 (Python·pandas 버전에 따라 문구가 조금 다를 수 있음)</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 2: 짝 맞추기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 자주 만나는 오류 · 직접 해 보기 2</span></div>
+  <h2>오류 메시지 ↔ 원인 짝 맞추기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 왼쪽 하나, 오른쪽 하나</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="match"><div class="col" id="m-left"></div><div class="col" id="m-right"></div></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-top:12px">
+      <span class="meter" style="padding:4px 14px"><span class="lbl">맞힌 짝 </span><b id="m-n" style="color:var(--accent);font-size:22px">0 / 6</b></span>
+      <span class="muted" style="font-size:16px" id="m-msg">왼쪽에서 오류 메시지를 먼저 고르세요.</span>
+      <button class="btn ghost" id="m-reset" type="button" style="margin-left:auto;padding:6px 14px;font-size:16px"><svg class="ic"><use href="#i-reset"/></svg> 다시</button>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시 · 메시지는 실제로 실행해 얻은 것</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>AI에게 묻고 고치기</h2><p>좋은 질문이 좋은 답을 부릅니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chat"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 묻는 법 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI에게 묻고 고치기</span></div>
+  <h2>오류를 물을 때 함께 넣을 네 가지</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1;display:grid;gap:10px">
+      <div class="tile row frag show" style="padding:12px 16px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:20px">① 오류 메시지 <u>전체</u></div><div class="d">맨 아래 한 줄만이 아니라 처음부터 끝까지 복사</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div><div class="h" style="font-size:20px">② 실행한 코드</div><div class="d">오류가 난 셀의 코드 그대로</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">③ 하려던 것 · 기대한 결과</div><div class="d">“불량률을 근무조별로 보고 싶었다”</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h" style="font-size:20px">④ 데이터 정보</div><div class="d">열 이름·자료형 (<span class="mono">df.columns</span>, <span class="mono">df.dtypes</span> 결과)</div></div></div>
+    </div>
+    <div class="bubble frag" style="flex:1;font-size:15.5px"><div class="who"><svg class="ic"><use href="#i-user"/></svg> 질문 예시</div>
+      Colab에서 아래 코드를 실행했더니 오류가 났어. <b>원인과 고친 코드</b>를 초보자도 알게 설명해 줘.<br>
+      <span class="pp mono">[코드] print(df['불량'].value_counts())</span>
+      <span class="pp mono">[오류] KeyError … (전체 붙여 넣기) … KeyError: '불량'</span>
+      <span class="pp">[하려던 것] 불량품 개수와 불량률을 알고 싶었어.</span>
+      <span class="pp">[데이터] process.csv. 열: shift(글자), defect(정수 0/1, 1=불량) …</span>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시 · 오류 메시지·코드에 개인정보나 비밀번호가 섞여 있지 않은지 먼저 확인 (1-3)</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 3: 질문 조립 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI에게 묻고 고치기 · 직접 해 보기 3</span></div>
+  <h2>질문을 바꾸면 AI의 답이 달라진다 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px;padding:14px 16px">
+      <div class="bubble" id="ask-q"></div>
+      <div class="ai-say" id="ask-a"></div>
+    </div>
+    <div class="side">
+      <div class="toggles">
+        <button class="tgl" type="button" data-k="msg" aria-pressed="false"><span class="chk"></span>① 오류 메시지 전체</button>
+        <button class="tgl" type="button" data-k="code" aria-pressed="false"><span class="chk"></span>② 실행한 코드</button>
+        <button class="tgl" type="button" data-k="goal" aria-pressed="false"><span class="chk"></span>③ 하려던 것</button>
+        <button class="tgl" type="button" data-k="cols" aria-pressed="false"><span class="chk"></span>④ 데이터 열 이름</button>
+      </div>
+      <div class="meter"><div class="lbl" style="display:flex;justify-content:space-between;align-items:baseline">질문에 담은 정보 <span class="val" id="ask-n" style="font-size:28px">0 / 4</span></div><div class="segs" id="ask-segs"><i></i><i></i><i></i><i></i></div></div>
+      <div class="status bad" id="ask-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시 · AI의 답은 경향을 보여 주려고 미리 써 둔 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 고친 뒤에는 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI에게 묻고 고치기</span></div>
+  <h2>오류 해결의 한 바퀴</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">1. 먼저 읽기</div><div class="d">맨 아래 줄 + 화살표 줄<br><b>30초</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">2. 묻기</div><div class="d">메시지 전체·코드<br>하려던 것·열 이름</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">3. 이해하기</div><div class="d">“왜 이렇게 고쳤는지”<br>설명을 읽는다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div class="h">4. 다시 실행</div><div class="d">위 셀부터<br>차례로</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">5. 결과 확인</div><div class="d">오류가 사라졌다고<br>끝이 아니다</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:24px;gap:20px">
+      <div class="box warn" style="margin:0"><p style="font-size:18px;margin:0"><b>오류를 ‘숨기는’ 수정에 주의.</b> 오류 난 줄을 지우거나, 문제 있는 행을 통째로 버리거나, 오류를 무시하게 만드는 코드는 오류만 없앨 뿐 <strong>답을 틀리게</strong> 만들 수 있습니다.</p></div>
+      <div class="box think" style="margin:0"><p style="font-size:18px;margin:0"><b>같은 오류가 반복되면</b> 같은 질문을 되풀이하지 말고, 새 오류 메시지와 <strong>바꾼 코드</strong>를 다시 보여 주세요. 오류 없는 결과가 맞는지 따지는 법은 <strong>4-3</strong>에서.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI에게 묻고 고치기 · 실습</span></div>
+  <h2>실습: 일부러 오류를 내고, 읽고, 고치기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div style="flex:1">
+      <ol style="font-size:21px;line-height:1.55;margin:0">
+        <li>오류를 <b>멈추지 않고 보여 주는</b> 장치(<span class="mono">try</span>/<span class="mono">except</span>)를 안다</li>
+        <li>KeyError의 <b>전체 트레이스백</b>을 출력해 아래부터 읽는다</li>
+        <li>여섯 가지 오류를 하나씩 내 보고 <b>고친 코드</b>와 비교한다</li>
+        <li><b>직접 바꿔 보기</b>: 틀린 값을 고쳐 오류를 없앤다</li>
+        <li>AI에게 보낼 <b>질문 묶음</b>을 자동으로 만들어 본다</li>
+      </ol>
+    </div>
+    <div style="flex:none;width:380px;display:flex;flex-direction:column;gap:16px;align-items:stretch">
+      <div class="tile" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">lesson02.ipynb</div><div class="d">코드 셀 15개</div>
+        <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week04/lesson02.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a></div>
+      <div class="callout b">실습 파일은 일부러 낸 오류가 <strong>빨간 글씨 대신 한 줄 메시지</strong>로 보이게 만들어 두었습니다. 끝까지 멈추지 않고 실행됩니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시 · 실습 데이터 process.csv · process_raw.csv (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">아래에서부터 읽기</div><div style="font-size:21px">맨 아래 <strong>오류 종류: 메시지</strong> → 화살표가 가리키는 <strong>내 코드의 줄</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">흔한 오류 여섯 가지</div><div style="font-size:21px">이름·열 이름·자료형·값·파일·들여쓰기. KeyError는 <strong>열 이름부터 확인</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">AI에게 제대로 묻기</div><div style="font-size:21px"><strong>메시지 전체 + 코드 + 하려던 것 + 열 이름</strong>. 고친 뒤엔 다시 실행해 확인</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="트레이스백은 가장 최근에 실행된 곳이 맨 아래에 옵니다. 맨 아래 줄의 오류 종류와 메시지부터 읽고, 화살표가 가리키는 내 코드의 줄을 찾습니다.">
+      <p class="q-title"><b>Q1.</b> 긴 오류 메시지에서 가장 먼저 읽어야 할 곳은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">맨 위의 첫 줄</button>
+        <button type="button" data-v="b">pandas 내부 파일 경로</button>
+        <button type="button" data-v="c">가장 긴 줄</button>
+        <button type="button" data-v="d">맨 아래의 ‘오류 종류: 메시지’ 줄</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="KeyError는 표에서 그 열 이름(키)을 찾지 못했다는 뜻입니다. df.columns로 실제 열 이름을 확인하면 대부분 해결됩니다. 파이썬은 대소문자도 구분합니다.">
+      <p class="q-title"><b>Q2.</b> <code>KeyError: 'Strength'</code>가 났다. 가장 먼저 확인할 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">인터넷 연결 상태</button>
+        <button type="button" data-v="b"><code>df.columns</code>로 실제 열 이름(대소문자 포함)</button>
+        <button type="button" data-v="c">들여쓰기 칸 수</button>
+        <button type="button" data-v="d">Colab 화면 밝기</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="Colab은 실행한 셀의 결과만 기억합니다. df를 만드는 셀을 실행하지 않았거나 런타임을 다시 시작했다면, 위 셀부터 차례로 다시 실행해야 합니다.">
+      <p class="q-title"><b>Q3.</b> 어제 잘 되던 노트북을 다시 열어 아래쪽 셀만 실행했더니 <code>NameError: name 'df' is not defined</code>. 해결 방법은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">df를 만드는 위쪽 셀부터 차례로 다시 실행한다</button>
+        <button type="button" data-v="b">pandas를 새로 설치한다</button>
+        <button type="button" data-v="c">df라는 글자를 모두 지운다</button>
+        <button type="button" data-v="d">오류가 사라질 때까지 같은 셀을 반복 실행한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="오류 메시지 전체, 실행한 코드, 하려던 것, 열 이름을 함께 주면 AI가 추측하지 않고 정확한 원인과 고친 코드를 줄 수 있습니다.">
+      <p class="q-title"><b>Q4.</b> AI에게 오류를 물을 때 가장 좋은 질문은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">“오류 났어. 고쳐 줘.”</button>
+        <button type="button" data-v="b">“KeyError가 뭐야?”만 묻는다</button>
+        <button type="button" data-v="c">오류 메시지 전체 + 코드 + 하려던 것 + 열 이름을 함께 보낸다</button>
+        <button type="button" data-v="d">오류 화면은 빼고 코드만 보낸다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">4-3</div>
+    <h2>AI 코드 검증 기초: 환각과 편향</h2>
+    <p>오류 없이 실행됐는데 답이 틀렸다면? AI가 지어낸 함수, 잘못된 숫자를 찾아내는 습관을 배웁니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-shield"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">4주 2차시 · AI로 오류 메시지 읽고 해결하기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

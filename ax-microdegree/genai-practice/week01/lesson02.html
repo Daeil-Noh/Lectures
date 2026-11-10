@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1주 2차시 · 수업에 쓸 AI 도구 준비하기(Gemini·Claude) | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 1주 2차시 교안: Gemini(학교 Google 계정)와 Claude 준비, 두 도구에 공통인 기본 조작, 데이터 설정 위치, 첫 비교 실습">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-oks { fill: var(--ok-soft); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .flowdot { display: none; } }
+  .ex-note { font-size: 13px; color: var(--muted); font-weight: 700; }
+  .chat .msg { font-size: 16px; }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 체크 토글 */
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 16.5px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid var(--surface); border-bottom: 3px solid var(--surface); transform: rotate(-45deg) translate(1px, -1px); }
+  .grp { font-size: 14px; font-weight: 800; color: var(--muted); margin: 6px 0 0; display: flex; align-items: center; gap: 6px; }
+
+  /* 화면 구조 */
+  .hot { cursor: pointer; }
+  .hot circle { fill: var(--accent-2); transition: transform .2s; transform-box: fill-box; transform-origin: center; }
+  .hot text { fill: #fff; font-size: 16px; font-weight: 800; pointer-events: none; }
+  .hot:hover circle, .hot.on circle { transform: scale(1.18); }
+  .hot.on circle { fill: var(--accent); }
+  .hot:focus { outline: none; } .hot:focus-visible circle { stroke: var(--text); stroke-width: 3; }
+  .zone { fill: var(--accent); fill-opacity: 0; stroke: var(--accent); stroke-width: 0; transition: fill-opacity .2s; }
+  .zone.on { fill-opacity: .12; stroke-width: 2.5; }
+
+  /* 파일 첨부 칩 */
+  .fchip { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; padding: 6px 12px; border-radius: 10px; background: var(--surface); color: var(--text); border: 1px solid var(--line); }
+
+  /* 비교 */
+  .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; height: 100%; }
+  .cmp .chat { padding: 10px 12px; gap: 8px; }
+  .cmp ol { margin: 0; padding-left: 1.3em; font-size: 15.5px; line-height: 1.5; }
+  .cmp li { margin: 4px 0; }
+  .cmp .len { display: none; font-size: 12.5px; font-weight: 800; margin-left: 6px; padding: 0 6px; border-radius: 6px; background: var(--ok-soft); color: var(--ok); white-space: nowrap; }
+  .cmp .len.over { background: var(--bad-soft); color: var(--bad); }
+  .cmp.c-len .len { display: inline-block; }
+  .cmp .extra { border-radius: 6px; transition: background .2s; }
+  .cmp.c-cnt .extra { background: var(--bad-soft); outline: 2px dashed var(--bad); }
+  .cmp .fact { border-radius: 4px; transition: background .2s; }
+  .cmp.c-fact .fact { background: var(--accent-2-soft); color: var(--accent-2); font-weight: 800; }
+  .cnt { display: none; font-size: 13px; font-weight: 800; padding: 2px 8px; border-radius: 6px; margin-left: auto; }
+  .cmp.c-cnt .cnt { display: inline-block; }
+  .cnt.ok { background: var(--ok-soft); color: var(--ok); } .cnt.bad { background: var(--bad-soft); color: var(--bad); }
+
+  .msg.ai.re { animation: fade .35s ease; }
+  @keyframes fade { from { opacity: .2; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .msg.ai.re { animation: none; } }
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4M20 16H6l4 4"/></symbol>
+</svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 1주차 2차시</p>
+    <h1>수업에 쓸<br>AI 도구 준비하기</h1>
+    <p class="lead" style="font-size:25px">Gemini와 Claude,<br>두 도구로 같은 질문을 해 보자</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 준비 차시</span><span>직접 해 보기 4개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="170" y="10" width="180" height="70" rx="20" class="f-acc"/>
+    <rect x="194" y="34" width="110" height="10" rx="5" fill="var(--surface)" opacity=".9"/>
+    <rect x="194" y="52" width="70" height="10" rx="5" fill="var(--surface)" opacity=".7"/>
+    <path id="pl" d="M240 82 C 200 130, 140 130, 130 170" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 7"/>
+    <path id="pr" d="M280 82 C 320 130, 380 130, 390 170" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 7"/>
+    <circle r="6" class="f-acc flowdot"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#pl"/></animateMotion></circle>
+    <circle r="6" class="f-acc flowdot"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#pr"/></animateMotion></circle>
+    <g>
+      <rect x="20" y="176" width="230" height="250" rx="22" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+      <rect x="20" y="176" width="230" height="44" rx="22" class="f-accs"/><rect x="20" y="200" width="230" height="20" class="f-accs"/>
+      <text x="135" y="205" text-anchor="middle" class="t-acc" style="font-size:18px">Gemini</text>
+      <rect x="40" y="240" width="170" height="12" rx="6" class="f-line"/><rect x="40" y="264" width="140" height="12" rx="6" class="f-line"/><rect x="40" y="288" width="160" height="12" rx="6" class="f-line"/>
+      <rect x="40" y="380" width="190" height="28" rx="14" class="f-s2"/>
+    </g>
+    <g>
+      <rect x="270" y="176" width="230" height="250" rx="22" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+      <rect x="270" y="176" width="230" height="44" rx="22" class="f-acc2s"/><rect x="270" y="200" width="230" height="20" class="f-acc2s"/>
+      <text x="385" y="205" text-anchor="middle" class="t-acc2" style="font-size:18px">Claude</text>
+      <rect x="290" y="240" width="150" height="12" rx="6" class="f-line"/><rect x="290" y="264" width="180" height="12" rx="6" class="f-line"/><rect x="290" y="288" width="120" height="12" rx="6" class="f-line"/>
+      <rect x="290" y="380" width="190" height="28" rx="14" class="f-s2"/>
+    </g>
+    <circle cx="260" cy="330" r="30" class="f-oks" stroke="var(--ok)" stroke-width="3"/>
+    <text x="260" y="338" text-anchor="middle" style="font-size:20px;font-weight:800;fill:var(--ok)">VS</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-swap"/></svg></span><div class="h">두 도구를 쓰는 이유</div><div class="d">한도에 걸렸을 때와 결과를 비교할 때 두 도구가 왜 필요한지 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">계정 준비</div><div class="d">학교 Google 계정으로 Gemini를, 무료 계정으로 Claude를 연다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">공통 기본 조작</div><div class="d">새 대화·첨부·다시 생성·기록·데이터 설정을 찾는다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">첫 비교 실습</div><div class="d">같은 프롬프트를 두 도구에 보내고 결과를 비교한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>왜 두 도구?</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 계정 준비</b><small>직접 해 보기 1</small></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>② 공통 기본 조작</b><small>직접 해 보기 2</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 첫 실습: 같은 질문 비교</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 영상을 잠시 멈추고 <strong>브라우저 창을 두 개</strong> 열어 따라 하세요. 하나는 Gemini, 하나는 Claude.</p></div>
+    <p class="muted" style="margin-top:6px;font-size:18px">서비스 화면·메뉴 이름은 자주 바뀝니다. 강의의 그림은 <strong style="color:var(--text)">단순화한 예시</strong>이니, 비슷한 위치·이름을 찾으면 됩니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 왜 두 도구 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">왜 두 도구?</span></div>
+  <h2>왜 하나가 아니라 두 개일까?</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-swap"/></svg></span><div class="h">한도에 걸리면 바꿔 쓰기</div><div style="font-size:19px">무료·교육용 서비스에는 <strong>사용량 한도</strong>가 있다. 한쪽이 막히면 다른 쪽으로 이어 한다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">결과 비교하기</div><div style="font-size:19px">같은 질문에도 답이 다르다. 두 답을 나란히 보면 <strong>더 나은 안</strong>과 <strong>틀린 곳</strong>이 잘 보인다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">도구마다 다른 기능</div><div style="font-size:19px">예: 이미지 생성은 Gemini로(11주). 맞춤형 AI 비서는 Gemini의 <strong>Gems</strong>, Claude의 <strong>프로젝트</strong>(9주)</div></div>
+    </div>
+    <div class="box key frag" style="margin-top:24px"><p style="font-size:21px;margin:0">이 수업의 원칙: 프롬프트와 방법은 <strong>어느 도구에서나 똑같이</strong> 통하게 배운다. 도구는 바뀌어도 일하는 방법은 남는다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 한도의 크기와 기준은 서비스가 정하며 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 한눈에 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">왜 두 도구?</span></div>
+  <h2>이 수업의 두 도구 한눈에</h2>
+  <div class="body">
+    <table style="font-size:20px">
+      <thead><tr><th style="width:22%"></th><th style="width:39%;color:var(--accent)">Gemini</th><th style="width:39%;color:var(--accent-2)">Claude</th></tr></thead>
+      <tbody>
+        <tr><th>만든 회사</th><td>Google</td><td>Anthropic</td></tr>
+        <tr><th>주소</th><td><b>gemini.google.com</b></td><td><b>claude.ai</b></td></tr>
+        <tr><th>로그인</th><td><b>학교 Google 계정</b> (학교가 제공)</td><td>무료 계정 가입 (이메일 또는 Google 계정)</td></tr>
+        <tr><th>이 수업에서</th><td>모든 실습 + <b>이미지 생성</b>(11주)</td><td>모든 실습 (이미지는 생성하지 않음)</td></tr>
+        <tr><th>맞춤형 AI 비서</th><td>Gems (9주)</td><td>프로젝트 (9주)</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:18px;font-size:18px">휴대폰 앱도 있지만, 수업 실습은 파일 첨부·비교가 편한 <strong style="color:var(--text)">PC 브라우저</strong>를 권합니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 요금제·모델 이름·세부 기능은 자주 바뀌므로 수업에서는 다루지 않음</span><span class="no"></span></div>
+</section>
+
+<!-- 6. Gemini 시작 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 계정 준비</span></div>
+  <h2>Gemini 시작하기: <span class="mark">학교 Google 계정</span>으로</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">1. 접속</div><div class="d">브라우저에서<br><b>gemini.google.com</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">2. 학교 계정 로그인</div><div class="d">개인 Gmail이 아니라<br><b>학교 Google 계정</b>으로</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">3. 계정 확인</div><div class="d">화면 구석의 프로필을 눌러<br>학교 계정인지 확인</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">4. 첫 대화</div><div class="d">“안녕, 자기소개를<br>두 줄로 해 줘”</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:16px">
+      <div class="callout b" style="font-size:18px"><b>왜 학교 계정?</b> 학교가 제공하는 교육용 Gemini를 쓸 수 있고, 계정의 데이터는 <strong>학교의 관리 정책</strong>을 따릅니다.</div>
+      <div class="callout" style="font-size:18px"><b>여러 계정이 로그인되어 있다면</b> 엉뚱한 계정으로 열리기 쉽습니다. 시크릿 창이나 브라우저 프로필을 따로 쓰면 편합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 로그인이 안 되면 학교 전산 안내(LMS 공지)를 확인 · 화면은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 7. Claude 시작 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 계정 준비</span></div>
+  <h2>Claude 시작하기: <span class="mark">무료 계정</span> 만들기</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge o"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">1. 접속</div><div class="d">브라우저에서<br><b>claude.ai</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">2. 가입</div><div class="d">이메일 인증 또는<br>Google 계정으로 가입</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge o"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">3. 안내 읽기</div><div class="d">이용 약관·개인정보 안내를<br>읽고 동의</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">4. 첫 대화</div><div class="d">같은 인사를 보내<br>답을 비교해 보기</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:16px">
+      <div class="callout b" style="font-size:18px"><b>무료 버전으로 충분합니다.</b> 유료 결제는 필요 없습니다. 결제 안내가 나와도 넘어가면 됩니다.</div>
+      <div class="callout" style="font-size:18px"><b>한도에 걸리면</b> 일정 시간이 지나야 다시 쓸 수 있습니다. 그동안은 Gemini로 이어 하세요(이 차시 마지막에).</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 가입 절차·화면은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 직접 해 보기 1: 체크리스트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 계정 준비 · 직접 해 보기 1</span></div>
+  <h2>“수업 준비 완료” 체크리스트 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;padding:14px 22px;gap:4px">
+      <div class="toggles" id="ready"></div>
+    </div>
+    <div class="side">
+      <div class="meter"><div class="lbl">준비한 항목</div><div class="val" id="rd-n">0 / 7</div><div class="track"><i id="rd-bar"></i></div></div>
+      <div class="status mid" id="rd-st"><b class="k">준비 중</b>한 가지씩 직접 해 보고 체크하세요.</div>
+      <button class="btn ghost" id="rd-reset" type="button"><svg class="ic"><use href="#i-reset"/></svg> 처음부터</button>
+      <div class="muted" style="font-size:14px">체크 상태는 이 브라우저에만 잠시 기억됩니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 마지막 항목은 이 차시 끝의 첫 실습에서</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 직접 해 보기 2: 화면 구조 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공통 기본 조작 · 직접 해 보기 2</span></div>
+  <h2>어느 AI 채팅이든 비슷한 일곱 군데 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot">
+      <svg id="ui" viewBox="0 0 700 420" role="group" aria-label="단순화한 AI 채팅 화면. 번호를 누르면 각 부분의 설명이 나온다">
+        <rect x="10" y="10" width="680" height="400" rx="18" class="f-s2" stroke="var(--line)" stroke-width="2"/>
+        <!-- 왼쪽 메뉴 -->
+        <rect x="10" y="10" width="170" height="400" rx="18" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+        <rect x="28" y="34" width="134" height="34" rx="10" class="f-accs"/><g transform="translate(38 41) scale(.85)" style="color:var(--accent)"><use href="#i-plus" width="24" height="24"/></g><text x="64" y="57" class="t-acc" style="font-size:14px">새 대화</text>
+        <text x="28" y="98" class="t-sub" style="font-size:12px;font-weight:700">최근 대화</text>
+        <rect x="28" y="108" width="134" height="12" rx="6" class="f-line"/><rect x="28" y="130" width="110" height="12" rx="6" class="f-line"/><rect x="28" y="152" width="124" height="12" rx="6" class="f-line"/><rect x="28" y="174" width="96" height="12" rx="6" class="f-line"/>
+        <circle cx="46" cy="380" r="14" class="f-line"/><rect x="68" y="374" width="80" height="12" rx="6" class="f-line"/>
+        <!-- 대화 -->
+        <rect x="390" y="40" width="270" height="44" rx="16" class="f-acc"/><rect x="410" y="56" width="200" height="10" rx="5" fill="var(--surface)" opacity=".85"/>
+        <rect x="210" y="104" width="360" height="120" rx="16" class="f-surface" stroke="var(--line)"/>
+        <rect x="230" y="124" width="300" height="10" rx="5" class="f-line"/><rect x="230" y="146" width="320" height="10" rx="5" class="f-line"/><rect x="230" y="168" width="260" height="10" rx="5" class="f-line"/><rect x="230" y="190" width="200" height="10" rx="5" class="f-line"/>
+        <g style="color:var(--muted)"><g transform="translate(214 232) scale(.75)"><use href="#i-log" width="24" height="24"/></g><g transform="translate(240 232) scale(.75)"><use href="#i-reset" width="24" height="24"/></g><g transform="translate(266 232) scale(.75)"><use href="#i-check" width="24" height="24"/></g></g>
+        <!-- 입력창 -->
+        <rect x="210" y="320" width="460" height="70" rx="22" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+        <text x="262" y="361" class="t-sub" style="font-size:15px">여기에 프롬프트를 입력…</text>
+        <g transform="translate(226 343) scale(1)" style="color:var(--muted)"><use href="#i-plus" width="24" height="24"/></g>
+        <circle cx="638" cy="355" r="20" class="f-acc"/><path d="M638 365 V346 M630 353 L638 345 L646 353" stroke="var(--surface)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- 강조 영역 -->
+        <rect class="zone" data-z="1" x="22" y="28" width="146" height="46" rx="12"/>
+        <rect class="zone" data-z="2" x="22" y="88" width="146" height="106" rx="10"/>
+        <rect class="zone" data-z="3" x="252" y="326" width="360" height="58" rx="16"/>
+        <rect class="zone" data-z="4" x="216" y="333" width="44" height="44" rx="12"/>
+        <rect class="zone" data-z="5" x="612" y="329" width="52" height="52" rx="26"/>
+        <rect class="zone" data-z="6" x="206" y="226" width="90" height="32" rx="8"/>
+        <rect class="zone" data-z="7" x="22" y="360" width="146" height="40" rx="12"/>
+        <!-- 번호 -->
+        <g class="hot" data-z="1" tabindex="0" role="button" aria-label="1 새 대화"><circle cx="176" cy="40" r="15"/><text x="176" y="46" text-anchor="middle">1</text></g>
+        <g class="hot" data-z="2" tabindex="0" role="button" aria-label="2 대화 기록"><circle cx="176" cy="130" r="15"/><text x="176" y="136" text-anchor="middle">2</text></g>
+        <g class="hot" data-z="3" tabindex="0" role="button" aria-label="3 입력창"><circle cx="440" cy="306" r="15"/><text x="440" y="312" text-anchor="middle">3</text></g>
+        <g class="hot" data-z="4" tabindex="0" role="button" aria-label="4 파일 첨부"><circle cx="230" cy="306" r="15"/><text x="230" y="312" text-anchor="middle">4</text></g>
+        <g class="hot" data-z="5" tabindex="0" role="button" aria-label="5 보내기"><circle cx="672" cy="318" r="15"/><text x="672" y="324" text-anchor="middle">5</text></g>
+        <g class="hot" data-z="6" tabindex="0" role="button" aria-label="6 답변 도구"><circle cx="312" cy="242" r="15"/><text x="312" y="248" text-anchor="middle">6</text></g>
+        <g class="hot" data-z="7" tabindex="0" role="button" aria-label="7 설정과 계정"><circle cx="176" cy="380" r="15"/><text x="176" y="386" text-anchor="middle">7</text></g>
+      </svg>
+    </div>
+    <div class="side">
+      <div class="tile" style="flex:1;padding:18px 20px;gap:10px">
+        <span class="ic-badge" id="ui-ic"><svg class="ic"><use href="#i-hand"/></svg></span>
+        <div class="h" id="ui-h" style="font-size:21px">번호를 눌러 보세요</div>
+        <div id="ui-d" style="font-size:17px">Gemini와 Claude 모두 이 일곱 가지를 갖추고 있습니다. 위치와 모양만 조금씩 다릅니다.</div>
+        <div class="d" id="ui-tip" style="font-size:16px;font-weight:700;color:var(--accent)"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 실제 서비스 화면이 아닌 단순화한 그림 — 위치·모양은 서비스와 버전마다 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 프롬프트 쓰기와 첨부 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공통 기본 조작</span></div>
+  <h2>프롬프트 보내기와 파일 첨부</h2>
+  <div class="body" style="flex-direction:row;gap:28px;align-items:stretch">
+    <div class="tile" style="flex:1;padding:20px 22px">
+      <div style="display:flex;align-items:center;gap:12px"><span class="ic-badge"><svg class="ic"><use href="#i-pen"/></svg></span><div class="h">프롬프트 보내기</div></div>
+      <ul style="font-size:18px;margin:0;line-height:1.5">
+        <li><b>Enter</b> = 보내기, <b>Shift + Enter</b> = 줄바꿈 <span class="muted">(대부분의 서비스)</span></li>
+        <li>긴 글은 메모장에 먼저 쓰고 <strong>붙여 넣기</strong></li>
+        <li>무엇을·누구에게·어떤 형식으로 — 세 가지만 넣어도 답이 달라진다 <span class="muted">(3주에 자세히)</span></li>
+      </ul>
+      <div class="prompt" style="margin-top:auto"><div class="prompt-h">프롬프트<button class="copy" type="button">복사</button></div><pre>첨부한 파일은 고객 후기 표야. 별점 2점 이하 후기만 골라서 불만 내용을 <mark>3가지 유형</mark>으로 묶어 줘.</pre></div>
+    </div>
+    <div class="tile" style="flex:1;padding:20px 22px">
+      <div style="display:flex;align-items:center;gap:12px"><span class="ic-badge o"><svg class="ic"><use href="#i-clip"/></svg></span><div class="h">파일 첨부하기</div></div>
+      <ul style="font-size:18px;margin:0;line-height:1.5">
+        <li>입력창 옆 <b>+</b> 또는 <b>클립</b> 모양을 누르거나, 파일을 끌어다 놓기</li>
+        <li>문서·표(CSV)·이미지를 올리고 <strong>무엇을 할지 함께</strong> 적는다</li>
+      </ul>
+      <div class="chat" style="margin-top:auto">
+        <div class="chat-h">AI 채팅 (화면은 단순화한 예시)</div>
+        <div class="msg user"><span class="fchip"><svg class="ic"><use href="#i-log"/></svg> reviews_2026.csv</span>
+첨부한 파일은 고객 후기 표야. …</div>
+      </div>
+      <div class="callout" style="font-size:16px"><b>올려도 될까?</b> 수업 실습 파일은 개인정보·기밀이 없는 <strong>가상 자료</strong>라 올려도 됩니다. 진짜 회사·고객 자료는 다릅니다 → 1-3</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 실습 자료: 강의 목록의 「고객 후기(CSV)」 · 올릴 수 있는 파일 종류·크기는 서비스마다 다름</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 직접 해 보기 3: 다시 생성·수정 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공통 기본 조작 · 직접 해 보기 3</span></div>
+  <h2>마음에 안 들면? 다시 생성 vs 질문 수정 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot" style="align-items:stretch;padding:14px">
+      <div class="chat" style="flex:1;border:0;padding:4px 6px">
+        <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)<span style="margin-left:auto" class="ex-note">예시 답변 — 실제 답은 매번 다를 수 있음</span></div>
+        <div class="msg user" id="rg-q"></div>
+        <div class="msg ai" id="rg-a"></div>
+      </div>
+    </div>
+    <div class="side">
+      <button class="btn ghost" id="rg-re" type="button"><svg class="ic"><use href="#i-reset"/></svg> 다시 생성</button>
+      <button class="btn" id="rg-ed" type="button"><svg class="ic"><use href="#i-pen"/></svg> 질문 수정해서 다시 보내기</button>
+      <button class="btn ghost" id="rg-0" type="button" style="font-size:16px;padding:8px 14px">처음으로</button>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">다시 생성</div><div class="val" id="rg-n" style="font-size:32px">0번</div></div>
+        <div class="meter"><div class="lbl">질문</div><div class="val o" id="rg-v" style="font-size:32px">처음</div></div>
+      </div>
+      <div class="callout b" id="rg-msg"><strong>다시 생성</strong>은 같은 질문으로 다른 답을, <strong>질문 수정</strong>은 고친 질문으로 새 답을 받습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 미리 써 둔 예시 대화 · 두 기능 모두 Gemini·Claude에 있음(버튼 모양은 다를 수 있음)</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 대화 기록 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공통 기본 조작</span></div>
+  <h2>대화 기록과 새 대화</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile row frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-plus"/></svg></span><div><div class="h">주제가 바뀌면 새 대화</div><div class="d">AI는 같은 대화의 앞 내용을 참고해 답한다. 다른 일을 시키려면 새 대화에서 시작해야 답이 섞이지 않는다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h">이어서 하려면 기록에서</div><div class="d">지난 대화를 열어 이어 쓸 수 있다. 과제별로 <strong>대화 이름</strong>을 바꿔 두면 찾기 쉽다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-x"/></svg></span><div><div class="h">필요 없는 대화는 삭제</div><div class="d">실수로 넣으면 안 되는 내용을 넣었다면 바로 삭제한다. 단, 이미 보낸 내용이 완전히 없던 일이 되지는 않는다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h">기록을 남기지 않는 대화</div><div class="d">두 서비스 모두 기록에 남지 않는 <strong>임시 대화</strong> 기능이 있다(이름은 서비스마다 다름)</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 계정 종류에 따라 일부 기능은 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 데이터 설정 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공통 기본 조작</span></div>
+  <h2>데이터·개인정보 설정은 어디에?</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:22px">
+      <div class="tile" style="padding:22px 24px;border-top:5px solid var(--accent)">
+        <div class="h" style="color:var(--accent)">Gemini · 학교 Google 계정</div>
+        <ul style="font-size:17.5px;margin:0;line-height:1.5">
+          <li>학교 계정은 <strong>학교(관리자)의 정책</strong>이 적용된다</li>
+          <li>Google 안내: 교육용 계정의 대화와 올린 파일은 <strong>사람이 검토하지 않고, AI 모델 개선에 쓰이지 않는다</strong></li>
+          <li>개인 Google 계정이라면 설정의 <b>활동</b> 메뉴(영문 화면 ‘Keep Activity’)에서 대화 저장 여부를 정한다</li>
+        </ul>
+      </div>
+      <div class="tile" style="padding:22px 24px;border-top:5px solid var(--accent-2)">
+        <div class="h" style="color:var(--accent-2)">Claude · 무료 계정</div>
+        <ul style="font-size:17.5px;margin:0;line-height:1.5">
+          <li>이름(프로필) → <b>설정</b> → <b>개인정보(Privacy)</b></li>
+          <li>내 대화를 <strong>AI 모델 개선(학습)에 쓸지</strong> 켜고 끄는 항목이 있다 → 직접 확인해 원하는 대로</li>
+          <li><b>시크릿 채팅</b>(영문 화면 ‘Incognito’): 기록에 남지 않고 학습에 쓰이지 않는다(일정 기간 보관 후 삭제)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="box warn frag" style="margin-top:20px"><p style="font-size:20px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> 설정을 어떻게 바꿔도, 보낸 내용은 <strong>서비스 회사의 서버로 전송</strong>됩니다. 그래서 개인정보·기밀은 <strong>처음부터 넣지 않는 것</strong>이 기본 — 다음 차시에서 자세히.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 2026년 11월 각 서비스 공식 안내 기준 · 메뉴 이름·위치는 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 첫 실습 안내 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 첫 실습</span></div>
+  <h2>첫 실습: 같은 질문을 두 도구에</h2>
+  <div class="body" style="flex-direction:row;gap:28px;align-items:center">
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="prompt"><div class="prompt-h">프롬프트<button class="copy" type="button">복사</button></div><pre>너는 부산의 건강 간식 회사 바다결의 신입 마케터야.
+<mark>20~30대 직장인</mark>에게 <mark>오리지널 그래놀라</mark>를 소개하는 문장을 3개만 써 줘.
+각 문장은 40자 이내로 써 줘.</pre></div>
+      <p class="muted" style="margin:0;font-size:17px"><b style="color:var(--accent-2)">주황색</b> 부분은 다른 대상·제품으로 바꿔 봐도 좋습니다. 단, 비교할 땐 <strong style="color:var(--text)">두 도구에 똑같은 문장</strong>을 보냅니다.</p>
+    </div>
+    <div style="width:380px;flex:none;display:flex;flex-direction:column;gap:10px">
+      <div class="tile row frag show" style="padding:12px 16px"><span class="ic-badge" style="width:44px;height:44px;font-size:22px"><b style="font-size:20px">1</b></span><div style="font-size:18px">위 프롬프트 <strong>복사</strong></div></div>
+      <div class="tile row frag" style="padding:12px 16px"><span class="ic-badge" style="width:44px;height:44px;font-size:22px"><b style="font-size:20px">2</b></span><div style="font-size:18px">Gemini <strong>새 대화</strong>에 붙여 넣고 보내기</div></div>
+      <div class="tile row frag" style="padding:12px 16px"><span class="ic-badge o" style="width:44px;height:44px;font-size:22px"><b style="font-size:20px">3</b></span><div style="font-size:18px">Claude <strong>새 대화</strong>에 붙여 넣고 보내기</div></div>
+      <div class="tile row frag" style="padding:12px 16px"><span class="ic-badge" style="width:44px;height:44px;font-size:22px;background:var(--ok-soft);color:var(--ok)"><b style="font-size:20px">4</b></span><div style="font-size:18px">두 창을 나란히 놓고 <strong>비교</strong> → 다음 장</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 바다결은 실습용 가상 회사 — 회사 소개는 강의 목록의 실습 자료</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 직접 해 보기 4: 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 첫 실습 · 직접 해 보기 4</span></div>
+  <h2>두 답을 점검해 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 300px">
+    <div class="plot" style="align-items:stretch;padding:12px">
+      <div class="cmp" id="cmp">
+        <div class="chat"><div class="chat-h">답 A <span class="ex-note">예시 답변</span><span class="cnt" id="cnt-a"></span></div><div class="msg ai" style="max-width:100%"><ol id="ans-a"></ol></div></div>
+        <div class="chat"><div class="chat-h">답 B <span class="ex-note">예시 답변</span><span class="cnt" id="cnt-b"></span></div><div class="msg ai" style="max-width:100%"><ol id="ans-b"></ol></div></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">점검 기준을 하나씩 켜 보세요</div>
+      <div class="toggles">
+        <button class="tgl" type="button" data-c="cnt" aria-pressed="false"><span class="chk"></span>① 3개만 썼나?</button>
+        <button class="tgl" type="button" data-c="len" aria-pressed="false"><span class="chk"></span>② 40자 이내인가?</button>
+        <button class="tgl" type="button" data-c="fact" aria-pressed="false"><span class="chk"></span>③ 회사 자료에 없는 사실은?</button>
+      </div>
+      <div class="status mid" id="cmp-st"><b class="k">어느 쪽이 나을까?</b>먼저 눈으로 읽고 고른 뒤, 기준을 켜서 확인하세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 미리 써 둔 예시 답(어느 서비스의 실제 출력도 아님) · 글자 수는 띄어쓰기 포함</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 한도에 걸렸을 때 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 첫 실습</span></div>
+  <h2>한도에 걸렸다면? 다른 도구로 이어 하기</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">한도 안내가 뜸</div><div class="d">“잠시 후 다시…”<br>같은 메시지</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">지금까지 요약</div><div class="d">막히기 전에 요약을 받아 두거나,<br>내 프롬프트를 복사해 둔다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-swap"/></svg></span><div class="h">다른 도구 새 대화</div><div class="d">요약 + 다음 요청을<br>붙여 넣는다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">이어서 진행</div><div class="d">과제가 멈추지 않는다</div></div>
+    </div>
+    <div class="prompt frag" style="margin-top:22px"><div class="prompt-h">이어 하기용 요약 프롬프트<button class="copy" type="button">복사</button></div><pre>지금까지의 대화를 다른 AI에게 이어서 맡길 수 있도록, 목표·지금까지 정한 내용·남은 할 일을 <mark>5줄</mark>로 요약해 줘.</pre></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시 · 대화 기록은 도구끼리 옮겨지지 않으므로 필요한 내용은 직접 붙여 넣기</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-swap"/></svg></span><div class="h">두 도구, 하나의 방법</div><div style="font-size:21px">Gemini(학교 계정)와 Claude(무료). 한도에 걸리면 <strong>바꿔 쓰고</strong>, 답은 <strong>비교</strong>한다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">공통 기본 조작</div><div style="font-size:21px">새 대화 · 첨부 · <strong>다시 생성 / 질문 수정</strong> · 기록 · 설정</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">답은 점검한다</div><div style="font-size:21px">조건을 지켰는지, <strong>없는 사실</strong>을 지어내지 않았는지 내가 확인한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="수업용 Gemini는 학교가 제공하는 학교 Google 계정으로 씁니다. 계정 데이터는 학교의 관리 정책을 따릅니다.">
+      <p class="q-title"><b>Q1.</b> 이 수업에서 Gemini에 로그인할 계정은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">가족과 함께 쓰는 Google 계정</button>
+        <button type="button" data-v="b">새로 만든 개인 Gmail 계정</button>
+        <button type="button" data-v="c">학교 Google 계정</button>
+        <button type="button" data-v="d">로그인하지 않아도 된다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="AI는 같은 대화 안의 앞 내용을 참고해 답합니다. 주제가 바뀌면 새 대화에서 시작해야 앞 내용이 섞이지 않습니다.">
+      <p class="q-title"><b>Q2.</b> 후기 요약을 마치고 전혀 다른 과제(영문 메일)를 시작하려 한다. 가장 좋은 방법은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">같은 대화에 이어서 바로 요청한다</button>
+        <button type="button" data-v="b">새 대화를 열어 요청한다</button>
+        <button type="button" data-v="c">다시 생성 버튼을 누른다</button>
+        <button type="button" data-v="d">브라우저를 껐다 켠다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="다시 생성은 같은 질문으로 다른 답을 받을 뿐입니다. 원하는 조건(대상·길이·형식)이 빠졌다면 질문을 고쳐 다시 보내야 합니다.">
+      <p class="q-title"><b>Q3.</b> 답이 너무 길고 대상도 맞지 않는다. 질문에 그런 조건을 쓰지 않았다면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">조건을 넣어 질문을 수정해 다시 보낸다</button>
+        <button type="button" data-v="b">원하는 답이 나올 때까지 다시 생성만 누른다</button>
+        <button type="button" data-v="c">AI가 틀렸으니 그 도구는 더 쓰지 않는다</button>
+        <button type="button" data-v="d">답을 그대로 과제에 낸다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="설정은 저장·학습 여부를 바꿀 뿐, 보낸 내용은 서비스 회사 서버로 전송됩니다. 개인정보·기밀은 처음부터 넣지 않는 것이 기본입니다.">
+      <p class="q-title"><b>Q4.</b> 데이터 설정에 대한 설명으로 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">학습 설정을 끄면 무엇을 넣어도 안전하다</button>
+        <button type="button" data-v="b">임시 대화에는 고객 명단을 넣어도 된다</button>
+        <button type="button" data-v="c">설정 메뉴는 서비스마다 똑같은 이름이다</button>
+        <button type="button" data-v="d">설정과 관계없이 보낸 내용은 서버로 전송된다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">1-3</div>
+    <h2>AI를 안전하게 쓰는 기본 규칙</h2>
+    <p>채팅창에 넣으면 안 되는 것은? 개인정보·기밀·저작권, 그리고 이 수업에서 AI를 쓸 때의 약속을 정리합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-shield"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">1주 2차시 · 수업에 쓸 AI 도구 준비하기(Gemini·Claude)</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

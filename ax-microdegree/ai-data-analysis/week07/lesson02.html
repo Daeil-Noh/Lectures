@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7주 2차시 · 그래프 그리기 실습 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 7주 2차시 교안: matplotlib·pandas로 막대·선·히스토그램·상자그림·산점도 그리기, 제목·축 이름·한글 표시, 그래프 파일로 저장하기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .grow { display: none; } }
+
+  /* 코드 + 결과 그래프 */
+  .cc { display: grid; grid-template-columns: 560px 1fr; gap: 22px; flex: 1; min-height: 0; margin-bottom: 6px; }
+  .cc .left { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .cc pre.code { font-size: 15.5px; line-height: 1.5; padding: 12px 16px; }
+  .chartbox { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 10px; display: flex; flex-direction: column; min-height: 0; }
+  .chartbox .cap { font-size: 13px; font-weight: 800; color: var(--muted); letter-spacing: .02em; padding: 0 6px; }
+  .chartbox svg { flex: 1; min-height: 0; height: 100%; }
+  .notes { display: grid; gap: 6px; }
+  .notes > div { font-size: 16px; line-height: 1.4; display: flex; gap: 10px; align-items: baseline; }
+  .notes code, .tile code, .callout code, .status code { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: .9em; background: var(--surface-2); border-radius: 5px; padding: 0 5px; }
+  .notes b.n { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--surface); font-size: 13px; display: grid; place-items: center; }
+
+  /* 한 줄씩 켜기 */
+  pre.live { margin: 0; font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; font-size: 14.5px; line-height: 1.5; border-radius: 14px; padding: 10px 6px; background: #1f2430; color: #e6e9ef; white-space: pre; overflow: hidden; }
+  pre.live .c { color: #8a93a6; font-style: italic; } pre.live .s { color: #a5d6a7; } pre.live .k { color: #ffb86c; font-weight: 700; } pre.live .n { color: #f3d27a; } pre.live .f { color: #8ab4f8; }
+  pre.live .ln { display: block; padding: 0 10px; border-radius: 6px; }
+  pre.live .ln.opt { cursor: pointer; }
+  pre.live .ln.opt:hover { background: rgba(255,255,255,.07); }
+  pre.live .ln.opt.on { background: rgba(255, 184, 108, .16); }
+  pre.live .ln.chg { background: rgba(255, 184, 108, .22); }
+  pre.live .ln .cb { display: inline-block; width: 13px; height: 13px; border: 2px solid #8a93a6; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+  pre.live .ln.on .cb { background: #ffb86c; border-color: #ffb86c; }
+  pre.live .ln .sp { display: inline-block; width: 23px; }
+
+  /* 만들기 도구 */
+  .seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .seg .btn { font-size: 15px; padding: 8px 4px; }
+  .seg .btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .sels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sels label { font-size: 14px; font-weight: 800; color: var(--muted); display: grid; gap: 3px; }
+  .sels select { font: inherit; font-size: 16px; font-weight: 700; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; }
+  .sels select:disabled { opacity: .45; }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); } .status.bad { background: var(--bad-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); } .status.bad b.k { color: var(--bad); }
+  .cbar { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+  .prompt { background: var(--surface); border: 2px dashed var(--accent); border-radius: 16px; padding: 16px 20px; font-size: 19px; line-height: 1.55; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 7주차 2차시</p>
+    <h1>그래프 그리기<br>실습</h1>
+    <p class="lead" style="font-size:25px">코드 몇 줄로 데이터를<br>그림으로 바꾸기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>코드 실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="10" y="40" width="300" height="190" rx="18" fill="#1f2430"/>
+    <circle cx="36" cy="64" r="6" fill="#ff7a6b"/><circle cx="56" cy="64" r="6" fill="#ffcc66"/><circle cx="76" cy="64" r="6" fill="#7ed19a"/>
+    <rect x="30" y="92" width="70" height="12" rx="6" fill="#ffb86c"/><rect x="108" y="92" width="150" height="12" rx="6" fill="#e6e9ef" opacity=".7"/>
+    <rect x="30" y="122" width="40" height="12" rx="6" fill="#e6e9ef" opacity=".7"/><rect x="78" y="122" width="96" height="12" rx="6" fill="#8ab4f8"/><rect x="182" y="122" width="90" height="12" rx="6" fill="#a5d6a7"/>
+    <rect x="30" y="152" width="120" height="12" rx="6" fill="#8ab4f8"/><rect x="158" y="152" width="110" height="12" rx="6" fill="#a5d6a7"/>
+    <rect x="30" y="182" width="90" height="12" rx="6" fill="#8ab4f8"/>
+    <path d="M200 250 C 220 300, 260 300, 290 300" fill="none" stroke="var(--muted)" stroke-width="3" stroke-dasharray="5 7"/>
+    <path d="M284 292 l12 8 -12 8" fill="none" stroke="var(--muted)" stroke-width="3"/>
+    <rect x="300" y="180" width="210" height="240" rx="18" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <line x1="326" y1="390" x2="490" y2="390" stroke="var(--muted)" stroke-width="2"/>
+    <rect x="340" y="300" width="36" height="90" rx="5" class="f-acc"><animate class="grow" attributeName="height" values="0;90;90" keyTimes="0;.4;1" dur="4s" repeatCount="indefinite"/><animate class="grow" attributeName="y" values="390;300;300" keyTimes="0;.4;1" dur="4s" repeatCount="indefinite"/></rect>
+    <rect x="392" y="220" width="36" height="170" rx="5" class="f-acc2"><animate class="grow" attributeName="height" values="0;0;170;170" keyTimes="0;.15;.55;1" dur="4s" repeatCount="indefinite"/><animate class="grow" attributeName="y" values="390;390;220;220" keyTimes="0;.15;.55;1" dur="4s" repeatCount="indefinite"/></rect>
+    <rect x="444" y="270" width="36" height="120" rx="5" class="f-accs" stroke="var(--accent)" stroke-width="2"><animate class="grow" attributeName="height" values="0;0;120;120" keyTimes="0;.3;.7;1" dur="4s" repeatCount="indefinite"/><animate class="grow" attributeName="y" values="390;390;270;270" keyTimes="0;.3;.7;1" dur="4s" repeatCount="indefinite"/></rect>
+    <text x="405" y="206" text-anchor="middle" class="t-main" style="font-size:15px">plt.show()</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">기본 틀</div><div class="d"><code>fig, ax = plt.subplots()</code>로 그래프 한 칸을 만든다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">다섯 가지 그래프</div><div class="d"><code>bar</code> · <code>plot</code> · <code>hist</code> · <code>boxplot</code> · <code>scatter</code>를 골라 쓴다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">다듬기</div><div class="d">제목·축 이름·단위를 붙이고 한글이 깨지지 않게 한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">저장하기</div><div class="d">그래프를 PNG 파일로 저장해 과제·보고서에 넣는다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>준비</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>① 그래프의 기본 틀</b><small>직접 해 보기 1</small></div>
+      <div style="flex:11;background:var(--accent-soft)"><b>② 다섯 가지 그래프</b><small>직접 해 보기 2</small></div>
+      <div style="flex:3;background:var(--accent-2-soft)"><b>저장·AI 활용</b></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 실습 파일을 옆에 열어 두고, 슬라이드의 코드를 <strong>한 셀씩 실행</strong>하며 따라오세요. 지난 시간에 고른 다섯 그래프를 오늘 직접 그립니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 준비 셀 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">준비</span></div>
+  <h2>준비 셀: 도구와 데이터 불러오기</h2>
+  <div class="cc" style="grid-template-columns:620px 1fr">
+    <div class="left">
+      <pre class="code">!pip -q install koreanize-matplotlib
+import koreanize_matplotlib          # 그래프 한글 표시
+import pandas as pd                  # 표 다루기
+import matplotlib.pyplot as plt      # 그래프 그리기
+
+DATA = 'https://raw.githubusercontent.com/Daeil-Noh/Lectures/main/ax-microdegree/ai-data-analysis/data/'
+df = pd.read_csv(DATA + 'process.csv')
+print(df.shape)</pre>
+      <pre class="out">(494, 13)</pre>
+    </div>
+    <div style="display:grid;align-content:center;gap:14px">
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div><div class="h" style="font-size:19px">matplotlib</div><div class="d" style="font-size:16px">파이썬의 대표 그래프 도구. <code>plt</code>라는 짧은 이름으로 부른다</div></div></div>
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge o"><svg class="ic"><use href="#i-chat"/></svg></span><div><div class="h" style="font-size:19px">koreanize-matplotlib</div><div class="d" style="font-size:16px">한글 글꼴을 설정해 준다. 없으면 한글이 □□로 깨진다</div></div></div>
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h" style="font-size:19px">df</div><div class="d" style="font-size:16px">5주차부터 쓴 공정 데이터 494행 × 13열</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시 · <code>!pip</code> 설치는 Colab을 새로 열 때마다 한 번</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>그래프의 기본 틀</h2><p>도화지를 펴고, 그리고, 이름표를 붙인다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 기본 틀 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 그래프의 기본 틀</span></div>
+  <h2>세 단계: 만들고 → 그리고 → 이름 붙이기</h2>
+  <div class="cc" style="grid-template-columns:520px 1fr">
+    <div class="left" style="justify-content:center">
+      <pre class="code"># ① 도화지(fig)와 그래프 한 칸(ax) 만들기
+fig, ax = plt.subplots(figsize=(7, 4))
+
+# ② 그리기: ax.그래프종류(x값, y값)
+ax.bar(['주간', '야간'], [7.0, 20.3])
+
+# ③ 이름표 붙이기
+ax.set_title('교대별 불량률')
+ax.set_xlabel('교대')
+ax.set_ylabel('불량률 (%)')
+plt.show()</pre>
+      <p class="codecap"><code>figsize=(가로, 세로)</code> 단위는 인치. 생략하면 기본 크기.</p>
+    </div>
+    <div class="chartbox"><svg id="anat" viewBox="0 0 560 440" role="img" aria-label="fig, ax, 제목, 축 이름, 눈금의 위치를 표시한 그림"></svg></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 한 줄씩 켜기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 그래프의 기본 틀 · 직접 해 보기 1</span></div>
+  <h2>코드 한 줄이 그래프의 어디를 바꿀까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 500px">
+    <div class="plot"><svg id="ln-chart" viewBox="0 0 600 430" role="img" aria-label="코드 줄을 켜고 끌 때 바뀌는 막대그래프"></svg></div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">□ 표시된 줄을 눌러 켜고 꺼 보세요 (꺼진 줄 = <code>#</code> 주석 = 실행 안 됨)</div>
+      <pre class="live" id="ln-code"></pre>
+      <div class="status mid" id="ln-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시 · process.csv 교대별 불량률 · 그래프 모양은 Colab과 조금 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 8. plt vs pandas -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 그래프의 기본 틀</span></div>
+  <h2>지름길: pandas의 <code style="font-size:.9em">.plot()</code></h2>
+  <div class="body">
+    <div class="grid g2" style="gap:24px">
+      <div class="tile" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div><div class="muted" style="font-size:16px;font-weight:700">matplotlib 방식</div><div class="h">하나하나 지정 — 세밀하게</div></div></div>
+        <pre class="code" style="font-size:14.5px">rate = df.groupby('shift')['defect'].mean() * 100
+fig, ax = plt.subplots()
+ax.bar(rate.index, rate.values)
+ax.set_title('교대별 불량률')</pre>
+      </div>
+      <div class="tile" style="padding:20px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div><div class="muted" style="font-size:16px;font-weight:700">pandas 방식</div><div class="h">표에서 바로 — 짧게</div></div></div>
+        <pre class="code" style="font-size:14.5px">rate = df.groupby('shift')['defect'].mean() * 100
+ax = rate.plot(kind='bar', rot=0)
+ax.set_title('교대별 불량률')</pre>
+        <div class="d" style="font-size:16px"><code>kind=</code> <code>'bar'</code> · <code>'line'</code> · <code>'hist'</code> · <code>'box'</code> · <code>'scatter'</code> · <code>'pie'</code></div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:21px">두 방식 모두 결과는 <strong style="color:var(--text)">ax</strong>. 그래서 <code>ax.set_title()</code> 같은 다듬기 코드는 똑같이 쓸 수 있습니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시 · <code>rot=0</code>: x축 글자를 눕히지 않음</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>다섯 가지 그래프</h2><p>지난 시간에 고른 그래프를 코드로 그립니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 막대 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 다섯 가지 그래프 · 비교</span></div>
+  <h2>막대: <code style="font-size:.85em">ax.bar(이름, 값)</code></h2>
+  <div class="cc">
+    <div class="left">
+      <pre class="code">rate = df.groupby('machine')['defect'].mean() * 100
+rate = rate.sort_values(ascending=False)  # 큰 순서로
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.bar(rate.index, rate.values, color='tab:blue')
+ax.set_title('호기별 불량률 (제품 494개)')
+ax.set_xlabel('설비')
+ax.set_ylabel('불량률 (%)')
+plt.show()</pre>
+      <div class="notes">
+        <div><b class="n">1</b><span><code>groupby</code> → 호기별 평균(6주차). 0/1의 평균 = 불량 비율</span></div>
+        <div><b class="n">2</b><span><code>sort_values</code>로 정렬하면 순위가 한눈에</span></div>
+        <div><b class="n">3</b><span>항목 이름이 길면 <code>ax.barh</code>(가로 막대)</span></div>
+      </div>
+    </div>
+    <div class="chartbox"><div class="cap">실행 결과</div><svg id="g-bar" viewBox="0 0 540 400" role="img" aria-label="호기별 불량률 막대그래프"></svg></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시 · process.csv · 가상 데이터 · 그래프 모양은 Colab과 조금 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 선 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 다섯 가지 그래프 · 추이</span></div>
+  <h2>선: <code style="font-size:.85em">ax.plot(x, y)</code></h2>
+  <div class="cc">
+    <div class="left">
+      <pre class="code">vib = pd.read_csv(DATA + 'vibration.csv')
+m3 = vib[vib['machine'] == '3호기']        # 3호기만 고르기
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(m3['day'], m3['rms'], marker='.')
+ax.axvline(96, color='red', linestyle='--')  # 고장일 표시
+ax.set_title('3호기 진동: 고장 전 약 25일간 상승')
+ax.set_xlabel('가동 일수 (일)')
+ax.set_ylabel('진동 RMS')
+plt.show()</pre>
+      <div class="notes">
+        <div><b class="n">1</b><span>x에는 <strong>시간 순서</strong> 열(day). 순서대로 정렬돼 있어야 선이 엉키지 않는다</span></div>
+        <div><b class="n">2</b><span><code>marker='.'</code> 점 표시, <code>axvline</code> 세로 기준선</span></div>
+      </div>
+    </div>
+    <div class="chartbox"><div class="cap">실행 결과</div><svg id="g-line" viewBox="0 0 540 400" role="img" aria-label="3호기 진동 선 그래프"></svg></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시 · vibration.csv · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 2: 히스토그램 bins -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 다섯 가지 그래프 · 분포 · 직접 해 보기 2</span></div>
+  <h2>히스토그램: 구간(bins)을 몇 개로? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 440px">
+    <div class="plot"><svg id="bins" viewBox="0 0 640 430" role="img" aria-label="구간 개수를 바꿀 수 있는 인장강도 히스토그램"></svg></div>
+    <div class="side">
+      <pre class="live" id="bins-code"></pre>
+      <div class="ctrl"><label>bins (구간 개수) <output id="bins-o">11</output></label><input id="bins-s" type="range" min="3" max="60" step="1" value="11" aria-label="구간 개수"></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">구간 폭</div><div class="val" id="bins-w" style="font-size:30px">-</div></div>
+        <div class="meter"><div class="lbl">가장 많은 구간</div><div class="val o" id="bins-m" style="font-size:24px;line-height:1.5">-</div></div>
+      </div>
+      <div class="status ok" id="bins-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시 · process.csv 인장강도 494개 · 구간은 최솟값~최댓값을 bins개로 똑같이 나눔(matplotlib 기본)</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 상자 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 다섯 가지 그래프 · 분포 비교</span></div>
+  <h2>상자그림: <code style="font-size:.85em">ax.boxplot([묶음1, 묶음2])</code></h2>
+  <div class="cc">
+    <div class="left">
+      <pre class="code">day = df[df['shift'] == '주간']['strength']
+night = df[df['shift'] == '야간']['strength']
+
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.boxplot([day, night])
+ax.set_xticks([1, 2], ['주간', '야간'])   # 상자 이름
+ax.set_title('교대별 인장강도 분포')
+ax.set_ylabel('인장강도 (MPa)')
+plt.show()</pre>
+      <div class="notes">
+        <div><b class="n">1</b><span>5주차 조건 고르기로 교대별 강도 묶음 두 개를 만든다</span></div>
+        <div><b class="n">2</b><span>리스트로 넣은 순서대로 1번, 2번 상자</span></div>
+        <div><b class="n">3</b><span>pandas로는 <code>df.boxplot(column='strength', by='shift')</code> 한 줄</span></div>
+      </div>
+    </div>
+    <div class="chartbox"><div class="cap">실행 결과</div><svg id="g-box" viewBox="0 0 540 400" role="img" aria-label="교대별 인장강도 상자그림"></svg></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시 · process.csv · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 산점도 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 다섯 가지 그래프 · 관계</span></div>
+  <h2>산점도: <code style="font-size:.85em">ax.scatter(x, y)</code></h2>
+  <div class="cc">
+    <div class="left">
+      <pre class="code">ok = df[df['defect'] == 0]
+bad = df[df['defect'] == 1]
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.scatter(ok['pressure'], ok['strength'], alpha=0.4, label='정상')
+ax.scatter(bad['pressure'], bad['strength'], alpha=0.8, label='불량')
+ax.set_title('압력과 인장강도 (불량은 아래쪽에 몰림)')
+ax.set_xlabel('사출 압력 (bar)')
+ax.set_ylabel('인장강도 (MPa)')
+ax.legend()
+plt.show()</pre>
+      <div class="notes">
+        <div><b class="n">1</b><span><code>alpha</code> 투명도(0~1) — 점이 겹친 곳이 진하게 보인다</span></div>
+        <div><b class="n">2</b><span>scatter를 두 번 + <code>label</code> → <code>ax.legend()</code>로 범례</span></div>
+      </div>
+    </div>
+    <div class="chartbox"><div class="cap">실행 결과</div><svg id="g-sc" viewBox="0 0 540 400" role="img" aria-label="압력과 인장강도 산점도, 불량 제품은 다른 색"></svg></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시 · process.csv · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 직접 해 보기 3: 만들기 도구 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 다섯 가지 그래프 · 직접 해 보기 3</span></div>
+  <h2>골라서 만드는 그래프 코드 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 500px">
+    <div class="plot"><svg id="bd" viewBox="0 0 600 430" role="img" aria-label="고른 그래프 종류와 열로 그린 그래프"></svg></div>
+    <div class="side">
+      <div class="seg" id="bd-type">
+        <button class="btn ghost" type="button" data-t="bar" aria-pressed="true">막대</button>
+        <button class="btn ghost" type="button" data-t="line" aria-pressed="false">선</button>
+        <button class="btn ghost" type="button" data-t="hist" aria-pressed="false">히스토</button>
+        <button class="btn ghost" type="button" data-t="box" aria-pressed="false">상자</button>
+        <button class="btn ghost" type="button" data-t="scatter" aria-pressed="false">산점도</button>
+      </div>
+      <div class="sels">
+        <label>x 열 <select id="bd-x" aria-label="x 열"></select></label>
+        <label>y 열 <select id="bd-y" aria-label="y 열"></select></label>
+      </div>
+      <pre class="live" id="bd-code" style="font-size:13.5px"></pre>
+      <div class="callout b" id="bd-msg" style="font-size:15px"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시 · process.csv 494개 · 그래프는 실제 데이터로 계산 · 모양은 Colab과 조금 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 저장하기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">저장·AI 활용</span></div>
+  <h2>그래프를 파일로 저장하기</h2>
+  <div class="body">
+    <div class="grid" style="grid-template-columns:560px 1fr;gap:26px;align-items:center">
+      <div style="display:grid;gap:10px">
+        <pre class="code" style="font-size:15.5px">fig, ax = plt.subplots(figsize=(7, 4))
+ax.bar(rate.index, rate.values)
+ax.set_title('호기별 불량률')
+fig.savefig('graph1_bar.png', dpi=150, bbox_inches='tight')
+plt.show()</pre>
+        <div class="notes">
+          <div><b class="n">1</b><span><code>dpi=150</code> 선명도 · <code>bbox_inches='tight'</code> 여백 잘림 방지</span></div>
+          <div><b class="n">2</b><span><code>plt.savefig</code>를 쓴다면 <strong><code>plt.show()</code>보다 먼저</strong> — 뒤에 쓰면 빈 그림이 저장된다</span></div>
+        </div>
+      </div>
+      <div class="flow">
+        <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div class="h" style="font-size:20px">셀 실행</div><div class="d">savefig 줄이 있는 셀</div></div>
+        <div class="arrow">›</div>
+        <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h" style="font-size:20px">파일 패널</div><div class="d">Colab 왼쪽<br>폴더 아이콘</div></div>
+        <div class="arrow">›</div>
+        <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div class="h" style="font-size:20px">다운로드</div><div class="d">파일 이름 옆 ⋮<br>→ 다운로드</div></div>
+      </div>
+    </div>
+    <div class="box warn frag" style="margin-top:22px"><p style="font-size:19px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> Colab의 파일 패널은 <strong>런타임이 끝나면 지워집니다.</strong> 필요한 그림은 바로 내려받거나 Google Drive에 저장하세요.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시 · 과제1에서 그래프를 PDF·보고서에 넣을 때 이 방법을 씁니다</span><span class="no"></span></div>
+</section>
+
+<!-- 17. AI 활용 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">저장·AI 활용</span></div>
+  <h2>생성형AI에게 그래프 코드 부탁하기</h2>
+  <div class="body" style="flex-direction:row;gap:28px;align-items:center">
+    <div style="flex:1.1;display:grid;gap:10px">
+      <div class="muted" style="font-size:16px;font-weight:700"><svg class="ic"><use href="#i-chat"/></svg> 이렇게 물어보면 쓸 만한 코드가 나옵니다</div>
+      <div class="prompt">“pandas 데이터프레임 <b>df</b>에 <b>line</b>(라인 이름), <b>strength</b>(인장강도, MPa) 열이 있어. <b>라인별 강도 분포를 비교하는 상자그림</b>을 matplotlib으로 그려 줘. 제목, y축 이름(단위 포함)도 붙이고, 한글은 koreanize_matplotlib을 쓰고 있어.”</div>
+      <div class="d muted" style="font-size:16px">열 이름 · 단위 · 목적(비교·분포…) · 쓰는 도구를 <strong style="color:var(--text)">구체적으로</strong>. 실제 데이터 값(개인정보·기밀)은 붙여 넣지 않는다.</div>
+    </div>
+    <div style="flex:1" class="tiles">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:19px">열 이름이 진짜인가?</div><div class="d" style="font-size:16px">AI가 지어낸 열 이름이면 KeyError (4주차)</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:19px">숫자가 맞는가?</div><div class="d" style="font-size:16px">그래프 전에 <code>print()</code>로 집계값을 직접 확인</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h" style="font-size:19px">목적에 맞는 그래프인가?</div><div class="d" style="font-size:16px">7-1의 체크리스트: 제목·축·단위·0부터</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">실습</span></div>
+  <h2>실습 파일: 다섯 그래프 그리고 저장하기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:36px">
+    <div class="cell-ui" style="flex:1.2">
+      <div class="cbar"><span class="run"><svg class="ic"><use href="#i-play"/></svg></span> lesson02.ipynb 의 순서</div>
+      <div class="flow" style="gap:4px">
+        <div class="stepbox" style="padding:12px 4px;gap:6px"><div class="h" style="font-size:17px">준비</div><div class="d">한글·데이터</div></div>
+        <div class="stepbox" style="padding:12px 4px;gap:6px"><div class="h" style="font-size:17px">막대</div><div class="d">bar</div></div>
+        <div class="stepbox" style="padding:12px 4px;gap:6px"><div class="h" style="font-size:17px">선</div><div class="d">plot</div></div>
+        <div class="stepbox" style="padding:12px 4px;gap:6px"><div class="h" style="font-size:17px">분포</div><div class="d">hist·boxplot</div></div>
+        <div class="stepbox" style="padding:12px 4px;gap:6px"><div class="h" style="font-size:17px">관계</div><div class="d">scatter</div></div>
+        <div class="stepbox goal" style="padding:12px 4px;gap:6px"><div class="h" style="font-size:17px">저장</div><div class="d">savefig</div></div>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:16px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week07/lesson02.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <div class="tile" style="padding:16px 20px;gap:6px"><div class="h" style="font-size:20px">직접 바꿔 보기</div>
+        <div class="d" style="font-size:17px">① 막대그래프의 기준 열을 <code>machine</code> → <code>line</code>으로<br>② 산점도의 x를 <code>pressure</code> → <code>thickness</code>로<br>③ 히스토그램 <code>bins</code>와 색 바꿔 저장하기</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">기본 틀은 하나</div><div style="font-size:21px"><code>fig, ax = plt.subplots()</code> → <code>ax.그래프()</code> → <strong>이름표</strong> → <code>plt.show()</code></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">함수만 바꾼다</div><div style="font-size:21px"><code>bar</code> · <code>plot</code> · <code>hist</code> · <code>boxplot</code> · <code>scatter</code> — 표에서 바로는 <code>.plot(kind=)</code></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">다듬고 저장</div><div style="font-size:21px">제목·축 이름·단위, 한글은 <strong>koreanize</strong>, 저장은 <code>savefig</code></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="fig는 그림 전체(도화지), ax는 그 안에서 실제로 그래프가 그려지는 한 칸(축)입니다. 그래서 ax.bar(), ax.set_title()처럼 ax에 명령합니다.">
+      <p class="q-title"><b>Q1.</b> <code>fig, ax = plt.subplots()</code>에서 <code>ax</code>는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">그래프를 저장할 파일 이름</button>
+        <button type="button" data-v="b">그래프가 그려지는 한 칸(축)</button>
+        <button type="button" data-v="c">데이터프레임의 한 열</button>
+        <button type="button" data-v="d">그래프의 제목</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="matplotlib 기본 글꼴에는 한글이 없어 □□로 깨집니다. 준비 셀에서 koreanize_matplotlib을 import하면 한글 글꼴이 설정됩니다.">
+      <p class="q-title"><b>Q2.</b> 그래프의 한글 제목이 □□□로 깨졌다. 가장 먼저 확인할 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">figsize를 더 크게 했는지</button>
+        <button type="button" data-v="b">plt.show()를 두 번 썼는지</button>
+        <button type="button" data-v="c">import koreanize_matplotlib을 실행했는지</button>
+        <button type="button" data-v="d">데이터에 결측치가 있는지</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="히스토그램은 ax.hist(값, bins=구간 개수)로 그립니다. 직접 해 보기 2에서 본 것처럼 bins가 너무 적거나 많으면 분포 모양을 읽기 어렵습니다.">
+      <p class="q-title"><b>Q3.</b> 인장강도 494개의 분포를 보려 한다. 알맞은 코드는?</p>
+      <div class="opts">
+        <button type="button" data-v="a"><code>ax.hist(df['strength'], bins=11)</code></button>
+        <button type="button" data-v="b"><code>ax.plot(df['strength'])</code></button>
+        <button type="button" data-v="c"><code>ax.bar(df['strength'])</code></button>
+        <button type="button" data-v="d"><code>ax.set_title(df['strength'])</code></button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="plt.show()가 그림을 화면에 내보내고 나면 plt.savefig는 빈 그림을 저장합니다. savefig를 show보다 먼저 쓰거나, fig.savefig를 씁니다.">
+      <p class="q-title"><b>Q4.</b> <code>plt.show()</code> 다음 줄에 <code>plt.savefig('a.png')</code>를 썼더니 빈 그림이 저장됐다. 고치려면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">dpi를 높인다</button>
+        <button type="button" data-v="b">파일 이름을 .jpg로 바꾼다</button>
+        <button type="button" data-v="c">셀을 한 번 더 실행한다</button>
+        <button type="button" data-v="d">savefig를 plt.show()보다 앞에 쓴다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">7-3</div>
+    <h2>상관관계와 인과관계</h2>
+    <p>산점도의 관계를 숫자(상관계수)로 재고, “함께 움직인다”와 “원인이다”가 왜 다른지 공정 데이터로 확인합니다. <strong>과제1</strong> 안내도 있습니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-link"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">7주 2차시 · 그래프 그리기 실습</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="w07data.js"></script>
+<script src="w07plot.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

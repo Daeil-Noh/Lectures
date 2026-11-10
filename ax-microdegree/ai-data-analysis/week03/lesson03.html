@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3주 3차시 · 파이썬 최소 문법 ②: 조건문·반복문·라이브러리 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 3주 3차시 교안: 비교와 if·elif·else, 들여쓰기, for 반복문으로 평균 내기·개수 세기, 함수 호출, import와 라이브러리, 첫 pd.read_csv">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-bad { fill: var(--bad); } .f-bads { fill: var(--bad-soft); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .t-mono { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; }
+  .mono { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .flowdot { display: none; } }
+  @keyframes pop { 0% { opacity: 0; transform: scale(.85); } 100% { opacity: 1; transform: none; } }
+
+  /* 한 줄씩 강조되는 코드 */
+  pre.code.lines { margin: 0; white-space: pre; font-size: 17px; line-height: 1.6; padding: 10px 6px; }
+  .lines .ln { display: block; padding: 1px 10px; border-radius: 7px; border-left: 4px solid transparent; transition: background .2s, opacity .2s; }
+  .lines .ln .no { color: #8a93a6; display: inline-block; width: 22px; font-style: normal; }
+  .lines .ln.cur { background: rgba(255, 184, 108, .24); border-left-color: #ffb86c; }
+  .lines .ln.run { background: rgba(165, 214, 167, .16); border-left-color: #a5d6a7; }
+  .lines .ln.skip { opacity: .38; }
+
+  /* 온도 데이터 격자 */
+  .tgrid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; }
+  .tgrid span { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 15px; font-weight: 700; text-align: center; padding: 5px 0; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); transition: background .3s, color .3s; }
+  .tg-wrap:has(.frag.show) .tgrid span.hi { background: var(--accent-2); color: var(--surface); border-color: var(--accent-2); }
+
+  /* 비교 연산자 */
+  .cmp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .cmp div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 6px 4px; text-align: center; font-size: 14px; color: var(--muted); line-height: 1.35; }
+  .cmp b { display: block; font-family: ui-monospace, monospace; font-size: 22px; color: var(--accent); }
+
+  /* 경보 놀이터 */
+  .alab { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 14px; width: 100%; height: 100%; padding: 4px; }
+  .alab .left { display: flex; flex-direction: column; gap: 10px; justify-content: center; min-width: 0; }
+  .stack { display: flex; height: 26px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+  .stack i { display: block; height: 100%; transition: width .25s; }
+  .slab { display: flex; justify-content: space-between; font-size: 14.5px; font-weight: 700; color: var(--muted); margin-bottom: 4px; gap: 8px; }
+  .slab b { font-variant-numeric: tabular-nums; }
+  .tgl { font: inherit; font-size: 16px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent-2); background: var(--accent-2-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent-2); border-color: var(--accent-2); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+
+  /* 반복문 따라가기 */
+  .loopv { display: flex; flex-direction: column; gap: 10px; width: 100%; height: 100%; justify-content: center; padding: 4px 6px; }
+  .lrow { display: flex; gap: 8px; align-items: center; }
+  .lrow .lab { font-family: ui-monospace, monospace; font-weight: 800; font-size: 15px; color: var(--muted); width: 64px; }
+  .lc { flex: 1; height: 48px; border: 2px solid var(--line); background: var(--surface-2); border-radius: 10px; display: grid; place-items: center; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 17px; font-weight: 800; transition: background .2s, border-color .2s, transform .2s, opacity .2s; }
+  .lc.on { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-3px); }
+  .lc.past { opacity: .5; }
+  .lc.hit { color: var(--accent-2); }
+  .lc.on.hit { border-color: var(--accent-2); background: var(--accent-2-soft); }
+  .vars { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .vv { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 6px 12px; }
+  .vv .k { font-family: ui-monospace, monospace; font-size: 14px; font-weight: 800; color: var(--muted); }
+  .vv .v { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 24px; font-weight: 800; color: var(--accent); line-height: 1.25; min-height: 1.25em; }
+  .vv.chg { border-color: var(--accent-2); }
+  .vv.chg .v { color: var(--accent-2); animation: pop .3s ease; }
+
+  /* 가짜 셀 (import 실험) */
+  .fcell { display: grid; grid-template-columns: 54px 1fr; gap: 4px 8px; align-items: start; border-radius: 12px; padding: 6px 8px; border: 2px solid transparent; transition: border-color .2s, background .2s; }
+  .fcell.now { border-color: var(--accent); background: var(--accent-soft); }
+  .fcell .runb { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); display: grid; place-items: center; cursor: pointer; font-size: 18px; margin: 4px 0 0 6px; }
+  .fcell .runb:hover { border-color: var(--accent); color: var(--accent); }
+  .fcell .cnt { font-family: ui-monospace, monospace; font-size: 14px; color: var(--muted); text-align: center; font-weight: 700; }
+  .fcell pre.code { font-size: 17px; padding: 9px 14px; }
+  .fcell .fout { grid-column: 2; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 15.5px; line-height: 1.45; padding: 4px 14px; min-height: 1.45em; white-space: pre-wrap; }
+  .fcell .fout.err { color: var(--bad); background: var(--bad-soft); border-radius: 8px; font-weight: 700; }
+  .libs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lib { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .lib:hover { border-color: var(--accent); }
+  .lib b { font-family: ui-monospace, monospace; font-size: 16px; }
+  .lib span { font-size: 13.5px; color: var(--muted); }
+  .lib[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* 함수 */
+  .ftab { font-size: 17px; }
+  .ftab td, .ftab th { padding: 7px 12px; }
+  .ftab td.m { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 700; }
+  .ftab td.r { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 800; color: var(--accent); }
+  .note { display: flex; gap: 10px; align-items: flex-start; font-size: 17px; line-height: 1.45; }
+  .note .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--surface); display: grid; place-items: center; font-size: 15px; font-weight: 800; margin-top: 1px; }
+  .checks { display: grid; gap: 10px; font-size: 19px; }
+  .checks div { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 9px 16px; }
+  .checks b { color: var(--accent); }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-branch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></symbol>
+</svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 3주차 3차시</p>
+    <h1 style="font-size:58px">파이썬 최소 문법 ②<br>조건문·반복문·<br>라이브러리</h1>
+    <p class="lead" style="font-size:25px">“220℃를 넘으면 경보”를<br>494개 기록에 한 번에</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:460px;flex:none" aria-hidden="true">
+    <!-- 리스트 -->
+    <g class="t-mono" style="font-size:15px;font-weight:800" text-anchor="middle">
+      <rect x="20" y="20" width="76" height="44" rx="10" class="f-s2" stroke="var(--line)" stroke-width="2"/><text x="58" y="48" class="f-text">218.2</text>
+      <rect x="104" y="20" width="76" height="44" rx="10" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/><text x="142" y="48" class="f-acc2">222.5</text>
+      <rect x="188" y="20" width="76" height="44" rx="10" class="f-s2" stroke="var(--line)" stroke-width="2"/><text x="226" y="48" class="f-text">209.8</text>
+      <rect x="272" y="20" width="76" height="44" rx="10" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/><text x="310" y="48" class="f-acc2">225.1</text>
+      <rect x="356" y="20" width="76" height="44" rx="10" class="f-s2" stroke="var(--line)" stroke-width="2"/><text x="394" y="48" class="f-text">216.4</text>
+      <rect x="440" y="20" width="62" height="44" rx="10" class="f-s2" stroke="var(--line)" stroke-width="2"/><text x="471" y="48" class="f-muted">…</text>
+    </g>
+    <path id="cv-in" d="M58 70 C 58 110, 260 90, 260 140" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 7"/>
+    <circle r="7" class="f-acc flowdot"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#cv-in"/></animateMotion></circle>
+    <!-- 판단 마름모 -->
+    <path d="M260 140 L380 210 L260 280 L140 210 Z" class="f-accs" stroke="var(--accent)" stroke-width="3"/>
+    <text x="260" y="206" text-anchor="middle" class="t-mono t-main" style="font-size:19px">temp</text>
+    <text x="260" y="232" text-anchor="middle" class="t-mono t-acc" style="font-size:19px">&gt; 220 ?</text>
+    <!-- 분기 -->
+    <path d="M140 210 H70 V330" fill="none" stroke="var(--muted)" stroke-width="3"/><text x="96" y="200" class="t-sub" style="font-size:16px;font-weight:700">아니오</text>
+    <path d="M380 210 H450 V330" fill="none" stroke="var(--accent-2)" stroke-width="3"/><text x="398" y="200" class="t-acc2" style="font-size:16px">예</text>
+    <rect x="10" y="330" width="120" height="60" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/><text x="70" y="367" text-anchor="middle" class="t-main">정상</text>
+    <rect x="390" y="330" width="120" height="60" rx="14" class="f-acc2"/><text x="450" y="367" text-anchor="middle" class="t-main" style="fill:#fff">경보!</text>
+    <!-- 반복 화살표 -->
+    <path d="M260 280 V360 C 260 420, 170 420, 170 400" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="6 6"/>
+    <text x="276" y="330" class="t-acc" style="font-size:15px">다음 값으로 반복</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-branch"/></svg></span><div class="h">조건문</div><div class="d">if·elif·else로 온도 기준에 따라 다르게 판단한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-repeat"/></svg></span><div class="h">반복문</div><div class="d">for로 리스트를 돌며 평균을 내고, 기준을 넘는 값을 센다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div class="h">들여쓰기·함수</div><div class="d">들여쓰기가 범위를 정함을 알고, 함수를 불러 쓴다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">라이브러리</div><div class="d">import로 pandas를 불러 첫 CSV 파일을 읽는다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>① 조건문</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>② 반복문</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 함수·라이브러리</b><small>직접 해 보기 1</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘이 파이썬 문법의 마지막 시간입니다. 끝나면 <strong>변수·리스트·조건·반복·라이브러리</strong>로 실제 공정 데이터 494행을 직접 세어 봅니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>220℃를 넘은 기록은 몇 개일까?</h2>
+  <div class="body tg-wrap" style="gap:14px">
+    <div class="tgrid" id="tgrid"></div>
+    <p class="muted" style="font-size:17px;margin:0">process.csv의 앞 48개 온도(℃). 전체는 <strong style="color:var(--text)">494개</strong>입니다.</p>
+    <div class="frag" style="display:grid;gap:12px"><p style="font-size:19px;margin:0">앞 48개 중 <strong style="color:var(--accent-2)">3개</strong>. 494개 전체를 눈으로 세기는 힘들다 → 컴퓨터에게 시키려면 두 가지가 필요하다.</p><div class="grid g2" style="gap:20px">
+      <div class="tile row" style="padding:14px 20px"><span class="ic-badge"><svg class="ic"><use href="#i-branch"/></svg></span><div><div class="h" style="font-size:21px">판단: “220보다 큰가?”</div><div class="d">→ <b>조건문 if</b></div></div></div>
+      <div class="tile row" style="padding:14px 20px"><span class="ic-badge o"><svg class="ic"><use href="#i-repeat"/></svg></span><div><div class="h" style="font-size:21px">반복: “494개 모두 하나씩”</div><div class="d">→ <b>반복문 for</b></div></div></div>
+    </div></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시 · 다음 단계를 누르면 220℃ 초과 값이 표시됨 · 실습용 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>조건문: 만약 ~라면</h2><p>조건이 참(True)일 때만 실행합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-branch"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. if 기본 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 조건문</span></div>
+  <h2>if: 조건이 참이면 들여쓴 줄을 실행</h2>
+  <div class="body" style="gap:18px">
+    <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:26px;align-items:center">
+      <div style="display:grid;gap:10px">
+        <pre class="code" style="font-size:21px">temp = 223.4
+if temp > 220:
+    print('경보! 온도가 높습니다')
+print('점검 끝')</pre>
+        <pre class="out">경보! 온도가 높습니다
+점검 끝</pre>
+      </div>
+      <svg viewBox="0 0 460 300" role="img" aria-label="temp가 220보다 크면 경보를 출력하고, 어느 쪽이든 점검 끝을 출력하는 흐름도">
+        <path d="M230 20 L340 80 L230 140 L120 80 Z" class="f-accs" stroke="var(--accent)" stroke-width="3"/>
+        <text x="230" y="88" text-anchor="middle" class="t-mono t-main" style="font-size:18px">temp &gt; 220 ?</text>
+        <path d="M340 80 H400 V170" fill="none" stroke="var(--accent-2)" stroke-width="3"/><text x="356" y="70" class="t-acc2">True</text>
+        <rect x="320" y="170" width="140" height="50" rx="12" class="f-acc2"/><text x="390" y="201" text-anchor="middle" class="t-main" style="font-size:16px;fill:#fff">경보! 출력</text>
+        <path d="M120 80 H60 V250 H160" fill="none" stroke="var(--muted)" stroke-width="3"/><text x="66" y="70" class="t-sub" style="font-size:15px;font-weight:700">False</text>
+        <path d="M390 220 V250 H300" fill="none" stroke="var(--accent-2)" stroke-width="3"/>
+        <rect x="160" y="228" width="140" height="46" rx="12" class="f-surface" stroke="var(--line)" stroke-width="2"/><text x="230" y="257" text-anchor="middle" class="t-main" style="font-size:16px">점검 끝</text>
+      </svg>
+    </div>
+    <div class="cmp frag">
+      <div><b>&gt;</b>크다</div><div><b>&lt;</b>작다</div><div><b>&gt;=</b>크거나 같다</div><div><b>&lt;=</b>작거나 같다</div><div><b>==</b>같다</div><div><b>!=</b>다르다</div>
+    </div>
+    <p class="muted frag" style="font-size:18px;margin:0">주의: <code>=</code>는 넣기, <code>==</code>는 <strong style="color:var(--text)">같은지 비교</strong>. 비교의 결과는 <code>True</code>/<code>False</code>(3-2의 bool)입니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 들여쓰기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 조건문</span></div>
+  <h2>들여쓰기가 <span class="mark">범위</span>를 정한다</h2>
+  <div class="body">
+    <div class="grid g3" style="gap:18px;align-items:start">
+      <div class="tile" style="padding:16px;gap:10px"><div class="h" style="font-size:20px">A. temp = 215.0</div>
+        <pre class="code" style="font-size:16px">temp = 215.0
+if temp > 220:
+    print('경보!')
+print('점검 끝')</pre>
+        <pre class="out" style="font-size:15px">점검 끝</pre>
+        <div class="d">조건이 거짓 → 들여쓴 줄만 <b>건너뜀</b></div></div>
+      <div class="tile frag show" style="padding:16px;gap:10px"><div class="h" style="font-size:20px">B. 둘 다 들여쓰면</div>
+        <pre class="code" style="font-size:16px">temp = 215.0
+if temp > 220:
+    print('경보!')
+    print('점검 끝')</pre>
+        <pre class="out" style="font-size:15px"> </pre>
+        <div class="d">‘점검 끝’도 if 안으로 → <b>아무것도 출력 안 됨</b></div></div>
+      <div class="tile frag" style="padding:16px;gap:10px;border:2px solid var(--bad)"><div class="h" style="font-size:20px">C. 들여쓰기를 빠뜨리면</div>
+        <pre class="code" style="font-size:16px">temp = 215.0
+if temp > 220:
+print('경보!')</pre>
+        <pre class="out err" style="font-size:14px">IndentationError: expected an indented block after 'if' statement on line 2</pre></div>
+    </div>
+    <div class="box think frag" style="margin-top:18px"><p style="font-size:20px;margin:0"><strong>규칙:</strong> 조건 끝에 <strong>콜론 :</strong> → 다음 줄부터 <strong>4칸 들여쓰기</strong>. Colab은 콜론 뒤에서 Enter를 치면 자동으로 들여 줍니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시 · 오류 문구는 파이썬 버전에 따라 조금 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 8. if/elif/else -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 조건문</span></div>
+  <h2>if · elif · else: 3단계 온도 경보</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1;display:grid;gap:10px">
+      <pre class="code" style="font-size:20px">temp = 218.0
+if temp >= 225:
+    print('위험: 즉시 정지')
+elif temp >= 215:
+    print('주의: 냉각 확인')
+else:
+    print('정상')</pre>
+      <pre class="out">주의: 냉각 확인</pre>
+    </div>
+    <div style="flex:1;display:grid;gap:14px">
+      <div class="tile frag show" style="padding:16px 20px;gap:6px"><div class="h" style="font-size:21px">위에서부터 차례로 검사</div><div class="d"><b>처음으로 참인 곳 하나만</b> 실행하고 나머지는 건너뛴다. 218.0은 225 이상? 아니오 → 215 이상? <b>예</b> → ‘주의’</div></div>
+      <div class="tile frag" style="padding:16px 20px;gap:8px"><div class="h" style="font-size:21px">process.csv 494개에 적용하면</div>
+        <div class="stack"><i style="width:67.2%;background:var(--accent-soft)"></i><i style="width:30%;background:var(--accent-2)"></i><i style="width:2.8%;background:var(--bad)"></i></div>
+        <div class="slab"><span>정상 <b style="color:var(--accent)">332</b></span><span>주의 <b style="color:var(--accent-2)">148</b></span><span>위험 <b style="color:var(--bad)">14</b></span></div></div>
+      <div class="tile frag" style="padding:14px 20px;gap:4px"><div class="d"><b>elif</b> = else if의 줄임. 몇 개든 쓸 수 있고, <b>else</b>는 “나머지 전부”.</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시 · 경보 기준 215·225℃는 설명용으로 정한 값</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 경보 놀이터 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 조건문 · 직접 해 보기 1</span></div>
+  <h2>경보 기준 놀이터 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="align-items:stretch;padding:12px">
+      <div class="alab">
+        <div class="left">
+          <pre class="code lines" id="a-code" data-hl="off"></pre>
+          <pre class="out" id="a-out" style="font-size:18px"></pre>
+          <div><div class="slab"><span>process.csv 494개에 같은 코드를 적용하면</span></div>
+            <div class="stack" id="a-stack"><i style="background:var(--accent-soft)"></i><i style="background:var(--accent-2)"></i><i style="background:var(--bad)"></i></div>
+            <div class="slab" style="margin-top:4px"><span>정상 <b id="a-n0" style="color:var(--accent)">0</b></span><span>주의 <b id="a-n1" style="color:var(--accent-2)">0</b></span><span>위험 <b id="a-n2" style="color:var(--bad)">0</b></span></div></div>
+        </div>
+        <svg id="a-thermo" viewBox="0 0 150 440" aria-label="온도계: 현재 온도와 주의·위험 기준선"></svg>
+      </div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>지금 온도 temp <output id="a-t-o">218.0℃</output></label><input id="a-t" type="range" min="195" max="235" step="0.5" value="218" aria-label="지금 온도"></div>
+      <div class="ctrl"><label>주의 기준 <output id="a-w-o">215℃</output></label><input id="a-w" type="range" min="205" max="225" step="1" value="215" aria-label="주의 기준"></div>
+      <div class="ctrl"><label>위험 기준 <output id="a-d-o">225℃</output></label><input id="a-d" type="range" min="215" max="235" step="1" value="225" aria-label="위험 기준"></div>
+      <button class="tgl" type="button" id="a-swap" aria-pressed="false"><span class="chk"></span>if와 elif 조건 순서 바꾸기</button>
+      <div class="callout b" id="a-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시 · 아래 막대는 process.csv(가상 데이터) 온도 494개를 실제로 센 결과</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>반복문: 하나씩 전부</h2><p>리스트의 값을 차례로 꺼내 같은 일을 반복합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-repeat"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. for 기본 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 반복문</span></div>
+  <h2>for: 리스트에서 하나씩 꺼내 t에 넣고 반복</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1;display:grid;gap:10px">
+      <pre class="code" style="font-size:20px">temps = [218.2, 222.5, 209.8]
+for t in temps:
+    print(t, '확인')
+print('끝')</pre>
+      <pre class="out">218.2 확인
+222.5 확인
+209.8 확인
+끝</pre>
+    </div>
+    <div style="flex:1;display:grid;gap:14px">
+      <svg viewBox="0 0 480 190" role="img" aria-label="리스트의 값이 하나씩 t에 들어가 들여쓴 줄을 반복 실행한다">
+        <g class="t-mono" style="font-size:17px;font-weight:800" text-anchor="middle">
+          <rect x="10" y="10" width="110" height="46" rx="10" class="f-accs" stroke="var(--accent)" stroke-width="2"/><text x="65" y="40" class="f-text">218.2</text>
+          <rect x="130" y="10" width="110" height="46" rx="10" class="f-s2" stroke="var(--line)" stroke-width="2"/><text x="185" y="40" class="f-text">222.5</text>
+          <rect x="250" y="10" width="110" height="46" rx="10" class="f-s2" stroke="var(--line)" stroke-width="2"/><text x="305" y="40" class="f-text">209.8</text>
+        </g>
+        <text x="380" y="30" class="t-sub" style="font-size:14px">1번째 →</text><text x="380" y="50" class="t-sub" style="font-size:14px">2번째 → 3번째</text>
+        <path d="M65 60 V100" stroke="var(--accent)" stroke-width="3" marker-end="url(#ah3)"/>
+        <defs><marker id="ah3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 10 5 0 10z" class="f-acc"/></marker></defs>
+        <rect x="20" y="106" width="90" height="34" rx="8" class="f-acc"/><text x="65" y="129" text-anchor="middle" class="t-mono" style="font-size:16px;font-weight:800;fill:var(--surface)">t</text>
+        <rect x="20" y="138" width="90" height="44" rx="10" class="f-accs" stroke="var(--accent)" stroke-width="3"/><text x="65" y="167" text-anchor="middle" class="t-mono t-main">218.2</text>
+        <rect x="150" y="120" width="250" height="54" rx="12" fill="#1f2430"/><text x="168" y="153" class="t-mono" style="font-size:16px;fill:#e6e9ef"><tspan style="fill:#ffb86c">print</tspan>(t, <tspan style="fill:#a5d6a7">'확인'</tspan>)</text>
+        <path d="M400 147 C 470 147, 470 70, 420 64" fill="none" stroke="var(--accent-2)" stroke-width="3" stroke-dasharray="6 5"/>
+        <text x="430" y="120" class="t-acc2" style="font-size:14px">반복</text>
+      </svg>
+      <div class="tile frag show" style="padding:12px 18px;gap:4px"><div class="d"><b>t</b>는 내가 정하는 이름 (temp, x … 무엇이든). 리스트 길이만큼 = <b>3번</b> 반복</div></div>
+      <div class="tile frag" style="padding:12px 18px;gap:4px"><div class="d">횟수로 반복: <code>for i in range(3):</code> → i가 <b>0, 1, 2</b> (리스트 인덱스처럼 0부터)</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 반복문 따라가기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 반복문 · 직접 해 보기 2</span></div>
+  <h2>반복문 한 단계씩 따라가기: 평균 내기 + 개수 세기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 320px">
+    <div class="plot" style="align-items:stretch;padding:10px">
+      <div class="loopv">
+        <div class="lrow" id="f-row"><span class="lab">temps</span></div>
+        <pre class="code lines" id="f-code" data-hl="off" style="font-size:16.5px;line-height:1.5"></pre>
+        <pre class="out" id="f-out" style="font-size:17px">(아직 출력 없음)</pre>
+      </div>
+    </div>
+    <div class="side">
+      <div style="display:flex;gap:8px"><button class="btn" id="f-step" type="button" style="flex:1"><svg class="ic"><use href="#i-play"/></svg> 한 단계</button><button class="btn ghost" id="f-auto" type="button">자동</button><button class="btn ghost" id="f-reset" type="button" aria-label="처음으로"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <div class="vars">
+        <div class="vv" id="vv-t"><div class="k">t</div><div class="v">-</div></div>
+        <div class="vv" id="vv-total"><div class="k">total</div><div class="v">-</div></div>
+        <div class="vv" id="vv-count"><div class="k">count</div><div class="v">-</div></div>
+        <div class="vv" id="vv-avg"><div class="k">avg</div><div class="v">-</div></div>
+      </div>
+      <div class="callout b" id="f-msg" style="min-height:110px"></div>
+      <div class="muted" style="font-size:15px" id="f-n">단계 0</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시 · 설명용 온도 6개 · total은 보기 좋게 소수 첫째 자리까지 표시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 반복 패턴 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 반복문</span></div>
+  <h2>반복문의 단골 패턴 두 가지</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:24px">
+      <div class="tile" style="padding:22px;gap:12px"><div style="display:flex;align-items:center;gap:14px"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">① 누적: 모두 더하기</div></div>
+        <pre class="code" style="font-size:18px">total = 0                 # 0에서 시작
+for t in temps:
+    total = total + t     # 하나씩 더해 쌓기
+avg = total / len(temps)</pre>
+        <div class="d">평균·합계. 한 줄로는 <code>sum(temps) / len(temps)</code></div></div>
+      <div class="tile" style="padding:22px;gap:12px"><div style="display:flex;align-items:center;gap:14px"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">② 세기: 조건에 맞으면 +1</div></div>
+        <pre class="code" style="font-size:18px">count = 0
+for t in temps:
+    if t > 220:           # 들여쓰기 두 단계
+        count = count + 1</pre>
+        <div class="d">불량 개수·경보 횟수. 5주차 pandas로는 한 줄로 된다</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:20px"><p style="font-size:20px;margin:0"><code>count = count + 1</code>은 <code>count += 1</code>로 줄여 쓰기도 합니다. 생성형AI가 만든 코드에서 자주 보게 됩니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>함수와 라이브러리</h2><p>남이 만든 도구를 이름만 불러 씁니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-book"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 함수 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 함수·라이브러리</span></div>
+  <h2>함수 = 이름(입력)으로 부르면 일을 해 주는 기계</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1;display:grid;gap:14px">
+      <svg viewBox="0 0 520 150" role="img" aria-label="입력 218.8333과 1을 round 함수에 넣으면 218.8이 나온다">
+        <rect x="0" y="45" width="140" height="60" rx="12" class="f-s2" stroke="var(--line)" stroke-width="2"/><text x="70" y="70" text-anchor="middle" class="t-sub" style="font-size:13px">입력</text><text x="70" y="94" text-anchor="middle" class="t-mono t-main" style="font-size:16px">218.8333, 1</text>
+        <path d="M145 75 H185" stroke="var(--muted)" stroke-width="3" marker-end="url(#ah4)"/>
+        <defs><marker id="ah4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 10 5 0 10z" class="f-muted"/></marker></defs>
+        <rect x="195" y="20" width="140" height="110" rx="20" class="f-acc"/><text x="265" y="70" text-anchor="middle" class="t-mono" style="font-size:24px;font-weight:800;fill:var(--surface)">round</text><text x="265" y="98" text-anchor="middle" style="font-size:14px;fill:var(--surface);opacity:.85">반올림 기계</text>
+        <path d="M340 75 H380" stroke="var(--muted)" stroke-width="3" marker-end="url(#ah4)"/>
+        <rect x="390" y="45" width="130" height="60" rx="12" class="f-accs" stroke="var(--accent)" stroke-width="2"/><text x="455" y="70" text-anchor="middle" class="t-sub" style="font-size:13px">결과</text><text x="455" y="94" text-anchor="middle" class="t-mono t-main" style="font-size:18px">218.8</text>
+      </svg>
+      <pre class="code" style="font-size:19px">round(218.8333, 1)    # 이름(입력1, 입력2)</pre>
+      <div class="box think frag" style="margin:0;padding:14px 20px"><p style="font-size:18px;margin:0"><code>def</code>로 함수를 <strong>직접 만들 수도</strong> 있습니다. 실습 파일에서 맛보기만 — 이 강의에서는 대부분 <strong>불러 쓰기</strong>만 합니다.</p></div>
+    </div>
+    <table class="ftab" style="flex:1">
+      <thead><tr><th>이미 써 본 함수</th><th>결과</th></tr></thead>
+      <tbody>
+        <tr><td class="m">print('점검 끝')</td><td>화면에 출력</td></tr>
+        <tr><td class="m">type(211.5)</td><td class="r">&lt;class 'float'&gt;</td></tr>
+        <tr><td class="m">len(temps)</td><td class="r">6</td></tr>
+        <tr><td class="m">sum(temps)</td><td class="r">1313.0</td></tr>
+        <tr><td class="m">max(temps)</td><td class="r">225.1</td></tr>
+        <tr><td class="m">int('120')</td><td class="r">120</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시 · temps = [218.2, 222.5, 209.8, 225.1, 216.4, 221.0]</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 라이브러리 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 함수·라이브러리 · 직접 해 보기 3</span></div>
+  <h2>라이브러리 = 공구함: 먼저 import로 꺼내기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:8px;padding:14px">
+      <div class="fcell" data-i="0"><div><button class="runb" type="button" aria-label="셀 1 실행"><svg class="ic"><use href="#i-play"/></svg></button><div class="cnt">[ ]</div></div><pre class="code">import math                 # 수학 공구함 꺼내기
+import pandas as pd         # 표 데이터 공구함, 별명 pd</pre><div class="fout"></div></div>
+      <div class="fcell" data-i="1"><div><button class="runb" type="button" aria-label="셀 2 실행"><svg class="ic"><use href="#i-play"/></svg></button><div class="cnt">[ ]</div></div><pre class="code">math.sqrt(16)               # 공구함.도구( )</pre><div class="fout"></div></div>
+      <div class="fcell" data-i="2"><div><button class="runb" type="button" aria-label="셀 3 실행"><svg class="ic"><use href="#i-play"/></svg></button><div class="cnt">[ ]</div></div><pre class="code">round(math.pi, 2)           # 원주율을 소수 둘째 자리로</pre><div class="fout"></div></div>
+      <div class="callout b" id="im-msg" style="margin-top:4px">셀 ②부터 눌러 보세요. <strong>공구함을 꺼내지 않고</strong> 도구를 쓰면?</div>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">이 강의에서 쓸 공구함 — 눌러 보세요</div>
+      <div class="libs" id="libs">
+        <button class="lib" type="button" data-k="math" aria-pressed="false"><b>math</b><span>수학 계산</span></button>
+        <button class="lib" type="button" data-k="pd" aria-pressed="false"><b>pandas</b><span>표 데이터</span></button>
+        <button class="lib" type="button" data-k="plt" aria-pressed="false"><b>matplotlib</b><span>그래프</span></button>
+        <button class="lib" type="button" data-k="sk" aria-pressed="false"><b>scikit-learn</b><span>머신러닝</span></button>
+      </div>
+      <div class="tile" style="flex:1;padding:14px 16px;gap:8px">
+        <div class="h" id="lib-h" style="font-size:19px">Colab에 이미 설치되어 있다</div>
+        <div id="lib-d" style="font-size:16px;line-height:1.5">설치(pip)는 필요 없고, 쓰기 전에 <strong>import</strong>만 하면 됩니다. 그래프 한글용 koreanize-matplotlib만 예외로 설치합니다.</div>
+        <pre class="code" id="lib-c" data-hl="off" style="font-size:14.5px;padding:8px 12px" hidden></pre>
+        <div class="d" id="lib-w" style="font-weight:700;color:var(--accent)"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시 · math는 파이썬에 기본으로 들어 있는 라이브러리</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 첫 read_csv -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 함수·라이브러리</span></div>
+  <h2>총동원: 494개 중 220℃ 초과 세기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:26px">
+    <div style="flex:1.3;display:grid;gap:10px">
+      <pre class="code" style="font-size:16.5px">import pandas as pd
+DATA = 'https://raw.githubusercontent.com/Daeil-Noh/Lectures/main/ax-microdegree/ai-data-analysis/data/'
+df = pd.read_csv(DATA + 'process.csv')   # 표로 읽기
+temps = df['temp'].tolist()              # 온도 열 → 리스트
+count = 0
+for t in temps:
+    if t > 220:
+        count = count + 1
+print(len(temps), count)</pre>
+      <pre class="out">494 49</pre>
+    </div>
+    <div style="flex:1;display:grid;gap:10px">
+      <div class="note frag show"><span class="n">1</span><span><b>라이브러리</b>: <code>import pandas as pd</code></span></div>
+      <div class="note frag show"><span class="n">2</span><span><b>함수</b>: <code>pd.read_csv( )</code>로 CSV를 표(df)로</span></div>
+      <div class="note frag show"><span class="n">3</span><span><b>리스트·변수</b>: 온도 열을 temps에</span></div>
+      <div class="note frag show"><span class="n">4</span><span><b>반복 + 조건</b>: 220 초과면 count + 1</span></div>
+      <div class="box warn frag" style="margin:6px 0 0;padding:14px 18px"><p style="font-size:18px;margin:0"><strong>5주차 예고:</strong> pandas로는 한 줄!<br><code>(df['temp'] &gt; 220).sum()</code> → <b>49</b></p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시 · process.csv는 실습용 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 함수·라이브러리 · 실습</span></div>
+  <h2>실습 파일로 직접 해 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div class="checks" style="flex:1">
+      <div><b>1</b> if·elif·else 3단계 경보 — 온도를 바꿔 실행</div>
+      <div><b>2</b> 일부러 들여쓰기를 빼고 IndentationError 만나 보기</div>
+      <div><b>3</b> for로 평균 내기 + 220℃ 초과 세기</div>
+      <div><b>4</b> 함수 불러 쓰기 + <code>def</code> 맛보기</div>
+      <div><b>5</b> <code>pd.read_csv</code>로 process.csv 494행 읽고 세기</div>
+      <div><b>6</b> 직접 바꿔 보기 과제 3개 (기준값·조건 바꾸기)</div>
+    </div>
+    <div style="flex:none;width:380px;display:grid;gap:16px;justify-items:start">
+      <span class="ic-badge lg" style="width:120px;height:120px;font-size:64px;border-radius:30px"><svg class="ic"><use href="#i-code"/></svg></span>
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week03/lesson03.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <p class="muted" style="font-size:18px;margin:0">먼저 <strong style="color:var(--text)">Drive에 사본 저장</strong>, 그다음 위에서부터 차례로 실행!</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시 · 실습 파일 lesson03.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-branch"/></svg></span><div class="h">if · elif · else</div><div style="font-size:21px">위에서부터 검사해 <strong>처음 참인 곳 하나만</strong> 실행. 조건의 순서가 중요</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-repeat"/></svg></span><div class="h">for + 들여쓰기</div><div style="font-size:21px">하나씩 꺼내 반복. <strong>누적(합)</strong>과 <strong>세기(+1)</strong>. 들여쓰기가 범위</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">import 후 불러 쓰기</div><div style="font-size:21px">함수는 <code>이름( )</code>, 라이브러리는 <code>import</code> 먼저. <strong>pandas = pd</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="위에서부터 검사합니다. 210.0은 225 이상도, 215 이상도 아니므로 else의 '정상'이 실행됩니다.">
+      <p class="q-title"><b>Q1.</b> 8번 슬라이드의 3단계 경보 코드에서 <code>temp = 210.0</code>이면 출력은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">주의: 냉각 확인</button>
+        <button type="button" data-v="b">정상</button>
+        <button type="button" data-v="c">위험: 즉시 정지</button>
+        <button type="button" data-v="d">아무것도 출력되지 않는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="첫 조건 temp >= 215가 230에서도 참이라 '주의'를 출력하고 끝납니다. 더 엄격한 조건(225 이상)을 먼저 검사해야 합니다 — 직접 해 보기 1의 ‘순서 바꾸기’.">
+      <p class="q-title"><b>Q2.</b> <code>if temp &gt;= 215: 주의</code> → <code>elif temp &gt;= 225: 위험</code> 순서로 썼다. <code>temp = 230</code>이면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">위험이 출력된다</button>
+        <button type="button" data-v="b">주의와 위험이 둘 다 출력된다</button>
+        <button type="button" data-v="c">주의만 출력된다 (순서 오류)</button>
+        <button type="button" data-v="d">오류가 난다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="221.0과 224.3만 220보다 큽니다. 220.0은 220과 같으므로 '> 220'에 해당하지 않습니다. 같은 값까지 세려면 >= 를 씁니다.">
+      <p class="q-title"><b>Q3.</b> <code>temps = [221.0, 219.5, 224.3, 220.0]</code>에 반복문으로 <code>t &gt; 220</code>인 값을 세면 count는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">1</button>
+        <button type="button" data-v="b">2</button>
+        <button type="button" data-v="c">3</button>
+        <button type="button" data-v="d">4</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="라이브러리는 쓰기 전에 import로 꺼내야 합니다. import math 셀을 먼저 실행하지 않으면 math라는 이름이 없어 NameError가 납니다.">
+      <p class="q-title"><b>Q4.</b> <code>math.sqrt(16)</code>을 실행했더니 <code>NameError: name 'math' is not defined</code>. 해결은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">위에 <code>import math</code>를 쓰고 먼저 실행한다</button>
+        <button type="button" data-v="b">16을 따옴표로 감싼다</button>
+        <button type="button" data-v="c">math를 대문자 MATH로 바꾼다</button>
+        <button type="button" data-v="d">들여쓰기를 4칸 넣는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 4주차 생성형AI 코딩 도우미</span></div>
+    <div class="big">4-1</div>
+    <h2>생성형AI로 코드 만들고 실행하기</h2>
+    <p>오늘 배운 문법은 <strong>읽고 고치기</strong> 위한 것. 이제 “220℃ 넘는 개수를 세 줘”를 AI에게 부탁하고, 그 코드를 직접 읽고 검증해 봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week04/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-sparkles"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">3주 3차시 · 파이썬 최소 문법 ②: 조건문·반복문·라이브러리</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

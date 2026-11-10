@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4주 1차시 · 예시 제시와 단계별 지시 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 4주 1차시 교안: 예시 보여 주기(퓨샷), 단계별 지시, 표·항목으로 형식 정해 주기 — 바다결 후기 답글 실습">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  .pop1, .pop2, .pop3 { animation: popin 4.5s ease-in-out infinite; }
+  .pop2 { animation-delay: .5s; } .pop3 { animation-delay: 1s; }
+  @keyframes popin { 0%, 12% { opacity: 0; transform: translateX(-12px); } 25%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .pop1, .pop2, .pop3, .flowdot { animation: none; } .flowdot { display: none; } }
+
+  .tgl { font: inherit; font-size: 16px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 4px var(--surface); }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+  .exlabel { font-size: 12.5px; font-weight: 800; color: var(--muted); }
+
+  /* 세 가지 '친절' */
+  .tri .msg { max-width: 100%; font-size: 16.5px; }
+  .tri .cap { font-size: 15px; font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+
+  /* 퓨샷 구조 */
+  .seg { display: grid; grid-template-columns: 120px 1fr; gap: 14px; align-items: start; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 17px; line-height: 1.5; }
+  .seg + .seg { margin-top: 8px; }
+  .seg .lb { font-size: 14px; font-weight: 800; padding: 3px 10px; border-radius: 8px; text-align: center; background: var(--surface-2); color: var(--muted); }
+  .seg.ex .lb { background: var(--accent-soft); color: var(--accent); }
+  .seg.new { border: 2px dashed var(--accent-2); }
+  .seg.new .lb { background: var(--accent-2-soft); color: var(--accent-2); }
+  .seg small { color: var(--muted); font-size: 15px; }
+
+  /* 예시 개수 데모 */
+  .chips { display: flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 700; color: var(--muted); }
+  .chip { padding: 3px 12px; border-radius: 999px; border: 1px dashed var(--line); color: var(--muted); transition: all .2s; }
+  .chip.on { border-style: solid; border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .rcard { background: var(--surface-2); border-radius: 14px; padding: 9px 14px; display: flex; flex-direction: column; gap: 5px; }
+  .rcard .rv { font-size: 13.5px; color: var(--muted); font-weight: 700; }
+  .rcard .rv b { color: var(--text); }
+  .rcard .tx { font-size: 15.5px; line-height: 1.5; transition: opacity .25s; }
+  .pills { display: flex; gap: 5px; flex-wrap: wrap; }
+  .pill { font-size: 12px; font-weight: 800; padding: 1px 8px; border-radius: 999px; }
+  .pill.y { background: var(--ok-soft); color: var(--ok); } .pill.n { background: var(--bad-soft); color: var(--bad); }
+  .ticks { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); font-weight: 700; padding: 0 2px; }
+
+  /* 순서 조립기 */
+  .steps { display: grid; gap: 8px; }
+  .step { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 7px 10px; font-size: 16.5px; font-weight: 700; transition: border-color .2s, background .2s; }
+  .step .no { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--surface); display: grid; place-items: center; font-weight: 800; font-size: 15px; }
+  .step .mv { display: flex; gap: 4px; }
+  .step .mv button { font: inherit; font-size: 14px; width: 32px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); cursor: pointer; }
+  .step .mv button:disabled { opacity: .3; cursor: default; }
+  .step.badpos { border-color: var(--bad); background: var(--bad-soft); }
+  .step small { display: block; font-size: 13px; color: var(--muted); font-weight: 500; }
+
+  /* 형식 데모 */
+  .out-area { flex: 1; min-height: 0; background: var(--surface); border-radius: 12px; padding: 12px 16px; font-size: 16.5px; line-height: 1.55; overflow: hidden; }
+  .out-area table { font-size: 15.5px; }
+  .out-area th, .out-area td { padding: 5px 9px; }
+  .out-area ul { margin: 0; padding-left: 1.1em; } .out-area li { margin: 2px 0; }
+  .fmt-line { font-size: 15px; background: var(--accent-soft); border-radius: 10px; padding: 6px 12px; }
+  .fmt-line b { color: var(--accent); }
+  .chk3 { display: grid; gap: 6px; }
+  .chk3 div { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 5px 12px; font-size: 15.5px; font-weight: 700; }
+  .chk3 span.v { font-weight: 800; }
+  .v.y { color: var(--ok); } .v.m { color: var(--accent-2); } .v.n { color: var(--bad); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 4주차 1차시</p>
+    <h1>예시 제시와<br>단계별 지시</h1>
+    <p class="lead" style="font-size:25px">말로 설명하기 어려우면<br>예시를 보여 주고, 순서를 정해 주자</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span><span>Gemini · Claude</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <g>
+      <rect x="20" y="70" width="150" height="80" rx="14" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+      <text x="38" y="100" class="t-main" style="font-size:15px;fill:var(--accent)">예시 1</text>
+      <rect x="38" y="112" width="110" height="9" rx="4" class="f-acc" opacity=".5"/><rect x="38" y="128" width="80" height="9" rx="4" class="f-acc" opacity=".3"/>
+      <rect x="20" y="180" width="150" height="80" rx="14" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+      <text x="38" y="210" class="t-main" style="font-size:15px;fill:var(--accent)">예시 2</text>
+      <rect x="38" y="222" width="110" height="9" rx="4" class="f-acc" opacity=".5"/><rect x="38" y="238" width="80" height="9" rx="4" class="f-acc" opacity=".3"/>
+      <rect x="20" y="290" width="150" height="80" rx="14" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+      <text x="38" y="320" class="t-main" style="font-size:15px;fill:var(--accent)">예시 3</text>
+      <rect x="38" y="332" width="110" height="9" rx="4" class="f-acc" opacity=".5"/><rect x="38" y="348" width="80" height="9" rx="4" class="f-acc" opacity=".3"/>
+    </g>
+    <path d="M178 220 H222" stroke="var(--muted)" stroke-width="3" stroke-dasharray="4 6"/>
+    <circle cx="262" cy="220" r="42" class="f-acc"/>
+    <g transform="translate(240 198) scale(1.85)" style="color:var(--surface)"><use href="#i-sparkles" width="24" height="24"/></g>
+    <path d="M304 220 H340" stroke="var(--muted)" stroke-width="3" stroke-dasharray="4 6"/>
+    <g class="pop1"><rect x="350" y="90" width="150" height="70" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/><rect x="366" y="110" width="118" height="9" rx="4" class="f-acc2" opacity=".6"/><rect x="366" y="128" width="88" height="9" rx="4" class="f-line"/></g>
+    <g class="pop2"><rect x="350" y="185" width="150" height="70" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/><rect x="366" y="205" width="118" height="9" rx="4" class="f-acc2" opacity=".6"/><rect x="366" y="223" width="88" height="9" rx="4" class="f-line"/></g>
+    <g class="pop3"><rect x="350" y="280" width="150" height="70" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/><rect x="366" y="300" width="118" height="9" rx="4" class="f-acc2" opacity=".6"/><rect x="366" y="318" width="88" height="9" rx="4" class="f-line"/></g>
+    <text x="425" y="384" text-anchor="middle" class="t-sub" style="font-size:15px;font-weight:700">같은 모양의 결과</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">예시 보여 주기</div><div class="d">원하는 결과의 예시 1~3개를 프롬프트에 넣어 말투·길이·구성을 맞춘다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">단계별로 시키기</div><div class="d">분류 → 요약 → 초안처럼 일의 순서를 정해 지시한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">형식 정해 주기</div><div class="d">표·항목·열 이름을 정해 바로 쓸 수 있는 결과를 받는다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">후기 답글에 적용</div><div class="d">바다결 고객 후기로 세 가지를 직접 해 본다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>① 예시 보여 주기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② 단계별로 시키기</b><small>직접 해 보기 2</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 형식 정해 주기</b><small>직접 해 보기 3</small></div>
+      <div style="flex:4;background:var(--surface-2)"><b>종합 실습·정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-sparkles"/></svg> 실습은 <strong>Gemini(학교 Google 계정)</strong>나 <strong>Claude(무료)</strong> 중 편한 쪽에서. 한쪽이 사용량 한도에 걸리면 같은 프롬프트를 다른 쪽에 붙여 넣어 이어 하면 됩니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>“친절하게 써 줘” — 그 ‘친절’은 매번 다르다</h2>
+  <div class="body" style="justify-content:flex-start;gap:14px">
+    <div class="callout b" style="font-size:18px">바다결 온라인 마케팅팀의 고민: 같은 후기 <strong>“배송 중에 봉투가 터져서 왔어요”</strong>에 같은 부탁을 했는데…</div>
+    <div class="grid g3 tri" style="gap:16px">
+      <div class="frag show"><div class="cap"><span class="tag" style="background:var(--muted)">월요일</span>너무 딱딱하다</div><div class="msg ai"><span class="who">예시 답변 ①</span>불편을 드려 대단히 죄송합니다. 고객님의 소중한 의견을 겸허히 받아들여 배송 포장 개선에 만전을 기하겠습니다. 향후 더욱 나은 서비스로 보답드리겠습니다.</div></div>
+      <div class="frag"><div class="cap"><span class="tag" style="background:var(--muted)">화요일</span>너무 가볍다</div><div class="msg ai"><span class="who">예시 답변 ②</span>헉 ㅠㅠ 봉투가 터졌다니 너무 속상하셨겠어요!! 😢 다음엔 꼭꼭 안전하게 보내 드릴게요~!</div></div>
+      <div class="frag"><div class="cap"><span class="tag">수요일</span>팀이 원하는 답글</div><div class="msg ai" style="outline:2px solid var(--accent)"><span class="who">예시 답변 ③</span>고객님, 봉투가 터진 채로 받으셔서 많이 불편하셨죠. 정말 죄송합니다. 사진을 고객센터로 보내 주시면 바로 확인해 드리겠습니다.</div></div>
+    </div>
+    <div class="box think frag" style="margin:4px 0 0"><p style="font-size:21px;margin:0">말로 설명하기 어려운 <strong>‘우리 회사 말투’</strong>는 → 원하는 답글을 <strong>예시로 보여 주면</strong> 됩니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시 · 예시 답변은 미리 써 둔 예시 — 실제 답은 매번 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>예시 보여 주기</h2><p>“이렇게 써 줘”를 말 대신 예시로.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 예시 개수 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 예시 보여 주기</span></div>
+  <h2>예시를 몇 개 보여 주는가</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge g lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">예시 0개</div><div class="d">지시만 한다<br>“친절한 답글을 써 줘”</div><div style="font-size:16px;font-weight:800;color:var(--muted)">제로샷 (zero-shot)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">예시 1개</div><div class="d">원하는 결과를 하나 보여 준다<br>“이 답글처럼 써 줘”</div><div style="font-size:16px;font-weight:800;color:var(--accent)">원샷 (one-shot)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">예시 2~3개</div><div class="d">여러 경우의 예시를 보여 준다<br>칭찬·불만·제안 답글 각각</div><div style="font-size:16px;font-weight:800">퓨샷 (few-shot)</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">AI는 예시에서 <strong style="color:var(--text)">말투·길이·구성</strong>의 패턴을 읽고 따라 합니다. 예시는 ‘정답의 모양’을 보여 주는 것.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시 · ‘샷(shot)’ = 프롬프트에 넣은 예시 한 개</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 예시 프롬프트 구조 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 예시 보여 주기</span></div>
+  <h2>예시를 넣은 프롬프트의 생김새</h2>
+  <div class="body" style="flex-direction:row;gap:30px;align-items:center">
+    <div style="flex:1.45">
+      <div class="seg frag show"><span class="lb">① 지시</span><div>바다결 고객 응대 담당자로서, <strong>아래 예시와 같은 말투·길이·구성</strong>으로 마지막 후기에 답글을 써 줘.</div></div>
+      <div class="seg ex frag"><span class="lb">② 예시 1</span><div>후기: 바삭하고 많이 달지 않아서… <small>(칭찬)</small><br>답글: 고객님, 바삭한 식감을 좋게 봐 주셔서 감사합니다! …</div></div>
+      <div class="seg ex frag"><span class="lb">③ 예시 2·3</span><div>후기: 봉투가 터져서 왔어요 <small>(불만)</small> → 답글: …<br>후기: 작은 용량도 나오면… <small>(제안)</small> → 답글: …</div></div>
+      <div class="seg new frag"><span class="lb">④ 새 입력</span><div>후기: <strong>조금 딱딱해서 우유에 오래 불려야 해요</strong><br>답글: <small>← 여기를 AI가 채운다</small></div></div>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div><div class="h" style="font-size:20px">입력 → 출력 짝</div><div class="d">예시는 ‘후기 → 답글’처럼 짝으로</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">같은 틀 반복</div><div class="d">예시와 새 입력을 같은 모양으로 써야 그대로 따라 한다</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:20px">마지막은 비워 두기</div><div class="d">“답글:” 뒤를 비워 두면 그 자리를 채운다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 직접 해 보기 1: 예시 개수 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 예시 보여 주기 · 직접 해 보기 1</span></div>
+  <h2>예시를 늘리면 답글이 어떻게 달라질까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;padding:12px 14px">
+      <div class="chips">프롬프트에 넣은 예시 <span class="chip" id="fs-c1">칭찬 답글 예시</span><span class="chip" id="fs-c2">불만 답글 예시</span><span class="chip" id="fs-c3">제안 답글 예시</span></div>
+      <div id="fs-cards" style="display:grid;gap:8px"></div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>프롬프트에 넣은 예시 수 <output id="fs-o">0개</output></label><input id="fs-s" type="range" min="0" max="2" step="1" value="0" aria-label="예시 수 (0개, 1개, 3개)"><div class="ticks"><span>0개</span><span>1개</span><span>3개</span></div></div>
+      <div class="meter"><div class="lbl">바다결 답글 기준 충족 (3건 × 5개 기준)</div><div class="val" id="fs-v">0 / 15</div><div class="track"><i id="fs-bar"></i></div></div>
+      <div class="status bad" id="fs-st"><b class="k">제각각</b>…</div>
+      <div class="muted" style="font-size:13.5px;line-height:1.45">기준: 고객님 호칭 · 후기 내용 짚기 · 유형에 맞는 응대 · 2~3문장 · ‘바다결 드림’ 서명</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시 · 답글은 경향을 보여 주려고 미리 써 둔 예시 — 실제 답은 매번 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 좋은 예시 고르기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 예시 보여 주기</span></div>
+  <h2>좋은 예시를 고르는 네 가지 요령</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">여러 경우를 골고루</div><div class="d">칭찬만 보여 주면 불만에도 감사 인사를 한다. 칭찬·불만·제안을 하나씩</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">원하는 수준 그대로</div><div class="d">예시의 품질이 결과의 품질. 대충 쓴 예시는 대충 따라 한다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">1~3개면 충분</div><div class="d">너무 길면 핵심이 흐려진다. 짧고 분명한 예시 몇 개가 낫다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">베끼지 않게 한 줄</div><div class="d">“표현은 그대로 쓰지 말고 형식만 따라 해” — 같은 문장 반복을 막는다</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:22px"><p style="font-size:20px;margin:0"><svg class="ic"><use href="#i-shield"/></svg> 실제 업무에서 예시를 만들 때도 <strong>고객 이름·주문번호 같은 개인정보는 지우고</strong> 넣습니다. (1주 3차시 규칙)</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 따라 하기 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 예시 보여 주기 · 따라 하기</span></div>
+  <h2>Gemini나 Claude에 붙여 넣어 보세요</h2>
+  <div class="body" style="flex-direction:row;gap:22px;align-items:stretch;justify-content:flex-start">
+    <div class="prompt" style="flex:1.35"><div class="prompt-h">프롬프트 · 예시 3개<button class="copy" type="button">복사</button></div><pre style="font-size:14.5px;line-height:1.5">너는 부산의 건강 간식 회사 '바다결'의 고객 응대 담당자야.
+아래 예시와 같은 말투·길이·구성으로 마지막 후기에 답글을 써 줘.
+표현은 그대로 베끼지 말고 형식만 따라 해.
+
+[예시 1] 후기: 바삭하고 많이 달지 않아서 아침에 먹기 좋아요
+답글: 고객님, 바삭한 식감을 좋게 봐 주셔서 감사합니다! 덜 달게 만드는 데 특히 신경 쓰고 있어요. — 바다결 드림
+
+[예시 2] 후기: 배송 중에 봉투가 터져서 왔어요
+답글: 고객님, 봉투가 터진 채로 받으셔서 많이 불편하셨죠. 정말 죄송합니다. 사진을 고객센터로 보내 주시면 바로 확인해 드리겠습니다. — 바다결 드림
+
+[예시 3] 후기: 작은 용량도 나오면 좋겠어요
+답글: 고객님, 좋은 의견 감사합니다! 작은 용량 제품에 대한 의견은 상품 기획팀에 꼭 전달하겠습니다. — 바다결 드림
+
+후기: <mark>조금 딱딱해서 우유에 오래 불려야 해요</mark>
+답글:</pre></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="chat" style="flex:1"><div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+        <div class="msg user">(왼쪽 프롬프트를 붙여 넣음)</div>
+        <div class="msg ai"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>고객님, 그래놀라가 딱딱해서 오래 불려 드셔야 했다니 죄송합니다. 식감에 대한 의견은 생산팀과 꼭 함께 살펴보겠습니다. — 바다결 드림</div>
+      </div>
+      <div class="callout b" style="font-size:16.5px"><mark style="background:var(--accent-2-soft);color:var(--accent-2);font-weight:700;border-radius:4px;padding:0 3px">주황색</mark> 후기를 다른 후기로 바꿔 몇 번 더 해 보세요. 말투·길이가 계속 비슷한가요?</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시 · 후기는 실습용 가상 회사 바다결의 가상 자료</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>단계별로 시키기</h2><p>한 번에 “다 해 줘” 대신, 일의 순서를 정해 줍니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-filter"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 단계별 개념 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 단계별로 시키기</span></div>
+  <h2>답글 쓰기를 세 단계로 나누면</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">1단계 · 분류</div><div class="d">칭찬 / 불만 / 제안<br>중 하나로 나누기</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">2단계 · 요약</div><div class="d">고객이 말한 핵심을<br>한 줄로 정리</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">3단계 · 답글 초안</div><div class="d">분류·요약에 맞춰<br>사과·감사·전달</div></div>
+    </div>
+    <div class="grid g3 frag" style="margin-top:22px;gap:16px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="d" style="font-size:17.5px;color:var(--text)">중간 결과가 보여서 <strong>어디서 틀렸는지</strong> 바로 찾는다</div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div class="d" style="font-size:17.5px;color:var(--text)">앞 단계 결과가 다음 단계의 <strong>근거</strong>가 된다</div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-reset"/></svg></span><div class="d" style="font-size:17.5px;color:var(--text)">틀린 단계만 <strong>골라서 다시</strong> 시킬 수 있다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 2: 순서 조립 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 단계별로 시키기 · 직접 해 보기 2</span></div>
+  <h2>단계의 순서를 맞춰 프롬프트를 완성하자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;padding:14px">
+      <div style="display:flex;flex-direction:column;gap:8px"><div class="exlabel" style="font-size:14px">단계 카드 — ▲▼로 순서를 바꾸세요</div><div class="steps" id="ord-list"></div></div>
+      <div class="prompt" style="display:flex;flex-direction:column"><div class="prompt-h">완성되는 프롬프트<button class="copy" type="button">복사</button></div><pre id="ord-pre" style="font-size:14.5px;line-height:1.55;flex:1"></pre></div>
+    </div>
+    <div class="side">
+      <div class="status bad" id="ord-st"><b class="k">순서 확인</b>…</div>
+      <div class="msg ai warn" id="ord-ex" style="max-width:100%;font-size:15px"></div>
+      <button class="btn ghost" id="ord-mix" type="button"><svg class="ic"><use href="#i-reset"/></svg> 다시 섞기</button>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시 · 오른쪽 답변 조각은 미리 써 둔 예시 — 실제 답은 매번 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 따라 하기 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 단계별로 시키기 · 따라 하기</span></div>
+  <h2>단계마다 제목을 붙여 보여 달라고 하자</h2>
+  <div class="body" style="flex-direction:row;gap:22px;align-items:stretch;justify-content:flex-start">
+    <div style="flex:1.1;display:flex;flex-direction:column;gap:12px">
+      <div class="prompt"><div class="prompt-h">프롬프트 · 단계별 지시<button class="copy" type="button">복사</button></div><pre style="font-size:15.5px;line-height:1.55">너는 바다결의 고객 응대 담당자야.
+아래 후기 3개를 다음 순서대로 처리해 줘.
+1단계: 각 후기를 칭찬 / 불만 / 제안 중 하나로 분류
+2단계: 후기의 핵심을 한 줄로 요약
+3단계: 1·2단계 결과에 맞춰 답글 초안 작성
+  (<mark>2~3문장</mark>, '고객님'으로 시작)
+단계마다 제목을 붙여서 보여 줘.
+
+후기 1: 부산 여행 때 매장에서 먹어 보고 주문했어요
+후기 2: 조금 딱딱해서 우유에 오래 불려야 해요
+후기 3: 선물 세트 구성이 조금 더 다양했으면 해요</pre></div>
+      <div class="callout b" style="font-size:16px">1단계 결과부터 확인하세요. 분류가 틀렸다면 “2번은 불만이야. 3단계만 다시 해 줘”처럼 <strong>그 단계만</strong> 고쳐 달라고 하면 됩니다 (3주 3차시).</div>
+    </div>
+    <div class="chat" style="flex:1"><div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">(왼쪽 프롬프트를 붙여 넣음)</div>
+      <div class="msg ai" style="font-size:15.5px;line-height:1.5"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span><b>1단계 · 분류</b>
+후기 1 칭찬 · 후기 2 불만 · 후기 3 제안
+<b>2단계 · 요약</b>
+1 매장에서 맛보고 온라인 주문
+2 식감이 딱딱함
+3 선물 세트 구성을 다양하게
+<b>3단계 · 답글 초안</b>
+1 고객님, 부산 여행 중 매장에서 맛보고 주문까지 해 주셔서 감사합니다! …
+2 고객님, 딱딱해서 오래 불려 드셔야 했다니 죄송합니다. …
+3 고객님, 선물 세트 구성에 대한 의견 감사합니다. …</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시 · 후기는 바다결 가상 자료(reviews_2026.csv)에서 골랐습니다</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>형식 정해 주기</h2><p>결과를 ‘어떤 모양으로’ 받을지까지 정하면 바로 쓸 수 있습니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 3: 형식 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 형식 정해 주기 · 직접 해 보기 3</span></div>
+  <h2>같은 내용, 어떤 형식으로 받을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 320px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;padding:12px 14px;background:var(--surface-2)">
+      <div class="fmt-line" id="fm-line"></div>
+      <div class="exlabel">예시 답변 — 실제 답은 매번 다를 수 있음</div>
+      <div class="out-area" id="fm-out"></div>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">프롬프트 마지막 줄을 골라 보세요</div>
+      <div style="display:grid;gap:6px" id="fm-btns">
+        <button class="tgl" type="button" data-f="prose" aria-pressed="true"><span class="chk"></span>형식 지정 없음 (줄글)</button>
+        <button class="tgl" type="button" data-f="list" aria-pressed="false"><span class="chk"></span>“항목으로 나눠 줘”</button>
+        <button class="tgl" type="button" data-f="table" aria-pressed="false"><span class="chk"></span>“표로, 열은 번호|유형|요약|답글”</button>
+      </div>
+      <div class="chk3" id="fm-chk"></div>
+      <div class="callout b" id="fm-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시 · 같은 후기 3건(앞 장)의 처리 결과를 형식만 바꿔 보여 줌</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 형식 요령 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 형식 정해 주기</span></div>
+  <h2>형식을 정할 때 함께 정해 줄 것</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile row frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h">열 이름과 순서</div><div class="d">“열: 번호 | 유형 | 요약 | 답글 초안” — 엑셀·문서에 그대로 옮길 수 있다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h">값의 범위</div><div class="d">“유형은 칭찬/불만/제안 중 하나” — 엉뚱한 분류 이름이 생기지 않는다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h">분량</div><div class="d">“답글은 2~3문장”, “요약은 한 줄” — 길이가 들쑥날쑥하지 않다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h">모를 때의 규칙</div><div class="d">“판단하기 어려우면 ‘확인 필요’라고 써” — 억지로 채우지 않게 한다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 종합 실습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">종합 실습</span></div>
+  <h2>세 가지를 한 프롬프트에: 예시 + 단계 + 형식</h2>
+  <div class="body" style="flex-direction:row;gap:22px;align-items:stretch;justify-content:flex-start">
+    <div class="prompt" style="flex:1.5"><div class="prompt-h">프롬프트 · 종합<button class="copy" type="button">복사</button></div><pre style="font-size:14.5px;line-height:1.5">너는 바다결의 고객 응대 담당자야.
+아래 후기 5개를 1단계 분류(칭찬/불만/제안) → 2단계 한 줄 요약 → 3단계 답글 초안 순서로 처리해 줘.
+답글은 아래 예시처럼 '고객님'으로 시작해 <mark>2~3문장</mark>, 끝에 '— 바다결 드림'.
+[답글 예시] 후기: 배송 중에 봉투가 터져서 왔어요
+→ 고객님, 봉투가 터진 채로 받으셔서 많이 불편하셨죠. 정말 죄송합니다. 사진을 고객센터로 보내 주시면 바로 확인해 드리겠습니다. — 바다결 드림
+결과는 표로 정리해 줘. 열: 번호 | 유형 | 요약 | 답글 초안
+
+1. 견과가 넉넉하게 들어 있어요
+2. 유통기한이 짧게 남은 제품이 왔어요
+3. 맛은 괜찮은데 특별하진 않아요
+4. 포장이 꼼꼼해서 선물하기 좋았습니다
+5. 가격이 조금 부담됩니다</pre></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="tile" style="padding:16px 18px;gap:8px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent)"><use href="#i-check"/></svg> 결과를 받으면 확인할 것</div>
+        <ul style="font-size:17px;margin:0;line-height:1.5"><li>표의 열이 지시한 순서대로인가</li><li>분류가 맞는가 — 별점이 없어도 문장으로 판단</li><li>답글이 2~3문장이고 서명이 있는가</li></ul></div>
+      <div class="box think" style="margin:0;padding:16px 18px"><p style="font-size:17px;margin:0"><strong>3번 후기</strong>는 어느 유형으로 나왔나요? 칭찬도 불만도 아닌 후기 — <strong>4주 3차시</strong>에서 다시 만납니다.</p></div>
+      <div class="callout" style="font-size:15.5px"><svg class="ic"><use href="#i-shield"/></svg> 후기는 개인정보·기밀이 없는 <strong>가상 자료</strong>라 붙여 넣어도 됩니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시 · Gemini·Claude 어느 쪽이든 그대로 붙여 넣으면 됩니다</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">예시를 보여 준다</div><div style="font-size:21px">원하는 결과 1~3개를 <strong>여러 경우로 골고루</strong> — 말투·길이·구성이 맞춰진다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">순서를 정해 준다</div><div style="font-size:21px">분류 → 요약 → 초안. <strong>앞 단계가 다음 단계의 근거</strong>, 틀린 곳도 바로 보인다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">모양을 정해 준다</div><div style="font-size:21px">표·항목·<strong>열 이름·값의 범위·분량</strong>까지 정하면 바로 쓸 수 있다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="원하는 결과의 예시 몇 개를 프롬프트에 넣어 보여 주는 방법을 퓨샷(few-shot)이라고 합니다. 예시가 없으면 제로샷입니다.">
+      <p class="q-title"><b>Q1.</b> 원하는 답글 예시 2~3개를 프롬프트에 넣어 보여 주는 방법은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">제로샷(zero-shot)</button>
+        <button type="button" data-v="b">퓨샷(few-shot)</button>
+        <button type="button" data-v="c">역할 지정</button>
+        <button type="button" data-v="d">출처 확인</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="AI는 보여 준 예시의 패턴을 따라 합니다. 칭찬 예시만 있으면 불만 후기에도 감사 인사 위주의 답글을 쓰기 쉽습니다. 예시는 여러 경우를 골고루 넣습니다.">
+      <p class="q-title"><b>Q2.</b> 칭찬 후기 답글 예시 <u>하나만</u> 넣었을 때 생기기 쉬운 문제는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">불만 후기에도 감사 인사 위주로 답한다</button>
+        <button type="button" data-v="b">AI가 답글을 아예 쓰지 않는다</button>
+        <button type="button" data-v="c">답글이 모두 영어로 나온다</button>
+        <button type="button" data-v="d">아무 문제도 생기지 않는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="불만인지 칭찬인지에 따라 답글의 방향(사과·감사·전달)이 달라집니다. 분류를 먼저 하면 그 결과가 답글의 근거가 되고, 분류가 틀렸는지도 바로 확인할 수 있습니다.">
+      <p class="q-title"><b>Q3.</b> 단계별 지시에서 ‘분류’를 ‘답글 초안’보다 먼저 시키는 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">분류가 가장 쉬운 일이라서</button>
+        <button type="button" data-v="b">AI는 한 번에 한 단계만 할 수 있어서</button>
+        <button type="button" data-v="c">분류 결과가 답글 방향을 정하는 근거가 되어서</button>
+        <button type="button" data-v="d">답글이 짧아져서</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="표로 받겠다는 것뿐 아니라 열 이름과 순서까지 정해 주면 결과를 엑셀·문서에 그대로 옮길 수 있고, 빠진 항목도 한눈에 보입니다.">
+      <p class="q-title"><b>Q4.</b> 결과를 바로 업무에 쓰기 가장 좋은 형식 지시는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">“보기 좋게 정리해 줘”</button>
+        <button type="button" data-v="b">“알아서 잘 써 줘”</button>
+        <button type="button" data-v="c">“최대한 자세하게 써 줘”</button>
+        <button type="button" data-v="d">“표로, 열은 번호 | 유형 | 요약 | 답글 초안”</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">4-2</div>
+    <h2>나만의 업무 프롬프트 템플릿</h2>
+    <p>오늘 만든 좋은 프롬프트, 한 번 쓰고 버리기 아깝지요? 빈칸만 바꿔 계속 쓰는 <strong>템플릿</strong>으로 만들어 저장합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week03/lesson03.html">← 3-3 대화로 결과 다듬기</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-log"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">4주 1차시 · 예시 제시와 단계별 지시</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12주 2차시 · AI로 발표 자료 만들기 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 12주 2차시 교안: 목적·청중에서 메시지·목차·슬라이드별 한 문장·시각 자료·발표 원고까지, AI로 개요와 발표자 노트 만들기, 한 장에 한 메시지, 숫자 확인">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .grow { transform-box: fill-box; transform-origin: bottom; animation: grow 3.2s ease-in-out infinite; }
+  @keyframes grow { 0%, 15% { transform: scaleY(.35); } 45%, 100% { transform: scaleY(1); } }
+  @media (prefers-reduced-motion: reduce) { .grow { animation: none; } }
+
+  .chat .msg { font-size: 16px; }
+  .prompt pre { font-size: 16px; line-height: 1.55; }
+  .ph { background: var(--accent-2-soft); color: var(--accent-2); font-weight: 800; border-radius: 4px; padding: 0 3px; }
+
+  /* 개요 조립기 */
+  .seg { display: grid; grid-template-columns: 52px 1fr 1fr; gap: 6px; align-items: center; }
+  .seg > span { font-size: 14.5px; font-weight: 800; color: var(--muted); }
+  .seg button, .tgl { font: inherit; font-size: 15px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 10px; padding: 6px 8px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .toggles { display: grid; gap: 5px; }
+  .tgl { text-align: left; display: flex; align-items: center; gap: 9px; padding: 5px 10px; }
+  .tgl .chk { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 9px; height: 5px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  #ob-prompt pre { font-size: 15px; line-height: 1.5; }
+  #ob-prompt pre .new { background: var(--accent-soft); border-radius: 4px; }
+
+  /* 슬라이드 다듬기 */
+  .mslide { width: 100%; aspect-ratio: 16 / 9; max-height: 100%; background: var(--surface); border: 2px solid var(--line); border-radius: 10px; padding: 22px 28px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 18px rgba(0,0,0,.08); }
+  .ms-title { font-size: 22px; font-weight: 800; line-height: 1.3; }
+  .ms-title.clean { font-size: 27px; color: var(--accent); }
+  .ms-main { flex: 1; display: flex; gap: 22px; min-height: 0; align-items: center; }
+  .ms-body { flex: 1; margin: 0; padding-left: 1.1em; font-size: 15px; line-height: 1.5; }
+  .ms-body li { margin: 4px 0; }
+  .ms-body.clean { font-size: 22px; line-height: 1.5; font-weight: 700; }
+  .ms-body.clean li { margin: 10px 0; }
+  .ms-body .note { list-style: none; margin-left: -1.1em; font-size: 15px; font-weight: 600; color: var(--muted); }
+  .ms-vis { width: 300px; flex: none; display: none; }
+  .ms-vis.on { display: block; }
+  .ms-src { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px; display: none; }
+  .ms-src.on { display: block; }
+
+  /* 판단 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; min-height: 118px; display: flex; flex-direction: column; gap: 6px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .nm { font-size: 18px; font-weight: 800; line-height: 1.4; }
+  .pcard .ans { display: none; font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 16px; }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.yes { background: var(--ok-soft); border-color: var(--ok); } .pcard.open.yes .verdict { color: var(--ok); }
+  .pcard.open.no { background: var(--bad-soft); border-color: var(--bad); } .pcard.open.no .verdict { color: var(--bad); }
+  .pcard.open.mid { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.mid .verdict { color: var(--accent-2); }
+
+  /* 예시 결과 5장 */
+  .mini { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .mini .ms { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .mini .n { font-size: 14px; font-weight: 800; color: var(--accent); }
+  .mini .t { font-size: 17px; font-weight: 800; line-height: 1.4; }
+  .mini .v { font-size: 14px; color: var(--muted); line-height: 1.4; margin-top: auto; border-top: 1px dashed var(--line); padding-top: 6px; }
+  .numtab { font-size: 15.5px; }
+  .numtab td, .numtab th { padding: 5px 12px; }
+  .numtab td.r { text-align: right; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 12주차 2차시</p>
+    <h1>AI로 발표<br>자료 만들기</h1>
+    <p class="lead" style="font-size:25px">개요와 원고는 AI와 함께,<br>메시지와 숫자는 내가</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="70" y="60" width="380" height="220" rx="16" class="f-s2" stroke="var(--line)" stroke-width="2" transform="rotate(-5 260 170)"/>
+    <rect x="50" y="50" width="400" height="230" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2.5"/>
+    <rect x="80" y="78" width="250" height="20" rx="10" class="f-acc"/>
+    <rect x="80" y="110" width="160" height="12" rx="6" class="f-line"/>
+    <line x1="90" y1="252" x2="420" y2="252" stroke="var(--line)" stroke-width="2"/>
+    <rect x="120" y="190" width="56" height="62" rx="6" class="f-accs grow"/>
+    <rect x="200" y="170" width="56" height="82" rx="6" class="f-accs grow" style="animation-delay:.2s"/>
+    <rect x="280" y="140" width="56" height="112" rx="6" class="f-acc grow" style="animation-delay:.4s"/>
+    <text x="370" y="160" class="t-acc" style="font-size:26px">+11.4%</text>
+    <!-- 발표자 -->
+    <rect x="250" y="280" width="12" height="70" class="f-line"/>
+    <rect x="200" y="346" width="112" height="10" rx="5" class="f-line"/>
+    <g style="color:var(--accent-2)"><g transform="translate(330 300) scale(4.2)"><use href="#i-user" width="24" height="24"/></g></g>
+    <rect x="60" y="310" width="190" height="96" rx="14" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/>
+    <text x="80" y="340" class="t-acc2" style="font-size:15px">발표자 노트</text>
+    <g fill="var(--accent-2)" opacity=".55"><rect x="80" y="354" width="150" height="8" rx="4"/><rect x="80" y="372" width="120" height="8" rx="4"/><rect x="80" y="390" width="136" height="8" rx="4"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">목적·청중 먼저</div><div class="d">누가 듣고 무엇을 결정할지에서 발표를 시작한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">만드는 순서</div><div class="d">메시지 → 목차 → 한 문장 → 시각 자료 → 원고</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">AI에게 맡길 일</div><div class="d">개요와 발표자 노트를 요청하고, 슬라이드 도구로 옮긴다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">한 장 한 메시지</div><div class="d">글을 줄이고, 숫자는 원자료로 다시 확인한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 오늘의 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>① 기획</b><small>목적·청중·메시지</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② AI로 개요와 원고</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>③ 슬라이드 다듬기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>④ 숫자 확인·실습</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-factory"/></svg> 오늘의 상황: 바다결 경영지원팀 직원으로서 다음 주 경영 회의에서 <strong>3분기(7~9월) 실적</strong>을 슬라이드 5장으로 발표합니다.</p></div>
+    <p class="muted" style="margin-top:18px;font-size:20px"><svg class="ic"><use href="#i-hand"/></svg> 손 모양이 보이는 슬라이드는 <strong>직접 조작</strong>해 볼 수 있습니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>“발표 자료 만들어 줘”만 하면?</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:flex-start">
+    <div class="chat" style="flex:1.2">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">바다결 3분기 실적 발표 자료 만들어 줘.</div>
+      <div class="msg ai warn"><span class="who">AI · 예시 답변 — 문제가 있는 답의 예 (실제 답은 매번 다를 수 있음)</span>1. 표지  2. 회사 소개  3. 시장 동향  4. 3분기 성과: 매출 <b>20% 성장</b>  5. 고객 만족도 <b>95%</b>  6. SWOT 분석  7. 경쟁사 비교  8. 마케팅 전략  9. 4분기 계획  10. 향후 비전  11. 결론  12. Q&amp;A</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-x"/></svg></span><div><div class="h" style="font-size:20px">누구에게, 왜?</div><div class="d">어느 회사 발표에나 붙는 12장짜리 목차</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:20px">지어낸 숫자</div><div class="d">자료를 주지 않았는데 ‘20%’, ‘95%’가 나왔다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-bulb"/></svg></span><div><div class="h" style="font-size:20px">해결: 순서대로 맡기기</div><div class="d">목적·메시지를 내가 정하고, 숫자는 원자료로</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 만드는 순서 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>발표 자료를 만드는 여섯 단계</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">목적·청중</div><div class="d">누가 듣고<br>무엇을 결정하나</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="h">핵심 메시지</div><div class="d">한 문장으로</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">목차</div><div class="d">메시지를 받치는<br>3~5개 덩어리</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">장별 한 문장</div><div class="d">제목 = 결론</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">시각 자료</div><div class="d">차트·표·그림<br>하나씩</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">발표 원고</div><div class="d">발표자 노트에<br>말하듯이</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:24px;gap:18px">
+      <div class="callout b" style="font-size:19px"><svg class="ic"><use href="#i-user"/></svg> <strong>내가 정할 것</strong> — 목적·청중, 핵심 메시지, 최종 숫자</div>
+      <div class="callout" style="font-size:19px"><svg class="ic"><use href="#i-sparkles"/></svg> <strong>AI와 함께</strong> — 목차 초안, 장별 문장 다듬기, 시각 자료 제안, 원고 초안</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>기획: 목적·청중·메시지</h2><p>슬라이드 도구를 열기 전에 정할 것.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 목적과 청중 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 기획</span></div>
+  <h2>네 가지 질문에 먼저 답한다</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile row frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div><div class="h">누가 듣나?</div><div class="d">대표와 팀장들 — 경영 회의</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h">듣고 나서 무엇을 하나?</div><div class="d">4분기 광고비를 채널별로 어떻게 나눌지 결정</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h">이미 아는 것 / 모르는 것</div><div class="d">매출이 늘었다는 건 안다 / 채널별로 광고비 효과가 어떻게 다른지는 모른다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h">분량</div><div class="d">회의 안건 중 하나 — 슬라이드 5장</div></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:20px">이 네 가지가 곧 AI에게 줄 <strong style="color:var(--text)">맥락</strong>입니다 (3주 1차시: 역할·맥락·지시·형식). 내려받는 기획표에 먼저 적어 보세요.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시 · 실습 자료: materials/presentation_plan.md (발표 기획표)</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 핵심 메시지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 기획</span></div>
+  <h2>핵심 메시지는 <span class="mark">한 문장</span>으로</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:24px">
+      <div class="tile frag show" style="padding:22px">
+        <div class="muted" style="font-size:16px;font-weight:800">주제만 있는 문장</div>
+        <div style="font-size:24px;font-weight:800">“3분기 실적에 대해 보고드리겠습니다.”</div>
+        <div class="d">듣고 나도 무엇을 기억해야 할지 모른다</div>
+      </div>
+      <div class="tile frag" style="padding:22px;border:3px solid var(--accent)">
+        <div style="font-size:16px;font-weight:800;color:var(--accent)">주장이 있는 문장</div>
+        <div style="font-size:24px;font-weight:800">“3분기 매출은 늘었지만 오픈마켓 광고비가 더 빨리 늘었다. 4분기 광고비를 다시 나누자.”</div>
+        <div class="d">결론 + 근거 + 요청이 한 문장에</div>
+      </div>
+    </div>
+    <div class="box think frag" style="margin-top:22px"><p style="font-size:20px;margin:0">메시지는 <strong>데이터를 먼저 훑어보고</strong> 정합니다 (7주: 스프레드시트 데이터를 AI로 분석). 정확한 숫자는 ④ 실습에서 직접 계산해 채웁니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시 · 사용 데이터: 공통 파일 sales_2026.csv (가상)</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>AI로 개요와 원고 만들기</h2><p>구조는 AI에게, 숫자 자리는 비워 두기.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-sparkles"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 개요 요청 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI로 개요와 원고</span></div>
+  <h2>개요를 부탁하는 프롬프트</h2>
+  <div class="body" style="flex-direction:row;gap:22px;align-items:flex-start">
+    <div class="prompt" style="flex:1">
+      <div class="prompt-h">프롬프트<button class="copy" type="button">복사</button></div>
+<pre>너는 사내 발표 자료를 기획하는 직원이야.
+가상 회사 바다결의 <mark>3분기(7~9월) 실적</mark>을 <mark>대표와 팀장들</mark>에게 발표해. 듣고 나서 <mark>4분기 광고비 배분</mark>을 결정해야 해.
+핵심 메시지: <mark>3분기 매출은 늘었지만 오픈마켓 광고비가 더 빨리 늘었다. 4분기 광고비를 다시 나누자.</mark>
+슬라이드 <mark>5장</mark> 개요를 표로 만들어 줘. 열: 번호 | 제목(결론 한 문장) | 시각 자료.
+숫자는 내가 확인해서 채울 테니 [ ]로 비워 둬.</pre>
+    </div>
+    <div class="chat" style="flex:1.05">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg ai"><span class="who">AI · 예시 답변 — 실제 답은 매번 다를 수 있음</span>1 | 3분기 매출, 2분기보다 <span class="ph">[ ]%</span> 늘었다 | 분기별 매출 막대
+2 | 성장을 이끈 것은 <span class="ph">[제품]</span>이다 | 제품별 증감률 막대
+3 | <span class="ph">[채널]</span>은 광고비를 적게 늘리고도 매출이 컸다 | 채널별 증가율 비교
+4 | 오픈마켓은 광고비 <span class="ph">[ ]%</span>↑, 매출 <span class="ph">[ ]%</span>↑ | 두 증가율 나란히 막대
+5 | 제안: 4분기 광고비를 다시 나누자 | 결정할 것 2가지</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시 · 숫자 자리를 비워 두면 AI가 숫자를 지어낼 틈이 줄어든다</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 직접 해 보기 1: 개요 조립기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI로 개요와 원고 · 직접 해 보기 1</span></div>
+  <h2>상황을 고르면 프롬프트가 바뀐다 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="padding:12px;align-items:stretch">
+      <div class="prompt" id="ob-prompt" style="width:100%;overflow:auto">
+        <div class="prompt-h">완성된 프롬프트 · 복사해서 Gemini·Claude에 붙여 넣기<button class="copy" type="button">복사</button></div>
+        <pre id="ob-pre"></pre>
+      </div>
+    </div>
+    <div class="side">
+      <div class="seg" data-k="aud"><span>청중</span><button type="button" data-v="exec" aria-pressed="true">경영 회의</button><button type="button" data-v="all" aria-pressed="false">전 직원 공유</button></div>
+      <div class="seg" data-k="goal"><span>목적</span><button type="button" data-v="decide" aria-pressed="true">결정 요청</button><button type="button" data-v="share" aria-pressed="false">결과 공유</button></div>
+      <div class="seg" data-k="n"><span>분량</span><button type="button" data-v="5" aria-pressed="true">5장</button><button type="button" data-v="8" aria-pressed="false">8장</button></div>
+      <div class="toggles">
+        <button class="tgl" type="button" data-t="title" aria-pressed="true"><span class="chk"></span>제목은 결론 한 문장</button>
+        <button class="tgl" type="button" data-t="vis" aria-pressed="true"><span class="chk"></span>시각 자료 제안</button>
+        <button class="tgl" type="button" data-t="note" aria-pressed="false"><span class="chk"></span>발표자 노트</button>
+        <button class="tgl" type="button" data-t="num" aria-pressed="true"><span class="chk"></span>숫자 자리는 비워 두기</button>
+      </div>
+      <div class="callout b" id="ob-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시 · 색이 칠해진 줄 = 방금 바뀐 부분</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 발표자 노트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI로 개요와 원고</span></div>
+  <h2>원고는 슬라이드가 아니라 <span class="mark">발표자 노트</span>에</h2>
+  <div class="body" style="flex-direction:row;gap:22px;align-items:flex-start">
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="prompt">
+        <div class="prompt-h">프롬프트<button class="copy" type="button">복사</button></div>
+<pre>아래 <mark>2번 슬라이드</mark>의 발표자 노트를 써 줘.
+말하듯이 3문장, 슬라이드에 없는 숫자는 넣지 마. 데이터만으로 알 수 없는 원인은 단정하지 말고 ‘확인이 필요하다’고 말해 줘.
+[2번] 제목: <mark>선물 세트 매출이 2분기보다 37.2% 늘었다</mark> / 숫자: <mark>9월 매출 1,062만 원, 8월 547만 원</mark></pre>
+      </div>
+      <div class="callout b frag" style="font-size:17px">슬라이드에는 <strong>한 문장과 시각 자료</strong>만. 설명은 노트에 넣어 두고, 발표 연습 때 내 말로 바꿔 읽습니다.</div>
+    </div>
+    <div class="chat" style="flex:1">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg ai"><span class="who">AI · 예시 답변 — 실제 답은 매번 다를 수 있음</span>3분기 성장을 가장 크게 이끈 제품은 선물 세트입니다. 2분기보다 매출이 37.2% 늘었고, 특히 9월 매출이 1,062만 원으로 8월의 두 배 가까이 됐습니다. 9월에 늘어난 이유가 명절 수요 때문인지는 지난해 자료와 비교해 확인이 필요합니다.</div>
+      <div class="callout" style="font-size:15.5px">“두 배 가까이” — 1,062 ÷ 547 ≈ 1.94. 표현을 바꿔도 <strong>원래 숫자와 맞는지</strong> 계산해 봅니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시 · 숫자는 sales_2026.csv에서 직접 계산한 값</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 한 장 한 메시지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 슬라이드 다듬기</span></div>
+  <h2>한 장에 한 메시지: 네 가지 습관</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">제목 = 결론</div><div class="d">“3분기 실적” 대신 “3분기 매출 11.4% 증가”. 제목만 이어 읽어도 이야기가 된다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">글은 덜어 낸다</div><div class="d">문장 → 핵심어. 다른 이야기는 다음 장으로 보낸다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">숫자는 하나 크게</div><div class="d">강조할 숫자 하나와 그 숫자를 보여 주는 차트 하나</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">출처·기간 표시</div><div class="d">어떤 자료의 어느 기간을 비교했는지 아래에 작게</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 직접 해 보기 2: 슬라이드 다듬기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 슬라이드 다듬기 · 직접 해 보기 2</span></div>
+  <h2>글자가 빽빽한 슬라이드를 고쳐 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 320px">
+    <div class="plot" style="padding:18px">
+      <div class="mslide" id="ms">
+        <div class="ms-title" id="ms-title"></div>
+        <div class="ms-main">
+          <ul class="ms-body" id="ms-body"></ul>
+          <svg class="ms-vis" id="ms-vis" viewBox="0 0 300 230" role="img" aria-label="2분기와 3분기 매출 막대">
+            <text x="150" y="40" text-anchor="middle" class="t-acc" style="font-size:40px">+11.4%</text>
+            <line x1="30" y1="204" x2="270" y2="204" stroke="var(--line)" stroke-width="2"/>
+            <rect x="62" y="96" width="70" height="108" rx="6" class="f-accs"/>
+            <rect x="168" y="84" width="70" height="120" rx="6" class="f-acc"/>
+            <text x="97" y="88" text-anchor="middle" class="t-sub" style="font-size:13px">1억 1,301만</text>
+            <text x="203" y="76" text-anchor="middle" class="t-main" style="font-size:14px">1억 2,588만</text>
+            <text x="97" y="222" text-anchor="middle" class="t-sub" style="font-size:13px">2분기</text>
+            <text x="203" y="222" text-anchor="middle" class="t-main" style="font-size:13px">3분기</text>
+          </svg>
+        </div>
+        <div class="ms-src" id="ms-src">자료: 바다결 판매 기록 sales_2026.csv (가상) · 2분기(4~6월)와 3분기(7~9월) 매출 합계 비교</div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="toggles">
+        <button class="tgl" type="button" data-m="title" aria-pressed="false"><span class="chk"></span>① 제목을 결론 한 문장으로</button>
+        <button class="tgl" type="button" data-m="cut" aria-pressed="false"><span class="chk"></span>② 핵심어만, 다른 이야기는 다음 장</button>
+        <button class="tgl" type="button" data-m="vis" aria-pressed="false"><span class="chk"></span>③ 숫자 하나 크게 + 차트</button>
+        <button class="tgl" type="button" data-m="src" aria-pressed="false"><span class="chk"></span>④ 출처·기간 표시</button>
+      </div>
+      <div class="meter"><div class="lbl">제목·본문 글자 수 (공백 제외)</div><div class="val o" id="ms-n">0</div><div class="track"><i id="ms-bar"></i></div></div>
+      <div class="callout b" id="ms-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시 · 슬라이드 모형은 설명용 그림 · 숫자는 sales_2026.csv에서 계산</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 슬라이드 도구로 옮기기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 슬라이드 다듬기</span></div>
+  <h2>개요를 슬라이드 도구로 옮기기</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">AI 채팅</div><div class="d">Gemini·Claude에서<br>개요·노트 초안</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">슬라이드 도구</div><div class="d">Google Slides(학교 계정),<br>PowerPoint 등에서 한 장씩</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">차트</div><div class="d">스프레드시트에서<br>확인한 숫자로 직접 (7주)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">발표자 노트</div><div class="d">원고를 노트 칸에<br>붙여 넣기</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div class="h">소리 내어 연습</div><div class="d">어색한 말은<br>내 말로 고치기</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:18px">
+      <div class="callout b" style="font-size:17.5px"><svg class="ic"><use href="#i-sparkles"/></svg> 일부 슬라이드 도구에는 생성형AI 기능이 들어 있습니다(예: Google Slides의 Gemini — 쓸 수 있는지는 <strong>계정·요금제에 따라 다름</strong>). 써도 원칙은 같습니다: 메시지와 숫자는 내가 확인.</div>
+      <div class="callout" style="font-size:17.5px"><svg class="ic"><use href="#i-alert"/></svg> AI로 만든 이미지·그림을 넣는다면 저작권과 <strong>AI 생성 표시</strong> 규칙을 지킵니다 (11주 3차시). 회사 로고·실존 인물 사진을 AI로 만들지 않습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시 · 서비스 화면·메뉴 이름·제공 기능은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 3: 숫자 확인 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 숫자 확인·실습 · 직접 해 보기 3</span></div>
+  <h2>AI 원고 속 숫자, 맞을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 판단하고 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="ncards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px" id="nc-score">0 / 6 확인</p>
+    <div class="grid g3 frag" style="margin-top:14px;gap:14px">
+      <div class="callout b" style="font-size:17px"><strong>기간</strong> — ‘3분기’는 7~9월 3개월 합계. 비교 대상(2분기)도 같은 방식인가?</div>
+      <div class="callout b" style="font-size:17px"><strong>범위</strong> — 전체인가, 한 채널·한 제품인가? 같은 ‘반품률’도 범위에 따라 다르다</div>
+      <div class="callout" style="font-size:17px"><strong>원자료에 있나</strong> — 파일에 없는 열(만족도 등)의 숫자는 지어낸 것</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시 · 문장은 AI 원고를 흉내 내 미리 써 둔 예시 · 정답 값은 sales_2026.csv를 python으로 계산</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 실습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 숫자 확인·실습</span></div>
+  <h2>실습: 3분기 실적 발표 5장 개요</h2>
+  <div class="body" style="flex-direction:row;gap:22px;align-items:flex-start">
+    <div style="flex:1.1;display:flex;flex-direction:column;gap:14px">
+      <div class="prompt">
+        <div class="prompt-h">프롬프트 · 숫자 계산 (sales_2026.csv 첨부)<button class="copy" type="button">복사</button></div>
+<pre>첨부한 sales_2026.csv로 <mark>2분기(4~6월)</mark>와 <mark>3분기(7~9월)</mark>의 매출·광고비 합계를 전체·제품별·채널별로 계산하고, 증가율(%)을 소수 첫째 자리까지 표로 보여 줘.
+어떤 열을 어떻게 더했는지 계산 방법도 적어 줘.</pre>
+      </div>
+      <div class="callout b" style="font-size:17px">AI의 계산도 <strong>한 번 더 확인</strong>: 스프레드시트의 필터·합계(7주)로 전체 매출 하나만이라도 직접 맞춰 봅니다. 그다음 10번 슬라이드 프롬프트로 개요를 받고 숫자를 채웁니다.</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <a class="btn" href="../materials/sales_2026.csv" download><svg class="ic"><use href="#i-database"/></svg> 실습 자료 받기 · sales_2026.csv</a>
+      <a class="btn ghost" href="materials/presentation_plan.md" download><svg class="ic"><use href="#i-log"/></svg> 발표 기획표 (presentation_plan.md)</a>
+      <div class="tile" style="padding:14px 18px;gap:6px"><div class="h" style="font-size:19px"><svg class="ic" style="color:var(--accent)"><use href="#i-shield"/></svg> 올려도 되는 자료인가?</div><div class="d" style="font-size:16px">가상 회사의 가상 데이터라 올려도 됩니다. 실제 회사의 매출 자료는 <strong>사내 규정 확인</strong>이 먼저입니다 (1주 3차시).</div></div>
+      <div class="tile" style="padding:14px 18px;gap:6px"><div class="h" style="font-size:19px"><svg class="ic" style="color:var(--accent)"><use href="#i-reset"/></svg> 두 도구 모두 가능</div><div class="d" style="font-size:16px">Gemini·Claude 어느 쪽이든 파일을 첨부해 같은 프롬프트로. 첨부가 안 되면 표를 복사해 붙여 넣습니다.</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시 · 서비스의 파일 첨부 방법·한도는 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 예시 결과 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 숫자 확인·실습 · 결과 예시</span></div>
+  <h2>완성 예시: 제목만 읽어도 이어지는 5장</h2>
+  <div class="body" style="justify-content:flex-start;gap:16px">
+    <div class="mini">
+      <div class="ms frag show"><div class="n">1</div><div class="t">3분기 매출 1억 2,588만 원, 2분기보다 11.4% 늘었다</div><div class="v">분기별 매출 막대 (1~3분기)</div></div>
+      <div class="ms frag"><div class="n">2</div><div class="t">선물 세트 매출이 37.2% 늘며 성장을 이끌었다</div><div class="v">제품별 증감률 막대 · 9월이 8월의 약 1.9배</div></div>
+      <div class="ms frag"><div class="n">3</div><div class="t">자사몰은 광고비 7.1% 늘려 매출 13.5% 늘었다</div><div class="v">채널별 매출·광고비 증가율</div></div>
+      <div class="ms frag"><div class="n">4</div><div class="t">오픈마켓은 광고비가 17.8% 늘 때 매출은 7.9%만 늘었다</div><div class="v">두 증가율 나란히 막대 · 매출 대비 광고비 44.0%</div></div>
+      <div class="ms frag" style="border:2px solid var(--accent)"><div class="n">5</div><div class="t">제안: 4분기 오픈마켓 광고비를 점검하고 자사몰에 더 나누자</div><div class="v">결정할 것 2가지 · 9월 증가 원인은 [확인 필요]</div></div>
+    </div>
+    <table class="numtab frag">
+      <tr><th>확인한 숫자 (2분기 → 3분기)</th><th>전체</th><th>선물 세트</th><th>자사몰</th><th>오픈마켓</th><th>오프라인 매장</th></tr>
+      <tr><td>매출 증가율</td><td class="r">+11.4%</td><td class="r">+37.2%</td><td class="r">+13.5%</td><td class="r">+7.9%</td><td class="r">+16.0%</td></tr>
+      <tr><td>광고비 증가율</td><td class="r">+13.2%</td><td class="r">+20.3%</td><td class="r">+7.1%</td><td class="r">+17.8%</td><td class="r">+5.7%</td></tr>
+      <tr><td>3분기 매출 대비 광고비</td><td class="r">33.1%</td><td class="r">40.0%</td><td class="r">34.0%</td><td class="r">44.0%</td><td class="r">8.1%</td></tr>
+    </table>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시 · 예시 정답 — 숫자는 sales_2026.csv(가상)를 python으로 계산 · 분기 = 3개월 합계</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">목적·청중 → 메시지</div><div style="font-size:21px">누가 듣고 무엇을 결정하는지 정한 뒤 <strong>한 문장 메시지</strong>부터</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">AI는 개요·노트 초안</div><div style="font-size:21px">목차·장별 문장·발표자 노트를 받고, <strong>슬라이드 도구</strong>에서 한 장씩</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">한 장 한 메시지 · 숫자 확인</div><div style="font-size:21px">제목 = 결론, 글은 덜고, <strong>모든 숫자는 원자료로 다시 계산</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="누가 듣고, 듣고 나서 무엇을 결정해야 하는지가 정해져야 메시지·목차·분량을 정할 수 있습니다. AI에게 줄 맥락도 여기서 나옵니다.">
+      <p class="q-title"><b>Q1.</b> 발표 자료를 만들 때 가장 먼저 정할 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">슬라이드 디자인 템플릿</button>
+        <button type="button" data-v="b">넣을 이미지</button>
+        <button type="button" data-v="c">발표의 목적과 청중</button>
+        <button type="button" data-v="d">발표자 노트 문장</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="제목이 결론 한 문장이면 제목만 이어 읽어도 이야기가 됩니다. ‘3분기 실적 관련 보고’는 주제일 뿐 메시지가 없습니다.">
+      <p class="q-title"><b>Q2.</b> ‘한 장에 한 메시지’에 가장 잘 맞는 슬라이드 제목은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">3분기 실적 관련 보고</button>
+        <button type="button" data-v="b">3분기 매출, 2분기보다 11.4% 늘었다</button>
+        <button type="button" data-v="c">매출·광고비·반품·후기 종합 현황</button>
+        <button type="button" data-v="d">3분기 실적 (1)</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="원자료(sales_2026.csv)로 계산하면 3분기 반품률은 189 ÷ 11,241 ≈ 1.7%입니다. AI가 쓴 숫자는 원자료로 다시 계산한 값으로 고칩니다.">
+      <p class="q-title"><b>Q3.</b> AI 원고에 “3분기 반품률 3%”라고 쓰였는데, 원자료로 계산하면 1.7%였다. 알맞은 대응은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">원자료로 계산한 1.7%로 고친다</button>
+        <button type="button" data-v="b">AI가 더 정확할 테니 3%로 둔다</button>
+        <button type="button" data-v="c">둘의 평균을 쓴다</button>
+        <button type="button" data-v="d">숫자를 빼고 ‘낮은 편’이라고만 쓴다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="슬라이드에는 한 문장과 시각 자료만 두고, 말로 풀 설명은 발표자 노트에 넣어 연습할 때 씁니다.">
+      <p class="q-title"><b>Q4.</b> AI가 써 준 긴 발표 원고는 어디에 두는 것이 좋을까?</p>
+      <div class="opts">
+        <button type="button" data-v="a">슬라이드 본문에 그대로 붙인다</button>
+        <button type="button" data-v="b">글자를 작게 줄여 슬라이드 아래에 넣는다</button>
+        <button type="button" data-v="c">청중에게 미리 이메일로 보낸다</button>
+        <button type="button" data-v="d">발표자 노트에 넣고 내 말로 다듬는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">12-3</div>
+    <h2>번역·교육 콘텐츠 활용</h2>
+    <p>외국인 손님을 위한 안내 카드를 번역하고, 신입 직원 매뉴얼로 퀴즈와 요약 카드를 만듭니다. 맥락을 주고, 확인하고, 출처를 지키는 법.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-book"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">12주 2차시 · AI로 발표 자료 만들기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

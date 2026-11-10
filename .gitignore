@@ -1,0 +1,4 @@
+# 노트북 점검 때 생기는 출력 그림
+ax-microdegree/graph*.png
+ax-microdegree/my_graphs.png
+__pycache__/

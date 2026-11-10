@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3주 3차시 · 대화로 결과 다듬기 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 3주 3차시 교안: 피드백으로 답 다듬기, 좋은 피드백과 나쁜 피드백, AI가 먼저 질문하게 하기, 같은 채팅과 새 채팅, 좋은 프롬프트 저장하기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  .spin { transform-box: view-box; transform-origin: 260px 220px; animation: spin 14s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 다듬기 대화 */
+  .convo { width: 100%; height: 100%; display: flex; flex-direction: column; min-height: 0; }
+  .convo .chat-h { flex: none; }
+  .convo .scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 2px; scroll-behavior: smooth; }
+  .convo .msg { font-size: 14.5px; line-height: 1.55; max-width: 92%; }
+  .convo .msg.new { animation: pop .35s ease; }
+  @keyframes pop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .fb { display: grid; gap: 5px; }
+  .fbtn { font: inherit; font-size: 14px; font-weight: 700; text-align: left; line-height: 1.35; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; display: flex; gap: 8px; align-items: flex-start; }
+  .fbtn:hover:not(:disabled) { border-color: var(--accent); }
+  .fbtn:disabled { opacity: .45; cursor: default; }
+  .fbtn .ic { margin-top: 2px; color: var(--accent); }
+  .fbtn.risky .ic { color: var(--accent-2); }
+  .goals { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; font-size: 13.5px; }
+  .goals div { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+  .goals div i { font-style: normal; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; background: var(--surface-2); flex: none; }
+  .goals div.ok { color: var(--text); } .goals div.ok i { background: var(--ok); color: #fff; }
+  .goals div.no { color: var(--bad); } .goals div.no i { background: var(--bad); color: #fff; }
+
+  /* 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 14px; min-height: 118px; display: flex; flex-direction: column; gap: 6px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .nm { font-size: 17px; font-weight: 700; line-height: 1.4; }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 15px; }
+  .pcard .ans { display: none; font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+  .pcard .ans b { color: var(--text); }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.good { background: var(--ok-soft); border-color: var(--ok); } .pcard.open.good .verdict { color: var(--ok); }
+  .pcard.open.bad { background: var(--bad-soft); border-color: var(--bad); } .pcard.open.bad .verdict { color: var(--bad); }
+  .pcard.open.mid { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.mid .verdict { color: var(--accent-2); }
+  .pcard.open.keep { background: var(--accent-soft); border-color: var(--accent); } .pcard.open.keep .verdict { color: var(--accent); }
+  .pcard.open.fresh { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.fresh .verdict { color: var(--accent-2); }
+  .pcards.c3 { grid-template-columns: repeat(3, 1fr); }
+  .pcards.c3 .pcard { min-height: 132px; }
+
+  .note-card { background: var(--surface); border: 2px dashed var(--accent); border-radius: 18px; padding: 16px 20px; font-size: 16px; line-height: 1.5; display: grid; grid-template-columns: 112px 1fr; gap: 6px 12px; }
+  .note-card dt { font-weight: 800; color: var(--accent); font-size: 14.5px; }
+  .note-card dd { margin: 0; }
+  .note-card dd.p { background: var(--surface-2); border-radius: 10px; padding: 6px 10px; font-size: 15px; }
+  .note-card mark { background: var(--accent-2-soft); color: var(--accent-2); font-weight: 700; border-radius: 4px; padding: 0 3px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 3주차 3차시</p>
+    <h1>대화로<br>결과 다듬기</h1>
+    <p class="lead" style="font-size:25px">첫 답은 초안이다 —<br>피드백 한 마디로 원하는 쪽으로</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span><span>Gemini · Claude</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:500px;flex:none" aria-hidden="true">
+    <circle cx="260" cy="220" r="160" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 10"/>
+    <g class="spin">
+      <path d="M260 60 a160 160 0 0 1 138 80" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M392 128 l8 14 l-15 2" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(70 70)"><rect width="150" height="62" rx="20" class="f-accs"/><text x="20" y="38" style="font-size:16px;font-weight:800;fill:var(--accent)">더 짧게</text></g>
+    <g transform="translate(320 250)"><rect width="170" height="62" rx="20" class="f-acc2s"/><text x="20" y="38" style="font-size:16px;font-weight:800;fill:var(--accent-2)">20대 대상으로</text></g>
+    <g transform="translate(50 300)"><rect width="190" height="62" rx="20" class="f-s2"/><text x="20" y="38" style="font-size:16px;font-weight:800;fill:var(--text)">자료의 숫자로</text></g>
+    <circle cx="260" cy="220" r="70" class="f-acc"/>
+    <g transform="translate(226 186) scale(2.85)" style="color:var(--surface)"><use href="#i-chat" width="24" height="24"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">피드백으로 다듬기</div><div class="d">범위·방향·이유·유지할 것을 담은 피드백을 쓴다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">먼저 묻게 하기</div><div class="d">무엇을 알려 줄지 모를 때 AI가 질문하게 만든다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">대화 관리</div><div class="d">같은 채팅에서 이어 갈지, 새 채팅으로 시작할지 판단한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">프롬프트 저장</div><div class="d">잘 된 프롬프트를 나만의 노트로 모아 다시 쓴다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>① 피드백으로 다듬기</b><small>직접 해 보기 2</small></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>② AI가 먼저 묻게 하기</b></div>
+      <div style="flex:7;background:var(--accent-2-soft)"><b>③ 대화 관리 · 저장</b><small>직접 해 보기 1 · 실습</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 3-1에서 프롬프트를 설계하고, 3-2에서 답을 채점했습니다. 오늘은 <strong>채점에서 찾은 문제를 대화로 고치는 법</strong>입니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>한 번에 완벽한 프롬프트? 대화로 다듬기!</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile" style="padding:24px">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg g"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:26px">한 번에 끝내려고 하면</div><div class="muted" style="font-size:17px">프롬프트를 쓰는 데만 한참</div></div></div>
+        <ul style="font-size:19px;margin:4px 0 0"><li>모든 조건을 미리 떠올리기 어렵다</li><li>답을 보고 나서야 원하는 게 분명해진다</li><li>마음에 안 들면 처음부터 다시</li></ul>
+      </div>
+      <div class="tile frag" style="padding:24px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg"><svg class="ic"><use href="#i-reset"/></svg></span><div><div class="h" style="font-size:26px">대화로 다듬으면</div><div class="muted" style="font-size:17px">초안 → 피드백 → 수정의 반복</div></div></div>
+        <ul style="font-size:19px;margin:4px 0 0"><li>네 요소를 갖춘 프롬프트로 <strong>초안</strong>을 받고</li><li>3-2 기준으로 <strong>무엇이 부족한지</strong> 짚고</li><li>그 부분만 <strong>한 번에 하나씩</strong> 고친다</li></ul>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">신입 사원이 올린 초안에 상사가 <strong style="color:var(--text)">빨간 펜</strong>으로 코멘트하는 것과 같습니다. 코멘트가 구체적일수록 다음 초안이 좋아집니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>피드백으로 다듬기</h2><p>“별로야” 대신 “어디를, 어떻게, 왜”.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-reset"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 좋은 피드백의 네 조각 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 피드백으로 다듬기</span></div>
+  <h2>좋은 피드백의 네 조각</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">어디를</div><div class="d">고칠 <b>범위</b>를 콕 집는다</div><div class="d" style="color:var(--accent)">“첫 줄만”, “두 번째 문단”</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">어떻게</div><div class="d">바꿀 <b>방향</b>을 숫자·예로</div><div class="d" style="color:var(--accent)">“3줄 이내로”, “질문형으로”</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="h">왜</div><div class="d"><b>이유·기준</b>을 알려 준다</div><div class="d" style="color:var(--accent-2)">“20대가 읽기엔 딱딱해서”</div></div>
+      <div class="tile frag"><span class="ic-badge lg g"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">무엇은 그대로</div><div class="d">잘된 부분은 <b>지킨다</b></div><div class="d">“나머지는 유지해 줘”</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:22px"><p style="margin:0;font-size:21px">예: “<strong>첫 줄</strong>을 <strong>질문형으로</strong> 바꿔 줘. <strong>20대가 스크롤을 멈추게</strong> 하고 싶어. <strong>가격 정보는 그대로</strong> 둬.”</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 다듬기 대화 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 피드백으로 다듬기 · 직접 해 보기 1</span></div>
+  <h2>피드백을 골라 답을 다듬어 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot" style="padding:12px 14px;align-items:stretch">
+      <div class="chat convo"><div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시 · 답은 미리 써 둔 것)</div><div class="scroll" id="t-log"></div></div>
+    </div>
+    <div class="side">
+      <div class="goals" id="t-goals"></div>
+      <div class="fb" id="t-fb"></div>
+      <div class="status mid" id="t-st"></div>
+      <div style="display:flex;gap:8px;align-items:center"><button class="btn ghost" id="t-reset" type="button" style="padding:6px 12px;font-size:15px"><svg class="ic"><use href="#i-reset"/></svg> 처음부터</button><span class="muted" style="font-size:14px" id="t-turn">대화 1턴</span></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시 · 가상 제품 · 판매 숫자는 공통 실습 파일 sales_2026.csv에서 계산</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 직접 해 보기 2: 좋은/나쁜 피드백 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 피드백으로 다듬기 · 직접 해 보기 2</span></div>
+  <h2>좋은 피드백일까, 나쁜 피드백일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 판단하고 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="f-cards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px" id="f-score">0 / 8 확인</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시 · 나쁜 피드백 카드에는 고쳐 쓴 예가 함께 나옵니다</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>AI가 먼저 묻게 하기</h2><p>무엇을 알려 줘야 할지 모를 때, 질문을 맡긴다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chat"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 역질문 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI가 먼저 묻게 하기</span></div>
+  <h2>“바로 쓰지 말고, 먼저 물어봐 줘”</h2>
+  <div class="body" style="flex-direction:row;gap:24px;align-items:stretch">
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;justify-content:center">
+      <div class="prompt"><div class="prompt-h">프롬프트<button class="copy" type="button">복사</button></div><pre>바다결 <mark>명절 선물 세트 기획안</mark> 초안을 쓰려고 해.
+바로 쓰지 말고, 좋은 기획안에 꼭 필요한 정보를 나에게 먼저 질문해 줘.
+질문은 <mark>중요한 것부터 5개 이내</mark>로, 번호를 붙여서.
+내가 답하면 그다음에 초안을 써 줘.</pre></div>
+      <div class="callout b" style="font-size:16px">쓰일 곳: 처음 해 보는 업무, 결과물이 길 때, <strong>무엇을 알려 줘야 할지 모를 때</strong>. 질문이 많으면 “가장 중요한 3개만”으로 줄입니다.</div>
+    </div>
+    <div class="chat" style="flex:1.05">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user" style="font-size:15px">(왼쪽 프롬프트)</div>
+      <div class="msg ai frag show" style="font-size:15px"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>좋아요. 먼저 몇 가지 여쭐게요.
+1. 주로 누가 사나요? (개인 선물 / 회사 단체 주문)
+2. 가격대는 지금처럼 3만 원대인가요?
+3. 작년 세트에서 아쉬웠던 점은요?
+4. 꼭 넣을 제품, 빼야 할 제품이 있나요?
+5. 기획안은 누가 읽고 결정하나요?</div>
+      <div class="msg user frag" style="font-size:15px">1. 20~30대 개인 선물 2. 3만 원대 유지 3. 매년 구성이 비슷하다는 말 4. 현미칩 매콤맛 꼭 5. 대표님</div>
+      <div class="msg ai frag" style="font-size:15px"><span class="who">예시 답변</span>감사합니다. 그럼 ‘20~30대 첫 선물’ 콘셉트로, 매콤맛을 넣은 새 구성안부터 정리해 볼게요…</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시 · Gemini·Claude 어느 쪽에서도 같은 방식으로 쓸 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 역질문이 좋은 이유 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI가 먼저 묻게 하기</span></div>
+  <h2>먼저 묻게 하면 좋은 점, 주의할 점</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">빈칸이 드러난다</div><div class="d">3-1에서 AI가 몰래 채우던 빈칸을 <b>AI가 먼저 물어봐 줍니다.</b> 맥락이 저절로 채워집니다.</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="h">생각이 정리된다</div><div class="d">질문에 답하다 보면 <b>내가 원하는 것</b>이 분명해집니다. 기획·보고서처럼 긴 문서에 특히 좋습니다.</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">답은 내가 한다</div><div class="d">모르는 질문에 <b>지어서 답하지 않습니다.</b> “모름 — 일단 비워 둬”라고 해도 됩니다. 개인정보는 답하지 않습니다.</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>대화 관리와 저장</h2><p>이어 갈까, 새로 시작할까? 그리고 잘 된 프롬프트는 모아 둔다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 같은 채팅 vs 새 채팅 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 대화 관리</span></div>
+  <h2>같은 채팅은 앞의 대화를 <span class="mark">함께 읽는다</span></h2>
+  <div class="body">
+    <svg viewBox="0 0 1120 360" role="img" aria-label="같은 채팅에서는 앞의 대화가 모두 다음 답에 반영되고, 새 채팅은 빈 종이에서 시작한다">
+      <defs><marker id="ah3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" class="f-muted"/></marker></defs>
+      <rect x="0" y="10" width="640" height="340" rx="22" class="f-surface" stroke="var(--accent)" stroke-width="2"/>
+      <text x="28" y="50" style="font-size:22px;font-weight:800;fill:var(--accent)">같은 채팅에서 이어 가기</text>
+      <g>
+        <rect x="28" y="72" width="300" height="34" rx="12" class="f-accs"/><text x="44" y="95" class="t-sub" style="font-size:14px;fill:var(--text)">① 첫 프롬프트 (제품 정보)</text>
+        <rect x="28" y="114" width="300" height="34" rx="12" class="f-s2"/><text x="44" y="137" class="t-sub" style="font-size:14px;fill:var(--text)">② 첫 답</text>
+        <rect x="28" y="156" width="300" height="34" rx="12" class="f-accs"/><text x="44" y="179" class="t-sub" style="font-size:14px;fill:var(--text)">③ “20대 대상으로”</text>
+        <rect x="28" y="198" width="300" height="34" rx="12" class="f-s2"/><text x="44" y="221" class="t-sub" style="font-size:14px;fill:var(--text)">④ 고친 답</text>
+        <rect x="28" y="240" width="300" height="34" rx="12" class="f-accs" stroke="var(--accent)" stroke-width="2"/><text x="44" y="263" class="t-sub" style="font-size:14px;fill:var(--text);font-weight:800">⑤ “더 짧게” ← 지금 보낸 말</text>
+      </g>
+      <path d="M335 89 C 380 89, 380 175, 420 175 M335 257 C 380 257, 380 175, 420 175" fill="none" stroke="var(--line)" stroke-width="3"/>
+      <path d="M335 131 C 370 131, 380 175, 420 175 M335 173 H420 M335 215 C 370 215, 380 175, 420 175" fill="none" stroke="var(--line)" stroke-width="3"/>
+      <path d="M420 175 H452" stroke="var(--muted)" stroke-width="3" marker-end="url(#ah3)"/>
+      <rect x="462" y="130" width="150" height="90" rx="18" class="f-acc"/>
+      <text x="537" y="170" text-anchor="middle" style="font-size:18px;font-weight:800;fill:var(--surface)">AI</text>
+      <text x="537" y="196" text-anchor="middle" style="font-size:13px;fill:var(--surface)">①~⑤를 함께 보고 답</text>
+      <text x="28" y="312" class="t-main" style="font-size:17px">좋은 점: 앞에서 정한 조건(20대, 제품 정보)이 유지된다</text>
+      <text x="28" y="336" class="t-main" style="font-size:17px;fill:var(--bad)">주의: 앞의 실수(지어낸 숫자)도 함께 따라온다</text>
+      <rect x="680" y="10" width="440" height="340" rx="22" class="f-s2"/>
+      <text x="708" y="50" style="font-size:22px;font-weight:800;fill:var(--accent-2)">새 채팅 열기</text>
+      <rect x="708" y="78" width="384" height="140" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2" stroke-dasharray="6 6"/>
+      <text x="900" y="140" text-anchor="middle" class="t-sub" style="font-size:16px">빈 종이</text>
+      <text x="900" y="166" text-anchor="middle" class="t-sub" style="font-size:14px">앞 채팅의 조건은 모른다고 생각한다</text>
+      <text x="708" y="256" class="t-main" style="font-size:17px">좋은 점: 꼬인 흐름·실수가 끊긴다</text>
+      <text x="708" y="282" class="t-main" style="font-size:17px">할 일: 필요한 맥락을 <tspan style="fill:var(--accent-2)">다시 넣는다</tspan></text>
+      <text x="708" y="320" class="t-sub" style="font-size:13px">이전 대화를 참고하는 기능이 있는 서비스도 있지만</text>
+      <text x="708" y="338" class="t-sub" style="font-size:13px">설정마다 다르므로 기대하지 않는 것이 안전하다</text>
+    </svg>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시 · 원리를 단순화한 그림 · 서비스 기능은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 언제 새로 시작할까 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 대화 관리</span></div>
+  <h2>이럴 땐 새 채팅으로</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:center">
+    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="tile frag show" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div class="h" style="font-size:20px">일이 바뀌었다</div><div class="d">SNS 문구 → 거래처 메일. 앞 대화의 말투가 섞인다</div></div>
+      <div class="tile frag" style="padding:16px"><span class="ic-badge o"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h" style="font-size:20px">대화가 너무 길다</div><div class="d">처음 정한 조건(3줄 이내)을 자꾸 놓친다</div></div>
+      <div class="tile frag" style="padding:16px"><span class="ic-badge" style="background:var(--bad-soft);color:var(--bad)"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h" style="font-size:20px">실수가 굳었다</div><div class="d">고쳐 달라 해도 지어낸 숫자를 다시 쓴다</div></div>
+      <div class="tile frag" style="padding:16px"><span class="ic-badge g"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h" style="font-size:20px">서너 번 고쳐도 제자리</div><div class="d">피드백이 아니라 <b>첫 프롬프트</b>를 고칠 때</div></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+      <div class="prompt frag"><div class="prompt-h">새 채팅으로 옮기기 전에 — 지금 채팅에서<button class="copy" type="button">복사</button></div><pre>지금까지 대화에서 정한 조건(대상·말투·분량·꼭 넣을 정보·쓰지 말 것)을 새 채팅에 그대로 붙여 넣을 수 있게 프롬프트 하나로 정리해 줘.</pre></div>
+      <div class="callout b frag" style="font-size:16px">정리된 프롬프트를 <strong>읽어 보고</strong> 틀린 조건·지어낸 숫자를 지운 뒤 새 채팅에 붙여 넣습니다. 이 정리본이 그대로 <strong>저장할 프롬프트</strong>가 됩니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 직접 해 보기 3: 이어 갈까 새로 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 대화 관리 · 직접 해 보기 3</span></div>
+  <h2>이어 갈까, 새로 시작할까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 판단하고 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards c3" id="n-cards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px" id="n-score">0 / 6 확인</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시 · 바다결 업무 상황</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 프롬프트 노트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 저장</span></div>
+  <h2>잘 된 프롬프트는 노트로 남긴다</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:center">
+    <dl class="note-card" style="flex:1.35;margin:0">
+      <dt>이름</dt><dd><b>신제품 SNS 소개 문구</b></dd>
+      <dt>언제 쓰나</dt><dd>새 제품·새 맛을 인스타그램에 처음 알릴 때</dd>
+      <dt>프롬프트</dt><dd class="p">너는 <mark>[대상]</mark>을 잘 아는 식품 브랜드 SNS 마케터야. 바다결의 <mark>[제품명]</mark>을 새로 출시해. 특징: <mark>[특징 2개]</mark>, 가격: <mark>[가격]</mark>. 인스타그램 소개 글을 3줄 이내로, 친구에게 말하듯. 아래 [자료]의 숫자 하나를 근거로 넣고, 자료에 없는 숫자는 쓰지 마.</dd>
+      <dt>잘 먹힌 피드백</dt><dd>“첫 줄을 질문형으로 바꾸고, 나머지는 그대로 둬.”</dd>
+      <dt>주의할 점</dt><dd>가격·숫자는 자료와 대조. 자료 없이 숫자를 요구하면 지어낸다.</dd>
+    </dl>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h" style="font-size:20px">바꿀 칸은 [ ]로</div><div class="d">다음엔 칸만 채워서 바로 씁니다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-reset"/></svg></span><div><div class="h" style="font-size:20px">피드백도 함께 저장</div><div class="d">자주 붙인 피드백은 <b>다음 프롬프트에 미리</b> 넣습니다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div><div class="h" style="font-size:20px">이 노트가 자라면</div><div class="d">4-2 나만의 업무 템플릿 → 9-3 Gems·프로젝트(맞춤형 AI 비서)</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시 · 노트에도 개인정보·회사 기밀은 적지 않습니다</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 실습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실습</span></div>
+  <h2>실습: 세 번의 피드백으로 다듬기</h2>
+  <div class="body" style="flex-direction:row;gap:24px;align-items:stretch">
+    <div style="flex:1.3;display:flex;flex-direction:column;gap:10px;justify-content:center">
+      <div class="prompt"><div class="prompt-h">① 첫 프롬프트<button class="copy" type="button">복사</button></div><pre style="font-size:16px">바다결 ‘미역귀 현미칩 매콤맛’ 인스타그램 소개 글 써 줘.
+제품 정보: 튀기지 않고 구운 현미칩, 청양고추로 매운맛, 1봉 6,900원.</pre></div>
+      <div class="prompt"><div class="prompt-h">② 같은 채팅에서 하나씩 보내기<button class="copy" type="button">복사</button></div><pre style="font-size:16px">더 짧게: 해시태그를 빼고 <mark>3줄 이내</mark>로 줄여 줘. 나머지 내용은 유지해 줘.
+
+<mark>20대 자취생</mark>이 읽는다고 생각하고, 친구에게 말하듯 바꿔 줘.
+
+아래 [판매 자료]에 있는 숫자 하나를 근거로 넣어 줘. 자료에 없는 숫자는 쓰지 마.
+[판매 자료] <mark>(refine_practice_3-3.txt에서 붙여 넣기)</mark></pre></div>
+      <p style="margin:0;display:flex;gap:12px"><a class="btn" href="materials/refine_practice_3-3.txt" download><svg class="ic"><use href="#i-log"/></svg> 실습 자료 받기</a><a class="btn ghost" href="materials/prompt_note_template.txt" download>프롬프트 노트 양식</a></p>
+    </div>
+    <div style="flex:1;display:grid;gap:10px;align-content:center">
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="d" style="font-size:17px;color:var(--text)"><b>Gemini</b>에서 한 번, <b>Claude</b>에서 한 번. 한도에 걸리면 다른 도구로</div></div>
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="d" style="font-size:17px;color:var(--text)">비교: 자료 없이 <b>“숫자 근거 추가해 줘”</b>만 보내면 어떤 숫자가 나오나?</div></div>
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="d" style="font-size:17px;color:var(--text)">마지막 답의 숫자를 <b>자료와 대조</b>하고 3-2 기준으로 채점</div></div>
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div class="d" style="font-size:17px;color:var(--text)">잘 된 흐름을 <b>프롬프트 노트</b> 한 장으로</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시 · 가상 회사의 가상 자료라 붙여 넣어도 됩니다</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">첫 답은 초안</div><div style="font-size:21px">어디를·어떻게·왜·무엇은 그대로 — <strong>한 번에 하나씩</strong> 고친다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">숫자는 자료와 함께</div><div style="font-size:21px">자료 없이 근거를 요구하면 AI는 <strong>숫자를 지어낼 수 있다</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">이어 가기 · 새로 · 저장</div><div style="font-size:21px">일이 바뀌거나 꼬이면 <strong>정리해서 새 채팅</strong>, 잘 된 건 노트로</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="고칠 범위(둘째 줄), 방향(질문형), 이유(20대가 멈추게), 유지할 것(나머지는 그대로)이 모두 담겨 있습니다.">
+      <p class="q-title"><b>Q1.</b> 가장 좋은 피드백은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">별로야, 다시 써 줘</button>
+        <button type="button" data-v="b">좀 더 좋게 해 줘</button>
+        <button type="button" data-v="c">둘째 줄을 질문형으로 바꿔 줘. 20대가 멈춰 보게. 나머지는 그대로</button>
+        <button type="button" data-v="d">완벽하게 고쳐 줘</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="근거가 될 자료를 주지 않고 숫자를 요구하면, AI는 그럴듯한 숫자를 지어낼 수 있습니다. 자료를 함께 주고 ‘자료에 없는 숫자는 쓰지 마’라고 합니다.">
+      <p class="q-title"><b>Q2.</b> 자료 없이 “숫자 근거를 추가해 줘”라고만 하면 생기기 쉬운 문제는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">글이 너무 짧아진다</button>
+        <button type="button" data-v="b">출처 없는 숫자를 그럴듯하게 지어낼 수 있다</button>
+        <button type="button" data-v="c">AI가 대답을 거부한다</button>
+        <button type="button" data-v="d">말투가 반드시 딱딱해진다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="일이 바뀌면 앞 대화의 조건·말투가 섞일 수 있으므로 새 채팅이 낫습니다. 나머지는 지금 대화의 맥락을 이어 쓰는 편이 좋습니다.">
+      <p class="q-title"><b>Q3.</b> <u>새 채팅</u>으로 시작하는 것이 가장 알맞은 경우는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">방금 받은 문구의 마지막 줄만 바꾸고 싶다</button>
+        <button type="button" data-v="b">AI가 던진 질문에 답하는 중이다</button>
+        <button type="button" data-v="c">같은 글을 조금 더 짧게 줄이고 싶다</button>
+        <button type="button" data-v="d">SNS 문구를 끝내고 거래처 견적 메일을 새로 쓰려 한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="AI가 필요한 정보를 먼저 묻게 하면, 내가 미처 떠올리지 못한 빈칸이 드러나고 그 답이 맥락이 됩니다. 모르는 질문에는 지어서 답하지 않습니다.">
+      <p class="q-title"><b>Q4.</b> “바로 쓰지 말고 필요한 정보를 먼저 질문해 줘”가 특히 쓸모 있는 때는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">처음 해 보는 기획안처럼 무엇을 알려 줘야 할지 모를 때</button>
+        <button type="button" data-v="b">맞춤법만 고치면 될 때</button>
+        <button type="button" data-v="c">한 줄짜리 간단한 뜻풀이가 필요할 때</button>
+        <button type="button" data-v="d">이미 완성된 답의 글자 수만 세고 싶을 때</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 4주차 프롬프트 활용</span></div>
+    <div class="big">4-1</div>
+    <h2>예시 제시와 단계별 지시</h2>
+    <p>원하는 결과의 <strong>예시</strong>를 보여 주고, 일을 <strong>단계로 나눠</strong> 맡기면 답이 얼마나 달라질까요? 오늘 만든 프롬프트 노트를 가지고 오세요.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week04/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 3주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">3주 3차시 · 대화로 결과 다듬기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

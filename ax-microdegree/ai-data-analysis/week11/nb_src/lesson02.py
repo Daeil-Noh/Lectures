@@ -1,0 +1,184 @@
+# %% [markdown]
+# # 11주 2차시 · 불량품 판정 실습
+#
+# **학습 목표**
+# - `stratify=y` 로 훈련·시험 데이터의 불량 비율을 맞춰 나눈다.
+# - `DecisionTreeClassifier` 를 학습하고 `plot_tree`, `export_text` 로 규칙을 읽는다.
+# - `predict`, `predict_proba` 로 새 제품을 판정한다.
+# - “전부 정상” 기준선과 비교하고, 특성 중요도(`feature_importances_`)를 조심해서 읽는다.
+#
+# **사용 데이터** `process.csv` — 사출 성형 공정 기록 494개(가상 데이터). 입력은 공정 조건 5개, 정답은 `defect`(0 정상, 1 불량).
+#
+# 슬라이드의 “실습 파일 N단계”는 아래 제목의 번호와 같습니다. 위에서부터 순서대로 실행하세요.
+
+# %% [markdown]
+# ## 1. 준비
+
+# %%
+!pip -q install koreanize-matplotlib
+import koreanize_matplotlib
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
+
+# %% [markdown]
+# ## 2. 데이터 불러오기
+
+# %%
+DATA = 'https://raw.githubusercontent.com/Daeil-Noh/Lectures/main/ax-microdegree/ai-data-analysis/data/'
+df = pd.read_csv(DATA + 'process.csv')
+df.head()
+
+# %% [markdown]
+# ## 3. 입력 X와 정답 y 정하기
+# `strength`(인장강도)는 제품을 끊어 봐야 아는 값이라 생산 직후 판정에는 쓸 수 없으므로 입력에서 뺍니다.
+
+# %%
+features = ['temp', 'pressure', 'speed', 'humidity', 'thickness']
+X = df[features]        # 입력: 공정 조건 5개
+y = df['defect']        # 정답: 0 정상, 1 불량
+print(X.shape)
+print(y.value_counts())
+
+# %% [markdown]
+# ## 4. 훈련용·시험용으로 나누기 — `stratify=y`
+# 9주 2차시의 복습입니다. 먼저 `stratify` 없이 `random_state` 만 바꿔 여러 번 나눠 보고, 시험 데이터에 불량이 몇 개씩 들어가는지 봅니다.
+# 이번에는 시험 데이터를 30%로 잡습니다(9~10주는 20%). 20%면 시험 불량이 14개뿐이라 불량을 잡는 실력을 재기에 너무 적기 때문입니다.
+# 그다음 `stratify=y` 로 나눈 결과를 이후 모든 단계에서 씁니다.
+
+# %%
+for s in range(5):
+    _, _, _, yt = train_test_split(X, y, test_size=0.3, random_state=s)
+    print('random_state =', s, '→ 시험 데이터 불량', yt.sum(), '개')
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42, stratify=y)   # y의 0/1 비율대로 나눈다
+print('stratify=y →', len(X_train), len(X_test))
+print('불량률 훈련', round(y_train.mean(), 3), '/ 시험', round(y_test.mean(), 3))
+
+# %% [markdown]
+# ## 5. 나무 만들고 학습하기
+# 지난 시간 실험에서 시험 정확도가 가장 좋았던 `max_depth=3` 을 씁니다.
+
+# %%
+model = DecisionTreeClassifier(max_depth=3, random_state=42)
+model.fit(X_train, y_train)            # 학습
+print('훈련 정확도:', round(model.score(X_train, y_train), 3))
+print('시험 정확도:', round(model.score(X_test, y_test), 3))
+
+# %% [markdown]
+# ## 6. plot_tree 로 나무 그리기
+# 상자 안: 질문 / gini(섞임 정도) / samples(훈련 데이터 제품 수) / value([정상 수, 불량 수]) / class(판정).
+
+# %%
+plt.figure(figsize=(16, 7))
+plot_tree(model, feature_names=features, class_names=['정상', '불량'],
+          filled=True, rounded=True, fontsize=10)
+plt.title('불량 판정 나무 (max_depth=3)')
+plt.show()
+
+# %% [markdown]
+# ## 7. export_text 로 규칙 읽기
+# `weights: [정상 수, 불량 수]` 를 보면 각 잎이 얼마나 “확실한” 규칙인지 알 수 있습니다.
+
+# %%
+print(export_text(model, feature_names=features, show_weights=True))
+
+# %% [markdown]
+# ## 8. 새 제품 판정하기 — `predict`
+# 새 제품도 학습 때와 **같은 열 이름, 같은 순서**로 만들어야 합니다.
+
+# %%
+new = pd.DataFrame([
+    [210, 80, 1200, 55, 2.00],   # A: 평범한 조건
+    [226, 80, 1200, 60, 1.98],   # B: 고온, 얇음
+    [212, 82, 1150, 79, 2.01],   # C: 고습
+], columns=features)
+print(model.predict(new))        # 0 = 정상, 1 = 불량
+
+# %% [markdown]
+# ## 9. 불량 확률 보기 — `predict_proba`
+# 결과는 `[정상 확률, 불량 확률]`. 나무에서는 **도착한 잎의 훈련 데이터 제품 중 불량 비율**입니다.
+# `predict` 는 불량 확률이 0.5를 넘으면 1로 판정합니다.
+
+# %%
+proba = model.predict_proba(new)
+print(proba.round(3))
+new['불량 확률'] = proba[:, 1].round(3)
+new['판정'] = model.predict(new[features])
+new
+
+# %% [markdown]
+# ## 10. 시험 데이터로 판정 결과 확인하기
+# 시험 제품 몇 개의 실제 결과와 나무의 판정을 나란히 놓아 봅니다.
+
+# %%
+check = X_test.copy()
+check['실제'] = y_test
+check['판정'] = model.predict(X_test)
+check['불량 확률'] = model.predict_proba(X_test)[:, 1].round(3)
+print('맞힌 개수:', (check['실제'] == check['판정']).sum(), '/', len(check))
+check.head(10)
+
+# %% [markdown]
+# ## 11. 기준선: “전부 정상”이라고만 하면?
+# 불량이 적은 데이터에서는 아무 판단 없이 전부 정상이라고 해도 정확도가 높게 나옵니다. 모델은 이 **기준선**을 넘어야 의미가 있습니다.
+
+# %%
+baseline = (y_test == 0).mean()           # 전부 정상일 때의 정확도
+tree_acc = model.score(X_test, y_test)
+print('기준선(전부 정상):', round(baseline, 3))
+print('나무             :', round(tree_acc, 3))
+
+bad = check[check['실제'] == 1]           # 실제 불량만 모아서
+print('실제 불량', len(bad), '개 중 나무가 잡은 불량:', (bad['판정'] == 1).sum(), '개')
+
+# %% [markdown]
+# ## 12. 특성 중요도 — `feature_importances_`
+# 각 특성으로 섞임 정도를 얼마나 줄였는지의 몫(합계 1)입니다. **원인의 크기가 아닙니다.** 0이면 “이 나무가 그 질문을 쓰지 않았다”는 뜻일 뿐입니다.
+
+# %%
+imp = pd.Series(model.feature_importances_, index=features)
+imp = imp.sort_values(ascending=False)
+print(imp.round(3))
+imp.sort_values().plot(kind='barh', figsize=(6, 3), title='특성 중요도 (max_depth=3 나무)')
+plt.xlabel('중요도')
+plt.show()
+
+# %% [markdown]
+# ## 직접 바꿔 보기
+# 1. 아래 `my_product` 에 내가 정한 공정 조건을 넣고 판정과 불량 확률을 확인해 보세요. 습도·두께·압력을 하나씩 바꿔 보면 무엇이 판정을 바꾸나요?
+# 2. `MY_DEPTH` 를 2, 4, 6으로 바꿔 나무를 다시 학습해 보세요. 시험 정확도와 “잡은 불량” 수가 어떻게 바뀌나요?
+# 3. `features` 에서 `humidity` 를 빼고 학습하면 나무의 첫 질문과 특성 중요도가 어떻게 바뀌나요?
+
+# %% [exercise]
+# 1번: 값을 바꿔 보세요 (온도, 압력, 속도, 습도, 두께 순서)
+my_product = pd.DataFrame([[215, 75, 1180, 70, 1.93]], columns=features)
+print('판정:', model.predict(my_product)[0], '/ 불량 확률:', model.predict_proba(my_product)[0, 1].round(3))
+
+# %% [exercise]
+# 2번: 깊이를 바꿔 보세요
+MY_DEPTH = 4
+m2 = DecisionTreeClassifier(max_depth=MY_DEPTH, random_state=42).fit(X_train, y_train)
+pred2 = m2.predict(X_test)
+print('시험 정확도:', round(m2.score(X_test, y_test), 3))
+print('잡은 불량:', ((pred2 == 1) & (y_test == 1)).sum(), '/', y_test.sum())
+
+# %% [exercise]
+# 3번: 특성 목록을 바꿔 보세요
+my_features = ['temp', 'pressure', 'speed', 'thickness']      # humidity 를 뺐다
+m3 = DecisionTreeClassifier(max_depth=3, random_state=42).fit(X_train[my_features], y_train)
+print(export_text(m3, feature_names=my_features))
+print(pd.Series(m3.feature_importances_, index=my_features).round(3))
+print('시험 정확도:', round(m3.score(X_test[my_features], y_test), 3))
+
+# %% [markdown]
+# ## 정리
+# - 불량처럼 드문 범주가 있으면 `stratify=y` 로 나눈다.
+# - `fit` → `plot_tree`/`export_text` 로 규칙 확인 → `predict`/`predict_proba` 로 판정.
+# - 정확도는 반드시 **“전부 정상” 기준선**과 비교하고, **놓친 불량**을 따로 센다 → 다음 차시의 정밀도·재현율.
+#
+# **생성형AI에게 물어볼 만한 질문**
+# - “export_text 결과를 붙여 넣을 테니, 각 규칙을 공장 작업자가 이해할 수 있는 문장으로 바꿔 줘.” — 숫자(기준값, 제품 수)가 원래 출력과 같은지 꼭 대조하세요.
+# - “feature_importances_가 0인 특성은 불량과 관계가 없다고 말해도 될까? 이유를 설명해 줘.”

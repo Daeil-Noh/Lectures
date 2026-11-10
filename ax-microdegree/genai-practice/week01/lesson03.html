@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1주 3차시 · AI를 안전하게 쓰는 기본 규칙 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 1주 3차시 교안: 생성형AI에 넣지 말아야 할 개인정보·기밀, 데이터 설정 확인, AI 답의 책임, 입력·출력의 저작권과 AI 사용 표시, 이 수업의 과제 규칙">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-bad { fill: var(--bad); } .f-bads { fill: var(--bad-soft); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .flowdot { display: none; } }
+  .ex-note { font-size: 13px; color: var(--muted); font-weight: 700; }
+  .chat .msg { font-size: 16px; }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 판정 카드 */
+  .vcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .vcard { border: 1px solid var(--line); background: var(--surface); border-radius: 16px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; min-height: 108px; transition: background .2s, border-color .2s; }
+  .vcard .top { display: flex; align-items: center; gap: 10px; }
+  .vcard .ic-badge { width: 32px; height: 32px; font-size: 18px; border-radius: 9px; }
+  .vcard .nm { font-size: 16px; font-weight: 800; line-height: 1.35; }
+  .vcard .pick { display: flex; gap: 6px; }
+  .vcard .pick button { flex: 1; font: inherit; font-size: 14px; font-weight: 800; padding: 5px 4px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); cursor: pointer; }
+  .vcard .pick button:hover:not(:disabled) { border-color: var(--accent); }
+  .vcard .pick button:disabled { cursor: default; opacity: .5; }
+  .vcard .pick button.mine { opacity: 1; outline: 2px solid var(--text); }
+  .vcard .pick button.ans.ok { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); opacity: 1; }
+  .vcard .pick button.ans.mid { background: var(--accent-2-soft); border-color: var(--accent-2); color: var(--accent-2); opacity: 1; }
+  .vcard .pick button.ans.no { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); opacity: 1; }
+  .vcard .why { display: none; font-size: 13px; line-height: 1.38; color: var(--muted); }
+  .vcard.done .why { display: block; }
+  .vcard.done.v-ok { border-color: var(--ok); } .vcard.done.v-mid { border-color: var(--accent-2); } .vcard.done.v-no { border-color: var(--bad); }
+
+  /* 가리기 */
+  .mail { white-space: pre-wrap; font-size: 17px; line-height: 1.85; background: var(--surface); padding: 6px 8px; }
+  .mail .tk { cursor: pointer; border-radius: 6px; padding: 1px 3px; border-bottom: 2px dotted var(--muted); transition: background .2s; }
+  .mail .tk:hover { background: var(--accent-soft); }
+  .mail .tk.masked { background: var(--text); color: var(--surface); border-bottom-color: transparent; font-weight: 800; }
+  .mail .tk.kept { background: var(--ok-soft); color: var(--ok); border-bottom-color: transparent; }
+  .mail .tk.mid { background: var(--accent-2-soft); color: var(--accent-2); border-bottom-color: transparent; font-weight: 700; }
+  .mail .tk.nudge { animation: nudge .35s ease; }
+  @keyframes nudge { 0%,100% { transform: none; } 30% { transform: translateX(-3px); } 70% { transform: translateX(3px); } }
+  @media (prefers-reduced-motion: reduce) { .mail .tk.nudge { animation: none; } }
+  .mail .tk { display: inline-block; }
+
+  /* 책임 사다리 */
+  .ladder { display: grid; gap: 8px; width: 100%; }
+  .rung { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); font-size: 17px; font-weight: 700; color: var(--muted); transition: background .25s, color .25s, border-color .25s, opacity .25s; opacity: .45; }
+  .rung .n { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--line); color: var(--text); font-size: 15px; flex: none; }
+  .rung.on { opacity: 1; background: var(--surface); color: var(--text); border-color: var(--accent); }
+  .rung.on .n { background: var(--accent); color: var(--surface); }
+  .rung.new { border-color: var(--accent-2); }
+  .rung.new .n { background: var(--accent-2); }
+  .uses { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); font-weight: 700; margin-top: 2px; }
+
+  /* 체크 토글 */
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 15.5px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 9px; height: 5px; border-left: 3px solid var(--surface); border-bottom: 3px solid var(--surface); transform: rotate(-45deg) translate(1px, -1px); }
+  .grp { font-size: 14px; font-weight: 800; color: var(--muted); }
+  .tg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-mask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 6.1A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-3 3.6M6.6 6.6A17 17 0 0 0 2.5 12S6 18 12 18a9.6 9.6 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+  <symbol id="i-copyr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9.5a3.5 3.5 0 1 0 0 5"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+</svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 1주차 3차시</p>
+    <h1 style="font-size:62px">AI를 안전하게<br>쓰는 기본 규칙</h1>
+    <p class="lead" style="font-size:25px">개인정보·기밀·저작권,<br>어떤 AI 도구에서나 같은 원칙</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>안전 수칙 차시</span><span>직접 해 보기 4개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="40" y="60" width="330" height="300" rx="26" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <rect x="40" y="60" width="330" height="50" rx="26" class="f-s2"/><rect x="40" y="86" width="330" height="24" class="f-s2"/>
+    <circle cx="70" cy="85" r="7" class="f-line"/><circle cx="94" cy="85" r="7" class="f-line"/>
+    <rect x="70" y="140" width="120" height="16" rx="8" class="f-line"/>
+    <rect x="200" y="140" width="110" height="16" rx="5" class="f-text"><animate attributeName="opacity" values="1;.85;1" dur="3s" repeatCount="indefinite"/></rect>
+    <rect x="70" y="176" width="240" height="16" rx="8" class="f-line"/>
+    <rect x="70" y="212" width="90" height="16" rx="5" class="f-text"/>
+    <rect x="170" y="212" width="150" height="16" rx="8" class="f-line"/>
+    <rect x="70" y="248" width="200" height="16" rx="8" class="f-line"/>
+    <rect x="70" y="284" width="130" height="16" rx="8" class="f-line"/><rect x="210" y="284" width="100" height="16" rx="5" class="f-text"/>
+    <circle cx="390" cy="310" r="92" class="f-acc"/>
+    <g transform="translate(338 258) scale(4.3)" style="color:var(--surface)"><use href="#i-shield" width="24" height="24"/></g>
+    <circle cx="460" cy="120" r="34" class="f-acc2s" stroke="var(--accent-2)" stroke-width="3"/>
+    <g transform="translate(442 102) scale(1.5)" style="color:var(--accent-2)"><use href="#i-copyr" width="24" height="24"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-mask"/></svg></span><div class="h">넣지 말 것</div><div class="d">개인정보·고객 명단·회사 기밀·미공개 자료를 구별하고 가린다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-lock"/></svg></span><div class="h">설정 확인</div><div class="d">어느 AI 서비스에서나 확인할 데이터 설정을 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">답의 책임</div><div class="d">AI 답은 초안이고 책임은 나에게 있음을 안다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-copyr"/></svg></span><div class="h">저작권·AI 사용 표시</div><div class="d">남의 저작물을 조심해 쓰고, 과제에 AI 사용을 밝힌다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>① 넣지 말아야 할 것</b><small>직접 해 보기 2</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② 답의 책임은 나에게</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 저작권과 수업 규칙</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:26px"><p style="font-size:20px;margin:0">오늘 규칙은 <strong>ChatGPT·Gemini·Claude 등 어떤 생성형AI에도</strong> 똑같이 적용됩니다.</p></div>
+    <div class="box warn" style="margin-top:4px"><p style="font-size:19px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> 이 차시는 법률 상담이 아니라 <strong>기본 원칙</strong>을 익히는 시간입니다. 실제 업무에서는 회사·기관의 지침과 관련 법(「개인정보 보호법」, 「저작권법」 등)을 확인하세요.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>‘보내기’를 누른 순간, 내용은 어디로 갈까?</h2>
+  <svg viewBox="0 0 1120 420" style="flex:1;min-height:0" role="img" aria-label="내 컴퓨터에서 보낸 내용이 인터넷을 거쳐 서비스 회사의 서버로 가고, 그곳에서 저장되거나 설정에 따라 학습·검토에 쓰일 수 있다는 그림">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" class="f-muted"/></marker></defs>
+    <rect x="0" y="80" width="300" height="220" rx="22" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <text x="24" y="118" class="t-acc" style="font-size:20px">내 화면</text>
+    <rect x="24" y="140" width="252" height="120" rx="14" class="f-s2"/>
+    <text x="40" y="172" class="t-main" style="font-size:16px">“이 고객 명단으로</text>
+    <text x="40" y="196" class="t-main" style="font-size:16px">안내 문자 써 줘”</text>
+    <rect x="40" y="214" width="180" height="30" rx="8" class="f-bads"/><text x="52" y="235" style="font-size:14px;font-weight:800;fill:var(--bad)">김○○ 010-…, 이○○ …</text>
+    <path id="wire" d="M310 190 H780" stroke="var(--line)" stroke-width="4" stroke-dasharray="6 10"/>
+    <circle r="9" class="f-bad flowdot"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#wire"/></animateMotion></circle>
+    <circle r="9" class="f-bad flowdot"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite"><mpath href="#wire"/></animateMotion></circle>
+    <text x="545" y="170" text-anchor="middle" class="t-sub" style="font-size:16px">인터넷</text>
+    <text x="545" y="226" text-anchor="middle" class="t-sub" style="font-size:15px">되돌리기 어렵다</text>
+    <rect x="790" y="40" width="330" height="340" rx="22" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+    <g transform="translate(820 64) scale(2)" style="color:var(--accent)"><use href="#i-server" width="24" height="24"/></g>
+    <text x="878" y="96" class="t-acc" style="font-size:20px">서비스 회사 서버</text>
+    <g class="frag show"><rect x="816" y="132" width="278" height="56" rx="12" class="f-surface"/><text x="834" y="166" class="t-main" style="font-size:16px">① 대화가 저장된다 (기록)</text></g>
+    <g class="frag"><rect x="816" y="200" width="278" height="56" rx="12" class="f-surface"/><text x="834" y="234" class="t-main" style="font-size:16px">② 설정에 따라 학습에 쓰일 수 있다</text></g>
+    <g class="frag"><rect x="816" y="268" width="278" height="56" rx="12" class="f-surface"/><text x="834" y="302" class="t-main" style="font-size:16px">③ 안전 점검 등으로 보관될 수 있다</text></g>
+    <text x="955" y="356" text-anchor="middle" class="t-sub" style="font-size:13.5px">구체적인 방식은 서비스·계정·설정마다 다름</text>
+  </svg>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 그래서 첫 번째 규칙: 넣으면 안 되는 것은 처음부터 넣지 않는다</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>넣지 말아야 할 것</h2><p>편리함보다 먼저 확인할 네 가지.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-mask"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 네 가지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 넣지 말아야 할 것</span></div>
+  <h2>채팅창에 넣지 않는 네 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">개인정보</div><div class="d">이름+연락처, 주소, 주민등록번호, 계좌번호, 건강 정보… 나와 다른 사람 모두</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">고객 명단</div><div class="d">회원 목록, 주문 내역, 상담 기록처럼 <strong>여러 사람의 정보를 모은 자료</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-lock"/></svg></span><div class="h">회사 기밀</div><div class="d">원가·거래 조건, 계약서, 신제품 계획, 내부 전략, 비밀번호</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">미공개 자료</div><div class="d">발표 전 실적, 내부 회의록, 심사 중인 자료, 아직 공개 안 된 연구 데이터</div></div>
+    </div>
+    <div class="box key frag" style="margin-top:22px"><p style="font-size:21px;margin:0">판단 질문 하나: <strong>“이 내용이 회사 밖, 모르는 사람에게 보여도 괜찮은가?”</strong> 아니라면 넣지 않거나, 가리고 넣습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 개인정보 = 살아 있는 개인을 알아볼 수 있는 정보(다른 정보와 쉽게 결합해 알아볼 수 있는 것 포함) — 「개인정보 보호법」 제2조</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 판정 카드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 넣지 말아야 할 것 · 직접 해 보기 1</span></div>
+  <h2>넣어도 될까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 가능 · 주의 · 금지 중 먼저 골라 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="vcards" id="vcards"></div>
+    <p class="muted" style="margin:8px 0 0;font-size:16px" id="vc-score">0 / 9 판정</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 주의 = 필요한 부분만, 가리거나 허락을 받고 · 회사·기관 지침이 있으면 그것이 먼저</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 직접 해 보기 2: 가리기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 넣지 말아야 할 것 · 직접 해 보기 2</span></div>
+  <h2>고객 문의, 가리고 나서 부탁하기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:14px 18px;gap:8px">
+      <div class="muted" style="font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px"><svg class="ic"><use href="#i-mail"/></svg> 바다결 고객센터로 온 문의 메일 — 가려야 할 곳을 눌러 보세요</div>
+      <div class="mail" id="mail"></div>
+    </div>
+    <div class="side">
+      <div class="meter"><div class="lbl">가린 개인정보</div><div class="val" id="rd-n">0 / 7</div><div class="track"><i id="rd-bar"></i></div></div>
+      <div class="status mid" id="rd-st"><b class="k">찾아보세요</b>점선 밑줄이 있는 곳을 누르면 가려집니다. 가리지 않아도 되는 곳도 섞여 있습니다.</div>
+      <div style="display:flex;gap:8px"><button class="btn ghost" id="rd-all" type="button" style="flex:1;font-size:16px;padding:9px 10px">정답 보기</button><button class="btn ghost" id="rd-0" type="button" aria-label="처음으로" style="padding:9px 12px"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <a class="btn" href="materials/customer_inquiry.txt" download style="font-size:16px;padding:9px 10px;text-decoration:none"><svg class="ic"><use href="#i-log"/></svg> 실습 자료 받기 (.txt)</a>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 실습용 가상 자료 — 실제 인물·주문·주소와 관계없음 · 가린 문장으로 쓰는 프롬프트는 다음 장</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 가린 뒤 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 넣지 말아야 할 것</span></div>
+  <h2>가린 문의로 답장 초안 받기</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:center">
+    <div style="flex:1">
+      <div class="prompt"><div class="prompt-h">프롬프트 (가린 문의 포함)<button class="copy" type="button">복사</button></div><pre id="masked-prompt" style="font-size:15px;line-height:1.5">너는 바다결 고객센터 담당자야. 아래 고객 문의에 대한 답장 초안을 정중하게 써 줘. [ ]는 개인정보를 가린 부분이니 그대로 두고, 배송 일정처럼 확인이 필요한 내용은 <mark>[확인 필요]</mark>로 표시해 줘.
+
+(앞 장에서 가린 문의가 여기에 들어갑니다.)</pre></div>
+      <p class="muted" style="margin:8px 0 0;font-size:15px">앞 장에서 가린 결과가 자동으로 들어갑니다. <strong style="color:var(--text)">보내기 전에 한 번 더</strong> 읽어 보세요.</p>
+    </div>
+    <div style="width:340px;flex:none;display:flex;flex-direction:column;gap:12px">
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-mask"/></svg></span><div style="font-size:17px"><b>가려도 일은 된다</b><br>답장에 필요한 건 고객의 <strong>사정</strong>이지 이름·번호가 아니다</div></div>
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge o"><svg class="ic"><use href="#i-pen"/></svg></span><div style="font-size:17px"><b>보낼 때 채운다</b><br>초안을 받은 뒤 회사 시스템 안에서 <strong>[이름]</strong> 등을 채워 발송</div></div>
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-alert"/></svg></span><div style="font-size:17px"><b>건강 정보는 더 조심</b><br>알레르기처럼 민감한 정보는 이름과 함께 두지 않는다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 이메일·답장 작성은 5주 2차시에 자세히</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 설정 확인 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 넣지 말아야 할 것</span></div>
+  <h2>어떤 AI 서비스든 확인할 데이터 설정 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">학습에 쓰이나?</div><div style="font-size:19px">내 대화를 AI 개선(학습)에 쓰는지, <strong>끌 수 있는지</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h">기록이 남나?</div><div style="font-size:19px">대화 기록 보관·<strong>삭제</strong> 방법, 기록이 남지 않는 <strong>임시 대화</strong>가 있는지</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">누가 관리하나?</div><div style="font-size:19px">학교·회사 계정은 <strong>관리자 정책</strong>이 적용된다. 개인 계정과 다를 수 있다</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:22px"><p style="font-size:20px;margin:0">설정은 <strong>두 번째</strong> 안전장치입니다. 학습을 꺼도, 임시 대화여도 내용은 서버로 전송됩니다. 첫 번째 안전장치는 언제나 <strong>“넣지 않기·가리기”</strong>.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · Gemini·Claude의 설정 위치는 1주 2차시 참고 · 메뉴 이름은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>답의 책임은 나에게</h2><p>“AI가 그렇게 말했어요”는 변명이 되지 않습니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-shield"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. AI 답은 초안 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 답의 책임은 나에게</span></div>
+  <h2>AI 답은 <span class="mark">초안</span>: 그럴듯해도 틀릴 수 있다</h2>
+  <div class="body" style="flex-direction:row;gap:28px;align-items:center">
+    <div class="chat" style="flex:1">
+      <div class="chat-h">AI 채팅 (화면은 단순화한 예시)<span style="margin-left:auto" class="ex-note">잘못된 답의 예 — 강의용으로 지어낸 문장</span></div>
+      <div class="msg user">보고서에 넣게 국내 그래놀라 시장 동향을 두 문장으로 알려 줘.</div>
+      <div class="msg ai warn"><span class="who">AI · 예시 답변</span>국내 그래놀라 시장은 최근 5년간 <b>매년 두 자릿수로 성장</b>했으며, 특히 <b>20~30대 여성이 전체 구매의 60%</b>를 차지합니다.</div>
+      <div class="callout" style="font-size:16px">숫자는 있는데 <strong>출처가 없다</strong>. 이대로 보고서에 넣으면, 틀렸을 때 책임은 <strong>보고서를 낸 사람</strong>에게.</div>
+    </div>
+    <div style="width:380px;flex:none;display:flex;flex-direction:column;gap:10px">
+      <div class="muted" style="font-size:16px;font-weight:700">내보내기 전 확인할 다섯 가지</div>
+      <div class="tile row frag show" style="padding:10px 16px"><span class="ic-badge" style="width:40px;height:40px;font-size:20px"><svg class="ic"><use href="#i-chart"/></svg></span><div style="font-size:18px"><b>숫자·통계</b> — 출처가 있나</div></div>
+      <div class="tile row frag" style="padding:10px 16px"><span class="ic-badge" style="width:40px;height:40px;font-size:20px"><svg class="ic"><use href="#i-user"/></svg></span><div style="font-size:18px"><b>이름·기관</b> — 실제로 있나</div></div>
+      <div class="tile row frag" style="padding:10px 16px"><span class="ic-badge" style="width:40px;height:40px;font-size:20px"><svg class="ic"><use href="#i-clock"/></svg></span><div style="font-size:18px"><b>날짜·최신성</b> — 지금도 맞나</div></div>
+      <div class="tile row frag" style="padding:10px 16px"><span class="ic-badge" style="width:40px;height:40px;font-size:20px"><svg class="ic"><use href="#i-link"/></svg></span><div style="font-size:18px"><b>출처·링크</b> — 열어서 확인했나</div></div>
+      <div class="tile row frag" style="padding:10px 16px"><span class="ic-badge o" style="width:40px;height:40px;font-size:20px"><svg class="ic"><use href="#i-target"/></svg></span><div style="font-size:18px"><b>우리 상황</b> — 회사 사실과 맞나</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 환각(그럴듯한 거짓)은 2주 3차시, 팩트체크는 6주 2차시에 자세히</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 3: 책임 사다리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 답의 책임은 나에게 · 직접 해 보기 3</span></div>
+  <h2>멀리 갈수록 더 꼼꼼히: 확인의 사다리 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;padding:16px 22px">
+      <div class="ladder" id="ladder"></div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>AI 초안을 어디에 쓰나? <output id="ld-o">나만 보는 메모</output></label><input id="ld-s" type="range" min="1" max="4" step="1" value="1" aria-label="AI 초안의 용도"><div class="uses"><span>메모</span><span>팀 공유</span><span>고객 발송</span><span>공식 문서</span></div></div>
+      <div class="meter"><div class="lbl">꼭 할 확인</div><div class="val" id="ld-n">1가지</div></div>
+      <div class="callout b" id="ld-msg">혼자 보는 메모라면 대충 맞는지 읽어 보는 정도로 충분합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 어느 단계든 AI가 만든 결과물의 책임은 그것을 쓴 사람에게</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>저작권과 이 수업의 규칙</h2><p>넣는 것도, 나오는 것도 주인이 있습니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-copyr"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 입력 저작권 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 저작권과 수업 규칙</span></div>
+  <h2>넣는 쪽: <span class="mark">남의 저작물</span>을 쓸 때</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:24px">
+      <div class="tile" style="padding:24px 26px">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-book"/></svg></span><div class="h" style="font-size:25px">이런 것은 남의 저작물</div></div>
+        <ul style="font-size:19px;margin:0">
+          <li>신문 기사, 책, 논문, 보고서</li>
+          <li>강의 자료, 다른 사람의 과제</li>
+          <li>사진·그림·음악·영상, 다른 회사의 광고 문구</li>
+        </ul>
+        <div class="d">인터넷에 공개되어 있어도 저작권은 만든 사람에게 있다</div>
+      </div>
+      <div class="tile" style="padding:24px 26px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h" style="font-size:25px">이렇게 쓴다</div></div>
+        <ul style="font-size:19px;margin:0">
+          <li>원문 전체보다 <strong>필요한 부분만</strong>, 출처를 적어 둔다</li>
+          <li>특정 작품과 <strong>비슷하게 만들어 달라</strong>는 요청은 피한다</li>
+          <li>결과를 <strong>공개·판매</strong>할 때는 특히 신중하게</li>
+        </ul>
+        <div class="d">공개·상업적으로 쓸 때 문제가 생기면 책임은 대개 그 요청을 입력한 이용자에게 돌아갈 수 있다</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 참고: 문화체육관광부·한국저작권위원회 「생성형 인공지능 활용 결과물에 의한 저작권 분쟁 예방 안내서」(2025)</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 출력 저작권 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 저작권과 수업 규칙</span></div>
+  <h2>나오는 쪽: AI가 만든 결과물은 누구의 것?</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg g"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">AI 혼자 만든 결과</div><div class="d">저작물은 <b>사람의</b> 사상·감정의 표현<br>→ 그 자체로는 <b>저작물로 인정받기 어렵다</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-pen"/></svg></span><div class="h">사람이 더한 부분</div><div class="d">고치고·고르고·배열한<br><b>창작적 기여</b>가 있는 부분은<br>보호받을 수 있다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">그래서 이렇게</div><div class="d">AI 결과를 <b>내가 만든 것처럼</b><br>내지 않는다<br>→ <b>AI 사용을 밝힌다</b></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:20px">이미지·영상 등 <strong style="color:var(--text)">AI 생성 콘텐츠의 표시와 저작권</strong>은 11주 3차시에 자세히 다룹니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 참고: 문화체육관광부·한국저작권위원회 「생성형 인공지능 활용 저작물의 저작권 등록 안내서」(2025)</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 수업 규칙 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 저작권과 수업 규칙</span></div>
+  <h2>이 수업에서 AI를 쓸 때의 약속</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile row"><span class="ic-badge lg"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h">과제 안내의 범위 안에서</div><div class="d">이 수업은 AI 활용을 배우는 수업이다. 과제마다 쓸 수 있는 범위는 <strong>과제 안내(LMS)</strong>를 따른다</div></div></div>
+      <div class="tile row"><span class="ic-badge lg o"><svg class="ic"><use href="#i-pen"/></svg></span><div><div class="h">쓴 만큼 밝힌다</div><div class="d">어떤 도구를, 어디에 썼고, <strong>내가 무엇을 고쳤는지</strong> 적는다. 숨기면 내 것처럼 낸 것이 된다</div></div></div>
+      <div class="tile row"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h">확인한 것만 제출한다</div><div class="d">사실·숫자·출처를 확인하지 않은 AI 답을 그대로 내지 않는다. <strong>없는 출처</strong>를 적으면 안 된다</div></div></div>
+      <div class="tile row"><span class="ic-badge lg"><svg class="ic"><use href="#i-mask"/></svg></span><div><div class="h">실습은 가상 자료로</div><div class="d">바다결 자료로 연습한다. 실제 회사·아르바이트처 자료가 필요하면 <strong>가리거나 교수와 상의</strong>한다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 과제별 세부 기준과 제출 방법은 LMS 공지 기준</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 직접 해 보기 4: AI 사용 표시 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 저작권과 수업 규칙 · 직접 해 보기 4</span></div>
+  <h2>과제에 붙일 ‘AI 사용 표시’ 만들기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 400px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;padding:18px 22px;gap:14px">
+      <div class="prompt"><div class="prompt-h">AI 사용 표시 (과제 끝에 붙이기)<button class="copy" type="button">복사</button></div><pre id="disc"></pre></div>
+      <div class="status mid" id="disc-st"><b class="k">무엇이 빠졌을까?</b>오른쪽에서 고르면 문장이 완성됩니다.</div>
+    </div>
+    <div class="side" style="gap:8px">
+      <div class="grp">쓴 도구</div>
+      <div class="tg2"><button class="tgl" type="button" data-g="tool" data-v="Gemini" aria-pressed="true"><span class="chk"></span>Gemini</button><button class="tgl" type="button" data-g="tool" data-v="Claude" aria-pressed="false"><span class="chk"></span>Claude</button></div>
+      <div class="grp">어디에 썼나</div>
+      <div class="tg2">
+        <button class="tgl" type="button" data-g="use" data-v="아이디어 내기" aria-pressed="false"><span class="chk"></span>아이디어</button>
+        <button class="tgl" type="button" data-g="use" data-v="초안 작성" aria-pressed="true"><span class="chk"></span>초안 작성</button>
+        <button class="tgl" type="button" data-g="use" data-v="자료 요약" aria-pressed="false"><span class="chk"></span>자료 요약</button>
+        <button class="tgl" type="button" data-g="use" data-v="문장 교정" aria-pressed="false"><span class="chk"></span>문장 교정</button>
+      </div>
+      <div class="grp">내가 한 일</div>
+      <div class="toggles">
+        <button class="tgl" type="button" data-g="me" data-v="사실·숫자 확인" aria-pressed="false"><span class="chk"></span>사실·숫자 확인</button>
+        <button class="tgl" type="button" data-g="me" data-v="고쳐 쓰기와 구성 정리" aria-pressed="false"><span class="chk"></span>직접 고쳐 쓰기</button>
+        <button class="tgl" type="button" data-g="me" data-v="최종 결론과 판단" aria-pressed="false"><span class="chk"></span>최종 판단</button>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시 · 표시 형식의 예시 — 과제별로 요구하는 형식이 있으면 LMS 공지를 따름</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-mask"/></svg></span><div class="h">넣지 않기 · 가리기</div><div style="font-size:21px">개인정보·고객 명단·기밀·미공개 자료는 넣지 않는다. <strong>설정은 두 번째</strong> 안전장치</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">AI 답은 초안</div><div style="font-size:21px">숫자·이름·출처를 확인한다. <strong>책임은 쓴 사람</strong>에게</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-copyr"/></svg></span><div class="h">저작권 · AI 사용 표시</div><div style="font-size:21px">남의 저작물은 조심해 쓰고, AI 결과를 <strong>내 것처럼 내지 않는다</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="고객 이름·연락처는 개인정보이고, 여러 고객을 모은 명단은 특히 위험합니다. 공개 자료나 가상 자료, 개인정보를 뺀 질문은 넣어도 됩니다.">
+      <p class="q-title"><b>Q1.</b> 생성형AI 채팅창에 넣으면 <u>안 되는</u> 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">회사 홈페이지에 공개된 제품 가격표</button>
+        <button type="button" data-v="b">수업에서 받은 가상 매출 데이터</button>
+        <button type="button" data-v="c">아르바이트하는 가게의 단골 고객 이름·전화번호 목록</button>
+        <button type="button" data-v="d">“보고서 목차는 어떻게 짜?”라는 질문</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="학습 설정을 꺼도 보낸 내용은 서비스 회사 서버로 전송됩니다. 설정은 두 번째 안전장치이고, 첫 번째는 넣지 않거나 가리는 것입니다.">
+      <p class="q-title"><b>Q2.</b> “학습 설정을 껐으니 고객 명단을 넣어도 된다”는 말이 틀린 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">학습 설정은 원래 끌 수 없으므로</button>
+        <button type="button" data-v="b">설정과 관계없이 내용이 외부 서버로 전송되므로</button>
+        <button type="button" data-v="c">AI가 명단을 읽지 못하므로</button>
+        <button type="button" data-v="d">명단은 저작물이므로</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="AI 답은 초안입니다. 출처 없는 숫자는 확인하기 전까지 쓰지 않고, 틀렸을 때의 책임은 보고서를 낸 사람에게 있습니다.">
+      <p class="q-title"><b>Q3.</b> AI가 출처 없이 “시장의 60%”라는 숫자를 알려 주었다. 보고서에 쓰기 전에 할 일은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 말했으니 그대로 쓴다</button>
+        <button type="button" data-v="b">다시 생성해서 같은 숫자가 나오면 쓴다</button>
+        <button type="button" data-v="c">숫자를 반올림해서 쓴다</button>
+        <button type="button" data-v="d">믿을 만한 원자료에서 직접 확인한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="AI 혼자 만든 결과물은 저작물로 인정받기 어렵고, 사람이 창작적으로 기여한 부분만 보호될 수 있습니다. 그래서 AI 사용을 밝히고 내 것처럼 내지 않습니다.">
+      <p class="q-title"><b>Q4.</b> AI가 만든 결과물에 대한 설명으로 가장 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI 혼자 만든 부분은 저작물로 인정받기 어렵다</button>
+        <button type="button" data-v="b">AI가 만들었으니 무조건 내 저작물이다</button>
+        <button type="button" data-v="c">AI 사용 사실은 밝히지 않는 것이 원칙이다</button>
+        <button type="button" data-v="d">남의 작품과 비슷하게 만들어도 문제없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 2주차 생성형AI 이해하기</span></div>
+    <div class="big">2-1</div>
+    <h2>LLM은 어떻게 답을 만드는가</h2>
+    <p>AI는 왜 그럴듯하지만 틀린 답을 할까요? 생성형AI가 글을 만들어 내는 원리를 그림으로 살펴봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week02/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 1주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">1주 3차시 · AI를 안전하게 쓰는 기본 규칙: 개인정보·기밀·저작권</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

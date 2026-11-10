@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11주 2차시 · 불량품 판정 실습 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 11주 2차시 교안: stratify로 데이터 나누기, DecisionTreeClassifier 학습과 나무 읽기, 새 제품 판정, ‘전부 정상’ 기준선, 특성 중요도">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .belt { animation: belt 3s linear infinite; }
+  @keyframes belt { from { transform: translateX(0); } to { transform: translateX(80px); } }
+  @media (prefers-reduced-motion: reduce) { .belt { animation: none; } .belt-dot { display: none; } .pulse { animation: none !important; } }
+
+  /* 나무 그림 공통 */
+  .tn-q rect { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+  .tn-q text { fill: var(--text); font-size: 15px; font-weight: 800; }
+  .tn-leaf rect { stroke-width: 2; }
+  .tn-leaf.ok rect { fill: var(--accent-soft); stroke: var(--accent); }
+  .tn-leaf.ng rect { fill: var(--accent-2-soft); stroke: var(--accent-2); }
+  .tn-leaf .v { font-size: 15px; font-weight: 800; }
+  .tn-leaf.ok .v { fill: var(--accent); } .tn-leaf.ng .v { fill: var(--accent-2); }
+  .tn-leaf .n { fill: var(--muted); font-size: 12.5px; }
+  .t-edge { stroke: var(--line); stroke-width: 2.5; fill: none; }
+  .t-edge.on { stroke: var(--accent); stroke-width: 5; }
+  .t-yn { fill: var(--muted); font-size: 12.5px; font-weight: 700; }
+  .tn-q.on rect, .tn-leaf.on rect { stroke: var(--accent); stroke-width: 4; }
+
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); } .status.info { background: var(--accent-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); } .status.info b.k { color: var(--accent); }
+
+  /* stratify 데모 */
+  .cellrow { display: grid; grid-template-columns: repeat(50, 1fr); gap: 2px; }
+  .cellrow i { aspect-ratio: 1; border-radius: 2px; background: var(--accent-soft); }
+  .cellrow i.b { background: var(--accent-2); }
+  .srow .lb { display: flex; justify-content: space-between; font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+  .srow .lb span:last-child { color: var(--accent-2); font-variant-numeric: tabular-nums; }
+
+  /* 검사기 슬라이더 */
+  .mini .ctrl { padding: 5px 14px 3px; }
+  .mini .ctrl label { font-size: 15px; margin: 0; }
+  .mini input[type=range] { height: 22px; }
+  .mini { display: grid; gap: 6px; }
+  .ctrl.unused label { color: var(--muted); }
+
+  /* 게으른 검사기 */
+  .pgrid { display: grid; grid-template-columns: repeat(19, 1fr); gap: 5px; width: 100%; }
+  .pgrid i { aspect-ratio: 1; border-radius: 6px; background: var(--accent-soft); position: relative; border: 2px solid transparent; }
+  .pgrid i.b { background: var(--accent-2-soft); }
+  .pgrid i.flag::after { content: ""; position: absolute; inset: 22%; border-radius: 50%; background: var(--accent-2); }
+  .pgrid i.wrong { border-color: var(--bad); }
+  .mbtn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+
+  /* 중요도 막대 */
+  .ibars { display: grid; gap: 12px; }
+  .ibar { display: grid; grid-template-columns: 150px 1fr 70px; gap: 12px; align-items: center; font-size: 19px; }
+  .ibar .tr { height: 26px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+  .ibar .tr i { display: block; height: 100%; background: var(--accent); border-radius: 8px; }
+  .ibar b { text-align: right; font-variant-numeric: tabular-nums; }
+  pre.out.sm { font-size: 14px; line-height: 1.5; }
+  pre.code { font-size: 16.5px; }
+  .cg { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 11주차 2차시</p>
+    <h1>불량품 판정<br>실습</h1>
+    <p class="lead" style="font-size:25px">나무를 학습시켜<br>새 제품을 판정해 보자</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>코드 실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="10" y="300" width="215" height="18" rx="9" class="f-line"/>
+    <clipPath id="cvclip"><rect x="10" y="240" width="205" height="60"/></clipPath>
+    <g clip-path="url(#cvclip)"><g class="belt">
+      <rect x="-70" y="254" width="44" height="44" rx="8" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+      <rect x="10" y="254" width="44" height="44" rx="8" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+      <rect x="90" y="254" width="44" height="44" rx="8" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/>
+      <rect x="170" y="254" width="44" height="44" rx="8" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+    </g></g>
+    <!-- 판정 게이트 -->
+    <rect x="215" y="70" width="130" height="250" rx="20" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <g stroke="var(--accent)" stroke-width="3" fill="none"><path d="M280 122 L250 162 M280 122 L310 162 M250 176 L234 210 M250 176 L266 210 M310 176 L326 210"/></g>
+    <rect x="262" y="104" width="36" height="22" rx="6" class="f-acc"/>
+    <rect x="234" y="156" width="32" height="20" rx="6" class="f-acc"/><rect x="294" y="156" width="32" height="20" rx="6" class="f-acc"/>
+    <circle cx="234" cy="214" r="8" class="f-accs" stroke="var(--accent)" stroke-width="2"/><circle cx="266" cy="214" r="8" class="f-acc2"/>
+    <circle cx="310" cy="214" r="8" class="f-acc2"/><circle cx="326" cy="214" r="8" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+    <text x="280" y="258" text-anchor="middle" class="t-main">나무 판정</text>
+    <text x="280" y="282" text-anchor="middle" class="t-sub">max_depth=3</text>
+    <!-- 출구 -->
+    <path id="ex-ok" d="M345 150 C 390 150, 390 110, 436 110" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="5 6"/>
+    <path id="ex-ng" d="M345 250 C 390 250, 390 330, 436 330" fill="none" stroke="var(--accent-2)" stroke-width="3" stroke-dasharray="5 6"/>
+    <rect x="436" y="70" width="80" height="80" rx="16" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+    <text x="476" y="116" text-anchor="middle" class="t-acc" style="font-size:19px">정상</text>
+    <rect x="436" y="290" width="80" height="80" rx="16" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/>
+    <text x="476" y="336" text-anchor="middle" class="t-acc2" style="font-size:19px">불량</text>
+    <g class="belt-dot"><rect x="-12" y="-12" width="24" height="24" rx="6" class="f-accs" stroke="var(--accent)" stroke-width="2"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#ex-ok"/></animateMotion></rect></g>
+    <g class="belt-dot"><rect x="-12" y="-12" width="24" height="24" rx="6" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"><animateMotion dur="2.4s" begin="-1.2s" repeatCount="indefinite"><mpath href="#ex-ng"/></animateMotion></rect></g>
+    <text x="260" y="370" text-anchor="middle" class="t-sub" style="font-size:16px">공정 조건이 들어가면 정상/불량이 나온다</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">고르게 나누기</div><div class="d">stratify로 훈련·시험 데이터의 불량 비율을 맞춘다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">나무 학습·읽기</div><div class="d">DecisionTreeClassifier를 학습하고 plot_tree·export_text로 읽는다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">새 제품 판정</div><div class="d">predict·predict_proba로 새 제품을 판정한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">기준선과 중요도</div><div class="d">“전부 정상” 기준선과 비교하고, 특성 중요도를 조심해서 읽는다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>준비</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 데이터 준비</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>② 학습과 나무 읽기</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>③ 새 제품 판정</b><small>직접 해 보기 1</small></div>
+      <div style="flex:4;background:var(--accent-2-soft)"><b>④ 기준선·중요도</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-code"/></svg> 실습 파일을 함께 열어 두고, 슬라이드의 코드가 나올 때마다 <strong>같은 셀을 실행</strong>해 보세요.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">실습 준비</span></div>
+  <h2>오늘 만들 것: 공정 조건 → 불량 판정기</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">불러오기</div><div class="d">read_csv<br>X·y 정하기</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">나누기</div><div class="d">train_test_split<br>stratify=y</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">학습</div><div class="d">DecisionTree<br>Classifier · fit</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">읽기</div><div class="d">plot_tree<br>export_text</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">판정</div><div class="d">predict<br>predict_proba</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">점검</div><div class="d">기준선 비교<br>특성 중요도</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:24px;margin-top:30px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week11/lesson02.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <p class="muted" style="margin:0;font-size:19px">코드 셀 15개 · 마지막에 <strong style="color:var(--text)">직접 바꿔 보기</strong> 3개 — 내 제품 값을 넣어 판정해 봅니다.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · lesson02.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>데이터 준비</h2><p>불량이 적을수록 나누는 방법이 중요해집니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-database"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 불러오기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 데이터 준비</span></div>
+  <h2>입력 X와 정답 y 정하기</h2>
+  <div class="body">
+    <div class="cg">
+      <pre class="code">import pandas as pd
+DATA = 'https://raw.githubusercontent.com/…/data/'  # 전체 주소는 실습 파일에
+df = pd.read_csv(DATA + 'process.csv')
+
+features = ['temp', 'pressure', 'speed', 'humidity', 'thickness']
+X = df[features]        # 입력: 공정 조건 5개
+y = df['defect']        # 정답: 0 정상, 1 불량
+print(y.value_counts())</pre>
+      <div style="display:grid;gap:14px">
+        <pre class="out">defect
+0    426
+1     68
+Name: count, dtype: int64</pre>
+        <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:19px">X는 표, y는 한 줄</div><div class="d" style="font-size:16px">X = 494행 × 5열, y = 494개의 0/1</div></div></div>
+        <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:19px">불량은 68개뿐 (13.8%)</div><div class="d" style="font-size:16px">한쪽이 훨씬 적은 데이터 — 나눌 때와 평가할 때 모두 조심</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · 실습 파일 2~3단계</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: stratify -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 데이터 준비 · 직접 해 보기 1 (9주 2차시 복습)</span></div>
+  <h2>다시 보기: 그냥 나누면 시험 데이터의 불량 수가 들쭉날쭉 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:22px;padding:20px 26px">
+      <div class="srow"><div class="lb"><span>stratify 없이 나눈 시험 데이터 149개</span><span id="st-a">-</span></div><div class="cellrow" id="st-ra"></div></div>
+      <div class="srow"><div class="lb"><span>stratify=y 로 나눈 시험 데이터 149개</span><span id="st-b">-</span></div><div class="cellrow" id="st-rb"></div></div>
+      <svg id="st-hist" viewBox="0 0 640 120" aria-label="지금까지 나눠 본 결과의 시험 불량 수 기록"></svg>
+    </div>
+    <div class="side">
+      <button class="btn" type="button" id="st-go"><svg class="ic"><use href="#i-reset"/></svg> 다시 나누기</button>
+      <div class="meter"><div class="lbl">random_state (누를 때마다 +1)</div><div class="val" id="st-seed" style="font-size:32px">0</div></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">stratify 없음</div><div class="val o" id="st-ma" style="font-size:30px">-</div></div>
+        <div class="meter"><div class="lbl">stratify=y</div><div class="val" id="st-mb" style="font-size:30px">-</div></div>
+      </div>
+      <div class="callout b" id="st-msg">전체 불량률은 13.8%. 시험 데이터 149개라면 불량이 약 21개 있어야 “고르게” 나눈 것입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · train_test_split(test_size=0.3, random_state=0~19)로 실제로 나눈 결과 · 주황 = 불량</span><span class="no"></span></div>
+</section>
+
+<!-- 8. train_test_split -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 데이터 준비</span></div>
+  <h2>stratify=y: 정답 비율을 지키며 나누기</h2>
+  <div class="body">
+    <div class="cg">
+      <div style="display:grid;gap:14px">
+        <pre class="code">from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42,
+    stratify=y)        # y의 0/1 비율대로 나눈다
+print(len(X_train), len(X_test))
+print(round(y_train.mean(), 3), round(y_test.mean(), 3))</pre>
+        <pre class="out">345 149
+0.136 0.141</pre>
+      </div>
+      <div style="display:grid;gap:12px">
+        <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h" style="font-size:19px">훈련 345개 (불량 47개)</div><div class="d" style="font-size:16px">나무가 질문을 고르는 데 쓴다</div></div></div>
+        <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:19px">시험 149개 (불량 21개)</div><div class="d" style="font-size:16px">끝까지 숨겨 두었다가 실력 평가에만</div></div></div>
+        <div class="callout frag">불량률 훈련 13.6% · 시험 14.1% — <strong>전체(13.8%)와 거의 같다</strong>. 9~10주는 8:2였지만 오늘은 <strong>7:3</strong>: 20%면 시험 불량이 14개뿐이라 불량을 잡는 실력을 재기에 너무 적다.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · 실습 파일 4단계 · y.mean() = 1의 비율 = 불량률</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>학습과 나무 읽기</h2><p>코드는 세 줄, 읽는 것이 진짜 실력입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-filter"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 학습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 학습과 나무 읽기</span></div>
+  <h2>DecisionTreeClassifier: 만들고, 학습하고, 점수 보기</h2>
+  <div class="body">
+    <div class="cg">
+      <div style="display:grid;gap:14px">
+        <pre class="code">from sklearn.tree import DecisionTreeClassifier
+model = DecisionTreeClassifier(max_depth=3,
+                               random_state=42)
+model.fit(X_train, y_train)            # 학습
+print(round(model.score(X_train, y_train), 3))  # 훈련
+print(round(model.score(X_test, y_test), 3))    # 시험</pre>
+        <pre class="out">0.91
+0.906</pre>
+      </div>
+      <div style="display:grid;gap:12px">
+        <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:19px">max_depth=3</div><div class="d" style="font-size:16px">지난 시간 깊이별 실험에서 시험 정확도가 가장 높았던 깊이(2~3)</div></div></div>
+        <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div><div class="h" style="font-size:19px">random_state=42</div><div class="d" style="font-size:16px">질문 후보가 동점일 때도 매번 같은 나무가 나오게</div></div></div>
+        <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:19px">훈련 91.0% · 시험 90.6%</div><div class="d" style="font-size:16px">차이가 작다 → 외우지 않고 규칙을 배웠다</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · 실습 파일 5단계 · score = 정확도(맞힌 비율)</span><span class="no"></span></div>
+</section>
+
+<!-- 11. plot_tree -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 학습과 나무 읽기</span></div>
+  <h2>plot_tree: 학습한 나무를 그림으로</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:24px">
+    <div class="box" style="flex:1;margin:0;padding:10px;display:flex;align-items:center"><svg id="treeA" viewBox="0 0 700 420" role="img" aria-label="max_depth=3으로 학습한 의사결정나무. 첫 질문은 습도 76.2 이하인가"></svg></div>
+    <div style="width:350px;flex:none;display:grid;gap:12px;align-content:center">
+      <pre class="code" style="font-size:14px">from sklearn.tree import plot_tree
+import matplotlib.pyplot as plt
+plt.figure(figsize=(16, 7))
+plot_tree(model, feature_names=features,
+    class_names=['정상', '불량'], filled=True)
+plt.show()</pre>
+      <div class="callout b" style="font-size:16px">Colab 그림에는 상자마다 <strong>gini</strong>(섞임 정도), <strong>samples</strong>(훈련 데이터 제품 수), <strong>value</strong>[정상, 불량]가 함께 나옵니다.</div>
+      <div class="callout" style="font-size:16px">첫 질문은 <strong>습도</strong>, 그다음은 온도·두께. 압력은 <strong>한 번도 묻지 않았다</strong>.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · 실습 파일 6단계 결과를 같은 숫자로 다시 그린 그림 · 숫자는 훈련 데이터 제품 수</span><span class="no"></span></div>
+</section>
+
+<!-- 12. export_text -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 학습과 나무 읽기</span></div>
+  <h2>export_text: 나무를 규칙 문장으로 읽기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:24px">
+    <div style="width:520px;flex:none;display:grid;gap:8px">
+      <pre class="code" style="font-size:14px">print(export_text(model, feature_names=features, show_weights=True))</pre>
+      <pre class="out sm">|--- humidity &lt;= 76.20
+|   |--- temp &lt;= 223.35
+|   |   |--- thickness &lt;= 1.95
+|   |   |   |--- weights: [63.00, 19.00] class: 0
+|   |   |--- thickness &gt;  1.95
+|   |   |   |--- weights: [228.00, 10.00] class: 0
+|   |--- temp &gt;  223.35
+|   |   |--- thickness &lt;= 2.01
+|   |   |   |--- weights: [1.00, 6.00] class: 1
+|   |   |--- thickness &gt;  2.01
+|   |   |   |--- weights: [2.00, 1.00] class: 0
+|--- humidity &gt;  76.20
+|   |--- thickness &lt;= 2.04
+|   |   |--- weights: [0.00, 9.00] class: 1
+|   |--- thickness &gt;  2.04  …(2개 잎 생략)</pre>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile frag show" style="padding:14px 18px;gap:4px;border-left:6px solid var(--accent-2)"><div class="h" style="font-size:19px">규칙 ① 습도 &gt; 76.2 이고 두께 ≤ 2.04 → 불량</div><div class="d" style="font-size:16px">훈련 데이터 제품 9개 모두 불량 — 가장 확실한 불량 조건</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:4px;border-left:6px solid var(--accent-2)"><div class="h" style="font-size:19px">규칙 ② 온도 &gt; 223.35 이고 두께 ≤ 2.01 → 불량</div><div class="d" style="font-size:16px">7개 중 6개 불량 (습도 ≤ 76.2인 경우)</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:4px;border-left:6px solid var(--accent)"><div class="h" style="font-size:19px">가장 큰 잎: 보통 조건 + 두께 &gt; 1.95 → 정상</div><div class="d" style="font-size:16px">238개 중 불량 10개 (4%)</div></div>
+      <div class="box warn frag" style="margin:0;padding:14px 18px"><p style="margin:0;font-size:17px"><strong>주의:</strong> 두께 ≤ 1.95인 잎은 82개 중 <strong>불량 19개(23%)</strong>인데도 다수결로 “정상”. 이 불량들은 모두 놓칩니다.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · 실습 파일 7단계 · weights = [정상 수, 불량 수] · class 0 = 정상, 1 = 불량</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>새 제품 판정</h2><p>학습한 규칙을 처음 보는 제품에 적용합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. predict -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 새 제품 판정</span></div>
+  <h2>predict는 판정, predict_proba는 불량 확률</h2>
+  <div class="body">
+    <div class="cg">
+      <div style="display:grid;gap:12px">
+        <pre class="code">new = pd.DataFrame([
+    [210, 80, 1200, 55, 2.00],   # A: 평범한 조건
+    [226, 80, 1200, 60, 1.98],   # B: 고온, 얇음
+    [212, 82, 1150, 79, 2.01],   # C: 고습
+], columns=features)
+print(model.predict(new))
+print(model.predict_proba(new).round(3))</pre>
+        <pre class="out">[0 1 1]
+[[0.958 0.042]
+ [0.143 0.857]
+ [0.    1.   ]]</pre>
+      </div>
+      <div style="display:grid;gap:12px">
+        <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:19px">predict → 0 또는 1</div><div class="d" style="font-size:16px">A 정상 · B 불량 · C 불량</div></div></div>
+        <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:19px">predict_proba → [정상 확률, 불량 확률]</div><div class="d" style="font-size:16px">B는 불량 확률 0.857 = 도착한 잎의 훈련 데이터 제품 7개 중 불량 6개</div></div></div>
+        <div class="callout frag">predict는 불량 확률이 <strong>0.5를 넘으면</strong> 1로 판정합니다. 이 0.5를 바꾸는 이야기가 다음 차시의 <strong>판정 기준</strong>.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · 실습 파일 8~9단계 · 새 제품도 학습 때와 같은 열 이름·순서로</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 직접 해 보기 2: 검사기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 새 제품 판정 · 직접 해 보기 2</span></div>
+  <h2>나무 판정기에 제품을 넣어 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot"><svg id="insp" viewBox="0 0 700 420" aria-label="입력한 제품이 나무를 따라 내려가는 길"></svg></div>
+    <div class="side">
+      <div class="mini" id="in-sl"></div>
+      <div class="status info" id="in-st"><b class="k">판정</b>-</div>
+      <button class="btn ghost" type="button" id="in-next"><svg class="ic"><use href="#i-database"/></svg> 시험 데이터 제품 불러오기</button>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · export_text 규칙을 그대로 옮긴 판정기 · 기준값은 둘째 자리까지 표시 (두께 실제 기준 1.9545·2.0135·2.0425)</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 섹션 ④ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">④</div><h2>기준선과 특성 중요도</h2><p>정확도 90.6%, 정말 잘한 걸까요?</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 직접 해 보기 3: 게으른 검사기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 기준선·중요도 · 직접 해 보기 3</span></div>
+  <h2>“전부 정상”이라고만 하는 게으른 검사기와 비교 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:10px;padding:16px 20px">
+      <div class="pgrid" id="lz-grid" role="img" aria-label="시험 제품 149개의 실제 결과와 판정"></div>
+      <div class="legend"><span><i class="dot" style="background:var(--accent-soft);border:1px solid var(--accent)"></i>실제 정상</span><span><i class="dot" style="background:var(--accent-2-soft);border:1px solid var(--accent-2)"></i>실제 불량</span><span><i class="dot" style="background:var(--accent-2)"></i>불량으로 판정</span><span><i class="dot" style="border:2px solid var(--bad)"></i>틀린 판정</span></div>
+    </div>
+    <div class="side">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn ghost mbtn" type="button" data-m="lazy" aria-pressed="true">게으른 검사기</button>
+        <button class="btn ghost mbtn" type="button" data-m="tree" aria-pressed="false">나무 (깊이 3)</button>
+      </div>
+      <div class="meter"><div class="lbl">정확도</div><div class="val" id="lz-acc">-</div></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">잡은 불량</div><div class="val" id="lz-tp" style="font-size:30px">-</div></div>
+        <div class="meter"><div class="lbl">놓친 불량</div><div class="val o" id="lz-fn" style="font-size:30px">-</div></div>
+      </div>
+      <div class="callout" id="lz-msg">-</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · 시험 데이터 149개 (정상 128 · 불량 21) · 정상 먼저, 불량을 뒤에 모아 배치</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 중요도 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 기준선·중요도</span></div>
+  <h2>feature_importances_: 나무가 어떤 질문으로 많이 나눴나</h2>
+  <div class="body">
+    <div class="grid" style="grid-template-columns:1.1fr 1fr;gap:28px;align-items:center">
+      <div style="display:grid;gap:12px">
+        <pre class="code">baseline = (y_test == 0).mean()  # 전부 정상일 때
+print(round(baseline, 3))
+imp = pd.Series(model.feature_importances_,
+                index=features)
+print(imp.sort_values(ascending=False).round(3))</pre>
+        <pre class="out">0.859
+humidity     0.375
+thickness    0.293
+temp         0.242
+speed        0.090
+pressure     0.000
+dtype: float64</pre>
+      </div>
+      <div style="display:grid;gap:18px">
+        <div class="ibars">
+          <div class="ibar"><span>습도 humidity</span><span class="tr"><i style="width:75%"></i></span><b>0.375</b></div>
+          <div class="ibar"><span>두께 thickness</span><span class="tr"><i style="width:58.6%"></i></span><b>0.293</b></div>
+          <div class="ibar"><span>온도 temp</span><span class="tr"><i style="width:48.4%"></i></span><b>0.242</b></div>
+          <div class="ibar"><span>속도 speed</span><span class="tr"><i style="width:18%"></i></span><b>0.090</b></div>
+          <div class="ibar"><span>압력 pressure</span><span class="tr"><i style="width:0"></i></span><b>0.000</b></div>
+        </div>
+        <div class="box warn frag" style="margin:0;padding:16px 20px"><p style="margin:0;font-size:18px">중요도 = 섞임 정도를 줄인 몫(합계 1). <strong>원인의 크기가 아닙니다.</strong> 압력 0은 “이 나무가 묻지 않았다”일 뿐 — 7주 3차시: 상관(그리고 중요도) ≠ 인과.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시 · 실습 파일 11~12단계</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">stratify=y</div><div style="font-size:21px">드문 불량도 훈련·시험에 <strong>같은 비율</strong>로 나눈다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">학습 → 읽기 → 판정</div><div style="font-size:21px">fit 후 <strong>plot_tree·export_text</strong>로 규칙을 확인하고 predict로 판정</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">기준선부터 비교</div><div style="font-size:21px">“전부 정상”도 85.9%. 정확도만 보면 <strong>놓친 불량</strong>이 안 보인다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="stratify=y는 정답(y)의 범주 비율이 훈련·시험 데이터에서 같게 유지되도록 나눕니다. 불량처럼 드문 범주가 시험 데이터에 너무 적거나 많이 들어가는 것을 막습니다.">
+      <p class="q-title"><b>Q1.</b> train_test_split에 stratify=y를 넣는 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">학습 속도를 빠르게 하려고</button>
+        <button type="button" data-v="b">훈련·시험 데이터의 불량 비율을 같게 맞추려고</button>
+        <button type="button" data-v="c">불량 제품을 데이터에서 빼려고</button>
+        <button type="button" data-v="d">시험 데이터를 더 크게 만들려고</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="의사결정나무의 predict_proba는 제품이 도착한 잎에 있던 훈련 데이터 제품의 범주 비율입니다. 7개 중 6개가 불량이면 불량 확률 6/7 ≈ 0.857입니다.">
+      <p class="q-title"><b>Q2.</b> 제품 B의 predict_proba가 [0.143, 0.857]인 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">B를 7번 검사해서 6번 불량이 나왔다</button>
+        <button type="button" data-v="b">나무가 임의로 정한 숫자다</button>
+        <button type="button" data-v="c">B가 도착한 잎의 훈련 데이터 제품 7개 중 6개가 불량이었다</button>
+        <button type="button" data-v="d">온도가 85.7% 높았다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="정상이 86%라면 아무 판단 없이 모두 ‘정상’이라고 해도 정확도가 약 86%입니다. 모델은 이 기준선보다 얼마나 나은지, 그리고 불량을 얼마나 잡는지로 봐야 합니다.">
+      <p class="q-title"><b>Q3.</b> 불량률 14%인 시험 데이터에서 정확도 86%인 모델에 대한 판단으로 가장 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">“전부 정상”과 다를 바 없을 수 있으니 잡은 불량 수를 확인한다</button>
+        <button type="button" data-v="b">86%면 충분히 높으니 바로 현장에 쓴다</button>
+        <button type="button" data-v="c">정확도는 100%가 아니면 의미가 없다</button>
+        <button type="button" data-v="d">시험 데이터를 훈련 데이터로 바꿔 다시 잰다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="특성 중요도는 이 나무가 그 특성으로 섞임 정도를 얼마나 줄였는지입니다. 0이면 이 나무가 그 질문을 쓰지 않았다는 뜻일 뿐, 불량과 관계가 없다는 증거는 아닙니다.">
+      <p class="q-title"><b>Q4.</b> 압력(pressure)의 특성 중요도가 0.000이었다. 옳은 해석은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">압력은 불량과 전혀 관계가 없다</button>
+        <button type="button" data-v="b">압력 센서가 고장 났다</button>
+        <button type="button" data-v="c">압력을 바꿔도 품질은 그대로다</button>
+        <button type="button" data-v="d">이 나무가 압력으로 질문하지 않았을 뿐이다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">11-3</div>
+    <h2>정확도·정밀도·재현율</h2>
+    <p>놓친 불량과 잘못 경보를 따로 세는 법, 판정 기준을 옮기는 법 — 그리고 <strong>과제2</strong> 안내.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">11주 2차시 · 불량품 판정 실습</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

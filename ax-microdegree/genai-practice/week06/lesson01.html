@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6주 1차시 · 시장·트렌드 조사 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 6주 1차시 교안: 사업 질문을 조사 질문으로 바꾸기, 웹 검색을 켜고 출처·날짜와 함께 묻기, 시장 규모·성장 요인·경쟁·소비자 트렌드로 정리하기, AI가 알 수 없는 것">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  .lens { animation: lens 7s ease-in-out infinite; }
+  @keyframes lens { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-150px, 120px); } 50% { transform: translate(-40px, 150px); } 75% { transform: translate(70px, 120px); } }
+  @media (prefers-reduced-motion: reduce) { .lens { animation: none; } }
+  .ex-note { font-size: 13px; color: var(--muted); font-weight: 700; }
+  .chat .msg.ai b { color: var(--accent); }
+  .ph { background: var(--accent-2-soft); color: var(--accent-2); font-weight: 800; border-radius: 4px; padding: 0 4px; }
+
+  /* 판단 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 14px; min-height: 150px; display: flex; flex-direction: column; gap: 6px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .nm { font-size: 16.5px; font-weight: 700; line-height: 1.45; }
+  .pcard .ans { display: none; font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 15px; }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.yes { background: var(--ok-soft); border-color: var(--ok); } .pcard.open.yes .verdict { color: var(--ok); }
+  .pcard.open.no { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.no .verdict { color: var(--accent-2); }
+  .pcard.open.mid { background: var(--surface-2); border-color: var(--muted); } .pcard.open.mid .verdict { color: var(--muted); }
+
+  /* 조사 질문 나무 */
+  .tree { width: 100%; height: 100%; display: flex; flex-direction: column; gap: 0; padding: 8px 6px; }
+  .tree-root { align-self: center; position: relative; background: var(--accent); color: var(--surface); border-radius: 16px; padding: 10px 22px; font-size: 18px; font-weight: 800; text-align: center; line-height: 1.4; max-width: 640px; }
+  .tree-root small { display: block; font-size: 13px; font-weight: 700; opacity: .85; }
+  .tree-root::after { content: ""; position: absolute; left: 50%; bottom: -22px; height: 22px; border-left: 3px solid var(--line); }
+  .branches { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; position: relative; margin-top: 22px; padding-top: 22px; min-height: 0; }
+  .branches::before { content: ""; position: absolute; top: 0; left: 12.5%; right: 12.5%; border-top: 3px solid var(--line); }
+  .branch { position: relative; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .branch::before { content: ""; position: absolute; top: -22px; left: 50%; height: 22px; border-left: 3px solid var(--line); }
+  .br-h { font: inherit; font-size: 16px; font-weight: 800; border: 2px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 6px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .br-h[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .br-slot { flex: 1; border: 2px dashed var(--line); border-radius: 12px; padding: 10px; font-size: 14.5px; line-height: 1.45; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+  .br-slot.good { border-style: solid; border-color: var(--ok); background: var(--ok-soft); color: var(--text); }
+  .br-slot.vague { border-style: solid; border-color: var(--accent-2); background: var(--accent-2-soft); color: var(--text); }
+  .br-slot.out { border-style: solid; border-color: var(--muted); background: var(--surface-2); color: var(--text); }
+  .br-slot .badge { font-size: 12.5px; font-weight: 800; }
+  .br-slot.good .badge { color: var(--ok); } .br-slot.vague .badge { color: var(--accent-2); } .br-slot.out .badge { color: var(--muted); }
+  .opts2 { display: grid; gap: 8px; }
+  .opts2 button { font: inherit; font-size: 15px; line-height: 1.45; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 8px 12px; cursor: pointer; }
+  .opts2 button:hover { border-color: var(--accent); }
+  .opts2 button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+
+  /* 웹 검색 켬/끔 */
+  .qgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; height: 100%; padding: 6px; }
+  .qc { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); transition: background .25s, border-color .25s; }
+  .qc .qq { font-size: 16px; font-weight: 800; line-height: 1.4; }
+  .qc .st { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+  .qc .why { font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+  .qc.ok { background: var(--ok-soft); border-color: var(--ok); } .qc.ok .st { color: var(--ok); }
+  .qc.chk { background: var(--accent-soft); border-color: var(--accent); } .qc.chk .st { color: var(--accent); }
+  .qc.risk { background: var(--accent-2-soft); border-color: var(--accent-2); } .qc.risk .st { color: var(--accent-2); }
+  .qc.no { background: var(--bad-soft); border-color: var(--bad); } .qc.no .st { color: var(--bad); }
+  .switch { margin-bottom: 0; }
+
+  .ftable { font-size: 17px; }
+  .ftable th, .ftable td { padding: 9px 14px; }
+  .ftable td:first-child { font-weight: 800; white-space: nowrap; }
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true"><symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol></svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 6주차 1차시</p>
+    <h1>시장·트렌드<br>조사</h1>
+    <p class="lead" style="font-size:25px">“요즘 그래놀라 어때?”를<br>답할 수 있는 질문으로 바꾸기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>Gemini · Claude</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:500px;flex:none" aria-hidden="true">
+    <rect x="160" y="40" width="200" height="64" rx="18" class="f-acc"/>
+    <text x="260" y="80" text-anchor="middle" style="font-size:20px;font-weight:800;fill:var(--surface)">사업 질문</text>
+    <path d="M260 104 V140 M75 140 H445 M75 140 V170 M198 140 V170 M322 140 V170 M445 140 V170" fill="none" stroke="var(--line)" stroke-width="4"/>
+    <g>
+      <rect x="20" y="170" width="110" height="80" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <rect x="143" y="170" width="110" height="80" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <rect x="267" y="170" width="110" height="80" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <rect x="390" y="170" width="110" height="80" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <text x="75" y="216" text-anchor="middle" class="t-main" style="font-size:16px">시장 규모</text>
+      <text x="198" y="216" text-anchor="middle" class="t-main" style="font-size:16px">성장 요인</text>
+      <text x="322" y="216" text-anchor="middle" class="t-main" style="font-size:16px">경쟁</text>
+      <text x="445" y="216" text-anchor="middle" class="t-main" style="font-size:16px">트렌드</text>
+    </g>
+    <g fill="var(--line)"><rect x="40" y="300" width="440" height="14" rx="7"/><rect x="40" y="330" width="360" height="14" rx="7"/><rect x="40" y="360" width="400" height="14" rx="7"/></g>
+    <rect x="40" y="300" width="130" height="14" rx="7" class="f-acc2" opacity=".8"/>
+    <rect x="40" y="360" width="90" height="14" rx="7" class="f-acc2" opacity=".8"/>
+    <g class="lens">
+      <circle cx="400" cy="90" r="52" fill="var(--surface)" fill-opacity=".35" stroke="var(--accent-2)" stroke-width="10"/>
+      <path d="M437 127 L478 168" stroke="var(--accent-2)" stroke-width="16" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">조사 질문 만들기</div><div class="d">막연한 사업 고민을 AI와 자료로 답할 수 있는 조사 질문으로 쪼갠다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-search"/></svg></span><div class="h">검색해서 묻기</div><div class="d">웹 검색을 켜고 출처·날짜를 함께 달라고 요청한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">네 칸으로 정리</div><div class="d">시장 규모·성장 요인·경쟁·소비자 트렌드로 답을 정리한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">AI가 모르는 것</div><div class="d">최신·비공개·내부 데이터는 직접 구해야 함을 안다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>① 조사 질문 만들기</b><small>직접 해 보기 2</small></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② AI에게 묻고 정리하기</b><small>프롬프트 실습</small></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>③ AI가 모르는 것</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-factory"/></svg> 이번 주 상황 — 가상 회사 <strong>바다결</strong>의 고민 ③ <strong>“20~30대 신규 고객을 늘리고 싶다.”</strong> 그래놀라 시장과 20~30대 트렌드를 조사해 대표에게 보고합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · 바다결은 수업용 가상 회사</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>“그래놀라 시장, 요즘 어때?”라고 물으면</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:28px">
+    <div class="chat" style="flex:1.15;align-self:center">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">그래놀라 시장 요즘 어때?</div>
+      <div class="msg ai"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>그래놀라 시장은 건강을 중시하는 트렌드에 따라 꾸준히 성장하고 있습니다. 특히 MZ세대 사이에서 인기가 높으며, 다양한 맛과 기능성 제품이 출시되고 있습니다. 앞으로도 성장이 기대됩니다.</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="muted" style="font-size:19px;font-weight:700">이 답으로 대표에게 보고할 수 있을까?</div>
+      <div class="tile row frag show" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:20px">얼마나?</div><div class="d">“꾸준히 성장” — 숫자가 없다</div></div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h" style="font-size:20px">언제 기준?</div><div class="d">날짜가 없다. 3년 전 이야기일 수도</div></div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h" style="font-size:20px">누가 그래?</div><div class="d">출처가 없다. 확인할 방법이 없다</div></div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">그래서 바다결은?</div><div class="d">무엇을 결정하려는지 질문에 없었다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · 미리 써 둔 예시 답변</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>조사 질문 만들기</h2><p>좋은 답은 좋은 질문에서 나옵니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 사업 질문 → 조사 질문 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 조사 질문 만들기</span></div>
+  <h2>사업 질문을 <span class="mark">조사 질문</span>으로 쪼갠다</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="h">사업 질문</div><div class="d">“20~30대 신규 고객을<br>늘리려면?”<br><b>회사가 결정할 것</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">알아야 할 것</div><div class="d">시장은 커지나?<br>왜 사나? 누가 파나?<br>무엇을 원하나?</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-search"/></svg></span><div class="h">조사 질문</div><div class="d">대상·기간·지표가<br>분명한 질문<br><b>AI와 자료로 답할 수 있게</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">확인할 자료</div><div class="d">통계·보고서·기사<br>우리 판매·후기 데이터</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">AI는 <strong style="color:var(--text)">사업 질문</strong>에 답을 “정해 주는” 도구가 아닙니다. <strong style="color:var(--text)">조사 질문</strong>에 대한 자료를 빨리 모으는 조수입니다. 결정은 우리가 합니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 좋은 질문 vs 막연한 질문 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 조사 질문 만들기 · 직접 해 보기 1</span></div>
+  <h2>좋은 조사 질문일까, 막연한 질문일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 판단하고 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="qcards"></div>
+    <div style="display:flex;gap:18px;align-items:center;margin-top:12px">
+      <span class="muted" style="font-size:17px" id="qc-score">0 / 8 확인</span>
+      <span class="legend"><span><i class="dot" style="background:var(--ok)"></i>좋은 조사 질문</span><span><i class="dot" style="background:var(--accent-2)"></i>막연함 — 고쳐 쓰기</span><span><i class="dot" style="background:var(--muted)"></i>AI에게 물을 게 아님</span></span>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · 경쟁사 이름은 쓰지 않고 “A사”로 표기</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 좋은 조사 질문의 다섯 요소 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 조사 질문 만들기</span></div>
+  <h2>좋은 조사 질문에 들어가는 다섯 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(5,1fr)">
+      <div class="tile" style="align-items:center;text-align:center;padding:18px 12px"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">누구</div><div class="d">대상<br><b style="color:var(--accent)">20~30대</b></div></div>
+      <div class="tile" style="align-items:center;text-align:center;padding:18px 12px"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">무엇</div><div class="d">지표<br><b style="color:var(--accent)">구매 이유·시장 규모</b></div></div>
+      <div class="tile" style="align-items:center;text-align:center;padding:18px 12px"><span class="ic-badge"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h">언제</div><div class="d">기간<br><b style="color:var(--accent)">최근 3년</b></div></div>
+      <div class="tile" style="align-items:center;text-align:center;padding:18px 12px"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">어디</div><div class="d">지역·채널<br><b style="color:var(--accent)">국내 · 온라인</b></div></div>
+      <div class="tile" style="align-items:center;text-align:center;padding:18px 12px"><span class="ic-badge o"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">왜</div><div class="d">용도<br><b style="color:var(--accent-2)">신제품 기획</b></div></div>
+    </div>
+    <div class="box frag" style="margin-top:22px;padding:18px 26px">
+      <div class="muted" style="font-size:16px;font-weight:700;margin-bottom:4px">막연한 질문 “그래놀라 시장 어때?” → 다섯 가지를 넣으면</div>
+      <p style="font-size:22px;margin:0;line-height:1.6">“<b style="color:var(--accent-2)">신제품 기획</b>을 위해, <b style="color:var(--accent)">최근 3년</b> <b style="color:var(--accent)">국내 온라인</b>에서 <b style="color:var(--accent)">20~30대</b>가 그래놀라를 사는 <b style="color:var(--accent)">주된 이유</b>를 다룬 조사 자료를 찾아 줘.”</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · 3주차 프롬프트 구성(역할·맥락·지시·형식)의 ‘맥락’을 조사용으로 구체화한 것</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 직접 해 보기 2: 조사 질문 나무 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 조사 질문 만들기 · 직접 해 보기 2</span></div>
+  <h2>조사 질문 나무를 만들어 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 350px">
+    <div class="plot" style="padding:12px">
+      <div class="tree">
+        <div class="tree-root"><small>사업 질문 · 바다결 대표</small>20~30대 신규 고객을 늘리려면 그래놀라를 어떻게 팔아야 할까?</div>
+        <div class="branches" id="tree-br"></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700" id="tr-lbl">가지 ‘시장 규모’에 달 질문을 고르세요</div>
+      <div class="opts2" id="tr-opts"></div>
+      <div class="meter"><div class="lbl">좋은 조사 질문</div><div class="val" id="tr-n">0 / 4</div><div class="track"><i id="tr-bar"></i></div></div>
+      <div class="callout b" id="tr-msg">가지(위쪽 칸)를 누르거나 질문을 고르면 다음 가지로 넘어갑니다. 네 가지를 모두 채워 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · 완성한 질문은 실습 자료 ‘조사 계획표’에 옮겨 적기</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>AI에게 묻고 정리하기</h2><p>검색을 켜고, 출처와 날짜를 함께 달라고 합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-search"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 웹 검색과 심층 조사 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI에게 묻고 정리하기</span></div>
+  <h2>조사할 때는 <span class="mark">웹 검색</span>을 켜고 묻는다</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">Gemini (학교 계정)</div><div class="d">질문에 따라 웹을 검색해 답하고, 참고한 출처를 보여 줄 수 있다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">Claude (무료 버전)</div><div class="d">웹 검색 기능으로 최신 자료를 찾아 답하고, 출처 링크를 함께 보여 줄 수 있다</div></div>
+      <div class="tile" style="border:2px dashed var(--line)"><span class="ic-badge g"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">심층 조사 기능</div><div class="d">여러 번 검색해 긴 보고서로 묶어 주는 기능도 있다 (Gemini의 Deep Research, Claude 유료 요금제의 Research). 이 수업은 <b>일반 대화 + 웹 검색</b>만으로 따라 할 수 있게 구성</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:20px;gap:18px">
+      <div class="callout b" style="font-size:18px"><strong>“웹에서 최신 자료를 찾아서”</strong>라고 분명히 적는다. 도구에 따라 검색 기능을 직접 켜야 할 수도 있다. 한쪽이 사용량 한도에 걸리면 다른 쪽으로 이어 한다.</div>
+      <div class="callout" style="font-size:18px">검색해서 답해도 <strong>틀릴 수 있다</strong>. 링크가 없거나, 링크 속 내용이 AI 말과 다를 수 있다 → <strong>2차시 팩트체크</strong></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · 기능 이름·메뉴·제공 범위·한도는 서비스마다 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 조사 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI에게 묻고 정리하기 · 따라 해 보기</span></div>
+  <h2>조사 요청 프롬프트</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:24px">
+    <div class="prompt" style="flex:1"><div class="prompt-h">프롬프트 — Gemini·Claude 공통<button class="copy" type="button">복사</button></div><pre>너는 식품 시장을 조사하는 리서치 보조야.
+부산의 건강 간식 회사가 <mark>20~30대 신규 고객</mark>을 늘리려고 <mark>국내 그래놀라 시장</mark>을 조사하고 있어.
+웹에서 최신 자료를 찾아서 아래 네 칸으로 정리해 줘.
+1. 시장 규모 (최근 3년, 연도별)
+2. 성장 요인
+3. 주요 경쟁 제품·브랜드
+4. 20~30대 소비자 트렌드
+조건
+- 숫자와 주장마다 출처(기관·제목·링크)와 발표 날짜를 붙여 줘.
+- 출처를 찾지 못한 내용은 지어내지 말고 "확인 필요"라고 적어 줘.
+- 표로 정리하고, 마지막에 자료의 한계를 한 줄로 적어 줘.</pre></div>
+    <div style="width:330px;display:flex;flex-direction:column;gap:10px;font-size:17px">
+      <div class="tile" style="padding:12px 16px;gap:4px"><div class="h" style="font-size:18px;color:var(--accent)">역할 · 맥락</div><div class="d" style="font-size:16px">누구를 위한 조사인지 — 회사 이름·기밀은 빼고</div></div>
+      <div class="tile" style="padding:12px 16px;gap:4px"><div class="h" style="font-size:18px;color:var(--accent)">지시 · 네 칸</div><div class="d" style="font-size:16px">조사 질문 나무의 네 가지</div></div>
+      <div class="tile" style="padding:12px 16px;gap:4px;border:2px solid var(--accent-2)"><div class="h" style="font-size:18px;color:var(--accent-2)">조건 · 출처와 날짜</div><div class="d" style="font-size:16px">오늘의 핵심. 출처가 없으면 <b>“확인 필요”</b></div></div>
+      <div class="muted" style="font-size:15px"><mark style="background:var(--accent-2-soft);color:var(--accent-2);font-weight:700;padding:0 3px;border-radius:4px">주황 글씨</mark>는 내 주제로 바꿔 쓰는 부분</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · 같은 프롬프트를 Gemini와 Claude에 넣고 답을 비교해 보기</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 예시 답변 읽기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI에게 묻고 정리하기</span></div>
+  <h2>답이 오면 이렇게 읽는다</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:24px">
+    <div class="chat" style="flex:1.25;align-self:flex-start">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user" style="font-size:15px">(앞 장의 프롬프트)</div>
+      <div class="msg ai" style="font-size:15.5px;max-width:100%"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span><b>① 시장 규모</b> 약 <span class="ph">[○○]억 원</span>(<span class="ph">[연도]</span>) — 출처: <span class="ph">[기관]</span>, 「<span class="ph">[보고서]</span>」
+<b>② 성장 요인</b> 아침 식사 대용 수요, 저당·고단백 선호 — 출처: 기사 2건 <span class="ph">[링크]</span>
+<b>③ 경쟁</b> 대형 식품사 제품, 온라인 전문 브랜드 — <span class="ph">확인 필요</span>
+<b>④ 트렌드</b> 소포장·1인 간식 — <span class="ph">확인 필요</span>
+<b>한계</b> 시장 규모는 시리얼 전체를 포함한 수치일 수 있음</div>
+      <div class="msg user" style="font-size:15px">① 시장 규모가 그래놀라만의 수치인지 확인하고, 출처 링크를 다시 보여 줘.</div>
+      <div class="msg ai" style="font-size:15.5px;max-width:100%"><span class="who">예시 답변</span>찾은 자료에는 그래놀라만의 시장 규모가 따로 없고, 시리얼 전체 수치만 있습니다. 표의 ①을 <span class="ph">확인 필요</span>로 바꾸겠습니다.</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+      <div class="tile row frag show" style="padding:10px 16px;gap:14px"><span class="ic-badge" style="width:48px;height:48px;font-size:26px"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:18px">숫자 옆에 출처·날짜가 있나</div><div class="d" style="font-size:15px">없으면 “이 숫자의 출처와 발표 날짜는?”</div></div></div>
+      <div class="tile row frag" style="padding:10px 16px;gap:14px"><span class="ic-badge" style="width:48px;height:48px;font-size:26px"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:18px">“확인 필요”가 솔직한가</div><div class="d" style="font-size:15px">모르는 것을 아는 척하지 않은 답이 더 쓸모 있다</div></div></div>
+      <div class="tile row frag" style="padding:10px 16px;gap:14px"><span class="ic-badge" style="width:48px;height:48px;font-size:26px"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h" style="font-size:18px">범위가 맞나</div><div class="d" style="font-size:15px">그래놀라만? 시리얼 전체? 국내? 세계?</div></div></div>
+      <div class="tile row frag" style="padding:10px 16px;gap:14px"><span class="ic-badge o" style="width:48px;height:48px;font-size:26px"><svg class="ic"><use href="#i-link"/></svg></span><div><div class="h" style="font-size:18px">링크는 직접 열어 본다</div><div class="d" style="font-size:15px">열리는지, 같은 말을 하는지 → 2차시</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · <b>[ ]</b> 자리는 실제 조사에서 출처를 확인해 채우는 칸 (이 강의는 확인되지 않은 시장 수치를 쓰지 않음)</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 네 칸 틀 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI에게 묻고 정리하기</span></div>
+  <h2>시장 조사의 네 칸: 무엇을, 어디서, 무엇을 조심할까</h2>
+  <div class="body">
+    <table class="ftable">
+      <thead><tr><th>칸</th><th>무엇을 묻나</th><th>믿을 만한 자료</th><th>조심할 점</th></tr></thead>
+      <tbody>
+        <tr class="frag show"><td style="color:var(--accent)">시장 규모</td><td>금액·성장률, 기준 연도</td><td>정부 통계(국가통계포털 KOSIS), 정부·협회 보고서</td><td>시장의 <b>범위</b>와 <b>단위</b>(억 원/조 원, 출고액/판매액)</td></tr>
+        <tr class="frag"><td style="color:var(--accent)">성장 요인</td><td>왜 늘었나, 왜 줄었나</td><td>소비자 조사 보고서, 언론 기사</td><td>기사 속 해석은 <b>기자의 의견</b>일 수 있다</td></tr>
+        <tr class="frag"><td style="color:var(--accent)">경쟁</td><td>누가, 얼마에, 무엇을 파나</td><td>온라인몰 상품 페이지, 기업 보도자료</td><td>가격은 자주 바뀐다 → <b>확인한 날짜</b>를 적는다</td></tr>
+        <tr class="frag"><td style="color:var(--accent-2)">소비자 트렌드</td><td>20~30대가 무엇을 원하나</td><td>조사 보고서, <b>우리 후기 데이터</b></td><td>SNS에서 화제 ≠ 다수의 생각</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · 국가통계포털(KOSIS)은 국가데이터처(옛 통계청)가 운영</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>AI가 모르는 것</h2><p>검색을 켜도 AI가 답할 수 없는 질문이 있습니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 3: 웹 검색 켬/끔 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI가 모르는 것 · 직접 해 보기 3</span></div>
+  <h2>검색을 켜면 AI가 답할 수 있을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 320px">
+    <div class="plot" style="padding:8px"><div class="qgrid" id="wq"></div></div>
+    <div class="side">
+      <div class="switch" role="group" aria-label="웹 검색"><button type="button" id="w-off" aria-pressed="true">웹 검색 끔</button><button type="button" id="w-on" aria-pressed="false">웹 검색 켬</button></div>
+      <div class="legend" style="flex-direction:column;gap:6px;font-size:14.5px">
+        <span><i class="dot" style="background:var(--ok)"></i>답할 수 있음</span>
+        <span><i class="dot" style="background:var(--accent)"></i>찾을 수 있음 — 원문 확인 필요</span>
+        <span><i class="dot" style="background:var(--accent-2)"></i>위험 — 오래됐거나 지어낼 수 있음</span>
+        <span><i class="dot" style="background:var(--bad)"></i>알 수 없음 — 직접 구해야 함</span>
+      </div>
+      <div class="meter"><div class="lbl">AI에게 맡겨도 되는 질문</div><div class="val" id="w-n">1 / 6</div></div>
+      <div class="callout b" id="w-msg">검색을 꺼 두면 AI는 <strong>학습한 시점까지의 지식</strong>으로만 답합니다. 스위치를 켜 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · 일반적인 경향을 보여 주는 예시 — 서비스·질문에 따라 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 세 가지 빈칸 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI가 모르는 것</span></div>
+  <h2>AI가 채울 수 없는 세 가지 빈칸</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h">최신</div><div class="d">학습 이후의 소식. 검색을 켜도 놓치거나 옛 자료를 가져올 수 있다</div><div style="font-size:17px;font-weight:700;color:var(--accent)">→ 발표 기관의 원문에서 날짜까지 확인</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">비공개</div><div class="d">유료 보고서의 상세 수치, 경쟁사 내부 매출. AI가 <b>그럴듯한 숫자를 지어낼</b> 위험이 가장 크다</div><div style="font-size:17px;font-weight:700;color:var(--accent-2)">→ 공개 요약만 쓰고, 없으면 “모름”</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">내부</div><div class="d">바다결의 판매량·후기. 인터넷 어디에도 없다. 우리가 <b>파일을 줘야</b> 분석할 수 있다</div><div style="font-size:17px;font-weight:700;color:var(--accent)">→ 7주차 · 개인정보·기밀은 빼고(1-3)</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:20px"><p style="font-size:20px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> AI가 이 빈칸을 <strong>숫자로 채워 왔다면</strong> 오히려 의심할 신호입니다. 출처를 다시 묻고, 확인되지 않으면 보고서에 “확인 필요”로 남깁니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 따라 하기 + 자료 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">실습 · 따라 해 보기</span></div>
+  <h2>오늘 실습: 조사 계획표 → AI 조사 → 저장</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:24px">
+    <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge"><b style="font-size:26px">1</b></span><div><div class="h" style="font-size:20px">조사 계획표 채우기</div><div class="d" style="font-size:16px">사업 질문 1개 → 조사 질문 4개 (직접 해 보기 2처럼)</div></div></div>
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge"><b style="font-size:26px">2</b></span><div><div class="h" style="font-size:20px">두 도구에 같은 프롬프트</div><div class="d" style="font-size:16px">Gemini와 Claude에 붙여 넣고, 웹 검색을 쓰게 한다</div></div></div>
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge"><b style="font-size:26px">3</b></span><div><div class="h" style="font-size:20px">이어서 묻기</div><div class="d" style="font-size:16px">출처 없는 숫자, 범위가 애매한 칸을 다시 묻는다</div></div></div>
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge o"><b style="font-size:26px">4</b></span><div><div class="h" style="font-size:20px">답과 링크를 저장</div><div class="d" style="font-size:16px">2차시에 이 답을 팩트체크한다</div></div></div>
+    </div>
+    <div style="width:470px;display:flex;flex-direction:column;gap:12px">
+      <div class="prompt"><div class="prompt-h">이어서 묻기<button class="copy" type="button">복사</button></div><pre>방금 표에서 출처가 없는 숫자는 모두 "확인 필요"로 바꿔 줘.
+<mark>시장 규모</mark>는 그래놀라만의 수치인지, 시리얼 전체 수치인지 구분해 줘.
+각 출처의 발표 날짜와 링크를 다시 정리해 줘.</pre></div>
+      <a class="btn" href="materials/research_plan_template.md" download><svg class="ic"><use href="#i-log"/></svg> 실습 자료 받기 · 조사 계획표</a>
+      <div class="callout b" style="font-size:16px">계획표에는 가상 회사 이야기만 있어 그대로 AI에 붙여 넣어도 됩니다. 실제 회사 일이라면 <strong>회사 이름·내부 숫자·고객 정보는 빼고</strong> 묻습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시 · 한쪽 도구가 사용량 한도에 걸리면 다른 도구로 이어서</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">질문을 쪼갠다</div><div style="font-size:21px">사업 질문 → <strong>누구·무엇·언제·어디·왜</strong>가 있는 조사 질문</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-search"/></svg></span><div class="h">출처·날짜와 함께</div><div style="font-size:21px">웹 검색을 켜고, 숫자마다 출처·날짜. 없으면 <strong>“확인 필요”</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">빈칸은 직접</div><div style="font-size:21px"><strong>최신·비공개·내부</strong> 자료는 AI가 채울 수 없다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="대상(20~30대), 기간(최근 2년), 지표(구매 기준), 형태(조사 자료)가 모두 들어 있어 AI가 찾을 것이 분명합니다.">
+      <p class="q-title"><b>Q1.</b> 가장 좋은 조사 질문은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">요즘 그래놀라 어때?</button>
+        <button type="button" data-v="b">MZ세대 트렌드 알려 줘</button>
+        <button type="button" data-v="c">20~30대가 아침 대용 간식을 고르는 기준을 다룬 최근 2년 조사 자료를 찾아 줘</button>
+        <button type="button" data-v="d">내년에 그래놀라가 유행할까?</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="출처 없는 숫자는 그대로 쓰지 않습니다. 출처와 발표 날짜를 다시 묻고, 그래도 확인되지 않으면 ‘확인 필요’로 남깁니다.">
+      <p class="q-title"><b>Q2.</b> AI 답에 시장 규모 숫자가 있는데 출처가 없다. 알맞은 행동은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 말했으니 보고서에 그대로 쓴다</button>
+        <button type="button" data-v="b">출처·날짜를 다시 묻고, 확인 안 되면 “확인 필요”로 둔다</button>
+        <button type="button" data-v="c">숫자를 조금 줄여서 쓴다</button>
+        <button type="button" data-v="d">다른 AI에게 물어 같은 숫자면 확정한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="바다결의 판매량은 인터넷에 없는 내부 데이터입니다. 검색을 켜도 알 수 없고, 우리가 파일을 줘야 합니다(7주차).">
+      <p class="q-title"><b>Q3.</b> 웹 검색을 켜도 AI가 알 수 <u>없는</u> 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">그래놀라가 무엇인지</button>
+        <button type="button" data-v="b">공개된 기업 보도자료의 내용</button>
+        <button type="button" data-v="c">정부 기관이 발표한 공개 통계</button>
+        <button type="button" data-v="d">바다결 자사몰의 9월 판매량</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="같은 ‘시장 규모’라도 그래놀라만인지 시리얼 전체인지, 몇 년 기준인지, 단위가 무엇인지에 따라 숫자가 크게 달라집니다.">
+      <p class="q-title"><b>Q4.</b> ‘시장 규모’ 칸에서 특히 확인할 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">시장의 범위·기준 연도·단위</button>
+        <button type="button" data-v="b">답이 얼마나 긴지</button>
+        <button type="button" data-v="c">AI가 자신 있게 말했는지</button>
+        <button type="button" data-v="d">숫자가 클수록 좋다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">6-2</div>
+    <h2>출처 확인과 팩트체크</h2>
+    <p>AI가 보여 준 링크, 정말 열릴까? 그 안에 AI가 말한 내용이 있을까? 오늘 저장한 답을 직접 검증합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week05/lesson03.html">← 5-3 요약과 교정</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">6주 1차시 · 시장·트렌드 조사</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

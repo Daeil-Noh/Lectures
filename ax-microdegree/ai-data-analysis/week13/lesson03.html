@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>13주 3차시 · 생성형AI의 원리 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 13주 3차시 교안: 다음 토큰 예측으로서의 언어 모델, 토큰, 샘플링과 온도, 환각이 생기는 이유, 프롬프트는 맥락, 분석 업무에서 책임 있게 쓰기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .tok-in { opacity: 0; animation: tokin 6s infinite; }
+  @keyframes tokin { 0%, 8% { opacity: 0; } 14%, 88% { opacity: 1; } 96%, 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .tok-in { animation: none; opacity: 1; } }
+
+  .tgl { font: inherit; font-size: 15.5px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 문장·막대 */
+  .sent { font-size: 26px; font-weight: 800; line-height: 1.5; min-height: 80px; display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+  .sent .w { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 2px 10px; }
+  .sent .w.ctx { background: var(--surface-2); color: var(--text); }
+  .sent .w.new { animation: pop .35s ease; }
+  .sent .w.odd { background: var(--bad-soft); color: var(--bad); }
+  .sent .cur { width: 3px; height: 34px; background: var(--accent-2); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @keyframes pop { 0% { transform: scale(.7); } 100% { transform: scale(1); } }
+  .bars { display: grid; gap: 7px; }
+  .bar-row { display: grid; grid-template-columns: 150px 1fr 64px; align-items: center; gap: 10px; font: inherit; font-size: 18px; font-weight: 700; text-align: left; background: none; border: 1px solid transparent; border-radius: 10px; padding: 3px 8px; color: var(--text); cursor: pointer; }
+  .bar-row:hover:not(:disabled) { border-color: var(--accent); }
+  .bar-row:disabled { cursor: default; }
+  .bar-row .tr { height: 24px; background: var(--surface-2); border-radius: 7px; overflow: hidden; position: relative; }
+  .bar-row .tr i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 7px; transition: width .3s; }
+  .bar-row .tr i.ghost { background: none; border: 2px dashed var(--muted); opacity: .6; }
+  .bar-row.odd .tr i:not(.ghost) { background: var(--bad); }
+  .bar-row.top .tr i:not(.ghost) { background: var(--accent-2); }
+  .bar-row.unk .tr i:not(.ghost) { background: var(--muted); }
+  .bar-row .pv { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .bar-row.picked { background: var(--accent-2-soft); }
+  .gen-list { display: grid; gap: 5px; font-size: 16px; }
+  .gen-list div { background: var(--surface-2); border-radius: 10px; padding: 3px 12px; }
+  .bars.sm { gap: 4px; } .bars.sm .bar-row { font-size: 16px; padding: 1px 8px; } .bars.sm .bar-row .tr { height: 18px; }
+  .chat .bubble { font-size: 16.5px; padding: 8px 14px; }
+  .gen-list div b.odd { color: var(--bad); }
+  /* 토큰 */
+  .tokens { display: flex; flex-wrap: wrap; gap: 6px; font-size: 24px; font-weight: 700; align-content: flex-start; }
+  .tokens span { border-radius: 8px; padding: 2px 6px; white-space: pre; display: inline-flex; flex-direction: column; align-items: center; line-height: 1.3; }
+  .tokens span small { font-size: 12px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tokens .c0 { background: var(--accent-soft); } .tokens .c1 { background: var(--accent-2-soft); } .tokens .c2 { background: var(--ok-soft); } .tokens .c3 { background: var(--surface-2); }
+  .tkin { width: 100%; font: inherit; font-size: 20px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
+  .pick { display: grid; gap: 6px; }
+  .pick button { font: inherit; font-size: 15px; font-weight: 700; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; text-align: left; }
+  .pick button[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  /* 채팅 */
+  .chat { display: grid; gap: 10px; }
+  .bubble { border-radius: 16px; padding: 10px 16px; font-size: 18px; line-height: 1.5; max-width: 92%; }
+  .bubble.me { background: var(--accent-soft); justify-self: end; border-bottom-right-radius: 4px; }
+  .bubble.ai { background: var(--surface-2); justify-self: start; border-bottom-left-radius: 4px; }
+  .bubble .doc { display: block; margin: 6px 0; padding: 6px 10px; border-left: 4px solid var(--accent-2); background: var(--surface); font-size: 15px; border-radius: 6px; }
+  .bubble .ins { display: block; margin-top: 4px; font-size: 15px; color: var(--accent); font-weight: 700; }
+  .bubble small { display: block; font-size: 13px; color: var(--muted); font-weight: 700; }
+  .cmp2 .tile { gap: 8px; }
+  .prompt { font-size: 18px; line-height: 1.55; background: var(--surface-2); border-radius: 12px; padding: 12px 16px; }
+  .prompt mark { background: var(--accent-soft); color: inherit; border-radius: 4px; padding: 0 3px; }
+  .codegrid { display: grid; grid-template-columns: 1fr 360px; gap: 22px; flex: 1; min-height: 0; align-items: start; }
+  .codegrid pre.code { font-size: 15px; }
+  .codegrid pre.out { font-size: 15px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-dice" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4c4 0 5 15 10 15s6-15 10-15"/><circle cx="5.6" cy="6.2" r="2.2" fill="currentColor"/><path d="M8 10.5l1.2 3.2 3-1"/></symbol>
+  <symbol id="i-token" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="6" height="10" rx="2"/><rect x="9" y="7" width="5" height="10" rx="2"/><rect x="15" y="7" width="7" height="10" rx="2"/></symbol>
+</svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 13주차 3차시</p>
+    <h1>생성형AI의<br>원리</h1>
+    <p class="lead" style="font-size:25px">“다음 단어 맞히기”로<br>글을 만드는 기계</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>원리 차시</span><span>직접 해 보기 4개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="30" y="40" width="430" height="150" rx="26" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <path d="M90 190 l-20 34 l50 -34z" class="f-surface" stroke="var(--line)" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="72" y="186" width="60" height="8" class="f-surface"/>
+    <g style="font-size:26px;font-weight:800">
+      <rect x="56" y="78" width="96" height="44" rx="10" class="f-s2"/><text x="104" y="109" text-anchor="middle" class="f-text">3호기</text>
+      <g class="tok-in" style="animation-delay:0s"><rect x="160" y="78" width="96" height="44" rx="10" class="f-accs"/><text x="208" y="109" text-anchor="middle" style="fill:var(--accent)">진동이</text></g>
+      <g class="tok-in" style="animation-delay:.5s"><rect x="264" y="78" width="120" height="44" rx="10" class="f-accs"/><text x="324" y="109" text-anchor="middle" style="fill:var(--accent)">평소보다</text></g>
+      <g class="tok-in" style="animation-delay:1s"><rect x="56" y="130" width="110" height="44" rx="10" class="f-accs"/><text x="111" y="161" text-anchor="middle" style="fill:var(--accent)">커졌다.</text></g>
+    </g>
+    <rect x="176" y="134" width="4" height="36" class="f-acc2"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/></rect>
+    <g transform="translate(190 250)">
+      <rect width="300" height="160" rx="20" class="f-acc2s"/>
+      <text x="20" y="34" class="t-acc2" style="font-size:16px">다음에 올 말의 확률</text>
+      <text x="20" y="70" class="t-main" style="font-size:16px">커졌다</text><rect x="110" y="56" width="150" height="18" rx="5" class="f-acc2"/>
+      <text x="20" y="104" class="t-sub" style="font-size:16px">줄었다</text><rect x="110" y="90" width="50" height="18" rx="5" class="f-acc2" opacity=".5"/>
+      <text x="20" y="138" class="t-sub" style="font-size:16px">맛있다</text><rect x="110" y="124" width="10" height="18" rx="5" class="f-acc2" opacity=".35"/>
+    </g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">다음 토큰 예측</div><div class="d">언어 모델이 글을 만드는 원리를 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-token"/></svg></span><div class="h">토큰</div><div class="d">모델이 글을 어떤 단위로 읽고 쓰는지 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-dice"/></svg></span><div class="h">샘플링과 온도</div><div class="d">같은 질문에 답이 왜 매번 다른지 설명한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">환각과 책임</div><div class="d">그럴듯한 거짓이 생기는 이유와 검증 습관을 말한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>① 다음 단어 맞히기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② 토큰과 온도</b><small>직접 해 보기 2</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 환각과 프롬프트</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>④ 활용</b></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 4주차부터 코딩 도우미로 써 온 생성형AI. 오늘은 <strong>그 안에서 무슨 일이 일어나는지</strong>, 그래서 <strong>무엇을 조심해야 하는지</strong> 봅니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>빈칸에 들어갈 말은?</h2>
+  <div class="body">
+    <div class="box" style="font-size:40px;font-weight:800;text-align:center;padding:30px">“3호기 진동이 평소보다 <span style="display:inline-block;min-width:150px;border-bottom:5px solid var(--accent-2);color:var(--accent-2)">　?　</span>”</div>
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);margin-top:10px">
+      <div class="tile frag" style="align-items:center;text-align:center"><div class="h" style="font-size:30px;color:var(--accent-2)">커졌다</div><div class="d">대부분 이렇게 떠올린다 — 많이 본 표현</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><div class="h" style="font-size:30px">줄었다</div><div class="d">가능하지만 덜 흔하다</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><div class="h" style="font-size:30px;color:var(--muted)">맛있다</div><div class="d">문법은 되지만 거의 안 나온다</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:21px">방금 여러분 머릿속에서 일어난 일 = <strong style="color:var(--text)">앞의 글을 보고 다음 말의 가능성을 따져 고르기</strong>. 언어 모델이 하는 일이 바로 이것입니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>다음 단어 맞히기</h2><p>생성형AI의 핵심은 놀랄 만큼 단순한 반복입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chat"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 언어 모델 = 다음 토큰 예측기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 다음 단어 맞히기</span></div>
+  <h2>언어 모델 = <span class="mark">다음 토큰 예측기</span></h2>
+  <svg viewBox="0 0 1120 420" style="flex:1;min-height:0" role="img" aria-label="앞의 글을 언어 모델에 넣으면 다음 토큰의 확률이 나오고, 하나를 골라 이어 붙인 뒤 다시 넣는 반복">
+    <defs><marker id="ah4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" class="f-muted"/></marker></defs>
+    <g class="frag show">
+      <rect x="0" y="120" width="260" height="120" rx="18" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <text x="20" y="156" class="t-sub" style="font-size:15px">① 지금까지의 글 (맥락)</text>
+      <text x="20" y="196" class="t-main" style="font-size:20px">3호기 진동이 평소보다</text>
+      <path d="M268 180 H318" stroke="var(--muted)" stroke-width="3" marker-end="url(#ah4)"/>
+      <rect x="326" y="110" width="200" height="140" rx="20" class="f-acc"/>
+      <g transform="translate(400 132) scale(2.2)" style="color:var(--surface)"><use href="#i-bot" width="24" height="24"/></g>
+      <text x="426" y="225" text-anchor="middle" style="font-size:18px;font-weight:800;fill:var(--surface)">언어 모델</text>
+      <text x="426" y="278" text-anchor="middle" class="t-sub" style="font-size:14px">층이 아주 깊은 신경망 (13-1)</text>
+    </g>
+    <g class="frag">
+      <path d="M534 180 H584" stroke="var(--muted)" stroke-width="3" marker-end="url(#ah4)"/>
+      <rect x="592" y="70" width="270" height="220" rx="18" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <text x="612" y="104" class="t-sub" style="font-size:15px">② 다음 토큰의 확률</text>
+      <text x="612" y="144" class="t-main" style="font-size:17px">커졌다</text><rect x="700" y="130" width="140" height="18" rx="5" class="f-acc2"/>
+      <text x="612" y="184" class="t-sub" style="font-size:17px">심해졌다</text><rect x="700" y="170" width="64" height="18" rx="5" class="f-acc2" opacity=".55"/>
+      <text x="612" y="224" class="t-sub" style="font-size:17px">줄었다</text><rect x="700" y="210" width="38" height="18" rx="5" class="f-acc2" opacity=".45"/>
+      <text x="612" y="264" class="t-sub" style="font-size:17px">맛있다</text><rect x="700" y="250" width="8" height="18" rx="5" class="f-acc2" opacity=".35"/>
+    </g>
+    <g class="frag">
+      <path d="M870 180 H920" stroke="var(--muted)" stroke-width="3" marker-end="url(#ah4)"/>
+      <rect x="928" y="130" width="190" height="100" rx="18" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/>
+      <text x="1023" y="168" text-anchor="middle" class="t-sub" style="font-size:15px">③ 하나 고르기</text>
+      <text x="1023" y="206" text-anchor="middle" class="t-acc2" style="font-size:24px">“커졌다”</text>
+    </g>
+    <g class="frag">
+      <path d="M1023 240 V340 H130 V250" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#ah4)"/>
+      <rect x="380" y="322" width="420" height="40" rx="12" class="f-accs"/>
+      <text x="590" y="349" text-anchor="middle" class="t-acc" style="font-size:18px">④ 이어 붙이고 다시 ①로 — 끝날 때까지 반복</text>
+      <text x="560" y="404" text-anchor="middle" class="t-main" style="font-size:19px">긴 답변도 이 반복을 수백 번 한 결과입니다</text>
+    </g>
+  </svg>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시 · 확률 막대는 설명용 예시 · 토큰 = 모델이 읽고 쓰는 글 조각 (② 구간)</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 한 단어씩 만들기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 다음 단어 맞히기 · 직접 해 보기 1</span></div>
+  <h2>내가 언어 모델이 되어 한 단어씩 이어 쓰기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:14px;padding:18px 22px">
+      <div class="sent" id="g1-sent"></div>
+      <div class="muted" style="font-size:16px;font-weight:700" id="g1-q">다음 단어 후보와 확률 — 막대를 눌러 직접 골라도 됩니다</div>
+      <div class="bars" id="g1-bars"></div>
+    </div>
+    <div class="side">
+      <button class="btn" id="g1-top" type="button"><svg class="ic"><use href="#i-target"/></svg> 가장 높은 것 고르기</button>
+      <button class="btn ghost" id="g1-rand" type="button"><svg class="ic"><use href="#i-dice"/></svg> 확률대로 뽑기</button>
+      <button class="btn ghost" id="g1-reset" type="button"><svg class="ic"><use href="#i-reset"/></svg> 처음부터</button>
+      <div class="meter"><div class="lbl">이 문장이 나올 확률 (고른 단어 확률의 곱)</div><div class="val" id="g1-p" style="font-size:32px">100%</div></div>
+      <div class="callout b" id="g1-msg">모델은 <strong>정답을 아는 것이 아니라</strong>, 많이 본 글에서 배운 “다음에 올 법한 말”의 확률을 계산합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시 · 손으로 만든 작은 확률표 (실제 모델은 앞의 글 전체를 보고 수만 개 토큰의 확률을 계산)</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 어떻게 배우나 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 다음 단어 맞히기</span></div>
+  <h2>확률은 어디서 오나? 엄청난 양의 글로 “빈칸 맞히기” 연습</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">① 사전학습</div><div class="d">책·웹 문서·코드 등 아주 많은 글에서<br>다음 토큰 맞히기를 반복<br><b>정답 = 실제로 이어진 글</b> (라벨이 따로 필요 없다)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">② 추가 학습</div><div class="d">질문–답변 예시와<br>사람의 평가를 이용해<br><b>도움이 되는 답</b> 쪽으로 조정</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">③ 사용</div><div class="d">내 질문(프롬프트)이 맥락이 되어<br>그 뒤를 이어 쓴다</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:22px"><p style="font-size:20px;margin:0"><svg class="ic"><use href="#i-down"/></svg> 13-1과 같은 원리: 오차 = “실제 다음 토큰을 얼마나 낮은 확률로 예측했나”. 이 오차가 줄도록 <strong>가중치를 조금씩</strong> 고친다. 모델이 배우는 것은 <strong>사실</strong>이 아니라 <strong>글의 패턴</strong>.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시 · 일반적인 학습 과정을 단순화 · 구체적인 데이터와 방법은 서비스마다 다르다</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>토큰과 온도</h2><p>무엇을 단위로 읽고, 어떻게 고르는가.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-token"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 직접 해 보기 2: 토큰 나누기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 토큰과 온도 · 직접 해 보기 2</span></div>
+  <h2>모델은 글을 “토큰” 조각으로 읽는다 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:16px;padding:20px 24px">
+      <input class="tkin" id="tk-in" type="text" value="3호기 진동이 평소보다 커졌다" aria-label="토큰으로 나눌 문장">
+      <div class="tokens" id="tk-out"></div>
+    </div>
+    <div class="side">
+      <div class="pick" id="tk-pre" role="group" aria-label="예시 문장"></div>
+      <button class="tgl" type="button" id="tk-id" aria-pressed="false"><span class="chk"></span>토큰 번호 보기</button>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">글자 수</div><div class="val" id="tk-c" style="font-size:32px">0</div></div>
+        <div class="meter"><div class="lbl">토큰 수</div><div class="val o" id="tk-n" style="font-size:32px">0</div></div>
+      </div>
+      <div class="callout b" id="tk-msg" style="font-size:15px">자주 나오는 조각은 한 토큰, 드문 말은 잘게 쪼개집니다. 입력 길이 제한·요금도 보통 <strong>토큰 수</strong>로 셉니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시 · 원리를 보여 주는 단순화한 예시 — 실제 토큰 나누는 방법·번호는 모델마다 다르다 · ▁ = 띄어쓰기</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 직접 해 보기 3: 온도 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 토큰과 온도 · 직접 해 보기 3</span></div>
+  <h2>같은 질문, 다른 답: 확률대로 뽑기와 “온도” <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:12px;padding:16px 22px">
+      <div class="muted" style="font-size:16px;font-weight:700">“3호기의 ___” 다음 단어 확률 <span style="font-weight:500">(점선 = 원래 확률, 막대 = 온도 적용 후)</span></div>
+      <div class="bars sm" id="t-bars"></div>
+      <div class="muted" style="font-size:16px;font-weight:700;margin-top:4px">만든 문장 5개</div>
+      <div class="gen-list" id="t-list"></div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>온도 (temperature) <output id="t-o">1.0</output></label><input id="t-s" type="range" min="0.1" max="2" step="0.1" value="1" aria-label="온도"></div>
+      <button class="btn" id="t-gen" type="button"><svg class="ic"><use href="#i-dice"/></svg> 문장 5개 만들기</button>
+      <div class="meter"><div class="lbl">엉뚱한 단어가 섞인 문장</div><div class="val o" id="t-odd" style="font-size:32px">-</div></div>
+      <div class="callout b" id="t-msg">온도를 바꾸고 문장을 만들어 보세요. 온도가 <strong>낮으면</strong> 늘 같은 답, <strong>높으면</strong> 다양하지만 엉뚱해집니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시 · 직접 해 보기 1과 같은 손으로 만든 확률표 · 빨간 글씨 = 엉뚱한 단어</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>환각과 프롬프트</h2><p>“그럴듯하다”와 “사실이다”는 다릅니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 4: 환각과 맥락 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 환각과 프롬프트 · 직접 해 보기 4</span></div>
+  <h2>모르는 것을 물으면? 맥락이 답을 바꾼다 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:12px;padding:16px 22px">
+      <div class="chat" id="h-chat"></div>
+      <div class="bars sm" id="h-bars"></div>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">프롬프트에 더할 것</div>
+      <button class="tgl" type="button" id="h-doc" aria-pressed="false"><span class="chk"></span>사내 정비 기준 문서 붙여 넣기</button>
+      <button class="tgl" type="button" id="h-ins" aria-pressed="false"><span class="chk"></span>“모르면 모른다고 답해” 지시</button>
+      <button class="btn" id="h-gen" type="button"><svg class="ic"><use href="#i-dice"/></svg> 답 만들기</button>
+      <div class="status bad" id="h-st"><b class="k">-</b></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시 · 막대: 빨강 = 사실과 다른 답 · 파랑 = 문서의 실제 값 · 회색 = 모른다고 답함 · 확률과 기준값은 설명용 가상 수치</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 환각 유형과 확인법 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 환각과 프롬프트</span></div>
+  <h2>데이터 분석에서 자주 만나는 환각과 확인법</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile row frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-code"/></svg></span><div><div class="h">없는 함수·옵션</div><div class="d">그럴듯한 이름의 함수나 인자를 지어낸다 → <strong>직접 실행</strong>, 공식 문서 확인 (4주 3차시)</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h">없는 출처·논문·규격</div><div class="d">제목·저자·번호를 자신 있게 만든다 → <strong>원문을 찾아</strong> 대조</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h">숫자·계산 실수</div><div class="d">평균·비율을 “말로” 계산하면 틀릴 수 있다 → 숫자는 <strong>코드로 계산</strong></div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-bulb"/></svg></span><div><div class="h">데이터에 없는 결론</div><div class="d">상관을 인과처럼, 없는 경향을 있는 것처럼 쓴다 → <strong>그래프·통계로</strong> 확인 (7주 3차시)</div></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:20px">왜? 모델은 “사실인가”가 아니라 “<strong style="color:var(--text)">다음에 올 법한가</strong>”로 고르기 때문 — 틀린 답도 같은 자신감으로 나온다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 프롬프트 = 맥락 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 환각과 프롬프트</span></div>
+  <h2>프롬프트는 “맥락”이다: 무엇을 넣느냐가 답을 정한다</h2>
+  <div class="body">
+    <div class="grid g2 cmp2" style="gap:24px">
+      <div class="tile frag show">
+        <div style="display:flex;align-items:center;gap:12px"><span class="ic-badge g"><svg class="ic"><use href="#i-x"/></svg></span><div class="h">맥락이 없는 질문</div></div>
+        <div class="prompt">불량 원인 분석 코드 짜 줘.</div>
+        <div class="d">모델은 데이터를 모른다 → 열 이름·방법을 <strong>지어내서</strong> 그럴듯한 코드를 만든다</div>
+      </div>
+      <div class="tile frag" style="border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:12px"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">맥락을 준 질문</div></div>
+        <div class="prompt"><mark>pandas로 process.csv를 읽었어. 열은 temp, pressure, humidity, defect(0/1).</mark> <mark>야간과 주간의 불량률을 비교하는</mark> 코드를 <mark>주석과 함께</mark> 짜 줘. <mark>확실하지 않은 부분은 그렇다고 말해 줘.</mark></div>
+        <div class="d">데이터 구조 · 목적 · 형식 · 불확실성 표시 — 그래도 <strong>실행하고 결과를 확인</strong>한다</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시 · 실제 데이터 값·개인정보 대신 열 이름과 구조만 알려 주기 (1주 3차시)</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 분석 업무에서 책임 있게 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 활용</span></div>
+  <h2>분석 업무에서 생성형AI를 쓸 때 다섯 가지 약속</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(5,1fr)">
+      <div class="tile frag show" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h" style="font-size:20px">넣지 말 것</div><div class="d" style="font-size:16px">개인정보·회사 기밀·미발표 데이터 (1주 3차시)</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-play"/></svg></span><div class="h" style="font-size:20px">실행해 확인</div><div class="d" style="font-size:16px">받은 코드는 돌려 보고, 결과가 말이 되는지 본다</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h" style="font-size:20px">숫자는 코드로</div><div class="d" style="font-size:16px">통계·비율은 AI의 문장이 아니라 계산 결과로</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h" style="font-size:20px">사용을 밝힌다</div><div class="d" style="font-size:16px">보고서에 어디에 어떻게 썼는지 적는다 (14주)</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h" style="font-size:20px">판단은 사람이</div><div class="d" style="font-size:16px">결론과 책임은 전공 지식을 가진 내가 진다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시 · 14주 전공 분석 보고서에서 그대로 적용</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 실습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 활용 · 실습</span></div>
+  <h2>실습: 점검 일지 40문장으로 아주 작은 언어 모델 만들기</h2>
+  <div class="codegrid">
+    <div>
+<pre class="code">def generate(start='&lt;시작&gt;', temperature=1.0, max_words=10):
+    word, out = start, ([] if start == '&lt;시작&gt;' else [start])
+    for _ in range(max_words):
+        p = next_word_probs(word)                    # 다음 단어 확률
+        if not p:
+            break
+        w = np.array(list(p.values())) ** (1 / temperature)   # 온도 적용
+        word = rng.choice(list(p.keys()), p=w / w.sum())    # 확률대로 뽑기
+        out.append(word)                             # 이어 붙이기
+        if word == '.':
+            break
+    return ' '.join(out)</pre>
+<pre class="out">--- 온도 0.1
+  진동이 정상이다 .   (4번 모두 같음)
+--- 온도 2.0
+  진동이 커지면 정비 일정을 잡았다 .
+  진동이 커지면 베어링을 교체하면 온도가 높으면 필터를 …</pre>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="tile" style="padding:14px 18px;gap:6px"><div class="h" style="font-size:19px">1~2. 세기 = 학습</div><div class="d">40문장에서 (앞 단어 → 다음 단어) 쌍을 센다</div></div>
+      <div class="tile" style="padding:14px 18px;gap:6px"><div class="h" style="font-size:19px">3. 온도 바꿔 만들기</div><div class="d">0.1 · 1.0 · 2.0 비교</div></div>
+      <div class="tile" style="padding:14px 18px;gap:6px"><div class="h" style="font-size:19px">4. 없던 문장 찾기</div><div class="d">만든 20문장 중 19개가 학습 글에 없던 문장 — 환각의 씨앗</div></div>
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week13/lesson03.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시 · 선택 실습 (약 5초) · 단순화: 바로 앞 단어 하나만 보고, 토큰 대신 띄어쓰기 단위 단어 사용 · 출력은 일부만 표시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">다음 토큰 예측의 반복</div><div style="font-size:21px">앞의 글을 보고 다음 <strong>토큰의 확률</strong>을 계산해 하나 고르고, 이어 붙이기를 반복</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-dice"/></svg></span><div class="h">확률대로 뽑는다</div><div style="font-size:21px">그래서 같은 질문에도 답이 다르다. <strong>온도</strong>가 높을수록 다양·엉뚱</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">그럴듯함 ≠ 사실</div><div style="font-size:21px">맥락(프롬프트)을 주고, 답은 <strong>실행·원문·계산으로 검증</strong>한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="언어 모델은 지금까지의 글(맥락)을 보고 다음 토큰의 확률을 계산한 뒤 하나를 골라 이어 붙이는 일을 반복합니다. 저장된 답을 찾아오는 것이 아닙니다.">
+      <p class="q-title"><b>Q1.</b> 생성형AI(언어 모델)가 글을 만드는 방식으로 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">질문과 똑같은 문장을 데이터베이스에서 찾아 보여 준다</button>
+        <button type="button" data-v="b">앞의 글을 보고 다음 토큰의 확률을 계산해 하나씩 이어 붙인다</button>
+        <button type="button" data-v="c">사람이 미리 써 둔 답변 중 하나를 고른다</button>
+        <button type="button" data-v="d">인터넷을 검색해 사실만 골라 답한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="온도를 낮추면 확률이 가장 높은 토큰이 거의 매번 선택되어 답이 일정해집니다. 온도를 높이면 낮은 확률의 토큰도 자주 뽑혀 답이 다양해집니다.">
+      <p class="q-title"><b>Q2.</b> 같은 질문에 매번 거의 같은 답을 받고 싶다면 온도를?</p>
+      <div class="opts">
+        <button type="button" data-v="a">아주 높인다</button>
+        <button type="button" data-v="b">온도는 답과 상관없다</button>
+        <button type="button" data-v="c">낮춘다</button>
+        <button type="button" data-v="d">질문할 때마다 무작위로 바꾼다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="모델은 사실 여부가 아니라 ‘다음에 올 법한가’로 토큰을 고르기 때문에, 본 적 없는 내용도 그럴듯한 패턴으로 만들어 냅니다. 이것이 환각입니다.">
+      <p class="q-title"><b>Q3.</b> 생성형AI가 존재하지 않는 규격 번호를 자신 있게 답하는 가장 근본적인 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">사실 여부가 아니라 그럴듯한 다음 토큰을 고르기 때문</button>
+        <button type="button" data-v="b">일부러 거짓말을 하도록 만들어졌기 때문</button>
+        <button type="button" data-v="c">인터넷 연결이 느리기 때문</button>
+        <button type="button" data-v="d">질문이 너무 짧았기 때문</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="분석 결과의 숫자는 AI의 문장이 아니라 직접 실행한 코드의 계산 결과로 확인해야 합니다. 개인정보를 넣거나, 확인 없이 붙여 넣거나, 사용 사실을 숨기는 것은 피해야 합니다.">
+      <p class="q-title"><b>Q4.</b> 분석 보고서를 쓸 때 생성형AI 활용으로 가장 바람직한 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 말한 불량률을 그대로 보고서에 적는다</button>
+        <button type="button" data-v="b">정확한 답을 위해 작업자 이름이 든 원본 파일을 올린다</button>
+        <button type="button" data-v="c">AI를 썼다는 사실은 적지 않는다</button>
+        <button type="button" data-v="d">AI가 짜 준 코드를 실행해 숫자를 직접 확인하고, 사용 사실을 밝힌다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 14주차 전공 분석 보고서</span></div>
+    <div class="big">14-1</div>
+    <h2>예시 프로젝트: AI와 함께 분석 전 과정 따라 하기</h2>
+    <p>문제 정의부터 데이터 정리, 모델, 해석까지 — 생성형AI를 도우미로 쓰며 오늘 배운 검증 습관을 실제로 적용합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week14/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-cap"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 13주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">13주 3차시 · 생성형AI의 원리</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

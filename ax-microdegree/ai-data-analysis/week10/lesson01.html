@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10주 1차시 · 회귀의 개념 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 10주 1차시 교안: 숫자를 예측하는 회귀, 직선 규칙 y = a·x + b, 잔차와 최소제곱법, 입력이 여러 개인 회귀, 회귀와 분류의 차이">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .wob { transform-box: view-box; transform-origin: 260px 230px; animation: wob 5s ease-in-out infinite; }
+  @keyframes wob { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(3deg); } }
+  @media (prefers-reduced-motion: reduce) { .wob { animation: none; } }
+
+  /* 데모 공통 */
+  .pt { cursor: pointer; }
+  .pt:focus { outline: none; } .pt:focus-visible { stroke: var(--text); stroke-width: 2; }
+  .resid { stroke: var(--accent-2); stroke-width: 2; }
+  .sq { fill: var(--accent-2); fill-opacity: .13; stroke: var(--accent-2); stroke-opacity: .5; stroke-width: 1; }
+  .handle { fill: var(--surface); stroke: var(--accent-2); stroke-width: 4; cursor: grab; }
+  .handle:active { cursor: grabbing; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; min-height: 128px; display: flex; flex-direction: column; gap: 8px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .ic-badge { width: 46px; height: 46px; font-size: 24px; border-radius: 12px; }
+  .pcard .nm { font-size: 18px; font-weight: 800; line-height: 1.35; }
+  .pcard .ans { display: none; font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 16px; }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.reg { background: var(--accent-soft); border-color: var(--accent); }
+  .pcard.open.reg .verdict { color: var(--accent); }
+  .pcard.open.clf { background: var(--accent-2-soft); border-color: var(--accent-2); }
+  .pcard.open.clf .verdict { color: var(--accent-2); }
+  .pcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .pcard-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .prod { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 16px; }
+  .prod .ic-badge { width: 52px; height: 52px; font-size: 28px; border-radius: 14px; }
+  .prod .k { font-size: 14px; color: var(--muted); font-weight: 700; }
+  .prod .v { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .eq { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px; }
+  .eq b { color: var(--accent-2); }
+  .tgl { font: inherit; font-size: 16px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .rinfo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .rinfo .meter .val { font-size: 30px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 10주차 1차시</p>
+    <h1>회귀의 개념</h1>
+    <p class="lead" style="font-size:25px">데이터에서 배운 직선으로<br>“몇 MPa일까?”에 답하기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>개념 + 코드 맛보기</span><span>직접 해 보기 4개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="20" y="20" width="480" height="400" rx="26" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <line x1="70" y1="370" x2="470" y2="370" stroke="var(--line)" stroke-width="2"/><line x1="70" y1="370" x2="70" y2="60" stroke="var(--line)" stroke-width="2"/>
+    <text x="270" y="402" text-anchor="middle" class="t-sub" style="font-size:15px">압력 →</text>
+    <text x="48" y="215" text-anchor="middle" class="t-sub" style="font-size:15px" transform="rotate(-90 48 215)">강도 →</text>
+    <g class="wob">
+      <line x1="80" y1="330" x2="460" y2="110" stroke="var(--accent-2)" stroke-width="5" stroke-linecap="round"/>
+    </g>
+    <g stroke="var(--accent-2)" stroke-width="2" stroke-dasharray="3 4" opacity=".7">
+      <path d="M110 288 V318 M150 318 V290 M190 262 V280 M230 240 V268 M270 214 V234 M310 222 V196 M350 168 V186 M390 176 V150 M430 116 V134"/>
+    </g>
+    <g class="f-acc">
+      <circle cx="110" cy="288" r="8"/><circle cx="150" cy="318" r="8"/><circle cx="190" cy="262" r="8"/><circle cx="230" cy="240" r="8"/><circle cx="270" cy="214" r="8"/>
+      <circle cx="310" cy="222" r="8"/><circle cx="350" cy="168" r="8"/><circle cx="390" cy="176" r="8"/><circle cx="430" cy="116" r="8"/>
+    </g>
+    <rect x="300" y="282" width="170" height="58" rx="14" class="f-acc2s"/>
+    <text x="385" y="319" text-anchor="middle" class="t-acc2" style="font-size:22px">y = a·x + b</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">회귀란?</div><div class="d">숫자를 예측하는 머신러닝을 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div class="h">직선 규칙</div><div class="d">y = a·x + b 에서 기울기와 절편의 뜻을 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">잔차와 최소제곱</div><div class="d">“가장 좋은 직선”이 무엇인지 그림으로 설명한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">회귀 vs 분류</div><div class="d">내 문제가 어느 쪽인지 구분한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 오늘의 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b><small>직접 해 보기</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 회귀란?</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② 직선 규칙과 잔차</b><small>직접 해 보기</small></div>
+      <div style="flex:7;background:var(--accent-2-soft)"><b>③ 가장 좋은 직선</b><small>직접 해 보기</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>④ 더 넓게</b><small>직접 해 보기</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-factory"/></svg> 오늘의 데이터: 사출 성형 공정 기록 <strong>process.csv</strong> (제품 494개) — 목표는 <strong>인장강도(strength, MPa)</strong> 예측</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입: 맞혀 보기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입 · 직접 해 보기 1</span></div>
+  <h2>압력만 보고 강도를 맞혀 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="gs-plot" viewBox="0 0 620 430" aria-label="내가 맞힌 값과 실제 강도를 압력에 따라 찍은 그래프"></svg></div>
+    <div class="side">
+      <div class="prod"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div><div class="k" id="gs-id">제품 P00356</div><div class="v" id="gs-p">압력 80.5 bar</div></div></div>
+      <div class="ctrl"><label>내 예상 강도 <output id="gs-o">38.0 MPa</output></label><input id="gs-s" type="range" min="28" max="46" step="0.1" value="38" aria-label="내 예상 강도"></div>
+      <div style="display:flex;gap:10px"><button class="btn" id="gs-check" type="button" style="flex:1"><svg class="ic"><use href="#i-check"/></svg> 정답 확인</button><button class="btn ghost" id="gs-next" type="button" style="flex:1">다음 제품 →</button></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">맞힌 제품</div><div class="val" id="gs-n" style="font-size:32px">0개</div></div>
+        <div class="meter"><div class="lbl">평균 오차</div><div class="val o" id="gs-e" style="font-size:32px">-</div></div>
+      </div>
+      <div class="callout b" id="gs-msg">세 개쯤 해 보세요. 맞힐수록 <strong>“압력이 높으면 강도도 높다”</strong>는 감이 생깁니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시 · process.csv 에서 고른 실제 제품 40개 (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>회귀란?</h2><p>방금 머릿속에서 한 일을 컴퓨터에게 시킵니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-trend"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 회귀 정의 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 회귀란?</span></div>
+  <h2>회귀 = 입력으로 <span class="mark">숫자</span>를 예측하는 지도학습</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-thermo"/></svg></span><div class="h">입력 (특성)</div><div class="d">압력 85 bar<br>두께 2.02 mm …</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">모델 (규칙)</div><div class="d">과거 데이터와 정답에서<br>배운 규칙</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">예측값 (숫자)</div><div class="d">인장강도<br><b style="font-size:22px">약 41 MPa</b></div></div>
+    </div>
+    <div class="tiles frag" style="grid-template-columns:repeat(4,1fr);margin-top:22px">
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="d" style="color:var(--text)">제품 강도<br><b>MPa</b></div></div>
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-flask"/></svg></span><div class="d" style="color:var(--text)">실험 수율<br><b>%</b></div></div>
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-clock"/></svg></span><div class="d" style="color:var(--text)">설비 남은 수명<br><b>일</b></div></div>
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge o"><svg class="ic"><use href="#i-activity"/></svg></span><div class="d" style="color:var(--text)">내일 전력 사용량<br><b>kWh</b></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시 · 지도학습 = 정답이 있는 데이터로 배우기 (9주 1차시)</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 데이터 보기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 회귀란?</span></div>
+  <h2>데이터 494개가 보여 주는 경향</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:30px">
+    <div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:8px;min-height:0;display:flex"><svg id="sc-all" viewBox="0 0 640 420" style="height:100%" aria-label="압력과 인장강도 산점도 494개"></svg></div>
+    <div style="width:360px;display:flex;flex-direction:column;gap:14px;justify-content:center">
+      <div class="tile frag show"><div class="h">압력 ↑ → 강도 ↑</div><div class="d">상관계수 0.70 — 7주차에 본 <strong>강한 양의 상관</strong></div></div>
+      <div class="tile frag"><div class="h">그런데 흩어져 있다</div><div class="d">같은 압력이어도 강도가 다르다. 다른 조건과 우연이 섞여 있기 때문</div></div>
+      <div class="tile frag" style="border:2px solid var(--accent-2)"><div class="h">경향을 직선 하나로 요약하면?</div><div class="d">그 직선이 곧 <strong>예측 규칙</strong>이 된다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시 · process.csv 전체 494개 (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>직선 규칙과 잔차</h2><p>규칙은 식 하나, 틀린 만큼은 잔차.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-code"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. y = ax + b -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 직선 규칙과 잔차</span></div>
+  <h2>예측 규칙: 강도 = <span style="color:var(--accent-2)">a</span> × 압력 + <span style="color:var(--accent)">b</span></h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:36px">
+    <svg viewBox="0 0 560 400" style="width:560px;flex:none" role="img" aria-label="기울기는 압력 1 bar 증가당 강도 증가량, 절편은 직선의 높이">
+      <rect x="0" y="0" width="560" height="400" rx="18" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <line x1="60" y1="350" x2="530" y2="350" stroke="var(--line)" stroke-width="2"/><line x1="60" y1="350" x2="60" y2="30" stroke="var(--line)" stroke-width="2"/>
+      <text x="300" y="382" text-anchor="middle" class="t-sub" style="font-size:15px">압력 x (bar) →</text>
+      <text x="30" y="190" text-anchor="middle" class="t-sub" style="font-size:15px" transform="rotate(-90 30 190)">강도 y (MPa) →</text>
+      <line x1="70" y1="300" x2="520" y2="80" stroke="var(--accent-2)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M230 222 H350 V163" fill="none" stroke="var(--accent)" stroke-width="3"/>
+      <text x="290" y="246" text-anchor="middle" class="t-acc" style="font-size:16px">압력 +10 bar</text>
+      <text x="360" y="200" class="t-acc2" style="font-size:16px">강도 +3.6 MPa</text>
+      <text x="360" y="222" class="t-sub" style="font-size:14px">(1 bar당 +0.36)</text>
+      <circle cx="430" cy="124" r="9" class="f-acc"/>
+      <path d="M430 124 V350" stroke="var(--muted)" stroke-width="2" stroke-dasharray="4 5"/>
+      <text x="430" y="342" text-anchor="middle" class="t-sub" style="font-size:13px">85</text>
+      <text x="430" y="104" text-anchor="middle" class="t-main" style="font-size:16px">85 bar → 40.6 MPa</text>
+    </svg>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show"><div class="h" style="color:var(--accent-2)">a · 기울기</div><div class="d">압력이 <strong>1 bar 늘 때</strong> 강도가 평균적으로 얼마나 늘어나는가</div></div>
+      <div class="tile frag"><div class="h" style="color:var(--accent)">b · 절편</div><div class="d">직선의 높이를 맞추는 값. 압력 0 bar 는 데이터에 없으니 <strong>뜻을 따지지 않는다</strong></div></div>
+      <div class="tile frag" style="background:var(--accent-soft);border-color:transparent"><div class="h" style="font-size:21px">데이터에서 찾은 규칙 (494개)</div><div style="font-size:23px;font-weight:800;font-variant-numeric:tabular-nums">강도 = 0.36 × 압력 + 10.0</div><div class="d">예: 0.36 × 85 + 10.0 = <strong>40.6 MPa</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시 · 회귀식의 a, b 를 컴퓨터가 데이터에서 찾는 것이 “학습”</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 잔차 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 직선 규칙과 잔차 · 직접 해 보기 2</span></div>
+  <h2>잔차 = 실제값 − 예측값 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="rs-plot" viewBox="0 0 620 430" aria-label="제품 40개와 예측 직선. 점을 누르면 잔차가 나온다"></svg></div>
+    <div class="side">
+      <div class="eq">강도 = 0.36 × 압력 + 10.0</div>
+      <div class="prod"><span class="ic-badge" id="rs-ic"><svg class="ic"><use href="#i-hand"/></svg></span><div><div class="k" id="rs-id">점을 눌러 보세요</div><div class="v" id="rs-p" style="font-size:20px">제품 하나 = 점 하나</div></div></div>
+      <div class="rinfo">
+        <div class="meter"><div class="lbl">실제 강도</div><div class="val" id="rs-y">-</div></div>
+        <div class="meter"><div class="lbl">예측 강도</div><div class="val" id="rs-f" style="color:var(--accent-2)">-</div></div>
+      </div>
+      <div class="meter"><div class="lbl">잔차 (실제 − 예측)</div><div class="val o" id="rs-r">-</div></div>
+      <div class="callout b" id="rs-msg">직선 <strong>위</strong>의 점은 잔차가 <strong>+</strong>, <strong>아래</strong>의 점은 <strong>−</strong>. 세로 선의 길이가 잔차의 크기입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시 · process.csv 실제 제품 40개 (가상 데이터) · 잔차를 “오차”라고도 부른다</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>가장 좋은 직선은?</h2><p>직선은 무수히 많습니다. 어떤 것을 고를까요?</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 왜 제곱인가 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 가장 좋은 직선</span></div>
+  <h2>잔차를 그냥 더하면 안 되는 이유</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile frag show" style="padding:20px">
+        <svg viewBox="0 0 460 210" role="img" aria-label="잔차 +2, -2, +1, -1을 그냥 더하면 0">
+          <line x1="20" y1="110" x2="440" y2="110" stroke="var(--accent-2)" stroke-width="4"/>
+          <g stroke="var(--muted)" stroke-width="2.5"><path d="M80 110 V40 M180 110 V180 M280 110 V75 M380 110 V145"/></g>
+          <g class="f-acc"><circle cx="80" cy="40" r="9"/><circle cx="180" cy="180" r="9"/><circle cx="280" cy="75" r="9"/><circle cx="380" cy="145" r="9"/></g>
+          <text x="96" y="70" class="t-acc" style="font-size:18px">+2</text><text x="196" y="160" class="t-acc" style="font-size:18px">−2</text><text x="296" y="98" class="t-acc" style="font-size:18px">+1</text><text x="396" y="135" class="t-acc" style="font-size:18px">−1</text>
+        </svg>
+        <div class="h">그냥 더하면 (+2) + (−2) + (+1) + (−1) = <span style="color:var(--bad)">0</span></div>
+        <div class="d">다 틀렸는데 “오차 0”? +와 −가 서로 지워진다</div>
+      </div>
+      <div class="tile frag" style="padding:20px;border:2px solid var(--accent-2)">
+        <svg viewBox="0 0 460 210" role="img" aria-label="잔차를 제곱해 정사각형 넓이로 더한다">
+          <line x1="20" y1="110" x2="440" y2="110" stroke="var(--accent-2)" stroke-width="4"/>
+          <rect x="80" y="40" width="70" height="70" class="sq" style="fill-opacity:.25"/><rect x="180" y="110" width="70" height="70" class="sq" style="fill-opacity:.25"/>
+          <rect x="280" y="75" width="35" height="35" class="sq" style="fill-opacity:.25"/><rect x="380" y="110" width="35" height="35" class="sq" style="fill-opacity:.25"/>
+          <g class="f-acc"><circle cx="80" cy="40" r="9"/><circle cx="180" cy="180" r="9"/><circle cx="280" cy="75" r="9"/><circle cx="380" cy="145" r="9"/></g>
+          <text x="115" y="82" text-anchor="middle" class="t-acc2" style="font-size:18px">4</text><text x="215" y="152" text-anchor="middle" class="t-acc2" style="font-size:18px">4</text>
+          <text x="297" y="98" text-anchor="middle" class="t-acc2" style="font-size:15px">1</text><text x="397" y="134" text-anchor="middle" class="t-acc2" style="font-size:15px">1</text>
+        </svg>
+        <div class="h">제곱해서 더하면 4 + 4 + 1 + 1 = <span style="color:var(--accent-2)">10</span></div>
+        <div class="d">모두 양수가 되고, <strong>큰 잔차일수록 더 크게</strong> 벌점을 준다</div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:21px">잔차 제곱을 모두 더한 값 = <strong style="color:var(--text)">오차 제곱합</strong>. 이 값이 가장 작은 직선을 고른다 → <strong style="color:var(--text)">최소제곱법</strong></p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직선 맞추기 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 가장 좋은 직선 · 직접 해 보기 3</span></div>
+  <h2>내가 직선을 그어 오차 제곱합을 줄여 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="fit-plot" viewBox="0 0 620 430" aria-label="제품 40개 위에 직선을 움직여 오차 제곱합을 줄이는 화면. 동그라미 손잡이를 끌거나 슬라이더를 쓴다" style="touch-action:none"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>기울기 a <output id="fit-a-o">0.10</output></label><input id="fit-a" type="range" min="-0.2" max="0.8" step="0.005" value="0.1" aria-label="기울기"></div>
+      <div class="ctrl"><label>압력 80 bar 에서의 높이 <output id="fit-c-o">38.0</output></label><input id="fit-c" type="range" min="32" max="44" step="0.05" value="38" aria-label="압력 80 bar 에서의 예측값"></div>
+      <button class="tgl" type="button" id="fit-sq" aria-pressed="false"><span class="chk"></span>잔차 제곱을 정사각형으로 보기</button>
+      <div class="meter"><div class="lbl">오차 제곱합 (작을수록 좋다)</div><div class="val o" id="fit-sse">-</div><div class="track"><i id="fit-bar" style="background:var(--accent-2)"></i></div></div>
+      <div style="display:flex;gap:10px"><button class="btn" id="fit-best" type="button" style="flex:1"><svg class="ic"><use href="#i-bot"/></svg> 최소제곱 직선 찾기</button><button class="btn ghost" id="fit-reset" type="button" aria-label="처음으로"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <div class="muted" id="fit-msg" style="font-size:15px;line-height:1.4">직선 양 끝의 동그라미를 끌어도 됩니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시 · process.csv 실제 제품 40개 (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 코드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 가장 좋은 직선</span></div>
+  <h2>컴퓨터에게 시키면: 코드 몇 줄</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1.5;display:flex;flex-direction:column;gap:12px">
+<pre class="code">from sklearn.linear_model import LinearRegression
+
+X = df[['pressure']]        # 입력: 압력 (표 모양)
+y = df['strength']          # 정답: 인장강도
+
+model = LinearRegression()  # 직선 모델 준비
+model.fit(X, y)             # 학습: 최소제곱 직선 찾기
+print('기울기 a =', round(model.coef_[0], 3))
+print('절편 b =', round(model.intercept_, 2))</pre>
+<pre class="out">기울기 a = 0.359
+절편 b = 9.97</pre>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show row"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h" style="font-size:21px">X 와 y</div><div class="d">X = 입력(특성), y = 맞힐 정답(목표). X 는 대괄호 두 겹 [[ ]] 로 표 모양</div></div></div>
+      <div class="tile frag row"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div><div class="h" style="font-size:21px">fit = 학습</div><div class="d">방금 손으로 한 일을 494개 전체로 한 번에</div></div></div>
+      <div class="tile frag row"><span class="ic-badge o"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:21px">coef_ · intercept_</div><div class="d">찾아낸 기울기 a 와 절편 b. 이름 끝의 _ 는 “학습으로 얻은 값” 표시</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시 · scikit-learn: 파이썬 머신러닝 라이브러리</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 가장 좋은 직선 · 실습 파일</span></div>
+  <h2>Colab에서 직접 해 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div style="flex:1">
+      <div class="tiles" style="grid-template-columns:1fr 1fr">
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:20px">산점도 그리기</div><div class="d">압력과 강도의 관계 보기</div></div></div>
+        <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-hand"/></svg></span><div><div class="h" style="font-size:20px">내 직선 vs 컴퓨터 직선</div><div class="d">a, b 를 바꿔 오차 제곱합 비교</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">새 제품 예측</div><div class="d">압력 85 bar 이면 몇 MPa?</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:20px">입력 바꿔 보기</div><div class="d">두께로 예측하면 오차는?</div></div></div>
+      </div>
+      <p style="margin-top:24px"><a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week10/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a></p>
+    </div>
+    <span class="ic-badge lg" style="width:200px;height:200px;font-size:110px;border-radius:46px;background:var(--surface)"><svg class="ic"><use href="#i-code"/></svg></span>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시 · 실습 파일: week10/lesson01.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 입력이 여러 개 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 더 넓게 보기</span></div>
+  <h2>입력이 여러 개라면?</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <svg viewBox="0 0 640 380" style="width:640px;flex:none" role="img" aria-label="압력, 두께, 습도, 속도, 온도에 각각 계수를 곱해 더하면 강도 예측값">
+      <defs><marker id="ah1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" class="f-muted"/></marker></defs>
+      <g>
+        <rect x="10" y="14" width="170" height="54" rx="14" class="f-accs"/><text x="95" y="48" text-anchor="middle" class="t-main">압력</text>
+        <rect x="10" y="86" width="170" height="54" rx="14" class="f-accs"/><text x="95" y="120" text-anchor="middle" class="t-main">두께</text>
+        <rect x="10" y="158" width="170" height="54" rx="14" class="f-s2"/><text x="95" y="192" text-anchor="middle" class="t-main">습도</text>
+        <rect x="10" y="230" width="170" height="54" rx="14" class="f-s2"/><text x="95" y="264" text-anchor="middle" class="t-main">속도</text>
+        <rect x="10" y="302" width="170" height="54" rx="14" class="f-s2"/><text x="95" y="336" text-anchor="middle" class="t-main">온도</text>
+      </g>
+      <g stroke="var(--muted)" stroke-width="2.5" fill="none" marker-end="url(#ah1)">
+        <path d="M184 41 C 280 41, 300 180, 384 184"/><path d="M184 113 C 280 113, 300 184, 384 186"/><path d="M184 185 H384"/><path d="M184 257 C 280 257, 300 188, 384 188"/><path d="M184 329 C 280 329, 300 192, 384 190"/>
+      </g>
+      <g class="t-acc2" style="font-size:16px"><text x="250" y="60">× a₁</text><text x="250" y="126">× a₂</text><text x="250" y="178">× a₃</text><text x="250" y="244">× a₄</text><text x="250" y="312">× a₅</text></g>
+      <circle cx="420" cy="187" r="34" class="f-acc"/><text x="420" y="199" text-anchor="middle" style="font-size:34px;font-weight:800;fill:var(--surface)">+</text>
+      <path d="M456 187 H510" stroke="var(--muted)" stroke-width="3" marker-end="url(#ah1)"/>
+      <rect x="516" y="147" width="118" height="80" rx="16" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/>
+      <text x="575" y="182" text-anchor="middle" class="t-acc2" style="font-size:18px">강도</text><text x="575" y="208" text-anchor="middle" class="t-sub" style="font-size:14px">+ b</text>
+    </svg>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show"><div class="h">입력마다 계수 하나씩</div><div class="d">강도 = a₁×압력 + a₂×두께 + … + a₅×온도 + b</div></div>
+      <div class="tile frag"><div class="h">찾는 방법은 똑같다</div><div class="d">오차 제곱합이 가장 작은 a₁~a₅, b 를 찾는다 → <strong>다중 회귀</strong></div></div>
+      <div class="tile frag" style="background:var(--accent-soft);border-color:transparent"><div class="h">다음 차시에 직접</div><div class="d">공정 조건 5개로 강도를 예측하고, 계수를 해석한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시 · 입력이 하나면 직선, 둘이면 평면 — 그 이상은 그림 대신 식으로 생각한다</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 회귀 vs 분류 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 더 넓게 보기 · 직접 해 보기 4</span></div>
+  <h2>회귀일까, 분류일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 생각하고 카드를 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="rc-cards"></div>
+    <div class="pcard-bar"><div class="legend" style="font-size:17px"><span><i class="dot" style="background:var(--accent)"></i><b style="color:var(--text)">회귀</b> 답이 숫자 (얼마나?)</span><span><i class="dot" style="background:var(--accent-2)"></i><b style="color:var(--text)">분류</b> 답이 종류 (어느 쪽?)</span></div><span class="muted" style="font-size:17px" id="rc-score">0 / 8 확인</span></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시 · 분류는 11주차에 자세히</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">회귀 = 숫자 예측</div><div style="font-size:21px">입력(공정 조건)으로 <strong>숫자</strong>(강도 MPa)를 예측하는 지도학습</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-code"/></svg></span><div class="h">규칙 = y = a·x + b</div><div style="font-size:21px">기울기 a 는 x 가 1 늘 때 y 의 변화. <strong>잔차 = 실제 − 예측</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">최소제곱법</div><div style="font-size:21px">잔차 제곱의 합이 <strong>가장 작은</strong> 직선 = 가장 좋은 직선</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="기울기 0.36은 압력이 1 bar 늘 때 강도가 평균 0.36 MPa 늘어난다는 뜻입니다. 10 bar 늘면 약 3.6 MPa 늘어납니다.">
+      <p class="q-title"><b>Q1.</b> “강도 = 0.36 × 압력 + 10.0” 에서 0.36 의 뜻은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">압력이 0 bar 일 때의 강도</button>
+        <button type="button" data-v="b">예측이 맞을 확률 36%</button>
+        <button type="button" data-v="c">압력이 1 bar 늘 때 강도가 늘어나는 정도</button>
+        <button type="button" data-v="d">압력과 강도의 상관계수</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="잔차 = 실제 − 예측 = 38.0 − 40.0 = −2.0 MPa. 음수이므로 점이 직선보다 아래에 있습니다(모델이 실제보다 높게 예측).">
+      <p class="q-title"><b>Q2.</b> 실제 강도 38.0 MPa, 예측 강도 40.0 MPa 인 제품의 잔차는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">+2.0 MPa</button>
+        <button type="button" data-v="b">−2.0 MPa</button>
+        <button type="button" data-v="c">4.0 MPa</button>
+        <button type="button" data-v="d">78.0 MPa</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="잔차를 그냥 더하면 +와 −가 서로 지워집니다. 제곱해서 더한 오차 제곱합이 가장 작은 직선을 고르는 것이 최소제곱법입니다.">
+      <p class="q-title"><b>Q3.</b> 최소제곱법이 고르는 직선은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">점을 가장 많이 지나가는 직선</button>
+        <button type="button" data-v="b">잔차를 그냥 더한 값이 0 인 직선</button>
+        <button type="button" data-v="c">기울기가 가장 큰 직선</button>
+        <button type="button" data-v="d">잔차 제곱의 합이 가장 작은 직선</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="수율(%)은 숫자를 예측하므로 회귀입니다. 나머지는 ‘불량/양품’, ‘고장/정상’, ‘결함 종류’처럼 종류를 고르는 분류입니다.">
+      <p class="q-title"><b>Q4.</b> 다음 중 <u>회귀</u> 문제는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">반응 온도로 실험 수율(%) 예측</button>
+        <button type="button" data-v="b">제품이 불량인지 양품인지 판정</button>
+        <button type="button" data-v="c">설비가 이번 주에 고장 날지 여부</button>
+        <button type="button" data-v="d">결함이 찍힘·스크래치 중 무엇인지</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">10-2</div>
+    <h2>공정 조건으로 품질 예측하기</h2>
+    <p>압력 하나가 아니라 <strong>압력·두께·습도·속도·온도</strong> 다섯 가지로 강도를 예측하고, 모델이 찾은 계수를 읽어 봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week09/lesson03.html">← 9-3</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-factory"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">10주 1차시 · 회귀의 개념</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6주 2차시 · 분포와 이상치 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 6주 2차시 교안: 히스토그램과 구간 너비, 분포의 모양, 사분위수와 상자그림, IQR 규칙, 센서 오류와 진짜 극단값 구분">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .grow { transform-box: fill-box; transform-origin: bottom; animation: grow 3.2s ease-in-out infinite alternate; }
+  @keyframes grow { from { transform: scaleY(.55); } to { transform: scaleY(1); } }
+  @media (prefers-reduced-motion: reduce) { .grow { animation: none; } }
+
+  .seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 16px; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+
+  /* 단계 표시 */
+  .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .steps span { height: 8px; border-radius: 4px; background: var(--surface-2); }
+  .steps span.on { background: var(--accent); }
+  .p-out { fill: var(--accent-2); }
+  .p-dim { fill: var(--muted); fill-opacity: .35; }
+
+  /* 판단 카드 (1주 3차시와 같은 형식) */
+  .pcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 14px 18px; min-height: 172px; display: flex; flex-direction: column; gap: 6px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .top { display: flex; align-items: center; gap: 12px; }
+  .pcard .ic-badge { width: 44px; height: 44px; font-size: 23px; border-radius: 12px; flex: none; }
+  .pcard .nm { font-size: 19px; font-weight: 800; line-height: 1.3; }
+  .pcard .ctx { font-size: 16px; color: var(--muted); line-height: 1.4; }
+  .pcard .ans { display: none; font-size: 15.5px; line-height: 1.45; color: var(--text); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 16px; }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.err { background: var(--bad-soft); border-color: var(--bad); }
+  .pcard.open.err .verdict { color: var(--bad); }
+  .pcard.open.real { background: var(--accent-2-soft); border-color: var(--accent-2); }
+  .pcard.open.real .verdict { color: var(--accent-2); }
+  .pcard.open.keep { background: var(--accent-soft); border-color: var(--accent); }
+  .pcard.open.keep .verdict { color: var(--accent); }
+
+  .codegrid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; align-items: start; }
+  .codegrid pre.code { font-size: 16px; }
+  .linenote { display: grid; gap: 8px; }
+  .linenote .tile { padding: 12px 16px; gap: 4px; font-size: 17px; flex-direction: row; align-items: center; }
+  .linenote .tile b { color: var(--accent); font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 15px; min-width: 118px; white-space: nowrap; }
+  .linenote .tile span { font-size: 16px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 6주차 2차시</p>
+    <h1>분포와<br>이상치</h1>
+    <p class="lead" style="font-size:25px">데이터의 모양을 보고<br>튀는 값을 가려내기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="30" y="30" width="460" height="380" rx="30" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <g class="f-accs">
+      <rect class="grow" x="92" y="196" width="36" height="34" rx="4"/><rect class="grow" x="132" y="166" width="36" height="64" rx="4" style="animation-delay:-.4s"/>
+      <rect class="grow" x="172" y="120" width="36" height="110" rx="4" style="animation-delay:-.8s"/><rect class="grow f-acc" x="212" y="86" width="36" height="144" rx="4" style="animation-delay:-1.2s"/>
+      <rect class="grow" x="252" y="100" width="36" height="130" rx="4" style="animation-delay:-1.6s"/><rect class="grow" x="292" y="146" width="36" height="84" rx="4" style="animation-delay:-2s"/>
+      <rect class="grow" x="332" y="186" width="36" height="44" rx="4" style="animation-delay:-2.4s"/>
+    </g>
+    <rect x="80" y="230" width="360" height="3" class="f-line"/>
+    <!-- 상자그림 -->
+    <line x1="110" x2="190" y1="320" y2="320" stroke="var(--muted)" stroke-width="3"/>
+    <line x1="300" x2="380" y1="320" y2="320" stroke="var(--muted)" stroke-width="3"/>
+    <rect x="190" y="290" width="110" height="60" rx="8" class="f-accs" stroke="var(--accent)" stroke-width="3"/>
+    <line x1="236" x2="236" y1="290" y2="350" stroke="var(--accent)" stroke-width="4"/>
+    <line x1="110" x2="110" y1="304" y2="336" stroke="var(--muted)" stroke-width="3"/><line x1="380" x2="380" y1="304" y2="336" stroke="var(--muted)" stroke-width="3"/>
+    <circle cx="438" cy="320" r="11" class="f-acc2"><animate attributeName="r" values="11;15;11" dur="1.6s" repeatCount="indefinite"/></circle>
+    <text x="438" y="296" text-anchor="middle" class="t-acc2" style="font-size:20px">?</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">히스토그램</div><div class="d">구간 너비에 따라 그림이 어떻게 달라지는지 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">분포의 모양</div><div class="d">대칭과 치우침을 구분하고 평균·중앙값의 위치로 확인한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">상자그림·IQR</div><div class="d">사분위수로 상자그림을 읽고 IQR 규칙으로 이상치 후보를 찾는다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">오류 vs 진짜</div><div class="d">센서 오류와 진짜 극단값을 구분해 다르게 처리한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>① 히스토그램과 모양</b><small>직접 해 보기 1</small></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>② 사분위수와 상자그림</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>③ 이상치 다루기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-link"/></svg> 지난 시간: 평균·중앙값·표준편차 — <strong>숫자로 요약</strong>. 오늘: <strong>그림으로 모양을 보고</strong>, 튀는 값을 판단합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>평균도 표준편차도 같은 세 데이터</h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);gap:16px">
+      <div class="tile" style="padding:14px 16px 8px;gap:4px"><div class="h">A 라인</div><svg id="sh-0" viewBox="0 0 340 190" aria-label="A 라인 측정값 히스토그램"></svg></div>
+      <div class="tile" style="padding:14px 16px 8px;gap:4px"><div class="h">B 라인</div><svg id="sh-1" viewBox="0 0 340 190" aria-label="B 라인 측정값 히스토그램"></svg></div>
+      <div class="tile" style="padding:14px 16px 8px;gap:4px"><div class="h">C 라인</div><svg id="sh-2" viewBox="0 0 340 190" aria-label="C 라인 측정값 히스토그램"></svg></div>
+    </div>
+    <div class="box think frag" style="margin-top:20px"><p style="font-size:22px;margin:0">세 라인 모두 <strong>평균 40.0 · 표준편차 3.0</strong>. 숫자 두 개로는 똑같지만 모양은 전혀 다릅니다 → 요약 전에 <strong>먼저 그려 본다.</strong></p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시 · 설명용 가상 데이터 300개씩 (평균·표준편차를 같게 맞춤)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>히스토그램과 분포의 모양</h2><p>값을 구간으로 나눠 세면 모양이 보입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 히스토그램 만들기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 히스토그램과 모양</span></div>
+  <h2>히스토그램 = 구간마다 개수를 센 막대</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><svg id="hs-0" viewBox="0 0 300 130" aria-hidden="true"></svg><div class="h">① 구간 나누기</div><div class="d">온도 축을 같은 너비로 자른다<br>예: 2℃씩</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><svg id="hs-1" viewBox="0 0 300 130" aria-hidden="true"></svg><div class="h">② 구간마다 세기</div><div class="d">각 구간에 들어간<br>제품 수를 센다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><svg id="hs-2" viewBox="0 0 300 130" aria-hidden="true"></svg><div class="h">③ 막대로 그리기</div><div class="d">높이 = 개수<br>막대 사이에 틈이 없다</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">막대그래프와 다른 점: 가로축이 <strong style="color:var(--text)">이어진 숫자</strong>(온도·강도)입니다. 막대그래프의 가로축은 라인·호기 같은 <strong style="color:var(--text)">범주</strong>.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시 · 설명용 그림 (온도 15개)</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 구간 너비 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 히스토그램과 모양 · 직접 해 보기 1</span></div>
+  <h2>구간 너비를 바꾸면 모양도 바뀐다? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="hist" viewBox="0 0 640 420" aria-label="process.csv 열 하나의 히스토그램. 구간 너비를 바꿀 수 있다"></svg></div>
+    <div class="side">
+      <div class="seg" role="group" aria-label="열 선택"><button type="button" data-v="temp" aria-pressed="true">온도</button><button type="button" data-v="strength" aria-pressed="false">인장강도</button><button type="button" data-v="humidity" aria-pressed="false">습도</button></div>
+      <div class="ctrl"><label>구간 너비 <output id="h-o">2℃</output></label><input id="h-s" type="range" min="0" max="7" step="1" value="3" aria-label="구간 너비"></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">구간 수</div><div class="val" id="h-n" style="font-size:32px">-</div></div>
+        <div class="meter"><div class="lbl">가장 많은 구간</div><div class="val o" id="h-max" style="font-size:32px">-</div></div>
+      </div>
+      <div class="callout b" id="h-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시 · process.csv 494개 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 모양 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 히스토그램과 모양</span></div>
+  <h2>분포의 모양: 꼬리가 어느 쪽인가</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show" style="gap:8px"><svg id="sp-0" viewBox="0 0 320 150" aria-label="좌우 대칭 분포"></svg><div class="h">좌우 대칭</div><div class="d">평균 ≈ 중앙값<br>예: 사출 온도 (211.4 · 211.6)</div></div>
+      <div class="tile frag" style="gap:8px"><svg id="sp-1" viewBox="0 0 320 150" aria-label="오른쪽 꼬리 분포"></svg><div class="h">오른쪽으로 긴 꼬리</div><div class="d">큰 값 몇 개 → 평균 &gt; 중앙값<br>예: 설비 수리 시간, 대기 시간</div></div>
+      <div class="tile frag" style="gap:8px"><svg id="sp-2" viewBox="0 0 320 150" aria-label="왼쪽 꼬리 분포"></svg><div class="h">왼쪽으로 긴 꼬리</div><div class="d">작은 값 몇 개 → 평균 &lt; 중앙값<br>예: 인장강도 (38.79 · 39.06)</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:20px"><b style="color:var(--accent-2)">▲ 평균</b>은 꼬리 쪽으로 끌려가고, <b style="color:var(--accent)">▼ 중앙값</b>은 덜 움직입니다 — 1차시에 끌어 본 그 현상입니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시 · 모양을 보여 주는 설명용 곡선</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 우리 데이터 한눈에 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 히스토그램과 모양</span></div>
+  <h2>process.csv 숫자 열 여섯 개, 한눈에</h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="tiles" id="multi" style="grid-template-columns:repeat(3,1fr);gap:12px"></div>
+    <div class="legend" style="margin-top:12px;font-size:16px"><span><i style="display:inline-block;width:22px;border-top:3px solid var(--accent-2)"></i>평균</span><span><i style="display:inline-block;width:22px;border-top:3px dashed var(--accent)"></i>중앙값</span><span style="color:var(--text)">대부분 대칭에 가깝고, <strong>인장강도만 왼쪽 꼬리</strong> — 유난히 약한 제품 몇 개</span></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시 · process.csv 494개 · 구간 20개 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>사분위수와 상자그림</h2><p>줄 세워 네 토막 내면, 가운데 절반과 튀는 값이 보입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 사분위수 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 사분위수와 상자그림</span></div>
+  <h2>사분위수: 줄 세워서 네 토막</h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="tile" style="padding:14px 18px 6px"><svg id="quart" viewBox="0 0 1100 300" role="img" aria-label="인장강도 494개를 줄 세워 4등분한 그림과 실제 값 축에서의 폭"></svg></div>
+    <div class="grid g3" style="margin-top:14px;gap:14px">
+      <div class="tile row frag show" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:20px">Q1 · Q2 · Q3</div><div class="d">25% · 50%(중앙값) · 75% 위치의 값 — describe()의 그 세 줄</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px;border:2px solid var(--accent)"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">IQR = Q3 − Q1</div><div class="d">가운데 50%의 폭: 41.05 − 36.80 = <b>4.25 MPa</b></div></div></div>
+      <div class="tile row frag" style="padding:12px 16px"><span class="ic-badge o"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h" style="font-size:20px">같은 개수, 다른 폭</div><div class="d">가운데는 촘촘, 양 끝은 듬성 — 맨 왼쪽 토막이 가장 넓다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시 · process.csv 인장강도 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 2: 상자그림 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 사분위수와 상자그림 · 직접 해 보기 2</span></div>
+  <h2>상자그림 한 단계씩 만들기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="box" viewBox="0 0 640 420" aria-label="인장강도 494개 점 위에 상자그림을 단계별로 그리는 그림"></svg></div>
+    <div class="side">
+      <div style="display:flex;gap:10px"><button class="btn" id="b-next" type="button" style="flex:1"><svg class="ic"><use href="#i-play"/></svg> 다음 단계</button><button class="btn ghost" id="b-reset" type="button" aria-label="처음부터"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <div class="steps" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="callout b" id="b-msg" style="min-height:96px"></div>
+      <div class="ctrl" id="b-ctrl"><label>울타리 거리 (IQR의 몇 배?) <output id="b-k-o">1.5배</output></label><input id="b-k" type="range" min="0.5" max="3" step="0.1" value="1.5" aria-label="울타리 거리" disabled></div>
+      <div class="meter"><div class="lbl">울타리 밖 (이상치 후보)</div><div class="val o" id="b-n">-</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시 · process.csv 인장강도 494개 · 점의 세로 위치는 겹치지 않게 흩뜨린 것 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 상자그림으로 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 사분위수와 상자그림</span></div>
+  <h2>상자그림은 나란히 놓고 비교할 때 강하다</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:26px">
+    <div class="tile" style="flex:1.35;padding:12px 16px 6px"><svg id="cmp" viewBox="0 0 680 330" role="img" aria-label="주간과 야간 제품의 인장강도 상자그림"></svg></div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">가운데 선 = 중앙값</div><div class="d">주간 39.28 · 야간 38.63 MPa → 야간이 조금 낮다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:20px">상자 길이 = IQR</div><div class="d">주간 3.98 · 야간 4.58 MPa → 야간이 더 퍼져 있다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:20px">점 = 울타리 밖</div><div class="d">가장 약한 제품은 야간에서 나왔다 (26.64 MPa)</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시 · process.csv 주간 243개 · 야간 251개 · 그룹별 비교는 다음 차시에 본격적으로</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>이상치, 지울까 남길까?</h2><p>규칙은 후보를 찾아 줄 뿐, 판단은 사람이 합니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 직접 해 보기 3: 오류 vs 진짜 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 이상치 다루기 · 직접 해 보기 3</span></div>
+  <h2>울타리 밖 후보들: 센서 오류일까, 진짜일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="ocards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px"><span id="oc-score">0 / 6 확인</span> · 정리 전 온도에 IQR 규칙(1.5배)을 쓰면 10개가 걸립니다: 999.9 ×6, −1.0 ×2, 그리고 <strong style="color:var(--text)">233.5 · 235.3</strong>.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시 · process_raw.csv / process.csv 실제 행 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 다루는 순서 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 이상치 다루기</span></div>
+  <h2>이상치를 다루는 네 단계</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">찾기</div><div class="d">히스토그램·상자그림<br>IQR 규칙으로 <b>후보</b> 표시</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">확인</div><div class="d">물리적으로 가능한 값인가?<br>같은 행의 다른 값·기록은?</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">판단</div><div class="d"><b>오류</b> → 결측 처리·수정<br><b>진짜</b> → 남기고 원인 조사</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">기록</div><div class="d">무엇을 몇 개, 왜 바꿨는지<br>보고서에 남긴다</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:24px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> 진짜 극단값을 “보기 싫다”고 지우면, <strong>불량의 원인</strong>이라는 가장 중요한 정보를 버리는 셈입니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 코드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 이상치 다루기</span></div>
+  <h2>pandas로: 히스토그램 · 상자그림 · IQR 규칙</h2>
+  <div class="codegrid">
+<pre class="code">s = df['strength']
+s.hist(bins=30)                      # 히스토그램
+df.boxplot(column='strength', by='shift')  # 주야간 비교
+
+q1 = s.quantile(0.25)                # Q1
+q3 = s.quantile(0.75)                # Q3
+iqr = q3 - q1
+low = q1 - 1.5 * iqr                 # 아래 울타리
+high = q3 + 1.5 * iqr                # 위 울타리
+out = df[(s &lt; low) | (s &gt; high)]     # 울타리 밖 행
+print(round(low, 2), round(high, 2), len(out))</pre>
+    <div class="linenote">
+<pre class="out">30.43 47.43 4</pre>
+      <div class="tile frag show"><b>.hist()</b><span>bins = 구간 수. 바꿔 가며 모양이 안정적인지 본다</span></div>
+      <div class="tile frag"><b>.quantile()</b><span>25% 위치의 값 = Q1. describe()의 25%와 같다</span></div>
+      <div class="tile frag"><b>df[… | …]</b><span>5주차 조건 고르기. 가운데 | 는 “또는”</span></div>
+      <div class="tile frag"><b>out</b><span>지우지 말고 <strong>행 전체를 열어</strong> 다른 값과 함께 본다</span></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시 · process.csv · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 이상치 다루기</span></div>
+  <h2>실습 파일: 그리고, 세고, 판단하기</h2>
+  <div class="body" style="flex-direction:row;gap:30px;align-items:stretch">
+    <div class="tile" style="flex:1.1;padding:24px 26px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week06/lesson02.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <ol style="font-size:19px;margin:6px 0 0;line-height:1.5">
+        <li>숫자 열 히스토그램 한 번에 그리기</li>
+        <li>구간 수(bins) 바꿔 보기</li>
+        <li>사분위수·IQR·울타리 계산</li>
+        <li>상자그림: 전체, 주야간 비교</li>
+        <li>정리 전 온도에서 후보 10개 찾고 <strong>오류/진짜 나누기</strong></li>
+        <li><b style="color:var(--accent-2)">직접 바꿔 보기</b> — 열, bins, 울타리 배수</li>
+      </ol>
+    </div>
+    <div class="tile" style="flex:1;padding:24px 26px;background:var(--accent-soft);border-color:transparent">
+      <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge o"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">생성형AI에게 물어보기</div></div>
+      <div style="font-size:18px;background:var(--surface);border-radius:12px;padding:12px 16px;line-height:1.55">“사출 성형 온도 데이터에 999.9와 −1.0이 섞여 있어. 이 값들을 <b>결측치로 바꾸는 pandas 코드</b>를 짜 주고, 바꾸기 전후 개수를 출력해 줘.”</div>
+      <div class="d" style="font-size:17px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-check"/></svg> AI가 “이상치는 모두 삭제하세요”라고 하면? <strong>진짜 극단값까지 지우는지</strong> 확인합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">요약 전에 그려 본다</div><div style="font-size:21px">히스토그램으로 <strong>모양</strong>을 본다. 구간 너비는 몇 가지로 바꿔 확인</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">상자그림 = 사분위수</div><div style="font-size:21px">상자 = 가운데 50%(IQR). 울타리 = 상자에서 <strong>1.5×IQR</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">후보 ≠ 삭제 대상</div><div style="font-size:21px">센서 오류는 고치고, <strong>진짜 극단값은 남겨서</strong> 원인을 찾는다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="구간이 너무 좁으면 구간마다 몇 개씩만 들어가 우연한 들쭉날쭉이 생기고, 너무 넓으면 막대가 몇 개뿐이라 모양이 뭉개집니다. 몇 가지 너비로 바꿔 보며 안정적인 모양을 찾습니다.">
+      <p class="q-title"><b>Q1.</b> 히스토그램의 구간 너비를 아주 좁게 하면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">데이터 개수가 줄어든다</button>
+        <button type="button" data-v="b">평균이 바뀐다</button>
+        <button type="button" data-v="c">막대가 들쭉날쭉해져 모양을 읽기 어렵다</button>
+        <button type="button" data-v="d">항상 더 정확한 그림이 된다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="작은 값 몇 개가 평균을 왼쪽(작은 쪽)으로 끌어당기므로 평균이 중앙값보다 작아집니다. 인장강도가 그 예입니다(38.79 &lt; 39.06).">
+      <p class="q-title"><b>Q2.</b> 왼쪽으로 꼬리가 긴 분포에서 평균과 중앙값의 관계는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">평균 &gt; 중앙값</button>
+        <button type="button" data-v="b">평균 &lt; 중앙값</button>
+        <button type="button" data-v="c">항상 같다</button>
+        <button type="button" data-v="d">알 수 없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="IQR = 50 − 40 = 10. 위쪽 울타리는 Q3 + 1.5 × IQR = 50 + 15 = 65입니다. 65보다 큰 값이 이상치 후보입니다.">
+      <p class="q-title"><b>Q3.</b> Q1 = 40, Q3 = 50일 때, IQR 규칙(1.5배)의 위쪽 울타리는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">65</button>
+        <button type="button" data-v="b">60</button>
+        <button type="button" data-v="c">55</button>
+        <button type="button" data-v="d">75</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="온도도 높고 강도도 낮은 불량품이라면 실제로 일어난 일일 가능성이 큽니다. 지우지 말고 남겨서 왜 그런 제품이 나왔는지(과열 등) 조사합니다.">
+      <p class="q-title"><b>Q4.</b> 울타리 밖 제품: 온도 233.5℃, 강도 26.64 MPa, ‘찍힘’ 불량. 가장 알맞은 처리는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">이상치이므로 바로 삭제한다</button>
+        <button type="button" data-v="b">평균값으로 바꿔 넣는다</button>
+        <button type="button" data-v="c">999.9처럼 결측치로 처리한다</button>
+        <button type="button" data-v="d">진짜 극단값일 수 있으니 남기고 원인을 조사한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">6-3</div>
+    <h2>그룹별 집계로 비교하기</h2>
+    <p>주간과 야간, 라인과 호기 — 데이터를 <strong>나눠서</strong> 계산하면 전체 평균에 숨어 있던 차이가 드러납니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-factory"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">6주 2차시 · 분포와 이상치</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

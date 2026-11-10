@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3주 2차시 · 파이썬 최소 문법 ①: 변수·자료형·리스트 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 3주 2차시 교안: 변수와 대입, 이름 규칙, 자료형(int·float·str·bool)과 type(), 사칙연산, f-string 출력, 리스트의 인덱스·len·append·슬라이싱">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .t-mono { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; }
+  .slide.section .big { margin-bottom: 24px; }
+  .mono { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; }
+  @media (prefers-reduced-motion: reduce) { .cv-move { display: none; } }
+  @keyframes pop { 0% { opacity: 0; transform: scale(.85); } 100% { opacity: 1; transform: none; } }
+
+  /* 변수 상자 */
+  .vdemo { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; width: 100%; height: 100%; padding: 8px; }
+  pre.code.lines { margin: 0; white-space: pre; font-size: 18.5px; line-height: 1.75; padding: 12px 6px; align-self: center; }
+  .lines .ln { display: block; padding: 3px 10px; border-radius: 7px; border-left: 4px solid transparent; transition: background .2s, opacity .2s; }
+  .lines .ln .no { color: #8a93a6; display: inline-block; width: 22px; font-style: normal; }
+  .lines .ln.cur { background: rgba(255, 184, 108, .22); border-left-color: #ffb86c; }
+  .lines .ln.done { opacity: .5; }
+  .boxes { display: flex; flex-wrap: wrap; align-content: center; gap: 18px 16px; padding: 6px; }
+  .vbx { width: 132px; display: flex; flex-direction: column; align-items: center; gap: 0; animation: pop .35s ease; }
+  .vbx .tag { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 800; font-size: 17px; background: var(--accent); color: var(--surface); border-radius: 8px 8px 0 0; padding: 2px 14px; }
+  .vbx .in { width: 132px; height: 92px; border: 3px solid var(--accent); border-radius: 12px; background: var(--accent-soft); display: grid; place-items: center; position: relative; }
+  .vbx .val { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 800; font-size: 28px; color: var(--text); }
+  .vbx .val.new { animation: pop .35s ease; }
+  .vbx .old { position: absolute; top: 4px; right: 8px; font-family: ui-monospace, monospace; font-size: 13px; color: var(--muted); text-decoration: line-through; }
+  .vbx .ty { font-size: 13px; color: var(--muted); font-weight: 700; margin-top: 3px; }
+  .vbx.hit .in { border-color: var(--accent-2); background: var(--accent-2-soft); }
+  .vbx.hit .tag { background: var(--accent-2); }
+  .boxes .empty { color: var(--muted); font-size: 17px; width: 100%; text-align: center; }
+
+  /* 자료형 맞히기 */
+  .tcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .tcard { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 188px; transition: background .2s, border-color .2s; }
+  .tcard .v { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 26px; font-weight: 800; text-align: center; padding: 6px 0 2px; }
+  .tcard .gs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .tcard .gs button { font: inherit; font-family: ui-monospace, monospace; font-size: 15px; font-weight: 700; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); border-radius: 8px; padding: 4px 0; cursor: pointer; }
+  .tcard .gs button:hover:not(:disabled) { border-color: var(--accent); }
+  .tcard .gs button:disabled { cursor: default; }
+  .tcard .gs button.ok { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+  .tcard .gs button.no { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+  .tcard .ex { display: none; font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .tcard .ex code { color: var(--text); font-weight: 700; }
+  .tcard.done .ex { display: block; }
+  .tcard.done .gs { display: none; }
+  .tcard.done.right { background: var(--ok-soft); border-color: var(--ok); }
+  .tcard.done.wrong { background: var(--accent-2-soft); border-color: var(--accent-2); }
+  .tcard .vd { display: none; font-weight: 800; font-size: 16px; text-align: center; }
+  .tcard.done .vd { display: block; }
+  .tcard.right .vd { color: var(--ok); } .tcard.wrong .vd { color: var(--accent-2); }
+
+  /* 자료형 타일 */
+  .tyt .ty { font-family: ui-monospace, monospace; font-weight: 800; font-size: 22px; color: var(--accent); }
+  .tyt .ex { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 19px; font-weight: 700; background: var(--surface-2); border-radius: 10px; padding: 6px 12px; }
+
+  /* 이름 규칙 */
+  .rules { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .rule { border-radius: 14px; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--line); background: var(--surface); }
+  .rule .nm { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 22px; font-weight: 800; }
+  .rule .why { font-size: 15px; color: var(--muted); line-height: 1.4; }
+  .rule.ok { border-color: var(--ok); } .rule.ok .nm { color: var(--ok); }
+  .rule.ng { border-color: var(--bad); background: var(--bad-soft); } .rule.ng .nm { color: var(--bad); text-decoration: line-through; text-decoration-thickness: 2px; }
+
+  /* 연산자 표 */
+  .optab { font-size: 18px; }
+  .optab td, .optab th { padding: 7px 14px; }
+  .optab td:first-child { font-family: ui-monospace, monospace; font-weight: 800; font-size: 22px; color: var(--accent); text-align: center; width: 64px; }
+  .optab td.m { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .optab td.r { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 800; }
+
+  /* 리스트 */
+  .lrow { display: flex; gap: 8px; justify-content: center; }
+  .lc { width: 92px; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: opacity .2s; }
+  .lc .mc { font-size: 14px; color: var(--muted); font-weight: 700; }
+  .lc .bx { width: 92px; height: 64px; border: 2px solid var(--line); background: var(--surface-2); border-radius: 12px; display: grid; place-items: center; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 20px; font-weight: 800; transition: background .2s, border-color .2s, transform .2s; }
+  .lc .ix { font-family: ui-monospace, monospace; font-size: 17px; font-weight: 800; color: var(--accent); }
+  .lc .nx { font-family: ui-monospace, monospace; font-size: 14px; font-weight: 700; color: var(--accent-2); }
+  .lc.on .bx { border-color: var(--accent-2); background: var(--accent-2-soft); transform: translateY(-4px); }
+  .lc.on .ix, .lc.on .nx { text-decoration: underline; text-underline-offset: 3px; }
+  .lc.dim { opacity: .45; }
+  .lc.new .bx { animation: pop .4s ease; }
+  .lrow .rowlab { width: 92px; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end; gap: 4px; font-size: 13px; color: var(--muted); font-weight: 700; padding-bottom: 1px; }
+  .lrow .rowlab span { line-height: 1.5; }
+  .lbig .lc { width: 120px; } .lbig .lc .bx { width: 120px; height: 76px; font-size: 24px; } .lbig .lc .mc { font-size: 16px; } .lbig .lc .ix { font-size: 20px; } .lbig .lc .nx { font-size: 16px; }
+  .lbig .rowlab { width: 110px; font-size: 15px; }
+  #l-row { gap: 7px; } #l-row .lc { width: 78px; } #l-row .lc .bx { width: 78px; font-size: 18px; } #l-row .rowlab { width: 64px; }
+  .note { display: flex; gap: 10px; align-items: flex-start; font-size: 17px; line-height: 1.45; }
+  .note .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--surface); display: grid; place-items: center; font-size: 15px; font-weight: 800; margin-top: 1px; }
+  .checks { display: grid; gap: 10px; font-size: 19px; }
+  .checks div { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 9px 16px; }
+  .checks b { color: var(--accent); }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M7 7v10M12 7v10M17 7v10"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+</svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 3주차 2차시</p>
+    <h1 style="font-size:58px">파이썬 최소 문법 ①<br>변수·자료형·리스트</h1>
+    <p class="lead" style="font-size:25px">값에 이름을 붙이고,<br>여러 값을 한 줄로 모으기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:440px;flex:none" aria-hidden="true">
+    <!-- 변수 상자 -->
+    <g transform="translate(20 30)"><rect x="0" y="0" width="86" height="30" rx="8" class="f-acc"/><text x="43" y="21" text-anchor="middle" class="t-mono" style="font-size:16px;font-weight:800;fill:var(--surface)">temp</text>
+      <rect x="0" y="26" width="150" height="90" rx="14" class="f-accs" stroke="var(--accent)" stroke-width="3"/><text x="75" y="81" text-anchor="middle" class="t-mono t-main" style="font-size:26px">211.5</text></g>
+    <g transform="translate(190 30)"><rect x="0" y="0" width="92" height="30" rx="8" class="f-acc"/><text x="46" y="21" text-anchor="middle" class="t-mono" style="font-size:16px;font-weight:800;fill:var(--surface)">count</text>
+      <rect x="0" y="26" width="140" height="90" rx="14" class="f-accs" stroke="var(--accent)" stroke-width="3"/><text x="70" y="81" text-anchor="middle" class="t-mono t-main" style="font-size:26px">120</text></g>
+    <g transform="translate(350 30)"><rect x="0" y="0" width="80" height="30" rx="8" class="f-acc2"/><text x="40" y="21" text-anchor="middle" class="t-mono" style="font-size:16px;font-weight:800;fill:var(--surface)">name</text>
+      <rect x="0" y="26" width="150" height="90" rx="14" class="f-acc2s" stroke="var(--accent-2)" stroke-width="3"/><text x="75" y="81" text-anchor="middle" class="t-mono t-main" style="font-size:24px">'3호기'</text></g>
+    <!-- 리스트 -->
+    <g transform="translate(20 220)">
+      <rect x="0" y="0" width="100" height="30" rx="8" class="f-acc"/><text x="50" y="21" text-anchor="middle" class="t-mono" style="font-size:16px;font-weight:800;fill:var(--surface)">temps</text>
+      <rect x="0" y="26" width="480" height="90" rx="14" class="f-surface" stroke="var(--accent)" stroke-width="3"/>
+      <g class="t-mono t-main" style="font-size:19px" text-anchor="middle"><text x="40" y="78">210.9</text><text x="120" y="78">211.7</text><text x="200" y="78">210.0</text><text x="280" y="78">213.0</text><text x="360" y="78">211.7</text><text x="440" y="78">211.1</text></g>
+      <g stroke="var(--line)" stroke-width="2"><path d="M80 34v74M160 34v74M240 34v74M320 34v74M400 34v74"/></g>
+      <g class="t-mono t-acc" style="font-size:17px" text-anchor="middle"><text x="40" y="144">0</text><text x="120" y="144">1</text><text x="200" y="144">2</text><text x="280" y="144">3</text><text x="360" y="144">4</text><text x="440" y="144">5</text></g>
+      <rect class="cv-move" x="4" y="30" width="72" height="82" rx="10" fill="var(--accent-2)" fill-opacity=".16" stroke="var(--accent-2)" stroke-width="3"><animate attributeName="x" values="4;84;164;244;324;404;404" keyTimes="0;.16;.33;.5;.66;.83;1" dur="6s" calcMode="discrete" repeatCount="indefinite"/></rect>
+    </g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-box"/></svg></span><div class="h">변수</div><div class="d"><code>=</code>로 값에 이름을 붙이고, 값을 바꿔 넣는다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-tag"/></svg></span><div class="h">자료형</div><div class="d">int·float·str·bool을 구분하고 <code>type()</code>으로 확인한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div class="h">계산과 출력</div><div class="d">사칙연산을 하고 f-string으로 보기 좋게 출력한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-list"/></svg></span><div class="h">리스트</div><div class="d">0부터 세는 인덱스, len·append·슬라이싱을 쓴다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>① 변수</b><small>직접 해 보기 1</small></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>② 자료형과 계산</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-2-soft)"><b>③ 리스트</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 문법을 외울 필요는 없습니다. <strong>“코드를 읽고, 어디를 바꾸면 되는지”</strong> 알아보는 것이 목표입니다. 코드를 만드는 일은 4주차부터 생성형AI가 돕습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>오늘 다룰 값: 여섯 대 설비의 평균 온도</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(6,1fr);gap:12px">
+      <div class="tile" style="align-items:center;text-align:center;padding:16px 8px;gap:6px"><span class="ic-badge"><svg class="ic"><use href="#i-factory"/></svg></span><div class="d">1호기</div><div class="h mono">210.9</div></div>
+      <div class="tile" style="align-items:center;text-align:center;padding:16px 8px;gap:6px"><span class="ic-badge"><svg class="ic"><use href="#i-factory"/></svg></span><div class="d">2호기</div><div class="h mono">211.7</div></div>
+      <div class="tile" style="align-items:center;text-align:center;padding:16px 8px;gap:6px;border:2px solid var(--accent-2)"><span class="ic-badge o"><svg class="ic"><use href="#i-factory"/></svg></span><div class="d">3호기</div><div class="h mono">210.0</div></div>
+      <div class="tile" style="align-items:center;text-align:center;padding:16px 8px;gap:6px"><span class="ic-badge"><svg class="ic"><use href="#i-factory"/></svg></span><div class="d">4호기</div><div class="h mono">213.0</div></div>
+      <div class="tile" style="align-items:center;text-align:center;padding:16px 8px;gap:6px"><span class="ic-badge"><svg class="ic"><use href="#i-factory"/></svg></span><div class="d">5호기</div><div class="h mono">211.7</div></div>
+      <div class="tile" style="align-items:center;text-align:center;padding:16px 8px;gap:6px"><span class="ic-badge"><svg class="ic"><use href="#i-factory"/></svg></span><div class="d">6호기</div><div class="h mono">211.1</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:24px;gap:20px">
+      <div class="tile row" style="padding:16px 20px"><span class="ic-badge"><svg class="ic"><use href="#i-box"/></svg></span><div><div class="h" style="font-size:21px">값 하나 → <span style="color:var(--accent)">변수</span></div><div class="d mono">temp = 210.0</div></div></div>
+      <div class="tile row" style="padding:16px 20px"><span class="ic-badge o"><svg class="ic"><use href="#i-list"/></svg></span><div><div class="h" style="font-size:21px">값 여러 개 → <span style="color:var(--accent-2)">리스트</span></div><div class="d mono">temps = [210.9, 211.7, …]</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시 · process.csv(가상 데이터)에서 호기별로 계산한 평균 온도(℃)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>변수</h2><p>값을 넣어 두고 이름으로 꺼내 쓰는 상자.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-box"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 변수 = 이름표 상자 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 변수</span></div>
+  <h2>변수 = <span class="mark">이름표</span>를 붙인 상자</h2>
+  <div class="body">
+    <svg viewBox="0 0 1120 250" role="img" aria-label="temp = 211.5 는 211.5라는 값을 temp라는 이름표가 붙은 상자에 넣는다는 뜻">
+      <rect x="0" y="70" width="430" height="80" rx="16" fill="#1f2430"/>
+      <text x="30" y="124" class="t-mono" style="font-size:38px;fill:#e6e9ef">temp <tspan style="fill:#ffb86c;font-weight:800">=</tspan> <tspan style="fill:#f3d27a">211.5</tspan></text>
+      <text x="30" y="186" class="t-sub" style="font-size:18px">① 이름</text><text x="140" y="186" class="t-sub" style="font-size:18px">② 넣어라</text><text x="262" y="186" class="t-sub" style="font-size:18px">③ 값</text>
+      <path d="M440 110 C 540 110, 560 140, 650 140" fill="none" stroke="var(--accent)" stroke-width="4" marker-end="url(#ah2)"/>
+      <defs><marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 10 5 0 10z" class="f-acc"/></marker></defs>
+      <text x="545" y="96" text-anchor="middle" class="t-acc" style="font-size:18px">오른쪽 값을 왼쪽 이름에</text>
+      <rect x="680" y="40" width="130" height="44" rx="10" class="f-acc"/><text x="745" y="71" text-anchor="middle" class="t-mono" style="font-size:24px;font-weight:800;fill:var(--surface)">temp</text>
+      <rect x="680" y="78" width="300" height="130" rx="20" class="f-accs" stroke="var(--accent)" stroke-width="4"/>
+      <text x="830" y="160" text-anchor="middle" class="t-mono t-main" style="font-size:44px">211.5</text>
+      <text x="1000" y="150" class="t-sub" style="font-size:17px">런타임의</text><text x="1000" y="174" class="t-sub" style="font-size:17px">메모리</text>
+    </svg>
+    <div class="grid g2" style="gap:22px;margin-top:10px">
+      <div class="box warn frag" style="margin:0"><p style="font-size:20px;margin:0"><strong><code>=</code> 는 “같다”가 아닙니다.</strong> “오른쪽 값을 왼쪽 이름의 상자에 <strong>넣어라</strong>”라는 명령입니다.</p></div>
+      <div class="box think frag" style="margin:0"><p style="font-size:20px;margin:0"><code>temp = temp + 3</code> → <strong>오른쪽을 먼저</strong> 계산(211.5 + 3 = 214.5)하고, 그 값을 temp에 <strong>다시 넣는다.</strong></p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 변수 상자 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 변수 · 직접 해 보기 1</span></div>
+  <h2>한 줄씩 실행하며 상자 지켜보기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="align-items:stretch;padding:12px">
+      <div class="vdemo">
+        <pre class="code lines" id="v-code" data-hl="off"></pre>
+        <div class="boxes" id="v-boxes"></div>
+      </div>
+    </div>
+    <div class="side">
+      <div style="display:flex;gap:10px"><button class="btn" id="v-step" type="button" style="flex:1"><svg class="ic"><use href="#i-play"/></svg> 한 줄 실행</button><button class="btn ghost" id="v-reset" type="button" aria-label="처음으로"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <div class="meter"><div class="lbl">실행한 줄</div><div class="val" id="v-n" style="font-size:32px">0 / 6</div></div>
+      <div class="callout b" id="v-msg">오른쪽 상자 칸은 <strong>런타임의 메모리</strong>입니다. <strong>한 줄 실행</strong>을 눌러 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시 · 3주 1차시의 temp 셀과 같은 원리</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 이름 규칙 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 변수</span></div>
+  <h2>변수 이름 짓는 규칙</h2>
+  <div class="body">
+    <div class="rules">
+      <div class="rule ok"><span class="nm">temp</span><span class="why">영어 소문자 — 가장 무난</span></div>
+      <div class="rule ok"><span class="nm">temp_max</span><span class="why">두 단어는 밑줄 _ 로 잇기</span></div>
+      <div class="rule ok"><span class="nm">machine3</span><span class="why">숫자는 <b>뒤에</b>는 써도 된다</span></div>
+      <div class="rule ok"><span class="nm">good_count</span><span class="why">뜻이 보이는 이름이 좋다</span></div>
+      <div class="rule ng frag"><span class="nm">3machine</span><span class="why">숫자로 <b>시작</b>할 수 없다</span></div>
+      <div class="rule ng frag"><span class="nm">my temp</span><span class="why">띄어쓰기 불가 → my_temp</span></div>
+      <div class="rule ng frag"><span class="nm">temp-max</span><span class="why">- 는 빼기로 읽힌다</span></div>
+      <div class="rule ng frag"><span class="nm">for</span><span class="why">파이썬이 쓰는 단어(if, for …)는 불가</span></div>
+    </div>
+    <div class="box think frag" style="margin-top:22px"><p style="font-size:21px;margin:0"><strong>대소문자를 구분합니다.</strong> <code>Temp</code>와 <code>temp</code>는 서로 <strong>다른 상자</strong> — 3주 1차시의 NameError가 여기서도 자주 생깁니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시 · 한글 이름도 문법상 가능하지만, 이 강의는 영어 이름을 씀</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>자료형과 계산</h2><p>상자에 든 값에도 종류가 있습니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-tag"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 자료형 네 가지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 자료형과 계산</span></div>
+  <h2>자주 쓰는 자료형 네 가지</h2>
+  <div class="body">
+    <div class="tiles tyt" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ty">int</span><div class="h">정수</div><div class="ex">120</div><div class="d">생산 개수, 설비 대수처럼 <b>셀 수 있는 수</b></div></div>
+      <div class="tile frag"><span class="ty">float</span><div class="h">실수</div><div class="ex">211.5</div><div class="d">온도, 두께처럼 <b>소수점이 있는 수</b></div></div>
+      <div class="tile frag"><span class="ty">str</span><div class="h">문자열</div><div class="ex">'3호기'</div><div class="d"><b>따옴표</b> 안의 글자. '…' 와 "…" 모두 가능</div></div>
+      <div class="tile frag"><span class="ty">bool</span><div class="h">참/거짓</div><div class="ex">True</div><div class="d">불량인가? 같은 <b>예/아니오</b>. True·False 두 값</div></div>
+    </div>
+    <div class="frag" style="margin-top:20px;display:grid;gap:8px">
+      <pre class="code">print(type(120), type(211.5), type('3호기'), type(True))   # type( ) : 자료형 확인</pre>
+      <pre class="out">&lt;class 'int'&gt; &lt;class 'float'&gt; &lt;class 'str'&gt; &lt;class 'bool'&gt;</pre>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시 · 5주차 pandas 표에서도 열마다 자료형이 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 자료형 맞히기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 자료형과 계산 · 직접 해 보기 2</span></div>
+  <h2>자료형 맞히기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— type( )을 실행하면 무엇이 나올까?</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="tcards" id="tcards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px" id="tc-score">맞힌 개수 0 / 8</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 계산 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 자료형과 계산</span></div>
+  <h2>파이썬은 계산기: 생산 120개, 불량 7개</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <table class="optab" style="flex:1.25">
+      <thead><tr><th>기호</th><th>뜻</th><th>예시</th><th>결과</th></tr></thead>
+      <tbody>
+        <tr><td>+</td><td>더하기</td><td class="m">120 + 30</td><td class="r">150</td></tr>
+        <tr><td>-</td><td>빼기 (양품 수)</td><td class="m">120 - 7</td><td class="r">113</td></tr>
+        <tr><td>*</td><td>곱하기</td><td class="m">12 * 10</td><td class="r">120</td></tr>
+        <tr><td>/</td><td>나누기 → 항상 float</td><td class="m">120 / 8</td><td class="r">15.0</td></tr>
+        <tr><td>//</td><td>몫 (12개씩 몇 상자?)</td><td class="m">125 // 12</td><td class="r">10</td></tr>
+        <tr><td>%</td><td>나머지 (남는 개수)</td><td class="m">125 % 12</td><td class="r">5</td></tr>
+        <tr><td>**</td><td>거듭제곱</td><td class="m">2 ** 3</td><td class="r">8</td></tr>
+      </tbody>
+    </table>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="frag show" style="display:grid;gap:8px"><pre class="code">rate = 7 / 120 * 100      # 불량률(%)
+rate</pre><pre class="out">5.833333333333333</pre></div>
+      <div class="box think frag" style="margin:0;padding:16px 20px"><p style="font-size:19px;margin:0">계산 순서는 수학과 같습니다: <strong>괄호 → 곱셈·나눗셈 → 덧셈·뺄셈</strong>.<br><code>(210.0 + 216.1) / 2</code> → <b>213.05</b></p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시 · 소수 자리를 줄이는 법은 다음 장</span><span class="no"></span></div>
+</section>
+
+<!-- 13. f-string, 섞으면 안 되는 것 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 자료형과 계산</span></div>
+  <h2>보기 좋게 출력하기: f-string</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:28px">
+    <div style="flex:1.1;display:grid;gap:10px;align-content:center">
+      <pre class="code">machine = '3호기'
+temp = 214.5
+rate = 7 / 120 * 100
+print(machine, temp)
+print(f'{machine} 온도: {temp}℃')
+print(f'불량률: {rate:.1f}%')</pre>
+      <pre class="out">3호기 214.5
+3호기 온도: 214.5℃
+불량률: 5.8%</pre>
+      <div class="grid g2" style="gap:10px">
+        <div class="note"><span class="n">1</span><span>따옴표 앞에 <b>f</b>, 변수는 <b>{ }</b> 안에</span></div>
+        <div class="note"><span class="n">2</span><span><b>{rate:.1f}</b> = 소수 첫째 자리까지</span></div>
+      </div>
+    </div>
+    <div class="tile frag" style="flex:1;padding:20px;gap:10px;justify-content:center">
+      <div class="h" style="display:flex;align-items:center;gap:10px"><span class="ic-badge o" style="width:44px;height:44px;font-size:24px;border-radius:12px"><svg class="ic"><use href="#i-alert"/></svg></span>글자와 숫자는 섞이지 않는다</div>
+      <pre class="code" style="font-size:16px">'3호기' + 1</pre>
+      <pre class="out err" style="font-size:14px">TypeError: can only concatenate str (not "int") to str</pre>
+      <pre class="code" style="font-size:16px">print('120' + '5')       # 글자끼리: 이어 붙이기
+print(int('120') + 5)    # int( )로 숫자로 바꾸면</pre>
+      <pre class="out" style="font-size:15px">1205
+125</pre>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시 · CSV에서 읽은 숫자가 글자(str)로 들어오면 계산이 안 됨 → 5주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>리스트</h2><p>여러 값을 순서대로 담는 칸 나뉜 상자.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-list"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 리스트 개념 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 리스트</span></div>
+  <h2>리스트: 번호(인덱스)는 <span class="mark">0부터</span></h2>
+  <div class="body" style="gap:18px">
+    <pre class="code" style="font-size:22px">temps = [210.9, 211.7, 210.0, 213.0, 211.7, 211.1]   # 대괄호 [ ], 쉼표로 구분</pre>
+    <div class="lrow lbig" id="l-static">
+      <div class="rowlab"><span>설비</span><span style="height:76px"></span><span style="color:var(--accent)">인덱스</span><span style="color:var(--accent-2)">뒤에서</span></div>
+      <div class="lc"><span class="mc">1호기</span><span class="bx">210.9</span><span class="ix">0</span><span class="nx">-6</span></div>
+      <div class="lc"><span class="mc">2호기</span><span class="bx">211.7</span><span class="ix">1</span><span class="nx">-5</span></div>
+      <div class="lc on"><span class="mc">3호기</span><span class="bx">210.0</span><span class="ix">2</span><span class="nx">-4</span></div>
+      <div class="lc"><span class="mc">4호기</span><span class="bx">213.0</span><span class="ix">3</span><span class="nx">-3</span></div>
+      <div class="lc"><span class="mc">5호기</span><span class="bx">211.7</span><span class="ix">4</span><span class="nx">-2</span></div>
+      <div class="lc"><span class="mc">6호기</span><span class="bx">211.1</span><span class="ix">5</span><span class="nx">-1</span></div>
+    </div>
+    <div class="grid g3" style="gap:14px">
+      <div class="tile frag" style="padding:14px 18px;gap:6px"><code class="mono" style="font-size:20px;font-weight:800">temps[0]</code><div class="d">→ <b>210.9</b> · 첫 번째 칸은 0번</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:6px;border:2px solid var(--accent-2)"><code class="mono" style="font-size:20px;font-weight:800">temps[2]</code><div class="d">→ <b>210.0</b> · 3호기는 2번! (하나 작다)</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:6px"><code class="mono" style="font-size:20px;font-weight:800">temps[-1]</code><div class="d">→ <b>211.1</b> · 음수는 뒤에서부터</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 리스트 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 리스트 · 직접 해 보기 3</span></div>
+  <h2>인덱스와 슬라이싱 움직여 보기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:16px;padding:16px 18px">
+      <div class="switch" id="l-mode" style="align-self:center;margin:0"><button type="button" data-m="idx" aria-pressed="true">인덱스 [i]</button><button type="button" data-m="slc" aria-pressed="false">슬라이싱 [a:b]</button></div>
+      <div class="lrow" id="l-row"></div>
+      <pre class="code" id="l-code" data-hl="off" style="font-size:20px"></pre>
+      <pre class="out" id="l-out" style="font-size:18px"></pre>
+    </div>
+    <div class="side">
+      <div class="ctrl" id="c-idx"><label>인덱스 i <output id="l-i-o">2</output></label><input id="l-i" type="range" min="-7" max="6" step="1" value="2" aria-label="인덱스"></div>
+      <div id="c-slc" style="display:none;gap:10px">
+        <div class="ctrl"><label>시작 a <output id="l-a-o">1</output></label><input id="l-a" type="range" min="0" max="6" step="1" value="1" aria-label="시작 인덱스"></div>
+        <div class="ctrl"><label>끝 b (포함 안 함) <output id="l-b-o">3</output></label><input id="l-b" type="range" min="0" max="6" step="1" value="3" aria-label="끝 인덱스"></div>
+      </div>
+      <div style="display:flex;gap:10px"><button class="btn ghost" id="l-app" type="button" style="flex:1;font-size:16px"><span class="mono">append(212.4)</span></button><button class="btn ghost" id="l-rst" type="button" aria-label="처음 리스트로"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <div class="meter"><div class="lbl">len(temps) — 칸 개수</div><div class="val" id="l-len" style="font-size:32px">6</div></div>
+      <div class="callout b" id="l-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시 · 212.4는 새로 들인 7호기의 가상 온도</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 리스트 정리 코드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 리스트</span></div>
+  <h2>리스트로 자주 하는 일</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:28px">
+    <div style="flex:1.15;display:grid;gap:10px">
+      <pre class="code">temps = [210.9, 211.7, 210.0, 213.0, 211.7, 211.1]
+print(len(temps))            # ① 칸 개수
+temps.append(212.4)          # ② 맨 뒤에 추가
+print(temps[-1], len(temps))
+print(temps[1:3])            # ③ 1번부터 3번 앞까지
+avg = sum(temps) / len(temps)
+print(f'평균 {avg:.1f}℃')     # ④ 평균</pre>
+      <pre class="out">6
+212.4 7
+[211.7, 210.0]
+평균 211.5℃</pre>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:12px 18px"><span class="ic-badge"><code class="mono" style="font-size:16px;font-weight:800">len</code></span><div><div class="h" style="font-size:20px">len(리스트)</div><div class="d">몇 칸인지 = 데이터 개수</div></div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:20px">리스트.append(값)</div><div class="d">새 측정값을 맨 뒤에 하나 붙인다</div></div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h" style="font-size:20px">리스트[a:b]</div><div class="d">a번부터 <b>b번 앞까지</b> 잘라 새 리스트</div></div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:20px">sum( ) / len( )</div><div class="d">합 ÷ 개수 = 평균 → 3-3에서 반복문으로 직접</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시 · 5주차 pandas의 열(column)도 이런 값의 줄</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 리스트 · 실습</span></div>
+  <h2>실습 파일로 직접 해 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div class="checks" style="flex:1">
+      <div><b>1</b> 변수 만들고 덮어쓰기: <code>temp = temp + 3</code></div>
+      <div><b>2</b> <code>type()</code>으로 자료형 확인, 불량률 계산</div>
+      <div><b>3</b> f-string으로 <code>3호기 온도: 214.5℃</code> 출력</div>
+      <div><b>4</b> 호기별 온도 리스트: 인덱스·append·슬라이싱·평균</div>
+      <div><b>5</b> 실제 process.csv 온도 494개를 리스트로 받아 보기</div>
+      <div><b>6</b> 직접 바꿔 보기 과제 3개</div>
+    </div>
+    <div style="flex:none;width:380px;display:grid;gap:16px;justify-items:start">
+      <span class="ic-badge lg" style="width:120px;height:120px;font-size:64px;border-radius:30px"><svg class="ic"><use href="#i-code"/></svg></span>
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week03/lesson02.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <p class="muted" style="font-size:18px;margin:0">먼저 <strong style="color:var(--text)">Drive에 사본 저장</strong>, 그다음 위에서부터 차례로 실행!</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시 · 실습 파일 lesson02.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-box"/></svg></span><div class="h">변수 = 이름표 상자</div><div style="font-size:21px"><code>=</code>는 <strong>오른쪽 값을 왼쪽에 넣기</strong>. 다시 넣으면 덮어쓴다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-tag"/></svg></span><div class="h">값의 종류: 자료형</div><div style="font-size:21px">int · float · <strong>str(따옴표)</strong> · bool. 글자와 숫자는 섞이지 않는다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-list"/></svg></span><div class="h">리스트는 0부터</div><div style="font-size:21px"><code>temps[0]</code>이 첫 칸, <code>[-1]</code>은 마지막. <strong>[a:b]는 b 앞까지</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="두 번째 줄은 오른쪽 count - 7 = 113을 먼저 계산한 뒤 count에 다시 넣습니다. 이전 값 120은 사라집니다.">
+      <p class="q-title"><b>Q1.</b> 다음을 실행한 뒤 <code>count</code>의 값은?<br><code>count = 120</code> → <code>count = count - 7</code></p>
+      <div class="opts">
+        <button type="button" data-v="a">120</button>
+        <button type="button" data-v="b">7</button>
+        <button type="button" data-v="c">113</button>
+        <button type="button" data-v="d">오류가 난다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="따옴표로 감싼 값은 숫자처럼 보여도 문자열(str)입니다. 계산하려면 float('211.5')처럼 숫자로 바꿔야 합니다.">
+      <p class="q-title"><b>Q2.</b> <code>type('211.5')</code>의 결과는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">&lt;class 'float'&gt;</button>
+        <button type="button" data-v="b">&lt;class 'str'&gt;</button>
+        <button type="button" data-v="c">&lt;class 'int'&gt;</button>
+        <button type="button" data-v="d">&lt;class 'bool'&gt;</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="인덱스는 0부터 셉니다. temps[0]=210.9, temps[1]=211.7, temps[2]=210.0 — 세 번째 칸입니다.">
+      <p class="q-title"><b>Q3.</b> <code>temps = [210.9, 211.7, 210.0, 213.0]</code>일 때 <code>temps[2]</code>는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">210.0</button>
+        <button type="button" data-v="b">211.7</button>
+        <button type="button" data-v="c">213.0</button>
+        <button type="button" data-v="d">IndexError</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="[1:3]은 1번부터 3번 '앞'까지, 즉 1번·2번 두 칸입니다. 끝 번호는 포함하지 않습니다.">
+      <p class="q-title"><b>Q4.</b> 같은 리스트에서 <code>temps[1:3]</code>의 결과는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">[210.9, 211.7, 210.0]</button>
+        <button type="button" data-v="b">[211.7, 210.0, 213.0]</button>
+        <button type="button" data-v="c">[210.9, 211.7]</button>
+        <button type="button" data-v="d">[211.7, 210.0]</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">3-3</div>
+    <h2>파이썬 최소 문법 ②: 조건문·반복문·라이브러리</h2>
+    <p>“온도가 220℃를 넘으면 경보” — 리스트의 값을 하나씩 꺼내 <strong>판단</strong>하고, 첫 CSV 파일을 직접 읽어 봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-reset"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">3주 2차시 · 파이썬 최소 문법 ①: 변수·자료형·리스트</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

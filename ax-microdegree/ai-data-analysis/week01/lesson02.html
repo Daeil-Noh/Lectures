@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1주 2차시 · 제조·연구·로봇 현장의 AX 사례 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 1주 2차시 교안: AX의 뜻, 제조·연구·로봇 현장의 AI 활용 사례와 공통 구조">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  @media (prefers-reduced-motion: reduce) { .spin, .flowdot { display: none; } }
+  .slide.section .big { margin-bottom: 24px; }
+
+  /* 공정 지도 */
+  .station { cursor: pointer; }
+  .station .pad { fill: var(--surface); stroke: var(--line); stroke-width: 2; transition: fill .2s, stroke .2s; }
+  .station:hover .pad { stroke: var(--accent); }
+  .station.on .pad { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 3; }
+  .station:focus { outline: none; } .station:focus-visible .pad { stroke: var(--accent); stroke-width: 3; }
+
+  /* 비전 검사 */
+  .parts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; position: relative; }
+  .part { position: relative; background: var(--surface-2); border-radius: 12px; aspect-ratio: 1; display: grid; place-items: center; border: 3px solid transparent; transition: border-color .2s, background .2s; }
+  .part svg { width: 74%; height: 74%; }
+  .part .sc { position: absolute; right: 6px; bottom: 4px; font-size: 13px; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; opacity: 0; transition: opacity .3s; }
+  .scanned .part .sc { opacity: 1; }
+  .part.flag { border-color: var(--accent-2); background: var(--accent-2-soft); }
+  .part.flag .sc { color: var(--accent-2); }
+  .reveal .part.truebad::after { content: "불량"; position: absolute; left: 6px; top: 4px; font-size: 12px; font-weight: 800; color: var(--bad); }
+  .reveal .part.miss { border-color: var(--bad); border-style: dashed; }
+  .scanline { position: absolute; left: -6px; right: -6px; height: 4px; top: 0; background: var(--accent); box-shadow: 0 0 18px 4px var(--accent); opacity: 0; border-radius: 4px; pointer-events: none; }
+  .scanning .scanline { animation: scan 1.4s ease-in-out forwards; }
+  @keyframes scan { 0% { top: 0; opacity: 1; } 95% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+  .counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .counts .meter .val { font-size: 32px; }
+
+  /* 실험 격자 */
+  .cells { width: 100%; display: grid; grid-template-columns: 60px repeat(5, 1fr); grid-template-rows: repeat(5, 1fr) 34px; gap: 6px; height: 100%; }
+  .cells .ax { display: grid; place-items: center; font-size: 14px; color: var(--muted); font-weight: 700; }
+  .cell { border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; font-weight: 800; font-size: 20px; color: var(--text); position: relative; transition: background .25s; font-variant-numeric: tabular-nums; }
+  .cell .pr { position: absolute; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .cell.best { outline: 4px solid var(--accent-2); outline-offset: -2px; }
+  .cell.tried { color: #fff; }
+  .cell.new { animation: pop .35s ease; }
+  @keyframes pop { 0% { transform: scale(.7); } 100% { transform: scale(1); } }
+
+  /* AX 순환 */
+  .loopnode rect { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+  .loopnode.on rect { stroke: var(--accent); stroke-width: 3; }
+  .casebtn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 1주차 2차시</p>
+    <h1>제조·연구·로봇<br>현장의 AX 사례</h1>
+    <p class="lead" style="font-size:25px">AI는 현장에서 실제로<br>무엇을 하고 있을까?</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>사례 차시</span><span>직접 해 보기 4개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <circle cx="260" cy="220" r="170" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 10"/>
+    <circle r="7" class="f-acc2 flowdot"><animateMotion dur="6s" repeatCount="indefinite" path="M260,50 a170,170 0 1,1 -0.1,0"/></circle>
+    <circle r="7" class="f-acc flowdot"><animateMotion dur="6s" begin="2s" repeatCount="indefinite" path="M260,50 a170,170 0 1,1 -0.1,0"/></circle>
+    <circle r="7" class="f-acc flowdot"><animateMotion dur="6s" begin="4s" repeatCount="indefinite" path="M260,50 a170,170 0 1,1 -0.1,0"/></circle>
+    <g transform="translate(205 0)"><rect width="110" height="110" rx="28" class="f-accs"/><g transform="translate(25 25) scale(2.5)" style="color:var(--accent)"><use href="#i-factory" width="24" height="24"/></g></g>
+    <g transform="translate(55 270)"><rect width="110" height="110" rx="28" class="f-accs"/><g transform="translate(25 25) scale(2.5)" style="color:var(--accent)"><use href="#i-flask" width="24" height="24"/></g></g>
+    <g transform="translate(355 270)"><rect width="110" height="110" rx="28" class="f-acc2s"/><g transform="translate(25 25) scale(2.5)" style="color:var(--accent-2)"><use href="#i-arm" width="24" height="24"/></g></g>
+    <circle cx="260" cy="225" r="54" class="f-acc"/>
+    <text x="260" y="236" text-anchor="middle" style="font-size:32px;font-weight:800;fill:var(--surface)">AX</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">AX의 뜻</div><div class="d">DX와 AX의 차이를 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-factory"/></svg></span><div class="h">현장 사례</div><div class="d">제조·연구·로봇 현장의 AI 활용을 예로 든다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">공통 구조</div><div class="d">센서 → 데이터 → 모델 → 판단 → 행동의 순환을 찾는다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-cap"/></svg></span><div class="h">나의 역할</div><div class="d">전공 지식이 AX에 왜 필요한지 말한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>AX란?</b></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>① 제조 현장</b><small>직접 해 보기 2</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② 연구 현장</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>③ 로봇 현장</b><small>직접 해 보기 1</small></div>
+      <div style="flex:4;background:var(--surface-2)"><b>공통 구조·정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 사례를 볼 때마다 질문 하나: <strong>“여기서 AI가 쓰는 데이터는 무엇이고, AI가 내리는 판단은 무엇인가?”</strong></p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. DX vs AX -->
+<section class="slide">
+  <div class="s-head"><span class="sec">AX란?</span></div>
+  <h2>AX = AI 전환 (AI Transformation)</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge g lg"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">아날로그</div><div class="d">종이 작업일지<br>사람이 눈으로 검사<br>고장 나면 수리</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">DX · 디지털 전환</div><div class="d">기록을 시스템에 저장<br>검사 결과를 입력<br>고장 이력을 기록</div><div style="font-size:16px;font-weight:800;color:var(--accent)">“기록을 디지털로”</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">AX · AI 전환</div><div class="d">데이터로 품질을 예측<br>카메라+AI가 불량 판정<br>고장 나기 전에 알림</div><div style="font-size:16px;font-weight:800">“판단을 AI와 함께”</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">DX로 쌓인 <strong style="color:var(--text)">데이터</strong>가 있어야 AX가 가능합니다. 지난 시간의 결론 — <strong style="color:var(--text)">데이터가 AI의 출발점</strong>.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션: 제조 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>제조 현장의 AX</h2><p>공장 한 바퀴를 돌며 AI가 일하는 곳을 찾아봅니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-factory"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 공정 지도 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 제조 현장</span></div>
+  <h2>공장 한 바퀴: 어디에 AI가 있을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot">
+      <svg id="pmap" viewBox="0 0 700 430" role="group" aria-label="제조 공정 지도. 각 공정을 누르면 AI 활용 예가 나온다">
+        <rect x="30" y="180" width="640" height="14" rx="7" class="f-line"/>
+        <circle r="6" class="f-acc flowdot"><animateMotion dur="5s" repeatCount="indefinite" path="M40,187 H660"/></circle>
+        <circle r="6" class="f-acc flowdot"><animateMotion dur="5s" begin="1.7s" repeatCount="indefinite" path="M40,187 H660"/></circle>
+        <circle r="6" class="f-acc flowdot"><animateMotion dur="5s" begin="3.4s" repeatCount="indefinite" path="M40,187 H660"/></circle>
+      </svg>
+    </div>
+    <div class="side">
+      <div class="tile" style="flex:1">
+        <span class="ic-badge" id="pm-ic"><svg class="ic"><use href="#i-hand"/></svg></span>
+        <div class="h" id="pm-h">공정을 눌러 보세요</div>
+        <div id="pm-d" style="font-size:19px">공장 곳곳에서 AI가 서로 다른 데이터로 서로 다른 판단을 합니다.</div>
+        <div class="d" id="pm-data"></div>
+        <div class="d" id="pm-wk" style="font-weight:700;color:var(--accent)"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시 · 대표적인 활용 유형을 정리한 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 비전 검사 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 제조 현장 · 직접 해 보기 1</span></div>
+  <h2>비전 검사: 카메라 + AI가 불량을 찾는다 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot" style="padding:16px;align-items:stretch">
+      <div class="parts" id="parts"><div class="scanline"></div></div>
+    </div>
+    <div class="side">
+      <div style="display:flex;gap:10px"><button class="btn" id="v-scan" type="button" style="flex:1"><svg class="ic"><use href="#i-eye"/></svg> AI 검사 시작</button><button class="btn ghost" id="v-ans" type="button">정답 보기</button></div>
+      <div class="ctrl"><label>불량 판정 기준 (AI 점수) <output id="v-th-o">50점 이상</output></label><input id="v-th" type="range" min="20" max="90" step="1" value="50" aria-label="불량 판정 기준"></div>
+      <div class="counts">
+        <div class="meter"><div class="lbl">잡은 불량</div><div class="val" id="v-tp">-</div></div>
+        <div class="meter"><div class="lbl">놓친 불량</div><div class="val o" id="v-fn">-</div></div>
+        <div class="meter"><div class="lbl">잘못 경보</div><div class="val o" id="v-fp">-</div></div>
+      </div>
+      <div class="callout b" id="v-msg">AI는 제품마다 <strong>불량 점수</strong>(0~100)를 매깁니다. 몇 점부터 불량으로 볼지는 <strong>사람이 정합니다.</strong></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시 · 실습용 가상 제품 24개 · 판정 기준과 평가는 11주차에 자세히</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 예지보전 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 제조 현장 · 직접 해 보기 2</span></div>
+  <h2>예지보전: 고장 나기 전에 알아채기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="pdm" viewBox="0 0 640 420" aria-label="60일간 설비 진동 기록과 경보 기준선"></svg></div>
+    <div class="side">
+      <div style="display:flex;gap:10px"><button class="btn" id="p-run" type="button" style="flex:1"><svg class="ic"><use href="#i-play"/></svg> 60일 재생</button><button class="btn ghost" id="p-reset" type="button" aria-label="처음으로"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <div class="ctrl"><label>경보 기준 (진동 세기) <output id="p-th-o">2.0</output></label><input id="p-th" type="range" min="1.2" max="3.2" step="0.1" value="2.0" aria-label="경보 기준"></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">경과</div><div class="val" id="p-day" style="font-size:32px">0일</div></div>
+        <div class="meter"><div class="lbl">첫 경보</div><div class="val o" id="p-alarm" style="font-size:32px">-</div></div>
+      </div>
+      <div class="callout b" id="p-msg">진동 센서가 매일 설비 상태를 기록합니다. <strong>60일째 고장</strong>이 납니다. 언제 알아챌 수 있을까요?</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시 · 실습용 가상 진동 데이터 · 이상탐지는 12주차에 자세히</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션: 연구 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>연구 현장의 AX</h2><p>실험과 시뮬레이션의 횟수를 AI로 줄입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-flask"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 실험 줄이기 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 연구 현장 · 직접 해 보기 3</span></div>
+  <h2>최고 수율 조건 찾기: 25번 vs AI와 함께 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot" style="padding:14px 18px 10px 8px;align-items:stretch"><div class="cells" id="cells"></div></div>
+    <div class="side">
+      <button class="btn ghost" id="e-all" type="button"><svg class="ic"><use href="#i-flask"/></svg> 하나씩 전부 실험하기</button>
+      <button class="btn" id="e-ai" type="button"><svg class="ic"><use href="#i-bot"/></svg> AI와 함께 실험하기</button>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">실험 횟수</div><div class="val" id="e-n" style="font-size:36px">0</div></div>
+        <div class="meter"><div class="lbl">찾은 최고 수율</div><div class="val o" id="e-best" style="font-size:36px">-</div></div>
+      </div>
+      <div class="callout b" id="e-msg">온도 5단계 × 시간 5단계 = 조건 25가지. 실험 한 번에 하루가 걸린다면?</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시 · 실습용 가상 수율 데이터 · 숫자는 수율(%)</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 연구 사례 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 연구 현장</span></div>
+  <h2>연구실에서 AI가 하는 일</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile row frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-flask"/></svg></span><div><div class="h">신소재·배터리 후보 탐색</div><div class="d">수많은 후보 물질의 성질을 AI로 먼저 예측해, 실제로 만들어 볼 후보를 줄인다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h">단백질 구조 예측</div><div class="d">아미노산 서열만으로 3차원 구조를 예측 (AlphaFold) — 개발자들이 2024년 노벨 화학상 공동 수상</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-cpu"/></svg></span><div><div class="h">시뮬레이션 대리모델</div><div class="d">몇 시간 걸리는 구조·유동 해석 결과를 AI가 학습해 몇 초 만에 근사한다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-arm"/></svg></span><div><div class="h">자율 실험실</div><div class="d">로봇이 실험을 수행하고, AI가 결과를 보고 다음 실험 조건을 고른다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션: 로봇 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>로봇 현장의 AX</h2><p>정해진 동작만 반복하던 로봇이 보고 판단합니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-arm"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 로봇 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 로봇 현장 · 직접 해 보기 4</span></div>
+  <h2>제각각 놓인 부품, 로봇이 집을 수 있을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="robot" viewBox="0 0 640 420" aria-label="로봇 팔이 트레이 위 부품을 집는 장면"></svg></div>
+    <div class="side">
+      <button class="btn ghost" id="rb-new" type="button"><svg class="ic"><use href="#i-reset"/></svg> 부품 새로 놓기</button>
+      <button class="btn ghost" id="rb-fixed" type="button"><svg class="ic"><use href="#i-code"/></svg> 정해진 좌표로 집기</button>
+      <button class="btn" id="rb-ai" type="button"><svg class="ic"><use href="#i-eye"/></svg> AI 비전으로 보고 집기</button>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">좌표 방식 성공</div><div class="val o" id="rb-s1" style="font-size:32px">0/0</div></div>
+        <div class="meter"><div class="lbl">AI 비전 성공</div><div class="val" id="rb-s2" style="font-size:32px">0/0</div></div>
+      </div>
+      <div class="callout b" id="rb-msg">기존 로봇은 <strong>프로그램에 적힌 좌표</strong>로만 움직입니다. 부품 위치가 매번 다르면?</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시 · 원리를 보여 주는 단순화한 그림</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 로봇 사례 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 로봇 현장</span></div>
+  <h2>AI가 들어간 로봇들</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">협동로봇</div><div class="d">사람 옆에서 함께 일하고, 사람이 다가오면 센서로 감지해 멈추거나 느려진다</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">물류 이동로봇</div><div class="d">공장·창고 지도를 만들고, 장애물을 피해 스스로 경로를 찾아 이동한다</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg o"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">비전 피킹·용접</div><div class="d">카메라로 부품 위치·용접선을 인식해 로봇 동작을 실시간으로 보정한다</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">공통점: 로봇의 <strong style="color:var(--text)">눈(센서·카메라)</strong>이 만든 데이터로 AI가 판단하고, 로봇이 움직인다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 공통 구조 (클릭) -->
+<section class="slide">
+  <div class="s-head"><span class="sec">공통 구조</span></div>
+  <h2>모든 사례에 숨어 있는 하나의 순환 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 300px">
+    <div class="plot"><svg id="loop" viewBox="0 0 760 420" aria-label="센서, 데이터, AI 모델, 판단, 행동이 이어지는 순환"></svg></div>
+    <div class="side">
+      <div class="muted" style="font-size:16px;font-weight:700">사례를 골라 보세요</div>
+      <button class="btn ghost casebtn" type="button" data-case="vision" aria-pressed="true"><svg class="ic"><use href="#i-eye"/></svg> 비전 검사</button>
+      <button class="btn ghost casebtn" type="button" data-case="pdm" aria-pressed="false"><svg class="ic"><use href="#i-activity"/></svg> 예지보전</button>
+      <button class="btn ghost casebtn" type="button" data-case="lab" aria-pressed="false"><svg class="ic"><use href="#i-flask"/></svg> 실험 줄이기</button>
+      <button class="btn ghost casebtn" type="button" data-case="robot" aria-pressed="false"><svg class="ic"><use href="#i-arm"/></svg> 로봇 집기</button>
+      <div class="callout" style="margin-top:6px">행동의 결과가 다시 <strong>데이터</strong>로 쌓여 AI는 점점 나아집니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 이 강의와의 연결 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">공통 구조</span></div>
+  <h2>오늘 본 사례, 이 강의에서 직접 해 봅니다</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(5,1fr)">
+      <div class="tile" style="align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h" style="font-size:20px">공정 데이터 그래프</div><div style="font-weight:800;color:var(--accent)">5~7주</div><div class="d" style="font-size:16px">정리·통계·시각화</div></div>
+      <div class="tile" style="align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h" style="font-size:20px">품질·수율 예측</div><div style="font-weight:800;color:var(--accent)">10주</div><div class="d" style="font-size:16px">회귀</div></div>
+      <div class="tile" style="align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h" style="font-size:20px">불량 판정</div><div style="font-weight:800;color:var(--accent)">11주</div><div class="d" style="font-size:16px">분류·판정 기준</div></div>
+      <div class="tile" style="align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-activity"/></svg></span><div class="h" style="font-size:20px">예지보전</div><div style="font-weight:800;color:var(--accent)">12주</div><div class="d" style="font-size:16px">이상탐지</div></div>
+      <div class="tile" style="align-items:center;text-align:center"><span class="ic-badge o"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h" style="font-size:20px">비전 검사·로봇</div><div style="font-weight:800;color:var(--accent-2)">13주</div><div class="d" style="font-size:16px">딥러닝·이미지 인식</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 나의 역할 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">공통 구조</span></div>
+  <h2>AX에 필요한 사람은 누구일까?</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <svg viewBox="0 0 560 380" style="width:560px;flex:none" role="img" aria-label="전공 지식과 데이터 역량이 겹치는 곳이 AX 인재">
+      <circle cx="200" cy="190" r="160" class="f-accs" fill-opacity=".85" stroke="var(--accent)" stroke-width="2"/>
+      <circle cx="360" cy="190" r="160" class="f-acc2s" fill-opacity=".85" stroke="var(--accent-2)" stroke-width="2"/>
+      <path d="M280 51 A160 160 0 0 1 280 329 A160 160 0 0 1 280 51" class="f-acc" fill-opacity=".9"/>
+      <text x="122" y="180" text-anchor="middle" class="t-acc" style="font-size:24px">전공 지식</text>
+      <text x="122" y="210" text-anchor="middle" class="t-sub" style="font-size:15px">무엇이 중요한</text><text x="122" y="230" text-anchor="middle" class="t-sub" style="font-size:15px">변수인가</text>
+      <text x="438" y="180" text-anchor="middle" class="t-acc2" style="font-size:24px">데이터·AI</text>
+      <text x="438" y="210" text-anchor="middle" class="t-sub" style="font-size:15px">어떻게</text><text x="438" y="230" text-anchor="middle" class="t-sub" style="font-size:15px">분석할 것인가</text>
+      <text x="280" y="186" text-anchor="middle" style="font-size:26px;font-weight:800;fill:var(--surface)">AX</text>
+      <text x="280" y="214" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--surface)">바로 여러분</text>
+    </svg>
+    <div style="flex:1">
+      <div class="tile frag show" style="margin-bottom:14px"><div class="h">AI 전문가만으로는 부족하다</div><div class="d">어떤 센서 값이 품질에 영향을 주는지, 어떤 결과가 말이 되는지는 <strong>현장과 전공을 아는 사람</strong>이 판단한다.</div></div>
+      <div class="tile frag"><div class="h">이 강의의 목표</div><div class="d">여러분의 전공 지식에 <strong>데이터·AI를 다루는 기초 역량</strong>을 더하는 것.</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">AX = AI 전환</div><div style="font-size:21px">DX로 쌓인 데이터로 <strong>예측·판단을 AI와 함께</strong> 하는 것</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-factory"/></svg></span><div class="h">현장마다 다른 데이터·판단</div><div style="font-size:21px">비전 검사·예지보전·실험 줄이기·로봇 집기 — <strong>판단 기준은 사람이 정한다</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">하나의 순환</div><div style="font-size:21px">센서 → 데이터 → 모델 → 판단 → 행동, 그리고 다시 <strong>데이터</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="DX가 기록을 디지털로 바꾸는 것이라면, AX는 그 데이터로 AI가 예측·판단을 돕게 하는 것입니다.">
+      <p class="q-title"><b>Q1.</b> AX(AI 전환)를 가장 잘 설명한 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">종이 기록을 컴퓨터 파일로 바꾸는 것</button>
+        <button type="button" data-v="b">데이터와 AI로 예측·판단을 업무에 녹이는 것</button>
+        <button type="button" data-v="c">로봇으로 사람을 모두 대체하는 것</button>
+        <button type="button" data-v="d">최신 컴퓨터를 구매하는 것</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="기준을 낮추면 더 많은 제품을 불량으로 의심하므로 놓치는 불량은 줄지만, 양품을 불량으로 잘못 경보하는 경우가 늘어납니다.">
+      <p class="q-title"><b>Q2.</b> 비전 검사에서 불량 판정 기준 점수를 낮추면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">놓치는 불량은 줄고, 잘못 경보는 늘어난다</button>
+        <button type="button" data-v="b">놓치는 불량과 잘못 경보가 모두 줄어든다</button>
+        <button type="button" data-v="c">AI 점수 자체가 바뀐다</button>
+        <button type="button" data-v="d">아무 변화가 없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="예지보전은 진동·전류·온도 같은 설비 센서 데이터의 변화를 보고 고장 징후를 미리 찾습니다.">
+      <p class="q-title"><b>Q3.</b> 예지보전에서 AI가 주로 쓰는 데이터는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">제품 판매 가격</button>
+        <button type="button" data-v="b">작업자 출근 기록</button>
+        <button type="button" data-v="c">진동·전류 같은 설비 센서 기록</button>
+        <button type="button" data-v="d">공장 건물의 설계 도면</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="정해진 좌표만 따라가는 로봇은 위치가 바뀌면 실패합니다. 카메라로 위치를 인식하는 AI(비전)가 있어야 매번 다른 위치의 부품을 집을 수 있습니다.">
+      <p class="q-title"><b>Q4.</b> 매번 다른 위치에 놓인 부품을 로봇이 집으려면 무엇이 필요할까?</p>
+      <div class="opts">
+        <button type="button" data-v="a">더 빠른 모터</button>
+        <button type="button" data-v="b">더 긴 로봇 팔</button>
+        <button type="button" data-v="c">좌표를 더 많이 입력한 프로그램</button>
+        <button type="button" data-v="d">카메라로 위치를 인식하는 AI</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">1-3</div>
+    <h2>데이터 윤리와 개인정보 기초</h2>
+    <p>카메라·센서가 사람까지 기록한다면? 데이터를 다룰 때 지켜야 할 기본 원칙을 배웁니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-shield"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 1주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">1주 2차시 · 제조·연구·로봇 현장의 AX 사례</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

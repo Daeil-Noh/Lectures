@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5주 1차시 · 보고서·기획서 초안 작성 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 5주 1차시 교안: 구조(목차) 먼저 받기, AI에게 사실 넘겨주기, 기획서의 기본 항목, 바다결 신규 고객 기획서 초안 실습">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .slide.section .big { margin-bottom: 24px; }
+  .bar-in { animation: barin 4.8s ease-in-out infinite; transform-box: fill-box; transform-origin: left center; }
+  @keyframes barin { 0%, 8% { transform: scaleX(0); } 30%, 85% { transform: scaleX(1); } 100% { transform: scaleX(1); opacity: 0; } }
+  .pen { animation: pen 4.8s ease-in-out infinite; }
+  @keyframes pen { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-18px, 8px); } }
+  @media (prefers-reduced-motion: reduce) { .bar-in, .pen { animation: none; } }
+
+  /* 6요소 타일 */
+  .six { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .six .tile { padding: 16px 18px; gap: 6px; }
+  .six .q6 { font-size: 16px; font-weight: 800; color: var(--accent); }
+  .six .ex { font-size: 15px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 6px; }
+
+  /* 목차 조립기 */
+  .docp { flex-direction: column; align-items: stretch !important; justify-content: flex-start !important; padding: 18px 22px !important; gap: 10px; }
+  .doc-t { font-size: 20px; font-weight: 800; border-bottom: 2px solid var(--line); padding-bottom: 8px; }
+  .slide .olist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; min-height: 120px; }
+  .olist li { margin: 0; display: flex; align-items: center; gap: 10px; font-size: 18px; background: var(--surface-2); border-radius: 10px; padding: 5px 12px; cursor: pointer; }
+  .olist li .n { font-weight: 800; color: var(--accent); width: 26px; }
+  .olist li .s { margin-left: auto; font-size: 13px; color: var(--muted); }
+  .olist li.bad { background: var(--bad-soft); } .olist li.bad .n { color: var(--bad); }
+  .olist li.late { outline: 2px dashed var(--accent-2); outline-offset: -2px; }
+  .olist .empty { font-size: 16px; color: var(--muted); background: none; cursor: default; }
+  .pv { font-family: inherit; font-size: 14px; line-height: 1.5; background: var(--accent-soft); border-radius: 12px; padding: 8px 12px; white-space: pre-wrap; color: var(--text); margin: 0; }
+  .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .chip { font: inherit; font-size: 16px; font-weight: 700; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; text-align: left; }
+  .chip:hover:not(:disabled) { border-color: var(--accent); }
+  .chip:disabled { opacity: .35; cursor: default; }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 지어낸 숫자 찾기 */
+  .draft { font-size: 18px; line-height: 1.75; }
+  .draft h4 { margin: 6px 0 0; font-size: 17px; color: var(--accent); }
+  .draft p { margin: 0 0 4px; }
+  .num { font: inherit; font-weight: 800; border: 0; border-bottom: 3px dotted var(--accent); background: var(--accent-soft); color: var(--text); padding: 0 4px; border-radius: 6px; cursor: pointer; }
+  .num.ok { background: var(--ok-soft); border-bottom: 3px solid var(--ok); }
+  .num.bad { background: var(--bad-soft); border-bottom: 3px solid var(--bad); text-decoration: line-through; text-decoration-color: var(--bad); }
+  .facts { font-size: 15px; line-height: 1.5; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; }
+  .facts b { color: var(--accent); }
+  .facts ul { margin: 4px 0 0; padding-left: 1.1em; } .facts li { margin: 2px 0; }
+
+  /* 고친 흔적 */
+  .edit { font-size: 18px; line-height: 1.75; }
+  .edit del { color: var(--bad); text-decoration-thickness: 2px; }
+  .edit ins { text-decoration: none; background: var(--ok-soft); color: var(--ok); font-weight: 700; border-radius: 4px; padding: 0 3px; }
+  .edit .tbd { background: var(--accent-2-soft); color: var(--accent-2); font-weight: 800; border-radius: 4px; padding: 0 3px; }
+  a.btn { text-decoration: none; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .two .prompt pre { font-size: 16px; }
+  .memo { font-size: 16px; line-height: 1.55; }
+  .memo li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></symbol>
+</svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 5주차 1차시</p>
+    <h1>보고서·기획서<br>초안 작성</h1>
+    <p class="lead" style="font-size:25px">“써 줘”보다 먼저<br>“이 순서로, 이 사실로”</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 2개</span><span>Gemini · Claude</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="80" y="40" width="320" height="370" rx="24" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <rect x="110" y="76" width="200" height="22" rx="8" class="f-acc"/>
+    <g style="font-size:20px;font-weight:800" fill="var(--accent)"><text x="112" y="150">1</text><text x="112" y="200">2</text><text x="112" y="250">3</text><text x="112" y="300">4</text><text x="112" y="350">5</text></g>
+    <rect x="140" y="134" width="200" height="18" rx="9" class="f-line"/><rect x="140" y="134" width="200" height="18" rx="9" class="f-accs bar-in"/>
+    <rect x="140" y="184" width="160" height="18" rx="9" class="f-line"/><rect x="140" y="184" width="160" height="18" rx="9" class="f-accs bar-in" style="animation-delay:.4s"/>
+    <rect x="140" y="234" width="220" height="18" rx="9" class="f-line"/><rect x="140" y="234" width="220" height="18" rx="9" class="f-accs bar-in" style="animation-delay:.8s"/>
+    <rect x="140" y="284" width="140" height="18" rx="9" class="f-line"/><rect x="140" y="284" width="140" height="18" rx="9" class="f-accs bar-in" style="animation-delay:1.2s"/>
+    <rect x="140" y="334" width="190" height="18" rx="9" class="f-line"/><rect x="140" y="334" width="190" height="18" rx="9" class="f-acc2s bar-in" style="animation-delay:1.6s"/>
+    <g class="pen"><circle cx="420" cy="330" r="70" class="f-acc"/><g transform="translate(380 290) scale(3.4)" style="color:var(--surface)"><use href="#i-pen" width="24" height="24"/></g></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-list"/></svg></span><div class="h">구조 먼저</div><div class="d">목차를 먼저 받고, 항목별로 나눠 초안을 쓰게 한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">사실은 내가</div><div class="d">숫자·날짜·이름을 AI에게 넘겨주고, 없는 것은 표시하게 한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">기획서 뼈대</div><div class="d">배경·목표·방안·일정·예산·기대효과를 말한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">사람의 몫</div><div class="d">빈칸을 채우고 판단하는 일은 내가 한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>① 구조 먼저</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② 사실은 내가 준다</b><small>직접 해 보기 2</small></div>
+      <div style="flex:7;background:var(--accent-2-soft)"><b>③ 실습: 바다결 기획서</b><small>Gemini · Claude</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘의 질문: <strong>“AI는 빈칸을 그럴듯하게 채운다. 그 빈칸이 숫자라면?”</strong></p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>“기획서 써 줘” 한 줄이면 될까?</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div class="chat" style="flex:1.25">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">20~30대 고객 늘리는 기획서 써 줘</div>
+      <div class="msg ai warn"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>■ 20~30대 고객 확보 전략 기획서
+1. 배경: 최근 MZ세대의 건강 간식 시장은 연 25% 성장하고 있습니다.
+2. 목표: 6개월 안에 20~30대 고객 비중을 40%까지 높입니다.
+3. 방안: 인플루언서 협업, 팝업 스토어, 구독 서비스 …
+4. 예산: 약 3,000만 원 …</div>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:20px">어디서 온 숫자?</div><div class="d">“연 25%”, “40%” — 아무 자료도 주지 않았다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">우리 회사 이야기인가?</div><div class="d">직원 12명 회사에 팝업 스토어, 예산 3,000만 원?</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:20px">한 번에 다 썼다</div><div class="d">구조가 맞는지 보기도 전에 본문까지 — 고치기 어렵다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시 · 미리 써 둔 예시 답변(숫자는 모두 근거 없는 예)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>구조 먼저</h2><p>본문을 쓰기 전에 목차부터 맞춥니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-list"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 단계 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 구조 먼저</span></div>
+  <h2>한 번에 다 쓰게 하지 말고, <span class="mark">단계로</span></h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge g"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">목적·독자</div><div class="d">누가 읽고<br>무엇을 결정하나</div><div style="font-size:15px;font-weight:800;color:var(--accent-2)">사람</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">목차 받기</div><div class="d">항목 + 한 줄 설명만<br>본문은 아직</div><div style="font-size:15px;font-weight:800;color:var(--accent)">AI</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge g"><svg class="ic"><use href="#i-pen"/></svg></span><div class="h">목차 고치기</div><div class="d">빼고, 더하고,<br>순서 바꾸기</div><div style="font-size:15px;font-weight:800;color:var(--accent-2)">사람</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">항목별 초안</div><div class="d">한 항목씩,<br>준 사실만으로</div><div style="font-size:15px;font-weight:800;color:var(--accent)">AI</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">확인·완성</div><div class="d">숫자 대조,<br>판단·결정</div><div style="font-size:15px;font-weight:800">사람</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">3주차 “대화로 결과 다듬기”를 문서에 적용한 것. 목차 단계에서 고치면 <strong style="color:var(--text)">본문을 통째로 다시 쓸 일</strong>이 줄어듭니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 기획서 뼈대 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 구조 먼저</span></div>
+  <h2>기획서의 기본 뼈대: 여섯 가지 질문</h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="six">
+      <div class="tile"><div class="h"><svg class="ic" style="color:var(--accent)"><use href="#i-book"/></svg> 배경</div><div class="q6">왜 지금 이 일을?</div><div class="ex">자사몰 매출은 느는데 신규 20~30대 고객이 적다</div></div>
+      <div class="tile"><div class="h"><svg class="ic" style="color:var(--accent)"><use href="#i-target"/></svg> 목표</div><div class="q6">무엇을 얼마나?</div><div class="ex">3개월 동안 자사몰 첫 구매 고객 ○명 — 숫자는 근거와 함께</div></div>
+      <div class="tile"><div class="h"><svg class="ic" style="color:var(--accent)"><use href="#i-bulb"/></svg> 실행 방안</div><div class="q6">어떻게?</div><div class="ex">체험팩, 매장 QR 쿠폰, 인스타그램 주 2회</div></div>
+      <div class="tile"><div class="h"><svg class="ic" style="color:var(--accent)"><use href="#i-clock"/></svg> 일정</div><div class="q6">언제, 누가?</div><div class="ex">12월 첫 주 시작 → 2월 말까지 시범</div></div>
+      <div class="tile"><div class="h"><svg class="ic" style="color:var(--accent)"><use href="#i-chart"/></svg> 예산</div><div class="q6">얼마가 드나?</div><div class="ex">3개월 상한 500만 원, 항목별로 나눠서</div></div>
+      <div class="tile"><div class="h"><svg class="ic" style="color:var(--accent-2)"><use href="#i-trend"/></svg> 기대효과</div><div class="q6">그래서 무엇이 좋아지나?</div><div class="ex">어떻게 확인할지(측정 방법)까지</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:14px;gap:14px">
+      <div class="callout b" style="font-size:16px"><strong>보고서</strong>는 이미 한 일의 <strong>현황·결과</strong> 중심, <strong>기획서</strong>는 앞으로 할 일의 <strong>제안</strong> 중심.</div>
+      <div class="callout" style="font-size:16px">회사·기관마다 양식이 다릅니다. <strong>정해진 사내 양식이 있으면 그 순서</strong>를 AI에게 알려 줍니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시 · 예시는 오늘 실습할 바다결(가상) 회의록 내용</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 직접 해 보기 1: 목차 조립기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 구조 먼저 · 직접 해 보기 1</span></div>
+  <h2>목차 조립기: 이 기획서에 무엇을, 어떤 순서로? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 400px">
+    <div class="plot docp">
+      <div class="doc-t">20~30대 신규 고객 확보 기획서 (초안 목차)</div>
+      <ol class="olist" id="olist"></ol>
+      <pre class="pv" id="o-pv"></pre>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">항목을 순서대로 눌러 넣으세요 (목차의 항목을 누르면 빠짐)</div>
+      <div class="chips" id="chips"></div>
+      <div style="display:flex;gap:10px;align-items:stretch">
+        <div class="meter" style="flex:1"><div class="lbl">기본 항목</div><div class="val" id="o-n" style="font-size:32px">0 / 6</div></div>
+        <button class="btn ghost" id="o-reset" type="button" aria-label="처음으로"><svg class="ic"><use href="#i-reset"/></svg></button>
+      </div>
+      <div class="status mid" id="o-st"><b class="k">빈 목차</b>먼저 “왜 이 일을 하는가”부터.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시 · 완성한 목차는 아래쪽 프롬프트 문장이 됩니다</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 목차 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 구조 먼저</span></div>
+  <h2>1단계 프롬프트: “목차만 먼저”</h2>
+  <div class="two">
+    <div class="prompt"><div class="prompt-h">프롬프트 ① 목차<button class="copy" type="button">복사</button></div><pre>너는 <mark>건강 간식 회사의 마케팅 기획 담당자</mark>야.
+아래 회의록을 바탕으로 「<mark>20~30대 신규 고객 확보</mark>」 기획서의 목차를 먼저 만들어 줘.
+- 배경, 목표, 실행 방안, 일정, 예산, 기대효과를 넣어 줘.
+- 항목마다 들어갈 내용을 한 줄씩만 적어 줘.
+- 본문은 아직 쓰지 마.
+
+[회의록]
+<mark>(여기에 회의록을 붙여 넣거나 파일을 첨부)</mark></pre></div>
+    <div class="chat">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg ai"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>1. 배경 — 자사몰 매출 증가, 매장 여행객의 구매 전환
+2. 목표 — 3개월 시범 기간의 신규 고객 목표 (회의록: 미정)
+3. 실행 방안 — 체험팩, 매장 QR 쿠폰, 인스타그램 강화, 카페 협업
+4. 일정 — 12월 첫 주 시작 ~ 2월 말
+5. 예산 — 상한 500만 원, 항목별 배분
+6. 기대효과 — 첫 구매 고객 수로 확인</div>
+      <div class="msg user" style="font-size:16px">카페 협업은 대상이 미정이니 3번에서 빼고 “추후 검토”로 옮겨 줘.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시 · 목차를 고치는 것은 짧은 대화 한 번이면 됩니다</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>사실은 내가 준다</h2><p>AI가 숫자를 지어내지 않게 하는 법.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-log"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 왜 숫자를 지어낼까 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 사실은 내가 준다</span></div>
+  <h2>AI는 왜 숫자를 지어낼까?</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px;align-items:stretch">
+      <div class="tile" style="padding:24px">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h" style="font-size:26px">그럴듯한 다음 말</div></div>
+        <div style="font-size:20px">생성형AI는 <strong>문장에 어울리는 말</strong>을 이어 붙입니다(2주차). “목표: 고객 비중을 ___%로”에는 <strong>어울리는 숫자</strong>가 들어갑니다 — 사실이든 아니든.</div>
+      </div>
+      <div class="tile" style="padding:24px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge lg"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h" style="font-size:26px">세 가지 습관</div></div>
+        <ol style="font-size:20px;margin:0">
+          <li class="frag show">숫자·날짜·이름은 <strong>내가 자료로 준다</strong></li>
+          <li class="frag">“자료에 없으면 <strong>[확인 필요]</strong>로 적어 줘”</li>
+          <li class="frag">받은 뒤 <strong>숫자마다 근거</strong>를 대조한다</li>
+        </ol>
+      </div>
+    </div>
+    <div class="prompt frag" style="margin-top:18px"><div class="prompt-h">어떤 문서에나 붙여 쓰는 한 줄<button class="copy" type="button">복사</button></div><pre>숫자·날짜·이름은 내가 준 자료에 있는 것만 써 줘. 자료에 없는 내용이 필요하면 지어내지 말고 [확인 필요]라고 적어 줘.</pre></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시 · 이렇게 지시해도 지어낼 수 있다 — 그래서 3번이 꼭 필요</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 2: 지어낸 숫자 찾기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 사실은 내가 준다 · 직접 해 보기 2</span></div>
+  <h2>AI가 지어낸 숫자 찾기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 회의록과 비교하고 숫자를 눌러 보세요</span></h2>
+  <div class="demo" style="grid-template-columns:1fr 370px">
+    <div class="plot docp" style="justify-content:center !important">
+      <div class="draft" id="draft"></div>
+    </div>
+    <div class="side">
+      <div class="facts"><b>회의록에 있는 사실 (요약)</b>
+        <ul>
+          <li>자사몰 월 매출: 1월 1,254만 원 → 9월 1,592만 원</li>
+          <li>후기 120건 중 13건 “매장에서 먹어 보고 주문”</li>
+          <li>인스타그램 팔로워 약 3,200명</li>
+          <li>예산 상한 3개월 500만 원</li>
+          <li>고객 나이 자료 <strong>없음</strong> · 목표 수치 <strong>미정</strong></li>
+        </ul>
+      </div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">찾은 지어낸 숫자</div><div class="val o" id="h-bad" style="font-size:32px">0 / 4</div></div>
+        <div class="meter"><div class="lbl">확인한 숫자</div><div class="val" id="h-all" style="font-size:32px">0 / 9</div></div>
+      </div>
+      <div class="callout b" id="h-msg">밑줄 친 숫자 9개 중 <strong>4개</strong>는 회의록에 없거나 바뀐 숫자입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시 · 미리 써 둔 예시 초안 · 바다결은 가상 회사</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 사람의 몫 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 사실은 내가 준다</span></div>
+  <h2>AI에게 맡길 일, 내가 할 일</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile" style="padding:24px">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h" style="font-size:26px">AI가 잘하는 일</div></div>
+        <ul style="font-size:20px;margin:0">
+          <li>흔히 쓰는 목차·뼈대 제안</li>
+          <li>준 사실을 문장으로 정리</li>
+          <li>빠진 항목·어색한 흐름 지적</li>
+          <li>길이·문체 바꾸기</li>
+        </ul>
+      </div>
+      <div class="tile" style="padding:24px;border:2px solid var(--accent-2)">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h" style="font-size:26px">내가 해야 하는 일</div></div>
+        <ul style="font-size:20px;margin:0">
+          <li><strong>사실</strong>을 모아 주고 대조하기</li>
+          <li><strong>[확인 필요]</strong> 채우기 — 담당자에게 묻기</li>
+          <li>목표 숫자처럼 <strong>판단</strong>이 필요한 것 정하기</li>
+          <li>내 이름으로 나가는 문서의 <strong>책임</strong></li>
+        </ul>
+      </div>
+    </div>
+    <div class="box think frag" style="margin-top:20px"><p style="font-size:20px;margin:0">예: 회의록에 “목표 수치 미정”. → AI가 아니라 <strong>내가</strong> “3개월 첫 구매 고객 ○명”을 제안하고, <strong>왜 그 숫자인지</strong> 근거를 적는다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>실습: 바다결 기획서 초안</h2><p>회의록 한 장으로 「20~30대 신규 고객 확보」 기획서를 씁니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-pen"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 실습 자료 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실습</span></div>
+  <h2>실습 자료: 11월 3일 회의록</h2>
+  <div class="body" style="flex-direction:row;gap:28px;align-items:stretch">
+    <div class="box" style="flex:1.3;margin:0;padding:18px 24px">
+      <p class="box-title"><svg class="ic"><use href="#i-log"/></svg> 20~30대 신규 고객 확보 방안 회의 (요약)</p>
+      <ul class="memo">
+        <li><strong>현황</strong> 자사몰 월 매출 1월 1,254만 원 → 9월 1,592만 원 · 고객 나이 자료 없음</li>
+        <li><strong>반응</strong> 후기 120건 중 13건 “부산 여행 때 매장에서 먹어 보고 주문”</li>
+        <li><strong>제안</strong> 체험팩(원가 확인 필요) · 매장 QR 첫 구매 쿠폰 · 인스타그램 주 2회 · 카페 협업(대상 미정)</li>
+        <li><strong>예산·일정</strong> 3개월 상한 500만 원 · 12월 첫 주 ~ 2월 말</li>
+        <li><strong>결정</strong> 목표 수치는 기획서에서 근거와 함께 제안</li>
+      </ul>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px;justify-content:center">
+      <a class="btn" href="materials/meeting_notes.txt" download><svg class="ic"><use href="#i-down"/></svg> 실습 자료 받기 (회의록.txt)</a>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="d" style="font-size:17px"><strong style="color:var(--text)">Gemini</strong>(학교 계정) 또는 <strong style="color:var(--text)">Claude</strong>에 파일을 첨부하거나 내용을 붙여 넣습니다.</div></div>
+      <div class="callout" style="font-size:16px"><svg class="ic"><use href="#i-shield"/></svg> 개인정보·기밀이 없는 <strong>가상 자료</strong>라서 올려도 됩니다. 실제 회사 회의록은 1-3의 규칙대로 — <strong>허락 없이 올리지 않기</strong>.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시 · 회의록의 숫자는 공통 실습 파일 sales_2026.csv·reviews_2026.csv에서 계산한 값</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 실습 단계 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실습</span></div>
+  <h2>2단계: 항목 하나씩, 준 사실로만</h2>
+  <div class="two">
+    <div class="prompt"><div class="prompt-h">프롬프트 ② 항목별 초안<button class="copy" type="button">복사</button></div><pre>좋아. 이제 목차의 <mark>1. 배경</mark>만 5문장 안팎으로 써 줘.
+- 읽는 사람은 <mark>대표님</mark>이고, 보고서 문체(~습니다)로 써 줘.
+- 숫자·날짜·이름은 회의록에 있는 것만 써.
+- 회의록에 없는 숫자가 필요하면 지어내지 말고 [확인 필요]라고 적어 줘.</pre></div>
+    <div style="display:grid;gap:12px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div><div class="h" style="font-size:19px">항목만 바꿔 반복</div><div class="d" style="font-size:16px">“1. 배경” → “2. 목표” → … 한 번에 한 항목</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h" style="font-size:19px">짧으니 확인이 쉽다</div><div class="d" style="font-size:16px">다섯 문장이면 숫자 대조도 금방</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-link"/></svg></span><div><div class="h" style="font-size:19px">두 도구로 교차 확인</div><div class="d" style="font-size:16px">Gemini·Claude에 같은 프롬프트 — 서로 다른 숫자가 나온 곳이 의심할 곳. 한쪽이 사용량 한도에 걸리면 다른 쪽에서 이어서.</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시 · 서비스 화면과 메뉴 이름은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 실습 단계 3 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실습</span></div>
+  <h2>3단계: 숫자 대조표를 AI에게, 판정은 내가</h2>
+  <div class="two">
+    <div style="display:grid;gap:14px">
+      <div class="prompt"><div class="prompt-h">프롬프트 ③ 점검<button class="copy" type="button">복사</button></div><pre>방금 쓴 초안에 나온 숫자·날짜·이름을 모두 표로 뽑아 줘.
+각각 회의록의 어느 문장에서 왔는지 옆에 적고, 회의록에 없는 것은 “근거 없음”이라고 표시해 줘.</pre></div>
+      <div class="callout" style="font-size:16px">AI의 대조표도 틀릴 수 있습니다. 표를 <strong>지도</strong>로 삼아, 회의록 원문을 <strong>내 눈으로</strong> 확인합니다.</div>
+    </div>
+    <div class="box" style="margin:0;padding:18px 22px">
+      <p class="box-title"><svg class="ic"><use href="#i-check"/></svg> 내 점검표</p>
+      <ul class="memo" style="font-size:18px;list-style:none;padding:0">
+        <li>☐ 숫자·날짜가 회의록과 <strong>한 글자까지</strong> 같은가</li>
+        <li>☐ [확인 필요]를 누구에게 물을지 적었나 (원가 → 생산팀)</li>
+        <li>☐ 목표 숫자는 <strong>내가 근거와 함께</strong> 정했나</li>
+        <li>☐ 예산 항목의 합이 500만 원을 넘지 않나</li>
+        <li>☐ 회의에서 나오지 않은 방안이 슬쩍 들어가지 않았나</li>
+        <li>☐ 대표님이 읽고 <strong>결정할 수 있는</strong> 문서인가</li>
+      </ul>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 고친 흔적 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실습</span></div>
+  <h2>예시: AI 초안에 내가 손댄 흔적</h2>
+  <div class="body">
+    <div class="box edit" style="padding:20px 28px">
+      <p class="box-title" style="margin-bottom:4px">1. 배경 <span class="muted" style="font-size:14px;font-weight:600">— 예시 답변을 고친 예 · 실제 답은 매번 다를 수 있음</span></p>
+      <p style="margin:0">바다결의 자사몰 월 매출은 1월 1,254만 원에서 9월 1,592만 원으로 늘어, 세 판매 채널 중 유일하게 꾸준히 증가하고 있습니다. <del>특히 20~30대 고객의 호응이 큽니다.</del> <ins>다만 고객 나이를 수집하지 않아 20~30대 비중은 알 수 없습니다.</ins> 올해 후기 120건 중 13건은 부산 여행 중 매장에서 먹어 본 뒤 주문했다는 내용으로, <del>매장 체험이 구매의 핵심 경로입니다.</del> <ins>매장 체험이 온라인 주문으로 이어지는 경우가 있음을 보여 줍니다.</ins> 이에 매장 방문 여행객을 자사몰 첫 구매로 잇는 방안이 필요합니다. 체험팩 원가는 <span class="tbd">[확인 필요: 생산팀]</span>입니다.</p>
+    </div>
+    <div class="grid g3" style="gap:14px;margin-top:6px">
+      <div class="callout frag show" style="font-size:16px"><del style="color:var(--bad)">빨간 줄</del> 근거 없는 주장, 지나친 단정</div>
+      <div class="callout b frag" style="font-size:16px"><strong style="color:var(--ok)">초록</strong> 자료가 말하는 만큼만 다시 쓰기</div>
+      <div class="callout frag" style="font-size:16px"><strong style="color:var(--accent-2)">[확인 필요]</strong> 지우지 말고 물어볼 곳을 적어 둔다</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시 · 이 고친 기록이 과제1의 「AI 활용 내역」이 됩니다 (5-3에서 안내)</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-list"/></svg></span><div class="h">구조 먼저</div><div style="font-size:21px">목차를 먼저 받아 고치고, <strong>항목별로</strong> 초안을 쓰게 한다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">사실은 내가 준다</div><div style="font-size:21px">자료에 없으면 <strong>[확인 필요]</strong> — 그래도 숫자마다 대조한다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">판단은 사람</div><div style="font-size:21px">목표 숫자·우선순위·책임은 <strong>문서를 내는 사람</strong>의 몫</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="목차 단계에서 빠진 항목이나 순서를 고치면, 본문을 통째로 다시 쓰지 않아도 됩니다. 그다음 항목별로 초안을 받습니다.">
+      <p class="q-title"><b>Q1.</b> AI로 기획서 초안을 쓸 때 가장 먼저 할 일은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">완성본을 한 번에 길게 써 달라고 한다</button>
+        <button type="button" data-v="b">목차(구조)를 먼저 받아 고친다</button>
+        <button type="button" data-v="c">글자 수만 정해 준다</button>
+        <button type="button" data-v="d">다른 회사 기획서를 붙여 넣고 바꿔 달라고 한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="회의록에 없는 숫자는 근거가 없습니다. 지우거나 [확인 필요]로 표시하고, 목표 숫자는 근거를 갖고 사람이 정합니다.">
+      <p class="q-title"><b>Q2.</b> 회의록엔 “목표 수치 미정”인데 AI 초안에 “신규 고객 40% 증가”가 있다면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">그럴듯하니 그대로 둔다</button>
+        <button type="button" data-v="b">더 크게 50%로 고친다</button>
+        <button type="button" data-v="c">지우거나 [확인 필요]로 두고, 근거를 갖고 사람이 정한다</button>
+        <button type="button" data-v="d">다른 AI도 40%라고 하면 그대로 둔다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="기획서의 기본 뼈대는 배경·목표·실행 방안·일정·예산·기대효과입니다. 대표 인사말은 기획서의 결정에 필요한 내용이 아닙니다.">
+      <p class="q-title"><b>Q3.</b> 기획서의 기본 항목이 <u>아닌</u> 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">배경</button>
+        <button type="button" data-v="b">예산</button>
+        <button type="button" data-v="c">기대효과</button>
+        <button type="button" data-v="d">대표 인사말</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="“정확하게”나 “전문가처럼”은 무엇을 하지 말아야 하는지 알려 주지 않습니다. 자료 밖의 숫자를 어떻게 처리할지 구체적으로 지시해야 합니다.">
+      <p class="q-title"><b>Q4.</b> AI가 숫자를 지어내지 않게 하는 지시로 가장 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">“자료에 없는 숫자는 지어내지 말고 [확인 필요]로 적어 줘”</button>
+        <button type="button" data-v="b">“정확하게 써 줘”</button>
+        <button type="button" data-v="c">“전문가처럼 써 줘”</button>
+        <button type="button" data-v="d">“숫자를 많이 넣어서 설득력 있게 써 줘”</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">5-2</div>
+    <h2>이메일·공문 작성</h2>
+    <p>거래처의 납기 문의, 고객의 불만 메일 — 받는 사람에 맞는 어조로 답장을 씁니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week04/lesson03.html">← 4-3 템플릿 적용 실습</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chat"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">5주 1차시 · 보고서·기획서 초안 작성</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

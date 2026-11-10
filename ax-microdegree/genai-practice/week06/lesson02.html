@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6주 2차시 · 출처 확인과 팩트체크 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 6주 2차시 교안: AI가 준 출처가 실제로 있는지·그렇게 말하는지 확인하기, 1차·2차 출처, 날짜와 작성자, 수평 읽기, 숫자 교차 확인, 가짜 링크와 지어낸 인용문">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  .stamp { animation: stamp 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  @keyframes stamp { 0%, 40% { opacity: 0; transform: scale(1.5); } 50%, 90% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .stamp { animation: none; } }
+  .chat .msg.ai b { color: var(--accent); }
+  .lnk { color: var(--accent); text-decoration: underline; font-size: 14.5px; word-break: break-all; }
+  .cl { border-bottom: 3px solid var(--accent-2); font-weight: 700; }
+  .cl sup { color: var(--accent-2); font-weight: 800; }
+  .cl.on { background: var(--accent-2-soft); }
+
+  /* 토글 */
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 15px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.35; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .tgl .exp { margin-left: auto; font-size: 12.5px; font-weight: 800; white-space: nowrap; }
+  .tgl .exp.y { color: var(--ok); } .tgl .exp.n { color: var(--bad); }
+  .status { border-radius: 14px; padding: 9px 14px; font-size: 15px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 출처 카드 */
+  .srcs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .srcbtn { font: inherit; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-height: 70px; }
+  .srcbtn .tp { font-size: 12px; font-weight: 800; color: var(--muted); }
+  .srcbtn .nm { font-size: 14.5px; font-weight: 800; line-height: 1.35; }
+  .srcbtn[aria-pressed="true"] { border: 2px solid var(--accent); background: var(--accent-soft); }
+  .srcbtn .sc { font-size: 12px; font-weight: 800; color: var(--accent); }
+  .doc { flex: 1; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; font-size: 16px; line-height: 1.5; min-height: 0; }
+  .doc .dt { font-size: 21px; font-weight: 800; line-height: 1.35; }
+  .doc .meta-row { display: grid; grid-template-columns: 84px 1fr; gap: 2px 12px; font-size: 15px; }
+  .doc .meta-row b { color: var(--muted); font-weight: 700; }
+  .doc .ex { border-left: 4px solid var(--line); padding: 4px 12px; color: var(--muted); font-size: 15px; background: var(--surface); border-radius: 0 8px 8px 0; }
+
+  /* 주장 검증 */
+  .vbtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .vbtns button { font: inherit; font-size: 15px; font-weight: 800; padding: 9px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .vbtns button:hover:not(:disabled) { border-color: var(--accent); }
+  .vbtns button.right { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+  .vbtns button.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+  .ctabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .ctabs button { font: inherit; font-size: 15px; font-weight: 800; padding: 7px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); cursor: pointer; }
+  .ctabs button[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .ctabs button.done::after { content: " ✓"; }
+  .evid { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; font-size: 15px; line-height: 1.5; }
+  .evid .eh { font-size: 13px; font-weight: 800; color: var(--muted); margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+
+  .ladder td { font-size: 18px; padding: 10px 16px; }
+  .ladder td:first-child { font-weight: 800; white-space: nowrap; }
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true"><symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol></svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 6주차 2차시</p>
+    <h1>출처 확인과<br>팩트체크</h1>
+    <p class="lead" style="font-size:25px">AI가 보여 준 출처,<br>정말 그렇게 말하고 있을까?</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>Gemini · Claude</span><span>직접 해 보기 2개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:500px;flex:none" aria-hidden="true">
+    <rect x="70" y="50" width="250" height="320" rx="22" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <rect x="200" y="90" width="250" height="320" rx="22" class="f-surface" stroke="var(--accent)" stroke-width="3"/>
+    <g fill="var(--line)"><rect x="100" y="95" width="80" height="14" rx="7"/><rect x="100" y="125" width="70" height="14" rx="7"/><rect x="100" y="155" width="85" height="14" rx="7"/></g>
+    <g fill="var(--line)"><rect x="230" y="130" width="190" height="14" rx="7"/><rect x="230" y="160" width="150" height="14" rx="7"/><rect x="230" y="190" width="175" height="14" rx="7"/><rect x="230" y="220" width="120" height="14" rx="7"/></g>
+    <rect x="230" y="160" width="150" height="14" rx="7" class="f-acc2" opacity=".85"/>
+    <path d="M170 167 C 200 167, 200 167, 228 167" stroke="var(--accent-2)" stroke-width="3" stroke-dasharray="5 5" fill="none"/>
+    <g class="stamp">
+      <circle cx="350" cy="320" r="62" fill="var(--surface)" stroke="var(--ok)" stroke-width="8"/>
+      <path d="M322 320 l20 20 l36 -40" fill="none" stroke="var(--ok)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(40 300) scale(3)" style="color:var(--accent)"><use href="#i-search" width="24" height="24"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">출처 확인</div><div class="d">출처가 실제로 있는지, AI가 말한 내용이 그 안에 있는지 확인한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">1차·2차 출처</div><div class="d">원자료와 옮긴 자료를 구분하고, 작성자·날짜를 읽는다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-search"/></svg></span><div class="h">수평 읽기·교차 확인</div><div class="d">다른 곳에서 그 출처와 숫자를 확인한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">판정과 기록</div><div class="d">주장마다 확인됨·일부 다름·확인 안 됨으로 판정해 기록한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 출처가 진짜인가</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>② 어떤 출처를 믿을까</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 팩트체크 실습</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-log"/></svg> 준비물: 1차시에 Gemini·Claude로 받은 <strong>그래놀라 시장 조사 답변</strong>과 링크. 없다면 오늘 슬라이드의 예시로 따라 합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>출처까지 붙어 있으니 믿어도 될까?</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:28px">
+    <div class="chat" style="flex:1.1">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">국내 그래놀라 시장 성장률을 출처와 함께 알려 줘.</div>
+      <div class="msg ai"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>한국건강간식협회(가상)의 「2026 그래놀라 시장 보고서」에 따르면, 국내 그래놀라 시장은 <b>매년 15%씩</b> 성장하고 있습니다.
+<span class="lnk"><svg class="ic"><use href="#i-link"/></svg> example.com/kfsa/market-2026</span></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="muted" style="font-size:19px;font-weight:700">링크를 눌러 보면, 이런 일이 생각보다 자주 생긴다</div>
+      <div class="tile row frag show" style="padding:12px 18px"><span class="ic-badge" style="background:var(--bad-soft);color:var(--bad)"><svg class="ic"><use href="#i-x"/></svg></span><div><div class="h" style="font-size:20px">페이지를 찾을 수 없음</div><div class="d">그럴듯한 주소지만 존재하지 않는다</div></div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:20px">열리지만 그런 숫자가 없음</div><div class="d">진짜 자료인데 AI가 다른 말을 붙였다</div></div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge g"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h" style="font-size:20px">숫자는 있지만 몇 년 전 자료</div><div class="d">지금 일처럼 말하고 있었다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시 · 미리 써 둔 예시 답변 · 협회·보고서·주소는 모두 가상</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>출처가 진짜인가</h2><p>출처가 “붙어 있는 것”과 “확인된 것”은 다릅니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-link"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 출처 확인 3단계 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 출처가 진짜인가</span></div>
+  <h2>출처 확인의 세 단계</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">1. 있나?</div><div class="d">링크가 열리는가<br>그 기관·보고서·기사가<br><b>실제로 존재</b>하는가</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-search"/></svg></span><div class="h">2. 그렇게 말하나?</div><div class="d">AI가 말한 숫자·문장이<br>그 안에 <b>그대로 있는가</b><br>(찾기 기능으로 확인)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">3. 믿을 만한가?</div><div class="d">누가·언제·어떻게<br>만든 자료인가<br>→ ② 에서</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:24px"><p style="font-size:20px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> 1단계에서 막히면 그 주장은 <strong>“확인 안 됨”</strong>. 출처를 대신 찾아 주겠다는 AI의 새 링크도 <strong>다시 1단계부터</strong> 확인합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시 · 긴 문서는 브라우저의 찾기(Ctrl+F)로 숫자·핵심어를 검색</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 흔한 문제 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 출처가 진짜인가</span></div>
+  <h2>AI 답변 속 출처의 흔한 문제 다섯 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(5,1fr);gap:14px">
+      <div class="tile frag show" style="padding:18px 14px"><span class="ic-badge" style="background:var(--bad-soft);color:var(--bad)"><svg class="ic"><use href="#i-x"/></svg></span><div class="h" style="font-size:20px">없는 링크</div><div class="d" style="font-size:16px">주소 모양은 그럴듯한데 열리지 않는다</div></div>
+      <div class="tile frag" style="padding:18px 14px"><span class="ic-badge o"><svg class="ic"><use href="#i-link"/></svg></span><div class="h" style="font-size:20px">엉뚱한 페이지</div><div class="d" style="font-size:16px">열리지만 AI가 말한 내용이 없다</div></div>
+      <div class="tile frag" style="padding:18px 14px"><span class="ic-badge o"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h" style="font-size:20px">지어낸 인용문</div><div class="d" style="font-size:16px">“○○ 회장은 …라고 말했다” — 검색해도 나오지 않는 말</div></div>
+      <div class="tile frag" style="padding:18px 14px"><span class="ic-badge g"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h" style="font-size:20px">오래된 자료</div><div class="d" style="font-size:16px">몇 년 전 숫자를 지금 일처럼 말한다</div></div>
+      <div class="tile frag" style="padding:18px 14px"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h" style="font-size:20px">부풀린 옮기기</div><div class="d" style="font-size:16px">기사·블로그를 거치며 숫자와 표현이 커진다</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">2주 3차시에 배운 <strong style="color:var(--text)">환각</strong>이 출처에서도 일어납니다. 웹 검색을 켜면 줄어들지만 <strong style="color:var(--text)">없어지지는 않습니다.</strong></p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>어떤 출처를 믿을까</h2><p>원자료에 가까울수록, 만든 사람이 분명할수록.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 1차 vs 2차 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 어떤 출처를 믿을까</span></div>
+  <h2>1차 출처와 2차 출처</h2>
+  <div class="body">
+    <table class="ladder">
+      <thead><tr><th>구분</th><th>예</th><th>특징</th><th>어떻게 쓸까</th></tr></thead>
+      <tbody>
+        <tr class="frag show"><td style="color:var(--ok)">1차 · 원자료</td><td>국가통계포털(KOSIS)의 통계표, 정부·공공기관 원 보고서, 협회 조사 원문</td><td>숫자를 <b>직접 만든 곳</b>. 조사 방법이 함께 있다</td><td><b>인용의 기본</b>. 단, 협회·기업 자료는 이해관계를 적는다</td></tr>
+        <tr class="frag"><td style="color:var(--accent)">2차 · 옮긴 자료</td><td>언론 기사, 다른 기관의 요약 보고서</td><td>1차 자료를 <b>골라 옮기고 해석</b>한다</td><td>원자료를 찾는 <b>길잡이</b>. 숫자는 원자료로 확인</td></tr>
+        <tr class="frag"><td style="color:var(--accent-2)">출발점일 뿐</td><td>블로그, SNS, 커뮤니티 글, <b>AI 답변</b></td><td>작성자·근거가 불분명하거나 광고가 섞인다</td><td>아이디어만 얻고 <b>인용하지 않는다</b></td></tr>
+      </tbody>
+    </table>
+    <p class="muted frag" style="margin-top:18px;font-size:19px">AI 답변은 출처가 아니라 <strong style="color:var(--text)">출처를 찾아 주는 도구</strong>입니다. 보고서에는 AI가 가리킨 <strong style="color:var(--text)">원문</strong>을 확인해 적습니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시 · 국가통계포털(KOSIS)은 국가데이터처(옛 통계청)가 운영하는 공식 통계 서비스</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 네 가지 질문 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 어떤 출처를 믿을까</span></div>
+  <h2>출처를 읽을 때 던지는 네 가지 질문</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">누가?</div><div class="d">작성자·기관 이름이 있는가. 그 분야를 다루는 곳인가</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h">언제?</div><div class="d">발행일·조사 시점이 있는가. 지금 쓰기에 너무 오래되지 않았나</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">어떻게?</div><div class="d">조사 대상·인원·방법을 밝혔는가. 숫자의 원자료가 있는가</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">왜?</div><div class="d">판매·홍보가 목적인가. 결과로 이득을 보는 쪽인가</div></div>
+    </div>
+    <div class="callout b frag" style="margin-top:20px;font-size:19px">네 질문에 모두 답할 수 있는 출처일수록 믿을 만합니다. 하나라도 비면 <strong>그 빈칸을 보고서에 함께 적거나</strong>, 다른 출처를 찾습니다.</div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 직접 해 보기 1: 출처 신뢰도 점검표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 어떤 출처를 믿을까 · 직접 해 보기 1</span></div>
+  <h2>출처 신뢰도 점검표 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px;padding:12px">
+      <div class="srcs" id="srcs"></div>
+      <div class="doc" id="doc"></div>
+    </div>
+    <div class="side">
+      <div class="toggles" id="crit"></div>
+      <div style="display:flex;gap:8px;align-items:stretch">
+        <div class="meter" style="flex:1"><div class="lbl">점수</div><div class="val" id="cr-n" style="font-size:30px">0 / 6</div></div>
+        <button class="btn ghost" id="cr-ans" type="button" style="flex:1.3;font-size:16px">점검 결과<br>비교하기</button>
+      </div>
+      <div class="status bad" id="cr-st"><b class="k">인용하지 않음</b>항목을 체크해 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시 · 협회·언론·블로그·주소는 모두 가상(KOSIS 카드는 일반적인 모습) · 6점 만점: 5~6 인용 / 3~4 한 번 더 확인 / 0~2 인용하지 않음</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 수평 읽기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 어떤 출처를 믿을까</span></div>
+  <h2>수평 읽기: 그 페이지 <span class="mark">밖에서</span> 확인한다</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <svg viewBox="0 0 560 380" style="width:540px;flex:none" role="img" aria-label="한 페이지만 깊이 읽는 수직 읽기와 여러 탭을 열어 확인하는 수평 읽기 비교">
+      <text x="120" y="26" text-anchor="middle" class="t-main">수직 읽기</text>
+      <rect x="40" y="44" width="160" height="300" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <g fill="var(--line)"><rect x="60" y="70" width="120" height="10" rx="5"/><rect x="60" y="94" width="100" height="10" rx="5"/><rect x="60" y="118" width="110" height="10" rx="5"/><rect x="60" y="142" width="90" height="10" rx="5"/><rect x="60" y="166" width="115" height="10" rx="5"/><rect x="60" y="190" width="100" height="10" rx="5"/><rect x="60" y="214" width="120" height="10" rx="5"/></g>
+      <path d="M120 240 V320" stroke="var(--muted)" stroke-width="3" marker-end="url(#ah)"/>
+      <text x="120" y="368" text-anchor="middle" class="t-sub">그 페이지 안의 말만 믿는다</text>
+      <text x="400" y="26" text-anchor="middle" class="t-main" style="fill:var(--accent)">수평 읽기</text>
+      <rect x="300" y="44" width="120" height="150" rx="12" class="f-surface" stroke="var(--accent)" stroke-width="2.5"/>
+      <g fill="var(--line)"><rect x="315" y="66" width="90" height="9" rx="4"/><rect x="315" y="86" width="70" height="9" rx="4"/></g>
+      <text x="360" y="130" text-anchor="middle" class="t-sub" style="font-size:12.5px">처음 본 출처</text>
+      <path d="M420 100 H448" stroke="var(--accent)" stroke-width="3" marker-end="url(#ah2)"/>
+      <g>
+        <rect x="455" y="44" width="95" height="50" rx="10" class="f-accs" stroke="var(--accent)" stroke-width="1.5"/><text x="502" y="74" text-anchor="middle" class="t-sub" style="fill:var(--text);font-size:12.5px">기관 소개</text>
+        <rect x="455" y="104" width="95" height="50" rx="10" class="f-accs" stroke="var(--accent)" stroke-width="1.5"/><text x="502" y="134" text-anchor="middle" class="t-sub" style="fill:var(--text);font-size:12.5px">다른 기사</text>
+        <rect x="455" y="164" width="95" height="50" rx="10" class="f-accs" stroke="var(--accent)" stroke-width="1.5"/><text x="502" y="194" text-anchor="middle" class="t-sub" style="fill:var(--text);font-size:12.5px">원자료</text>
+      </g>
+      <text x="425" y="250" text-anchor="middle" class="t-sub">새 탭을 열어</text>
+      <text x="425" y="272" text-anchor="middle" class="t-sub">“이 출처는 어떤 곳이지?”</text>
+      <text x="425" y="294" text-anchor="middle" class="t-sub">“다른 곳도 같은 말을 하나?”</text>
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" class="f-muted"/></marker>
+        <marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" class="f-acc"/></marker>
+      </defs>
+    </svg>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="tile frag show" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:20px">1. 오래 읽기 전에 새 탭</div><div class="d">기관·작성자 이름을 검색해 어떤 곳인지 본다</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:20px">2. 다른 곳의 평가</div><div class="d">언론·공공기관은 이 출처를 어떻게 다루나</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:20px">3. 원자료까지</div><div class="d">숫자가 처음 나온 곳을 찾아 같은 말인지 본다</div></div>
+      <div class="callout b frag" style="font-size:16px">스탠퍼드대 연구진(SHEG, 2017)은 전문 팩트체커가 역사학자·대학생보다 웹 정보의 신뢰도를 더 정확하고 빠르게 판단했고, 그 비결이 이 <strong>수평 읽기</strong>였다고 보고했습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시 · Wineburg &amp; McGrew, Stanford History Education Group (2017)</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 숫자는 두 곳에서 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 어떤 출처를 믿을까</span></div>
+  <h2>숫자는 <span class="mark">서로 독립된</span> 두 곳에서 확인한다</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <svg viewBox="0 0 600 380" style="width:580px;flex:none" role="img" aria-label="AI가 말한 숫자를 원 조사와 기사에서 확인하는데, 기사는 원 조사를 옮긴 것이라 독립된 확인이 아니다">
+      <rect x="190" y="10" width="220" height="72" rx="16" class="f-acc"/>
+      <text x="300" y="40" text-anchor="middle" style="font-size:14px;font-weight:700;fill:var(--surface)">AI가 말한 숫자</text>
+      <text x="300" y="66" text-anchor="middle" style="font-size:20px;font-weight:800;fill:var(--surface)">“30대 41%가 구매”</text>
+      <path d="M250 82 L130 160 M350 82 L470 160" stroke="var(--line)" stroke-width="3"/>
+      <rect x="20" y="160" width="220" height="110" rx="16" class="f-surface" stroke="var(--ok)" stroke-width="2.5"/>
+      <text x="130" y="192" text-anchor="middle" class="t-main">협회 조사 원문 (가상)</text>
+      <text x="130" y="218" text-anchor="middle" class="t-sub">표 3 · 30대 41%</text>
+      <text x="130" y="248" text-anchor="middle" style="font-size:15px;font-weight:800;fill:var(--ok)">1차 출처 · 같음</text>
+      <rect x="360" y="160" width="220" height="110" rx="16" class="f-surface" stroke="var(--accent-2)" stroke-width="2.5"/>
+      <text x="470" y="192" text-anchor="middle" class="t-main">가상일보 기사</text>
+      <text x="470" y="218" text-anchor="middle" class="t-sub">“협회 조사에 따르면 41%”</text>
+      <text x="470" y="248" text-anchor="middle" style="font-size:15px;font-weight:800;fill:var(--accent-2)">원문을 옮긴 것</text>
+      <path d="M360 215 C 300 215, 300 215, 244 215" stroke="var(--accent-2)" stroke-width="3" stroke-dasharray="6 6" fill="none" marker-end="url(#ah3)"/>
+      <text x="300" y="300" text-anchor="middle" style="font-size:16px;font-weight:800;fill:var(--accent-2)">결국 출처는 한 곳</text>
+      <text x="300" y="326" text-anchor="middle" class="t-sub">원문이 틀리면 둘 다 틀린다 → 다른 기관의 조사·공식 통계로 한 번 더</text>
+      <defs><marker id="ah3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" class="f-acc2"/></marker></defs>
+    </svg>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="tile row frag show" style="padding:12px 16px;gap:14px"><span class="ic-badge" style="width:52px;height:52px;font-size:28px"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:19px">같은 숫자인가</div><div class="d" style="font-size:16px">41%와 “절반”은 다른 말이다</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px;gap:14px"><span class="ic-badge" style="width:52px;height:52px;font-size:28px"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h" style="font-size:19px">같은 기준인가</div><div class="d" style="font-size:16px">대상(20~59세? 30대?)·연도·단위가 같나</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px;gap:14px"><span class="ic-badge o" style="width:52px;height:52px;font-size:28px"><svg class="ic"><use href="#i-link"/></svg></span><div><div class="h" style="font-size:19px">서로 베낀 것은 아닌가</div><div class="d" style="font-size:16px">다른 AI에게 다시 물어 같은 답이 나와도 확인이 아니다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시 · 협회·언론·수치는 모두 수업용 가상 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>팩트체크 실습</h2><p>AI는 확인할 목록을 만들고, 확인은 내가 합니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 팩트체크 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 팩트체크 실습 · 따라 해 보기</span></div>
+  <h2>주장 목록 만들기 프롬프트</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:24px">
+    <div class="prompt" style="flex:1"><div class="prompt-h">프롬프트 — Gemini·Claude 공통<button class="copy" type="button">복사</button></div><pre>아래 글에서 확인이 필요한 사실 주장(숫자·통계·인용문·날짜)을 모두 찾아 표로 정리해 줘.
+열: 번호 | 주장 | 글에 적힌 출처 | 원문을 찾을 곳 | 확인할 때 볼 점(대상·연도·단위)
+판정은 하지 말고, 내가 직접 확인할 목록만 만들어 줘.
+출처가 적혀 있지 않은 주장은 "출처 없음"이라고 표시해 줘.
+
+[<mark>1차시에 받은 AI 답변을 여기에 붙여 넣기</mark>]</pre></div>
+    <div style="width:360px;display:flex;flex-direction:column;gap:10px">
+      <div class="tile" style="padding:12px 16px;gap:4px"><div class="h" style="font-size:18px;color:var(--accent)">AI에게 맡길 일</div><div class="d" style="font-size:16px">긴 글에서 <b>주장을 빠짐없이 뽑아</b> 목록으로 만들기</div></div>
+      <div class="tile" style="padding:12px 16px;gap:4px;border:2px solid var(--accent-2)"><div class="h" style="font-size:18px;color:var(--accent-2)">내가 할 일</div><div class="d" style="font-size:16px">목록의 출처를 <b>직접 열어</b> 세 단계로 확인하고 판정</div></div>
+      <div class="callout" style="font-size:16px">“이거 맞아?”라고 AI에게 다시 묻는 것은 검증이 아닙니다. 같은 실수를 자신 있게 되풀이할 수 있습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시 · 1차시 답을 Gemini에서 받았다면 Claude에, Claude에서 받았다면 Gemini에 넣어 봐도 좋음</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 2: 주장 3개 검증 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 팩트체크 실습 · 직접 해 보기 2</span></div>
+  <h2>AI 답변 속 주장 세 개를 판정해 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 390px">
+    <div class="plot" style="align-items:stretch;padding:12px">
+      <div class="chat" style="flex:1;border:0;padding:4px">
+        <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+        <div class="msg user">20~30대 그래놀라 소비 현황을 출처와 함께 요약해 줘.</div>
+        <div class="msg ai" style="font-size:16.5px;max-width:100%"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>20~30대에게 그래놀라는 아침 식사로 자리 잡고 있습니다. <span class="cl" data-c="0">한 조사에서 30대의 41%가 최근 1년 안에 그래놀라를 샀고<sup>①</sup></span>, <span class="cl" data-c="1">20~30대의 절반 이상이 그래놀라를 정기적으로 구매합니다<sup>②</sup></span>. 또한 <span class="cl" data-c="2">국내 그래놀라 시장은 매년 15%씩 성장하고 있습니다<sup>③</sup></span>.
+
+<b>출처</b>
+① 한국건강간식협회(가상), 「2026 건강 간식 소비자 조사」 <span class="lnk">example.com/kfsa/2026-survey</span>
+② 가상일보, 2026.8.12. <span class="lnk">example.com/gasang-daily/2026/08/12/granola</span>
+③ 한국건강간식협회(가상), 「2026 시장 보고서」 <span class="lnk">example.com/kfsa/market-2026</span></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="ctabs" id="cv-tabs"><button type="button" aria-pressed="true">주장 ①</button><button type="button" aria-pressed="false">주장 ②</button><button type="button" aria-pressed="false">주장 ③</button></div>
+      <div class="evid" id="cv-ev"></div>
+      <div class="muted" style="font-size:14px;font-weight:700">판정은?</div>
+      <div class="vbtns" id="cv-v"><button type="button" data-v="ok">확인됨</button><button type="button" data-v="part">일부 다름</button><button type="button" data-v="no">확인 안 됨</button></div>
+      <div class="status mid" id="cv-st"><b class="k">찾아본 결과를 읽고 판정하세요</b>세 주장 모두 판정하면 결과가 나옵니다.</div>
+      <div class="meter" style="padding:6px 14px"><div class="lbl">맞힌 판정</div><div class="val" id="cv-n" style="font-size:28px">0 / 3</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시 · 미리 써 둔 예시 답변 · 협회·언론·주소·수치는 모두 가상</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 기록표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 팩트체크 실습</span></div>
+  <h2>판정은 기록으로 남긴다</h2>
+  <div class="body">
+    <table style="font-size:16px">
+      <thead><tr><th>번호</th><th>AI가 말한 주장</th><th>직접 열어 본 출처</th><th>원문에 실제로 있는 내용</th><th>판정</th><th>확인한 날짜</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>30대 41%가 최근 1년 구매</td><td>협회 조사 원문 (가상)</td><td>표 3: 20대 38% · 30대 41%</td><td style="color:var(--ok);font-weight:800">확인됨</td><td>2026.11.3.</td></tr>
+        <tr><td>2</td><td>20~30대 절반 이상 정기 구매</td><td>가상일보 기사</td><td>제목만 “절반” · 원 조사는 38%·41% · “정기적”은 없음</td><td style="color:var(--accent-2);font-weight:800">일부 다름</td><td>2026.11.3.</td></tr>
+        <tr><td>3</td><td>시장 매년 15% 성장</td><td>협회 시장 보고서 링크</td><td>링크 열리지 않음 · 보고서를 찾지 못함</td><td style="color:var(--bad);font-weight:800">확인 안 됨</td><td>2026.11.3.</td></tr>
+      </tbody>
+    </table>
+    <div style="display:flex;gap:16px;align-items:center;margin-top:20px">
+      <a class="btn" href="materials/factcheck_log.csv" download><svg class="ic"><use href="#i-log"/></svg> 실습 자료 받기 · 팩트체크 기록표</a>
+      <div class="callout b" style="flex:1;font-size:17px">“확인 안 됨”도 <strong>버리지 말고 기록</strong>합니다. 다음 차시에 보고서를 쓸 때, 무엇을 빼고 무엇을 “확인 필요”로 둘지 이 표가 정해 줍니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시 · 기록표는 가상 자료(엑셀·구글 시트에서 열림) · 날짜는 실습 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">있나 · 그렇게 말하나</div><div style="font-size:21px">링크를 <strong>직접 열고</strong>, 그 숫자가 원문에 그대로 있는지 찾는다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">1차 출처로</div><div style="font-size:21px">누가·언제·어떻게·왜. 기사·블로그·AI 답변은 <strong>원자료를 찾는 길잡이</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-search"/></svg></span><div class="h">밖에서 · 두 곳에서</div><div style="font-size:21px"><strong>수평 읽기</strong>, 서로 독립된 두 곳. 판정은 기록으로</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="통계표는 숫자를 직접 만든 기관이 낸 원자료(1차 출처)입니다. 기사·블로그·AI 답변은 그것을 옮기거나 요약한 것입니다.">
+      <p class="q-title"><b>Q1.</b> 다음 중 1차 출처에 가장 가까운 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">통계를 소개한 블로그 글</button>
+        <button type="button" data-v="b">통계를 인용한 언론 기사</button>
+        <button type="button" data-v="c">국가통계포털(KOSIS)의 해당 통계표</button>
+        <button type="button" data-v="d">통계를 요약해 준 AI 답변</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="수평 읽기는 그 페이지 안에 머무르지 않고, 새 탭을 열어 그 출처가 어떤 곳인지·다른 곳은 뭐라고 하는지 확인하는 방법입니다.">
+      <p class="q-title"><b>Q2.</b> ‘수평 읽기’를 바르게 설명한 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">한 페이지를 처음부터 끝까지 꼼꼼히 읽는다</button>
+        <button type="button" data-v="b">새 탭을 열어 그 출처에 대해 다른 곳에서 확인한다</button>
+        <button type="button" data-v="c">화면을 가로로 돌려서 읽는다</button>
+        <button type="button" data-v="d">AI에게 같은 질문을 여러 번 한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="출처가 있는지(1단계)부터 확인되지 않았으므로 ‘확인 안 됨’입니다. 보고서에 쓰려면 원문을 따로 찾아 다시 확인해야 합니다.">
+      <p class="q-title"><b>Q3.</b> AI가 준 보고서 링크가 열리지 않는다. 알맞은 판정은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 말했으니 확인됨</button>
+        <button type="button" data-v="b">기관 이름이 있으니 일부 다름</button>
+        <button type="button" data-v="c">링크만 지우고 숫자는 그대로 쓴다</button>
+        <button type="button" data-v="d">확인 안 됨 — 원문을 따로 찾을 때까지 쓰지 않는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="기사가 보고서를 옮긴 것이라면 두 곳이 아니라 사실상 한 곳입니다. 원문을 직접 확인하고, 가능하면 서로 독립된 다른 출처로 한 번 더 확인합니다.">
+      <p class="q-title"><b>Q4.</b> 같은 숫자가 보고서와 기사에 모두 있다. 그런데 기사가 그 보고서를 인용한 것이라면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">사실상 출처는 한 곳 — 원문을 확인하고 독립된 출처를 더 찾는다</button>
+        <button type="button" data-v="b">두 곳에서 확인됐으니 충분하다</button>
+        <button type="button" data-v="c">기사가 더 최신이니 기사만 인용한다</button>
+        <button type="button" data-v="d">숫자가 같으면 출처는 적지 않아도 된다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">6-3</div>
+    <h2>조사 결과 정리 실습</h2>
+    <p>확인한 것과 추정을 구분해, 대표가 한눈에 읽는 한 장짜리 조사 브리프를 만듭니다. 오늘의 기록표를 가지고 오세요.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-log"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 6주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">6주 2차시 · 출처 확인과 팩트체크</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

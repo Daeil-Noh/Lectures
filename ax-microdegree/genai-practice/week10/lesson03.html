@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10주 3차시 · 홍보 콘텐츠 기획 실습 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 10주 3차시 교안: 바다결 미니 캠페인 기획(목표·타깃·메시지·채널·콘텐츠 3개·일정·성과 지표), AI로 아이디어와 초안 얻기, 사람이 고르기, 발행 전 점검">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .slide.section .big { margin-bottom: 24px; }
+  .pop { transform-box: fill-box; transform-origin: center; animation: pop 3.6s ease-in-out infinite; }
+  .pop.b { animation-delay: 1.2s; } .pop.c { animation-delay: 2.4s; }
+  @keyframes pop { 0%, 70%, 100% { transform: none; } 80% { transform: translateY(-10px); } }
+  @media (prefers-reduced-motion: reduce) { .pop { animation: none; } }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 기획서 7칸 */
+  .plan { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .pc { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; }
+  .pc .n { font-size: 14px; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+  .pc .v { font-size: 17px; line-height: 1.45; }
+  .pc.wide { grid-column: span 2; }
+  .pc.hot { border: 2px solid var(--accent); }
+
+  /* 목표 고치기 */
+  .fixrow { display: grid; grid-template-columns: 1fr 40px 1.5fr; gap: 10px; align-items: center; }
+  .fixrow .bad, .fixrow .good { border-radius: 14px; padding: 12px 16px; font-size: 18px; line-height: 1.45; }
+  .fixrow .bad { background: var(--bad-soft); }
+  .fixrow .good { background: var(--ok-soft); }
+  .fixrow .ar { text-align: center; color: var(--muted); font-size: 26px; }
+
+  /* 캠페인 보드 */
+  .goalbtns { display: grid; gap: 8px; }
+  .goalbtns .btn { justify-content: flex-start; font-size: 16.5px; padding: 10px 14px; }
+  .goalbtns .btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; height: 100%; }
+  .col { background: var(--surface-2); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; min-height: 0; }
+  .col .ch { font-size: 14px; font-weight: 800; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .kc { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; font-size: 15px; line-height: 1.4; animation: kin .35s ease; }
+  .kc b { display: block; font-size: 15.5px; }
+  .kc small { color: var(--muted); font-size: 12.5px; display: block; margin-top: 2px; }
+  .kc.warn { border-color: var(--accent-2); background: var(--accent-2-soft); }
+  @keyframes kin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .kc { animation: none; } }
+
+  /* 막대 */
+  .cbars { display: grid; gap: 14px; }
+  .cbar .lbl { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .cbar .tr { height: 26px; background: var(--surface-2); border-radius: 8px; overflow: hidden; display: flex; }
+  .cbar .tr i { display: block; height: 100%; }
+
+  /* 아이디어 카드 */
+  .ideas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; }
+  .idea { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; }
+  .idea:hover { border-color: var(--accent); }
+  .idea .t { font-size: 16px; font-weight: 800; line-height: 1.35; }
+  .idea .f { font-size: 13px; color: var(--muted); }
+  .idea .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
+  .idea .tags span { font-size: 11.5px; font-weight: 800; border-radius: 6px; padding: 1px 6px; background: var(--surface-2); color: var(--muted); }
+  .idea .tags span.g { background: var(--ok-soft); color: var(--ok); }
+  .idea .tags span.r { background: var(--bad-soft); color: var(--bad); }
+  .idea .tags span.y { background: var(--accent-2-soft); color: var(--accent-2); }
+  .idea[aria-pressed="true"] { border: 2px solid var(--accent); background: var(--accent-soft); }
+  .idea[aria-pressed="true"].risky { border-color: var(--bad); background: var(--bad-soft); }
+  .picked { display: grid; gap: 6px; }
+  .picked div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 15px; }
+  .picked div.empty { color: var(--muted); border-style: dashed; }
+
+  /* 일정 */
+  .gantt { display: grid; grid-template-columns: 230px repeat(4, 1fr); gap: 6px; align-items: center; font-size: 17px; }
+  .gantt .hd { font-size: 15px; font-weight: 800; color: var(--muted); text-align: center; }
+  .gantt .rn { font-weight: 700; line-height: 1.3; }
+  .gantt .rn small { display: block; color: var(--muted); font-weight: 500; font-size: 13.5px; }
+  .gantt .gb { height: 38px; border-radius: 10px; display: flex; align-items: center; padding: 0 10px; font-size: 14px; font-weight: 700; color: var(--surface); white-space: nowrap; overflow: hidden; }
+  .gantt .gb.a { background: var(--accent); } .gantt .gb.b { background: var(--accent-2); } .gantt .gb.g { background: var(--surface-2); color: var(--text); border: 1px dashed var(--muted); }
+
+  /* 지표 깔때기 */
+  .funnel { display: grid; gap: 8px; }
+  .fstep { display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: center; }
+  .fstep .nm { font-weight: 800; font-size: 20px; }
+  .fstep .bx { border-radius: 12px; padding: 10px 16px; font-size: 17px; line-height: 1.4; background: var(--accent-soft); }
+
+  /* 체크리스트 */
+  .clist { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; align-content: start; }
+  .tgl { font: inherit; font-size: 15.5px; font-weight: 600; text-align: left; display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.4; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; margin-top: 1px; }
+  .tgl[aria-pressed="true"] { border-color: var(--ok); background: var(--ok-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--ok); border-color: var(--ok); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .tgl .g { display: block; font-size: 12px; font-weight: 800; color: var(--accent); }
+  .tgl small { display: block; font-size: 12.5px; color: var(--muted); font-weight: 500; }
+  .chat .msg { font-size: 15.5px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .steps .tile { padding: 14px 16px; gap: 6px; }
+  .steps .tile .h { font-size: 19px; }
+  .steps .tile .d { font-size: 16px; }
+  .steps .no { font-size: 15px; font-weight: 800; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 10주차 3차시</p>
+    <h1>홍보 콘텐츠<br>기획 실습</h1>
+    <p class="lead" style="font-size:25px">아이디어는 AI와 넓게,<br>선택과 책임은 사람이</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span><span>Gemini · Claude</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="20" y="40" width="480" height="360" rx="28" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <rect x="20" y="40" width="480" height="58" rx="28" class="f-accs"/><rect x="20" y="70" width="480" height="28" class="f-accs"/>
+    <rect x="50" y="60" width="170" height="18" rx="9" class="f-acc"/>
+    <g class="pop"><rect x="50" y="128" width="130" height="150" rx="18" class="f-s2"/><rect x="66" y="148" width="98" height="64" rx="10" class="f-accs"/><rect x="66" y="226" width="80" height="10" rx="5" class="f-line"/><rect x="66" y="246" width="60" height="10" rx="5" class="f-line"/></g>
+    <g class="pop b"><rect x="195" y="128" width="130" height="150" rx="18" class="f-s2"/><rect x="211" y="148" width="98" height="64" rx="10" class="f-acc2s"/><rect x="211" y="226" width="80" height="10" rx="5" class="f-line"/><rect x="211" y="246" width="60" height="10" rx="5" class="f-line"/></g>
+    <g class="pop c"><rect x="340" y="128" width="130" height="150" rx="18" class="f-s2"/><rect x="356" y="148" width="98" height="64" rx="10" class="f-accs"/><rect x="356" y="226" width="80" height="10" rx="5" class="f-line"/><rect x="356" y="246" width="60" height="10" rx="5" class="f-line"/></g>
+    <rect x="50" y="306" width="420" height="16" rx="8" class="f-s2"/>
+    <rect x="50" y="306" width="120" height="16" rx="8" class="f-acc"/><rect x="180" y="306" width="150" height="16" rx="8" class="f-acc2"/><rect x="340" y="306" width="80" height="16" rx="8" class="f-accs"/>
+    <circle cx="440" cy="356" r="22" class="f-acc"/>
+    <g transform="translate(428 344)" style="color:var(--surface)"><use href="#i-check" width="24" height="24"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">기획서 일곱 칸</div><div class="d">목표·타깃·메시지·채널·콘텐츠·일정·지표로 캠페인을 한 장에 쓴다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">목표에 맞는 선택</div><div class="d">목표에 따라 채널과 성과 지표가 달라짐을 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">AI는 넓게, 사람은 선택</div><div class="d">AI로 아이디어·초안을 받고 기준에 따라 고른다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">발행 전 점검</div><div class="d">사실·표시 의무·저작권·개인정보를 확인한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>① 기획서의 뼈대</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② AI와 아이디어·초안</b><small>직접 해 보기 1</small></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>③ 일정·성과 지표</b></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>④ 발행 전 점검</b><small>직접 해 보기 1 · 실습</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘 만드는 기획서는 11주 <strong>과제2(홍보 콘텐츠 제작)</strong>의 출발점이 됩니다. 과제 내용과 제출 방법은 LMS 공지를 기준으로 합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>이번 주에 만든 것을 한 장으로 모은다</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div class="muted" style="font-size:15px;font-weight:700">10-1</div><div class="h">페르소나</div><div class="d">서윤 — 바쁜 아침,<br>너무 단 건 싫다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="muted" style="font-size:15px;font-weight:700">10-2</div><div class="h">메시지·카피</div><div class="d">“덜 달아서 매일 아침,<br>바다결 무가당 견과 믹스”</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div style="font-size:15px;font-weight:700;opacity:.85">10-3 오늘</div><div class="h">캠페인 기획서</div><div class="d">무엇을, 어디에, 언제,<br>어떻게 잴 것인가</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-eye"/></svg></span><div class="muted" style="font-size:15px;font-weight:700">11주</div><div class="h">이미지·숏폼</div><div class="d">기획한 콘텐츠를<br>직접 만들기</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">게시물 하나는 “콘텐츠”, 목표를 가지고 여러 콘텐츠를 일정에 맞춰 내보내는 묶음은 <strong style="color:var(--text)">캠페인</strong>입니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시 · 바다결은 수업용 가상 회사</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>기획서의 뼈대</h2><p>일곱 칸이 서로 이어져야 한다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-log"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 기획서 7칸 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 기획서의 뼈대</span></div>
+  <h2>미니 캠페인 기획서: 일곱 칸 <span class="muted" style="font-size:20px;font-weight:500">— 바다결 「아침 한 줌」(가제) 예시</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="plan">
+      <div class="pc hot frag show"><div class="n"><svg class="ic"><use href="#i-target"/></svg>1. 목표</div><div class="v">매장에서 맛본 고객을 <b>자사몰 첫 구매</b>로 잇는다</div></div>
+      <div class="pc frag"><div class="n"><svg class="ic"><use href="#i-user"/></svg>2. 타깃</div><div class="v">페르소나 서윤 — 아침을 간단히 먹는 20~30대 <span class="muted" style="font-size:14px">(가설)</span></div></div>
+      <div class="pc wide frag"><div class="n"><svg class="ic"><use href="#i-chat"/></svg>3. 핵심 메시지</div><div class="v">“덜 달아서 매일 아침, 바다결 무가당 견과 믹스”</div></div>
+      <div class="pc frag"><div class="n"><svg class="ic"><use href="#i-map"/></svg>4. 채널</div><div class="v">매장 안내 카드 → 자사몰<br>인스타그램 피드·짧은 영상</div></div>
+      <div class="pc wide frag"><div class="n"><svg class="ic"><use href="#i-layers"/></svg>5. 콘텐츠 3개</div><div class="v">① 아침 한 줌 짧은 영상 ② 후기 한 줄 카드(피드) ③ 매장 맛보기 + 자사몰 쿠폰 카드</div></div>
+      <div class="pc frag"><div class="n"><svg class="ic"><use href="#i-clock"/></svg>6. 일정</div><div class="v">4주: 준비 → 발행 → 측정</div></div>
+      <div class="pc wide frag"><div class="n"><svg class="ic"><use href="#i-chart"/></svg>7. 성과 지표</div><div class="v">쿠폰 사용 건수 · 자사몰 첫 구매 고객 수 · 게시물 저장·공유 수 — <b>시작 전 기준값</b>을 먼저 기록</div></div>
+      <div class="pc wide frag" style="background:var(--accent-soft);border-color:transparent;justify-content:center"><div class="v" style="display:flex;align-items:center;gap:14px"><a class="btn" href="materials/campaign_plan_template.md" download>기획서 양식 받기</a><span style="font-size:16px">일곱 칸 + 발행 전 점검표</span></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시 · 예시 기획은 수업용 가상 내용</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 목표는 측정할 수 있게 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 기획서의 뼈대</span></div>
+  <h2>목표는 <span class="mark">잴 수 있게</span> 쓴다</h2>
+  <div class="body" style="gap:14px">
+    <div class="fixrow frag show"><div class="bad">20~30대 고객을 늘린다</div><div class="ar">›</div><div class="good">4주 동안 <b>매장 쿠폰 카드로 자사몰에서 처음 산 고객 수</b>를 센다</div></div>
+    <div class="fixrow frag"><div class="bad">SNS를 열심히 한다</div><div class="ar">›</div><div class="good">게시물 3개의 <b>저장·공유 수</b>를 기록해 어떤 형식이 반응이 좋은지 비교한다</div></div>
+    <div class="fixrow frag"><div class="bad">브랜드를 알린다</div><div class="ar">›</div><div class="good">캠페인 전 4주와 비교해 <b>자사몰 방문 수</b>가 얼마나 달라졌는지 본다</div></div>
+    <div class="box warn frag" style="margin:8px 0 0;padding:14px 22px"><p style="font-size:19px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> 지금 판매 기록(sales_2026.csv)에는 <strong>신규·재구매 구분도, 나이도 없습니다</strong>. 잴 방법(쿠폰 코드·링크)을 캠페인 <strong>전에</strong> 준비해야 결과를 알 수 있습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 직접 해 보기 1: 캠페인 보드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 기획서의 뼈대 · 직접 해 보기 1</span></div>
+  <h2>목표를 바꾸면 채널과 지표도 바뀐다 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:270px 1fr">
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">이번 캠페인의 목표는?</div>
+      <div class="goalbtns" id="goals">
+        <button class="btn ghost" type="button" data-g="aware" aria-pressed="false"><svg class="ic"><use href="#i-eye"/></svg> 바다결 알리기</button>
+        <button class="btn ghost" type="button" data-g="first" aria-pressed="false"><svg class="ic"><use href="#i-target"/></svg> 처음 사 보게 하기</button>
+        <button class="btn ghost" type="button" data-g="store" aria-pressed="true"><svg class="ic"><use href="#i-map"/></svg> 매장 → 온라인 잇기</button>
+        <button class="btn ghost" type="button" data-g="again" aria-pressed="false"><svg class="ic"><use href="#i-reset"/></svg> 다시 사게 하기</button>
+      </div>
+      <div class="callout b" id="bd-msg" style="font-size:15.5px"></div>
+    </div>
+    <div class="plot" style="padding:12px;align-items:stretch"><div class="board" id="board"></div></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시 · 근거 숫자: ../materials/sales_2026.csv, reviews_2026.csv (가상) · 추천은 수업용 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 데이터로 채널 고르기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 기획서의 뼈대</span></div>
+  <h2>채널도 데이터로 고른다: 광고비는 어디에 쓰이고 있나</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <div class="cbars" style="flex:1">
+      <div class="cbar frag show"><div class="lbl"><span>광고비 나눠 쓴 비율 (1~9월)</span><span class="muted" style="font-size:15px">총 1억 1,506만 원</span></div><div class="tr"><i style="width:57.9%;background:var(--accent-2)"></i><i style="width:36%;background:var(--accent)"></i><i style="width:6.1%;background:var(--muted)"></i></div></div>
+      <div class="cbar frag show"><div class="lbl"><span>매출 나눠 가진 비율 (1~9월)</span><span class="muted" style="font-size:15px">총 3억 5,644만 원</span></div><div class="tr"><i style="width:46.6%;background:var(--accent-2)"></i><i style="width:32.3%;background:var(--accent)"></i><i style="width:21.1%;background:var(--muted)"></i></div></div>
+      <div class="legend" style="font-size:16px"><span><i class="dot" style="background:var(--accent-2)"></i>오픈마켓 광고비 58% · 매출 47%</span><span><i class="dot" style="background:var(--accent)"></i>자사몰 36% · 32%</span><span><i class="dot" style="background:var(--muted)"></i>오프라인 매장 6% · 21%</span></div>
+    </div>
+    <div style="width:400px;display:grid;gap:12px">
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="d" style="font-size:17px">오픈마켓은 광고비의 58%를 쓰지만 매출은 47% — 회사의 고민 ①과 같은 이야기입니다.</div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div class="d" style="font-size:17px">자사몰 매출은 9월이 1월보다 27% 많았습니다. 매장 경험(후기 13건)을 자사몰로 잇는 목표의 근거가 됩니다.</div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge g"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="d" style="font-size:17px">단, 매장은 광고비가 적어 비율만 보면 좋아 보입니다. 비율은 <strong style="color:var(--text)">단서</strong>일 뿐 — 원인은 7주처럼 따져 봅니다.</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시 · 출처: ../materials/sales_2026.csv (가상) · python3로 계산</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>AI와 아이디어·초안</h2><p>많이 받고, 기준으로 고르고, 고쳐 쓴다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-sparkles"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 아이디어 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI와 아이디어·초안 · 실습</span></div>
+  <h2>따라 해 보기: 콘텐츠 아이디어 10개 받기</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:24px">
+    <div style="flex:1.3;display:flex;flex-direction:column;justify-content:center;gap:12px">
+      <div class="prompt"><div class="prompt-h">프롬프트 (기획서 양식 첨부 후)<button class="copy" type="button">복사</button></div><pre>너는 <mark>부산의 건강 간식 회사 바다결</mark>의 마케팅 기획을 돕는 조수야.
+[목표] <mark>매장에서 맛본 고객을 4주 안에 자사몰 첫 구매로 잇기</mark>
+[타깃] <mark>서윤: 출근 전 바쁜 아침을 간단히 해결하고 싶다. 너무 단 건 싫다.</mark>
+[핵심 메시지] <mark>덜 달아서 매일 아침, 바다결 무가당 견과 믹스</mark>
+[예산·인원] 마케팅 담당 2명, 큰 촬영 장비 없음
+콘텐츠 아이디어 10개를 표로 써 줘. 열: 아이디어 / 채널 / 형식 / 필요한 준비 / 성과를 잴 방법.
+- 체중 감량·질병 효능 표현, 실존 인물·유명인 이용, 다른 회사 비교는 넣지 마.</pre></div>
+    </div>
+    <div style="flex:1;display:grid;gap:12px;align-content:center">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-bot"/></svg></span><div class="d" style="font-size:17px"><strong style="color:var(--text)">9-3에서 만든 맞춤형 AI 비서</strong>(Gemini Gem · Claude 프로젝트)에 바다결 소개·페르소나 카드를 넣어 두었다면, 그 비서에게 물어도 됩니다.</div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-reset"/></svg></span><div class="d" style="font-size:17px">같은 프롬프트를 <strong style="color:var(--text)">Gemini와 Claude 양쪽</strong>에 넣어 보면 아이디어 폭이 넓어집니다. 한도에 걸리면 한쪽만으로도 충분합니다.</div></div>
+      <div class="prompt"><div class="prompt-h">이어서 물어보기<button class="copy" type="button">복사</button></div><pre>10개 중 준비가 가장 쉬운 것 3개를 고르고, 각각 예상되는 위험(사실 확인, 광고 표시, 저작권, 개인정보)을 적어 줘.</pre></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시 · 주황색 부분은 내 기획에 맞게 바꿔 쓰기 · 서비스 화면과 기능 이름은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 2: 아이디어 고르기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI와 아이디어·초안 · 직접 해 보기 2</span></div>
+  <h2>AI가 낸 아이디어 8개 중 3개를 골라 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 300px">
+    <div class="plot" style="padding:12px;align-items:flex-start"><div class="ideas" id="ideas"></div></div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">고른 아이디어 (최대 3개)</div>
+      <div class="picked" id="picked"></div>
+      <div class="status mid" id="id-st"><b class="k">아이디어를 눌러 보세요</b>카드 아래의 표시를 보고 판단합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시 · 아이디어는 미리 써 둔 예시 답변 — 실제 답은 매번 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 콘텐츠 3개 초안 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI와 아이디어·초안</span></div>
+  <h2>고른 3개, 초안은 AI와 · 결정은 사람이</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show" style="padding:18px 20px;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div><div class="muted" style="font-size:14px;font-weight:700">콘텐츠 ① · 짧은 영상</div><div class="h" style="font-size:20px">아침 한 줌 15초</div></div></div><div class="d" style="font-size:16px">장면: 바쁜 아침 → 요거트에 한 줌 → 자막 “덜 달아서 매일 아침”</div><div style="font-size:15px"><b style="color:var(--accent)">사람이 할 일</b> 촬영, 자막 문구 확정, 배경 음악 이용 조건 확인</div></div>
+      <div class="tile frag" style="padding:18px 20px;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div><div class="muted" style="font-size:14px;font-weight:700">콘텐츠 ② · 인스타그램 피드</div><div class="h" style="font-size:20px">후기 한 줄 카드</div></div></div><div class="d" style="font-size:16px">“많이 달지 않아서 아침에 먹기 좋아요” — 후기 원문을 카드 이미지로</div><div style="font-size:15px"><b style="color:var(--accent)">사람이 할 일</b> 후기 원문 대조(고치지 않기), 작성자 정보 가리기</div></div>
+      <div class="tile frag" style="padding:18px 20px;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span class="ic-badge o"><svg class="ic"><use href="#i-map"/></svg></span><div><div class="muted" style="font-size:14px;font-weight:700">콘텐츠 ③ · 매장 안내 카드</div><div class="h" style="font-size:20px">맛보기 + 자사몰 쿠폰</div></div></div><div class="d" style="font-size:16px">“매장에서 맛보셨나요? 집에서도 매일 아침” + 쿠폰 코드</div><div style="font-size:15px"><b style="color:var(--accent)">사람이 할 일</b> 쿠폰 조건·기간 확정, 쿠폰 코드별 사용 수 세기 준비</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:20px;padding:16px 24px"><p style="font-size:19px;margin:0">AI에게는 <strong>문구 초안·장면 순서·체크리스트</strong>를 맡기고, <strong>사실·숫자·조건·최종 문구</strong>는 사람이 정합니다. 영상 대본과 이미지 만들기는 11주에서 이어 합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시 · 예시 기획은 수업용 가상 내용</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 일정 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 일정·성과 지표</span></div>
+  <h2>4주 일정: 준비 → 발행 → 측정</h2>
+  <div class="body">
+    <div class="gantt">
+      <div></div><div class="hd">1주</div><div class="hd">2주</div><div class="hd">3주</div><div class="hd">4주</div>
+      <div class="rn">기준값 기록·준비<small>쿠폰 코드, 촬영, 문구 확정</small></div><div class="gb g" style="grid-column:2 / span 1">준비·점검</div><div></div><div></div><div></div>
+      <div class="rn">③ 매장 안내 카드<small>오프라인 매장 2곳</small></div><div></div><div class="gb b" style="grid-column:3 / span 3">매장 비치 → 쿠폰 사용 세기</div>
+      <div class="rn">② 후기 한 줄 카드<small>인스타그램 피드</small></div><div></div><div class="gb a" style="grid-column:3 / span 1">1차 발행</div><div class="gb a" style="grid-column:4 / span 1">2차 발행</div><div></div>
+      <div class="rn">① 아침 한 줌 15초<small>짧은 영상</small></div><div></div><div></div><div class="gb a" style="grid-column:4 / span 1">발행</div><div></div>
+      <div class="rn">결과 정리<small>지표 비교·다음 계획</small></div><div></div><div></div><div></div><div class="gb g" style="grid-column:5 / span 1">측정·보고</div>
+    </div>
+    <p class="muted frag show" style="margin-top:22px;font-size:20px">발행 날짜마다 <strong style="color:var(--text)">④ 발행 전 점검</strong>을 통과해야 합니다. 일정은 점검할 시간까지 넣어 짭니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시 · 예시 일정</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 성과 지표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 일정·성과 지표</span></div>
+  <h2>성과 지표: 목표에 가까운 숫자를 본다</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div class="funnel" style="flex:1">
+      <div class="fstep frag show"><div class="nm">보기</div><div class="bx" style="margin-right:120px">도달·조회 수 — 몇 명에게 보였나</div></div>
+      <div class="fstep frag"><div class="nm">반응</div><div class="bx" style="margin-right:80px">저장·공유·댓글 — 관심을 보였나</div></div>
+      <div class="fstep frag"><div class="nm">행동</div><div class="bx" style="margin-right:40px">링크 클릭·자사몰 방문 — 움직였나</div></div>
+      <div class="fstep frag"><div class="nm" style="color:var(--accent)">구매</div><div class="bx" style="background:var(--accent);color:var(--surface)">쿠폰 사용·첫 구매 고객 수 — <b>목표에 가장 가깝다</b></div></div>
+    </div>
+    <div style="width:360px;display:grid;gap:12px">
+      <div class="tile frag" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:19px">아래로 갈수록 목표에 가깝다</div><div class="d">“좋아요”가 많아도 구매로 이어지지 않으면 이번 목표에는 실패일 수 있습니다.</div></div>
+      <div class="tile frag" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:19px">지표는 1~3개만, 시작 전에</div><div class="d">결과를 본 뒤 좋은 숫자만 골라 보고하지 않도록 <strong>미리</strong> 정해 둡니다.</div></div>
+      <div class="tile frag" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:19px">AI에게 맡길 일</div><div class="d">결과 표를 주고 요약·비교를 부탁하기(7주). 숫자는 원본과 대조합니다.</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 섹션 ④ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">④</div><h2>발행 전 점검</h2><p>올리는 버튼을 누르기 전에, 사람이 한 번 더.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-shield"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 직접 해 보기 3: 체크리스트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 발행 전 점검 · 직접 해 보기 3</span></div>
+  <h2>콘텐츠 ② 「후기 한 줄 카드」, 올려도 될까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="padding:12px 14px;align-items:flex-start"><div class="clist" id="clist"></div></div>
+    <div class="side">
+      <div class="meter"><div class="lbl">확인한 항목</div><div class="val" id="cl-n" style="font-size:36px">0 / 8</div><div class="track"><i id="cl-bar"></i></div></div>
+      <div class="status bad" id="cl-st"><b class="k">발행 보류</b>아직 확인하지 않은 항목이 있습니다.</div>
+      <div class="callout b" style="font-size:15px">AI에게 점검표를 먼저 돌려 봐도 좋지만, <strong>체크 표시는 사람이 직접 확인한 뒤</strong>에 합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시 · 저작권·AI 생성물 표시는 11-3, 개인정보는 1-3, 광고 표현은 10-2</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 과제 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 발행 전 점검 · 실습</span></div>
+  <h2>실습: 나의 미니 캠페인 기획서 만들기</h2>
+  <div class="body" style="gap:16px">
+    <div class="steps">
+      <div class="tile"><span class="no">1</span><div class="h">양식 받기</div><div class="d">기획서 양식에 10-1 페르소나, 10-2 핵심 메시지를 옮긴다</div></div>
+      <div class="tile"><span class="no">2</span><div class="h">목표·지표 정하기</div><div class="d">목표를 고르고, 잴 수 있는 지표 1~3개를 먼저 적는다</div></div>
+      <div class="tile"><span class="no">3</span><div class="h">AI와 아이디어</div><div class="d">아이디어 10개 → 기준으로 3개 고르고, 고른 이유를 적는다</div></div>
+      <div class="tile"><span class="no">4</span><div class="h">초안 쓰기</div><div class="d">10-2 프롬프트로 콘텐츠별 카피 초안을 받아 고친다</div></div>
+      <div class="tile"><span class="no">5</span><div class="h">일정 짜기</div><div class="d">준비·점검 시간까지 넣어 4주 일정을 만든다</div></div>
+      <div class="tile"><span class="no">6</span><div class="h">점검과 검토</div><div class="d">발행 전 점검표를 직접 채우고, AI에게 빠진 칸을 묻는다</div></div>
+    </div>
+    <div style="display:flex;gap:18px;align-items:stretch">
+      <div class="prompt" style="flex:1"><div class="prompt-h">AI에게 기획서 검토받기<button class="copy" type="button">복사</button></div><pre>첨부한 <mark>바다결 미니 캠페인 기획서</mark>를 검토해 줘. ① 비어 있거나 서로 안 맞는 칸 ② 잴 수 없는 목표나 지표 ③ 과장·효능 표현 ④ 사실 확인이 필요한 내용을 표로 정리해 줘. 고쳐 쓰지는 말고 지적만 해 줘.</pre></div>
+      <div style="display:grid;gap:8px;align-content:center;width:300px"><a class="btn" href="materials/campaign_plan_template.md" download>기획서 양식 받기</a><span class="muted" style="font-size:15px">“고쳐 쓰지 말고 지적만” — 결정은 내가 하고, AI는 빠진 곳을 찾는 데 씁니다.</span></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시 · 과제2 안내와 제출은 LMS 공지 기준</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">일곱 칸이 이어진다</div><div style="font-size:21px">목표가 정해져야 <strong>채널·콘텐츠·지표</strong>가 정해진다. 목표는 잴 수 있게</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">AI는 넓게, 사람은 선택</div><div style="font-size:21px">아이디어·초안은 AI와 함께, <strong>고르는 기준과 최종 결정</strong>은 사람이</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">발행 전 점검</div><div style="font-size:21px"><strong>사실 · 광고 표시 · 과장 · 저작권 · 개인정보 · 승인</strong> — 하나라도 빠지면 보류</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="잴 수 있는 목표는 무엇을, 얼마 동안, 어떻게 셀지가 분명합니다. 쿠폰 코드로 첫 구매를 세면 결과를 확인할 수 있습니다.">
+      <p class="q-title"><b>Q1.</b> 캠페인 목표로 가장 잘 쓴 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">20~30대 고객을 많이 늘린다</button>
+        <button type="button" data-v="b">SNS를 열심히 한다</button>
+        <button type="button" data-v="c">4주 동안 매장 쿠폰으로 자사몰에서 처음 산 고객 수를 센다</button>
+        <button type="button" data-v="d">바다결을 최고의 브랜드로 만든다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="목표가 ‘처음 사 보게 하기’라면 구매에 가까운 지표(쿠폰 사용, 첫 구매 고객 수)를 봐야 합니다. 조회·좋아요는 앞 단계 지표입니다.">
+      <p class="q-title"><b>Q2.</b> 목표가 “처음 사 보게 하기”일 때 가장 중요한 지표는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">쿠폰 사용·첫 구매 고객 수</button>
+        <button type="button" data-v="b">게시물 좋아요 수</button>
+        <button type="button" data-v="c">팔로워 수</button>
+        <button type="button" data-v="d">게시물 개수</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="체중 인증 챌린지는 일반식품에 체중 감량 효과를 떠올리게 해 과장·오인 광고 위험이 큽니다. 아이디어 단계에서 걸러 냅니다.">
+      <p class="q-title"><b>Q3.</b> AI가 낸 아이디어 중 <u>고르지 말아야</u> 할 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">아침 한 줌 15초 영상</button>
+        <button type="button" data-v="b">후기 원문 한 줄 카드</button>
+        <button type="button" data-v="c">매장 맛보기 + 자사몰 쿠폰 카드</button>
+        <button type="button" data-v="d">2주 동안 먹고 몸무게 인증하는 챌린지</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="AI가 점검을 도울 수는 있지만 빠뜨릴 수 있습니다. 사실·표시·저작권·개인정보는 사람이 직접 확인하고, 책임도 사람에게 있습니다.">
+      <p class="q-title"><b>Q4.</b> 발행 전 점검에 대한 설명으로 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 “문제없음”이라고 하면 바로 올린다</button>
+        <button type="button" data-v="b">AI 점검은 참고하고, 체크는 사람이 직접 확인한 뒤 한다</button>
+        <button type="button" data-v="c">협찬받은 후기라도 광고 표시는 필요 없다</button>
+        <button type="button" data-v="d">이미지 저작권은 올린 뒤 문제가 생기면 확인한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 11주차 이미지·숏폼 영상</span></div>
+    <div class="big">11-1</div>
+    <h2>이미지 생성 AI 활용(Gemini)</h2>
+    <p>오늘 기획한 콘텐츠에 쓸 이미지를 Gemini로 만들어 봅니다. 기획서를 가지고 오세요 — 11주 과제2(홍보 콘텐츠 제작)로 이어집니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week11/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-eye"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">10주 3차시 · 홍보 콘텐츠 기획 실습</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

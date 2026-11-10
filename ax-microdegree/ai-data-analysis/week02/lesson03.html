@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2주 3차시 · 공공데이터·AI허브에서 데이터 찾기 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 2주 3차시 교안: 공공데이터포털·AI허브·KAMP에서 데이터 찾기, 파일 형식, 공공누리 이용 조건과 출처 표시, 데이터 품질 점검표">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .lens { animation: lens 7s ease-in-out infinite; }
+  @keyframes lens { 0%,100% { transform: translate(0,0); } 33% { transform: translate(150px,10px); } 66% { transform: translate(60px,150px); } }
+  @media (prefers-reduced-motion: reduce) { .lens { animation: none; } }
+  .slide.section .big { margin-bottom: 24px; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+  /* 사이트 비교 */
+  .sites { display: grid; grid-template-columns: 150px repeat(3, 1fr); gap: 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); }
+  .sites > div { padding: 9px 14px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); font-size: 16px; line-height: 1.45; }
+  .sites > div:nth-child(4n) { border-right: 0; }
+  .sites > div.rh { background: var(--surface-2); font-weight: 800; font-size: 15px; color: var(--muted); display: flex; align-items: center; }
+  .sites > div.hd { background: var(--accent-soft); display: flex; align-items: center; gap: 10px; }
+  .sites > div.hd b { font-size: 20px; display: block; line-height: 1.2; }
+  .sites > div.hd span.u { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: var(--accent); }
+  .sites > div.hd.o { background: var(--accent-2-soft); } .sites > div.hd.o span.u { color: var(--accent-2); }
+  .sites > div.last { border-bottom: 0; }
+
+  /* 매칭 */
+  .qcard { background: var(--surface-2); border-radius: 18px; padding: 22px 26px; width: 100%; display: grid; gap: 10px; }
+  .qcard .maj { font-size: 16px; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+  .qcard .qq { font-size: 26px; font-weight: 800; line-height: 1.4; }
+  .qcard .need { font-size: 17px; color: var(--muted); }
+  .dots { display: flex; gap: 8px; margin-top: 4px; }
+  .dots i { width: 14px; height: 14px; border-radius: 50%; background: var(--line); display: inline-block; }
+  .dots i.cur { background: var(--accent); } .dots i.ok { background: var(--ok); } .dots i.no { background: var(--bad); }
+  .site-btn { justify-content: flex-start; font-size: 17px; padding: 9px 14px; }
+  .site-btn.right { background: var(--ok-soft); border-color: var(--ok); color: var(--text); }
+  .site-btn.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--text); }
+  .fb { width: 100%; font-size: 16px; line-height: 1.5; border-radius: 14px; padding: 10px 14px; background: var(--surface-2); min-height: 72px; }
+  .fb b.ok { color: var(--ok); } .fb b.no { color: var(--bad); }
+
+  /* 형식 보기 */
+  .fmtview { width: 100%; height: 100%; display: flex; flex-direction: column; gap: 10px; }
+  .fmtview pre { flex: 1; margin: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 17px; line-height: 1.55; background: #1f2430; color: #e6e9ef; border-radius: 14px; padding: 16px 20px; white-space: pre; overflow: hidden; }
+  .fmtview pre .k { color: #8ab4f8; } .fmtview pre .s { color: #a5d6a7; } .fmtview pre .n { color: #f3d27a; } .fmtview pre .p { color: #8a93a6; }
+  .fmtview table { font-size: 17px; }
+  .fmtview .cap { font-size: 15px; color: var(--muted); }
+  .switch { margin-bottom: 0; flex-wrap: wrap; }
+  .switch button { font-size: 15px; padding: 6px 11px; }
+
+  /* 상세 페이지 모형 */
+  .mock { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; gap: 10px; font-size: 16px; }
+  .mock .sbox { display: flex; align-items: center; gap: 10px; border: 2px solid var(--accent); border-radius: 12px; padding: 8px 14px; font-weight: 700; }
+  .mock .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mock .chips span { font-size: 14px; background: var(--surface-2); border-radius: 999px; padding: 2px 12px; color: var(--muted); }
+  .mock .row { display: grid; grid-template-columns: 110px 1fr; gap: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+  .mock .row b { color: var(--muted); font-size: 14px; }
+  .mock .row .n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-2); color: var(--surface); font-size: 13px; font-weight: 800; margin-right: 6px; }
+
+  /* 공공누리 */
+  .kogl td, .kogl th { font-size: 18px; padding: 10px 16px; text-align: center; vertical-align: middle; }
+  .kogl td:first-child, .kogl th:first-child { text-align: left; }
+  .kogl .y { color: var(--ok); font-weight: 800; } .kogl .x { color: var(--bad); font-weight: 800; }
+
+  /* 체크리스트 */
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 15px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .tgl .res { margin-left: auto; font-size: 13px; font-weight: 800; }
+  .tgl .res.t { color: var(--ok); } .tgl .res.f { color: var(--bad); }
+  .cand { width: 100%; display: grid; gap: 10px; }
+  .cand .cbtns { display: flex; gap: 8px; }
+  .cand .cbtns .btn { flex: 1; font-size: 16px; padding: 9px 10px; }
+  .cand .cbtns .btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .meta-card { background: var(--surface-2); border-radius: 14px; padding: 12px 16px; display: grid; gap: 4px; font-size: 16px; }
+  .meta-card .tt { font-size: 21px; font-weight: 800; }
+  .meta-card .mr { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
+  .meta-card .mr b { color: var(--muted); font-size: 14px; }
+  .verdict { border-radius: 14px; padding: 10px 14px; font-size: 16px; line-height: 1.45; background: var(--surface-2); }
+  .verdict.ok { background: var(--ok-soft); } .verdict.mid { background: var(--accent-2-soft); } .verdict.bad { background: var(--bad-soft); }
+  .verdict b.k { display: block; font-size: 16px; }
+  .verdict.ok b.k { color: var(--ok); } .verdict.mid b.k { color: var(--accent-2); } .verdict.bad b.k { color: var(--bad); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 2주차 3차시</p>
+    <h1 style="font-size:64px">공공데이터·<br>AI허브에서<br>데이터 찾기</h1>
+    <p class="lead" style="font-size:25px">어디서 찾고, 무엇을 확인하고,<br>어떻게 출처를 밝힐까</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>이론 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:500px;flex:none" aria-hidden="true">
+    <g>
+      <rect x="30" y="40" width="200" height="150" rx="18" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <g transform="translate(52 62) scale(2)" style="color:var(--accent)"><use href="#i-database" width="24" height="24"/></g>
+      <rect x="52" y="130" width="150" height="12" rx="6" class="f-line"/><rect x="52" y="154" width="110" height="12" rx="6" class="f-line"/>
+      <rect x="280" y="40" width="200" height="150" rx="18" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <g transform="translate(302 62) scale(2)" style="color:var(--accent)"><use href="#i-eye" width="24" height="24"/></g>
+      <rect x="302" y="130" width="150" height="12" rx="6" class="f-line"/><rect x="302" y="154" width="90" height="12" rx="6" class="f-line"/>
+      <rect x="30" y="230" width="200" height="150" rx="18" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <g transform="translate(52 252) scale(2)" style="color:var(--accent-2)"><use href="#i-factory" width="24" height="24"/></g>
+      <rect x="52" y="320" width="150" height="12" rx="6" class="f-line"/><rect x="52" y="344" width="120" height="12" rx="6" class="f-line"/>
+      <rect x="280" y="230" width="200" height="150" rx="18" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/>
+      <g transform="translate(302 252) scale(2)" style="color:var(--accent-2)"><use href="#i-check" width="24" height="24"/></g>
+      <text x="302" y="336" class="t-main" style="font-size:20px">출처·조건·품질</text><text x="302" y="362" class="t-sub" style="font-size:15px">쓰기 전에 확인</text>
+    </g>
+    <g class="lens">
+      <circle cx="150" cy="130" r="62" fill="var(--accent-soft)" fill-opacity=".45" stroke="var(--accent)" stroke-width="8"/>
+      <path d="M195 175 L240 220" stroke="var(--accent)" stroke-width="16" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">어디서 찾나</div><div class="d">공공데이터포털·AI허브·KAMP가 각각 어떤 데이터를 주는지 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">파일 형식</div><div class="d">CSV·엑셀·JSON·오픈API의 차이를 구별한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">이용 조건</div><div class="d">공공누리 유형을 읽고 출처를 바르게 표시한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">품질 점검</div><div class="d">쓰기 전 체크리스트로 데이터를 고른다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>① 어디서 찾을까</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② 찾는 법·형식</b><small>직접 해 보기 1</small></div>
+      <div style="flex:4;background:var(--accent-2-soft)"><b>③ 이용 조건</b></div>
+      <div style="flex:3;background:var(--accent-2-soft)"><b>④ 품질 점검</b><small>해 보기 1</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box warn" style="margin-top:28px"><p style="font-size:20px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> 사이트의 메뉴·절차·이용 조건은 바뀔 수 있습니다. 데이터를 받을 때마다 <strong>그 데이터의 상세 페이지와 이용 안내</strong>를 직접 확인하세요.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>내 질문에 맞는 데이터, 어디서 구할까?</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-flask"/></svg></span><div class="h">직접 측정한다</div><div class="d">실험·센서로 내가 모은다. 가장 확실하지만 시간·장비가 든다</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">연구실·기업 데이터</div><div class="d">현장 그대로지만 <b>허락이 먼저</b>. 1-3에서 배운 약속</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center;border:2px solid var(--accent)"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">공개 데이터</div><div class="d">누구나 받을 수 있게 공개된 데이터 — <b>오늘의 주제</b></div></div>
+    </div>
+    <div class="box think frag" style="margin-top:24px"><p style="font-size:21px;margin:0">9주차에 <strong>전공 분석 보고서 주제</strong>를 냅니다. 오늘 배운 곳에서 내 질문에 맞는 데이터가 있는지 미리 찾아보세요.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>어디서 찾을까</h2><p>공공기관 데이터, AI 학습용 데이터, 제조 현장 데이터.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-map"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 세 사이트 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 어디서 찾을까</span></div>
+  <h2>대표적인 세 곳</h2>
+  <div class="sites">
+    <div class="rh"></div>
+    <div class="hd"><span class="ic-badge" style="width:44px;height:44px;font-size:24px;border-radius:12px"><svg class="ic"><use href="#i-database"/></svg></span><div><b>공공데이터포털</b><span class="u">data.go.kr</span></div></div>
+    <div class="hd"><span class="ic-badge" style="width:44px;height:44px;font-size:24px;border-radius:12px"><svg class="ic"><use href="#i-eye"/></svg></span><div><b>AI허브</b><span class="u">aihub.or.kr</span></div></div>
+    <div class="hd o"><span class="ic-badge o" style="width:44px;height:44px;font-size:24px;border-radius:12px"><svg class="ic"><use href="#i-factory"/></svg></span><div><b>KAMP</b><span class="u">kamp-ai.kr</span></div></div>
+
+    <div class="rh">누가</div>
+    <div>행정안전부가 운영하는 공공데이터 통합 창구 (실무: 한국지능정보사회진흥원)</div>
+    <div>과학기술정보통신부·한국지능정보사회진흥원의 AI 학습용 데이터 플랫폼</div>
+    <div>중소벤처기업부 지원 ‘인공지능 중소벤처 제조 플랫폼’ (KAIST 운영으로 출범)</div>
+
+    <div class="rh">무엇이</div>
+    <div>여러 공공기관이 가진 데이터 — 교통·환경·산업·에너지 등</div>
+    <div>이미지·영상·음성·텍스트 + <b>정답(라벨)</b>. 한국어·영상이미지·헬스케어·교통물류 등</div>
+    <div>제조 현장 데이터셋 + 분석 <b>가이드북</b>. 사출성형기·CNC·용접기·프레스·머신비전 등</div>
+
+    <div class="rh">형식</div>
+    <div><b>파일데이터</b>(CSV·엑셀 등), <b>오픈API</b>(JSON·XML)</div>
+    <div>원천 파일(이미지 등) + 라벨 파일(JSON 등)</div>
+    <div>공정 데이터 표 중심, 이미지 등</div>
+
+    <div class="rh last">이럴 때</div>
+    <div class="last">지역·기관·시설 단위의 <b>공공 기록</b>이 필요할 때</div>
+    <div class="last"><b>AI 모델 학습</b>용 라벨 데이터가 필요할 때</div>
+    <div class="last"><b>공정·설비</b> 데이터로 제조 AI를 연습할 때</div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시 · 출처: 공공데이터포털 소개 페이지, 언론 보도(2020·2022·2023) — 세부 운영은 각 사이트 안내 확인</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 그 밖의 곳 + 받는 법 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 어디서 찾을까</span></div>
+  <h2>받는 방법도 조금씩 다르다</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">공공데이터포털</div><div class="d"><b>파일데이터</b>: 상세 페이지에서 내려받기<br><b>오픈API</b>: 로그인 → 활용신청 → 인증키 받기</div></div>
+      <div class="arrow">·</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">AI허브</div><div class="d">로그인 → 데이터마다 <b>이용 신청</b>(목적 등) → 승인 후 다운로드<br>데이터별 이용 조건(국내 이용 등) 확인</div></div>
+      <div class="arrow">·</div>
+      <div class="stepbox frag"><span class="ic-badge o"><svg class="ic"><use href="#i-factory"/></svg></span><div class="h">KAMP</div><div class="d">회원 가입 후 사이트 안내에 따라<br>데이터셋·가이드북 이용</div></div>
+    </div>
+    <div class="tile frag" style="margin-top:22px;padding:16px 22px">
+      <div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent)"><use href="#i-map"/></svg> 그 밖에 알아 두면 좋은 곳</div>
+      <div class="d" style="font-size:18px"><b style="color:var(--text)">KOSIS 국가통계포털</b>(지역·산업별 통계) · <b style="color:var(--text)">기상청 기상자료개방포털</b>(기온·습도 관측) · <b style="color:var(--text)">Kaggle, UCI 머신러닝 저장소</b>(해외 공개 데이터셋, 영어) · 논문에 딸린 공개 데이터</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시 · 절차는 바뀔 수 있으니 받을 때마다 사이트 안내를 확인</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 매칭 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 어디서 찾을까 · 직접 해 보기 1</span></div>
+  <h2>내 전공 질문, 어디서 데이터를 찾을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="padding:18px;flex-direction:column;justify-content:center;gap:14px">
+      <div class="qcard">
+        <div class="maj" id="m-maj"></div>
+        <div class="qq" id="m-q"></div>
+        <div class="need" id="m-need"></div>
+      </div>
+      <div class="fb" id="m-fb">오른쪽에서 가장 먼저 찾아볼 곳을 고르세요.</div>
+      <div style="display:flex;align-items:center;gap:14px;width:100%"><div class="dots" id="m-dots"></div><span class="spacer" style="flex:1"></span><button class="btn ghost" id="m-next" type="button" style="font-size:16px;padding:8px 14px">다음 질문 →</button></div>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">어디서 먼저 찾아볼까요?</div>
+      <button class="btn ghost site-btn" type="button" data-s="portal"><svg class="ic"><use href="#i-database"/></svg> 공공데이터포털</button>
+      <button class="btn ghost site-btn" type="button" data-s="aihub"><svg class="ic"><use href="#i-eye"/></svg> AI허브</button>
+      <button class="btn ghost site-btn" type="button" data-s="kamp"><svg class="ic"><use href="#i-factory"/></svg> KAMP</button>
+      <button class="btn ghost site-btn" type="button" data-s="kosis"><svg class="ic"><use href="#i-chart"/></svg> KOSIS 국가통계포털</button>
+      <button class="btn ghost site-btn" type="button" data-s="self"><svg class="ic"><use href="#i-flask"/></svg> 직접 측정·실험</button>
+      <div class="meter"><div class="lbl">맞힌 질문</div><div class="val" id="m-score" style="font-size:30px">0 / 6</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시 · “먼저 찾아볼 곳”의 예시 — 실제로는 여러 곳을 함께 찾아본다</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>찾는 법과 파일 형식</h2><p>검색은 넓게, 확인은 꼼꼼하게.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-log"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 검색 요령 + 상세 페이지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 찾는 법·형식</span></div>
+  <h2>검색 요령과 상세 페이지에서 볼 것</h2>
+  <div class="body" style="flex-direction:row;gap:28px;align-items:stretch;justify-content:flex-start">
+    <div style="flex:1;display:grid;gap:12px;align-content:center">
+      <div class="tile frag show" style="padding:14px 18px"><div class="h" style="font-size:20px">① 비슷한 말로 여러 번</div><div class="d">“사출” · “성형” · “플라스틱” · “injection molding”</div></div>
+      <div class="tile frag" style="padding:14px 18px"><div class="h" style="font-size:20px">② 넓게 찾고 필터로 좁히기</div><div class="d">분야·제공기관·파일 형식·갱신일로 거른다</div></div>
+      <div class="tile frag" style="padding:14px 18px"><div class="h" style="font-size:20px">③ 제목만 보고 받지 않기</div><div class="d">상세 페이지의 설명을 먼저 읽는다 → 오른쪽</div></div>
+    </div>
+    <div class="mock frag" style="flex:1.1" aria-label="데이터 상세 페이지를 단순화한 예시">
+      <div class="sbox"><svg class="ic" style="color:var(--accent)"><use href="#i-filter"/></svg> 사출 성형 불량<span class="muted" style="margin-left:auto;font-size:14px;font-weight:500">검색</span></div>
+      <div class="chips"><span>분야: 산업</span><span>형식: CSV</span><span>최근 갱신순</span></div>
+      <div class="row"><b><span class="n">1</span>설명</b><span>무엇을, 언제, 어떻게 모았나</span></div>
+      <div class="row"><b><span class="n">2</span>열 정의</b><span>열 이름·단위·코드 뜻 (예: ng = 불량?)</span></div>
+      <div class="row"><b><span class="n">3</span>기간·주기</b><span>수집 기간, 갱신 주기, 행 수</span></div>
+      <div class="row"><b><span class="n">4</span>형식</b><span>CSV·XLSX·JSON, 파일 크기, 인코딩</span></div>
+      <div class="row"><b><span class="n">5</span>이용 조건</b><span>이용허락범위·공공누리 유형</span></div>
+      <div class="row"><b><span class="n">6</span>제공기관</b><span>담당 기관·문의처</span></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시 · 오른쪽은 실제 사이트 화면이 아닌 단순화한 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 형식 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 찾는 법·형식 · 직접 해 보기 2</span></div>
+  <h2>같은 데이터, 다른 파일 형식 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 370px">
+    <div class="plot" style="padding:16px;align-items:stretch">
+      <div class="fmtview" id="fmtview"></div>
+    </div>
+    <div class="side">
+      <div class="switch" id="fmt-sw" role="group" aria-label="파일 형식">
+        <button type="button" data-f="xlsx" aria-pressed="true">엑셀 표</button>
+        <button type="button" data-f="csv" aria-pressed="false">CSV</button>
+        <button type="button" data-f="json" aria-pressed="false">JSON</button>
+        <button type="button" data-f="label" aria-pressed="false">이미지 라벨</button>
+      </div>
+      <div class="tile" style="padding:14px 18px;flex:1"><div class="h" id="fmt-h" style="font-size:21px"></div><div id="fmt-d" style="font-size:16px;line-height:1.5"></div><div class="d" id="fmt-w" style="font-size:15px;font-weight:700;color:var(--accent)"></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시 · 실습용 가상 데이터 process.csv 앞 3행 · 라벨 예시는 설명용으로 만든 것</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 파일데이터 vs 오픈API -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 찾는 법·형식</span></div>
+  <h2>파일데이터 vs 오픈API</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile" style="padding:24px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div><div class="h" style="font-size:28px">파일데이터</div><div class="muted" style="font-size:17px">한 번 내려받는 <b>사진 한 장</b></div></div></div>
+        <svg viewBox="0 0 440 90" aria-hidden="true"><rect x="10" y="20" width="110" height="56" rx="10" class="f-accs"/><text x="65" y="54" text-anchor="middle" class="t-acc">사이트</text><path d="M128 48 H300" stroke="var(--accent)" stroke-width="3"/><path d="M292 40 L304 48 L292 56" fill="none" stroke="var(--accent)" stroke-width="3"/><text x="214" y="38" text-anchor="middle" class="t-sub">한 번 다운로드</text><rect x="312" y="20" width="118" height="56" rx="10" class="f-s2"/><text x="371" y="54" text-anchor="middle" class="t-main" style="font-size:16px">data.csv</text></svg>
+        <div class="d">받은 뒤로는 바뀌지 않는다. <b style="color:var(--text)">이 강의의 실습은 대부분 이 방식</b></div>
+      </div>
+      <div class="tile" style="padding:24px">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-link"/></svg></span><div><div class="h" style="font-size:28px">오픈API</div><div class="muted" style="font-size:17px">주소로 그때그때 <b>물어보기</b></div></div></div>
+        <svg viewBox="0 0 440 90" aria-hidden="true"><rect x="10" y="20" width="110" height="56" rx="10" class="f-s2"/><text x="65" y="54" text-anchor="middle" class="t-main" style="font-size:16px">내 코드</text><path d="M128 36 H300" stroke="var(--accent-2)" stroke-width="3"/><path d="M292 28 L304 36 L292 44" fill="none" stroke="var(--accent-2)" stroke-width="3"/><path d="M304 62 H132" stroke="var(--muted)" stroke-width="3"/><path d="M140 54 L128 62 L140 70" fill="none" stroke="var(--muted)" stroke-width="3"/><text x="214" y="26" text-anchor="middle" class="t-sub">요청 + 인증키</text><text x="214" y="86" text-anchor="middle" class="t-sub">최신 값 (JSON·XML)</text><rect x="312" y="20" width="118" height="56" rx="10" class="f-acc2s"/><text x="371" y="54" text-anchor="middle" class="t-main" style="font-size:16px">서버</text></svg>
+        <div class="d">실시간·자주 바뀌는 데이터에 알맞다. 활용신청 후 받은 <b style="color:var(--text)">인증키</b>는 남에게 공유하지 않는다</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>이용 조건과 출처 표시</h2><p>공개되어 있다고 아무렇게나 써도 되는 것은 아닙니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-book"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 공공누리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 이용 조건</span></div>
+  <h2>공공누리: 공공저작물 이용 조건 네 가지</h2>
+  <div class="body">
+    <table class="kogl">
+      <thead><tr><th>유형</th><th>출처 표시</th><th>상업적 이용</th><th>변경·2차 저작물</th><th>한 줄 요약</th></tr></thead>
+      <tbody>
+        <tr><td><b>제1유형</b></td><td class="y">필요</td><td class="y">가능</td><td class="y">가능</td><td>출처만 밝히면 자유롭게</td></tr>
+        <tr><td><b>제2유형</b></td><td class="y">필요</td><td class="x">금지</td><td class="y">가능</td><td>비영리 목적으로만</td></tr>
+        <tr><td><b>제3유형</b></td><td class="y">필요</td><td class="y">가능</td><td class="x">금지</td><td>내용·형식을 바꾸지 않고</td></tr>
+        <tr><td><b>제4유형</b></td><td class="y">필요</td><td class="x">금지</td><td class="x">금지</td><td>비영리 + 변경 금지</td></tr>
+      </tbody>
+    </table>
+    <p class="muted frag" style="margin-top:20px;font-size:20px">공공데이터포털은 데이터마다 상세 페이지에 <strong style="color:var(--text)">이용허락범위</strong>가 적혀 있습니다. AI허브·KAMP 데이터는 각 사이트의 <strong style="color:var(--text)">이용 약관·데이터별 조건</strong>을 따릅니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시 · 출처: 문화체육관광부 공공누리 유형 안내 (요약)</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 출처 표시 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 이용 조건</span></div>
+  <h2>보고서에 출처는 이렇게 적는다</h2>
+  <div class="body">
+    <div class="box key" style="padding:20px 26px"><p style="font-size:22px;margin:0;line-height:1.6"><span class="tag">예시</span> 출처: <b>○○공단</b>, 「<b>○○ 측정 데이터</b>」, 공공데이터포털(https://www.data.go.kr), <b>2026. 11. 5.</b> 내려받음, 공공누리 제1유형</p></div>
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);margin-top:8px">
+      <div class="tile frag show" style="padding:16px 20px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent)"><use href="#i-book"/></svg> 다섯 가지를 빠짐없이</div><div class="d">제공기관 · 데이터 이름 · 사이트 주소 · 내려받은 날짜 · 이용 조건</div></div>
+      <div class="tile frag" style="padding:16px 20px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-user"/></svg> 개인정보가 섞였다면</div><div class="d">공개 데이터라도 사람을 알아볼 수 있는 열이 있으면 쓰기 전에 확인 (1-3)</div></div>
+      <div class="tile frag" style="padding:16px 20px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-sparkles"/></svg> 다시 나눠 주거나 AI에 올릴 때</div><div class="d">원본 재배포·외부 서비스 업로드는 데이터별 조건을 먼저 확인</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시 · ○○은 실제 데이터 이름으로 바꿔 적는다</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 품질 체크리스트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 품질 점검</span></div>
+  <h2>받기 전에, 쓰기 전에: 데이터 품질 점검표</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);gap:14px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:19px">① 질문에 필요한 변수</div><div class="d" style="font-size:16px">내 질문의 원인·결과 열이 다 있나</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h" style="font-size:19px">② 기간·단위</div><div class="d" style="font-size:16px">충분히 길고, 간격이 질문에 맞나</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div><div class="h" style="font-size:19px">③ 열 설명</div><div class="d" style="font-size:16px">이름·단위·코드 뜻이 적혀 있나</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:19px">④ 결측·오류</div><div class="d" style="font-size:16px">빈칸·이상한 값이 얼마나 되나</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div><div class="h" style="font-size:19px">⑤ 출처·수집 방법</div><div class="d" style="font-size:16px">누가, 어떻게 모았는지 분명한가</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h" style="font-size:19px">⑥ 이용 조건</div><div class="d" style="font-size:16px">내 목적(보고서·발표)에 써도 되나</div></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">1주차의 교훈 — <strong style="color:var(--text)">AI는 데이터 품질을 넘을 수 없다.</strong> 좋은 분석은 좋은 데이터를 고르는 데서 시작합니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 체크리스트 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 품질 점검 · 직접 해 보기 3</span></div>
+  <h2>후보 데이터 세 개, 점검표로 골라 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot" style="padding:16px 18px;align-items:stretch">
+      <div class="cand">
+        <div class="muted" style="font-size:16px;font-weight:700">보고서 질문: <span style="color:var(--text)">“습도가 사출 제품 불량에 영향을 줄까?”</span></div>
+        <div class="cbtns">
+          <button class="btn ghost" type="button" data-c="0" aria-pressed="true">후보 A</button>
+          <button class="btn ghost" type="button" data-c="1" aria-pressed="false">후보 B</button>
+          <button class="btn ghost" type="button" data-c="2" aria-pressed="false">후보 C</button>
+        </div>
+        <div class="meta-card" id="ck-meta"></div>
+        <div class="verdict" id="ck-v">항목을 읽고, 통과한다고 생각하는 칸에 체크한 뒤 <strong>판정 보기</strong>를 누르세요.</div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="toggles" id="ck-tg"></div>
+      <div style="display:flex;gap:10px"><button class="btn" id="ck-go" type="button" style="flex:1"><svg class="ic"><use href="#i-check"/></svg> 판정 보기</button></div>
+      <div class="meter"><div class="lbl">내 판단과 일치</div><div class="val" id="ck-score" style="font-size:30px">- / 6</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시 · 후보 A·B·C는 설명용으로 만든 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">목적에 맞는 곳</div><div style="font-size:21px">공공 기록은 <strong>공공데이터포털</strong>, AI 학습용 라벨 데이터는 <strong>AI허브</strong>, 제조 현장은 <strong>KAMP</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">조건 읽고 출처 밝히기</div><div style="font-size:21px">공공누리 유형·이용 조건을 확인하고, 기관·이름·주소·날짜·조건을 <strong>출처로 적는다</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">점검표로 고르기</div><div style="font-size:21px">변수·기간·열 설명·결측·출처·이용 조건 — <strong>여섯 가지</strong>를 보고 고른다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="AI허브는 이미지·영상·음성·텍스트에 정답(라벨)이 붙은 AI 학습용 데이터를 제공하는 플랫폼입니다.">
+      <p class="q-title"><b>Q1.</b> 정답(라벨)이 붙은 이미지로 AI를 학습시키고 싶다. 먼저 찾아볼 곳은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">KOSIS 국가통계포털</button>
+        <button type="button" data-v="b">AI허브</button>
+        <button type="button" data-v="c">기상자료개방포털</button>
+        <button type="button" data-v="d">검색 엔진 이미지 검색 결과</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="공공누리 제2유형은 출처를 표시해야 하고, 상업적 이용은 금지되지만 변경은 허용됩니다. 수업 보고서처럼 비영리 목적이면 출처를 밝히고 쓸 수 있습니다.">
+      <p class="q-title"><b>Q2.</b> 공공누리 <u>제2유형</u> 데이터의 이용 조건은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">아무 조건 없이 자유롭게</button>
+        <button type="button" data-v="b">출처 표시 + 변경 금지</button>
+        <button type="button" data-v="c">출처 표시 + 상업적 이용 금지</button>
+        <button type="button" data-v="d">이용 자체가 금지</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="오픈API는 주소로 요청할 때마다 최신 값을 받아 오는 방식이어서 자주 바뀌는 데이터에 알맞습니다. 파일데이터는 한 번 받은 시점의 값입니다.">
+      <p class="q-title"><b>Q3.</b> 실시간으로 바뀌는 데이터를 프로그램에서 계속 받아 오려면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">오픈API로 요청한다</button>
+        <button type="button" data-v="b">CSV를 한 번 받아 계속 쓴다</button>
+        <button type="button" data-v="c">화면을 캡처한다</button>
+        <button type="button" data-v="d">엑셀로 손으로 옮겨 적는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="출처가 불분명하고 열 설명이 없으면 값의 뜻도, 이용해도 되는지도 알 수 없습니다. 행이 많아도 품질 점검을 통과하지 못합니다.">
+      <p class="q-title"><b>Q4.</b> 행이 100만 개지만 출처·열 설명·이용 조건이 없는 파일. 알맞은 판단은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">데이터가 많으니 바로 쓴다</button>
+        <button type="button" data-v="b">열 이름을 보고 뜻을 짐작해 쓴다</button>
+        <button type="button" data-v="c">AI에게 뜻을 물어보고 그대로 믿는다</button>
+        <button type="button" data-v="d">출처를 확인할 수 없으면 쓰지 않는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 3주차 분석 환경 시작하기</span></div>
+    <div class="big">3-1</div>
+    <h2>Google Colab 시작하기</h2>
+    <p>설치 없이 브라우저에서 파이썬을 실행하는 Colab을 열고, 오늘 본 것 같은 CSV 데이터를 직접 불러와 봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week03/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-code"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 2주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">2주 3차시 · 공공데이터·AI허브에서 데이터 찾기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

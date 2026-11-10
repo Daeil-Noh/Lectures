@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7주 1차시 · 스프레드시트 데이터를 AI로 분석하기 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 7주 1차시 교안: 표(행·열) 읽기, CSV를 AI에 올리기, 좋은 데이터 질문, 계산 과정 요청, 스프레드시트로 직접 검증하기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .pulse { animation: none !important; } .flowdot { display: none; } }
+  .pulse { animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+
+  /* 토글·상태 */
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 15.5px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.35; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+  .ex-tag { display: inline-block; font-size: 12px; font-weight: 800; color: var(--accent-2); background: var(--accent-2-soft); border-radius: 6px; padding: 1px 8px; margin-left: 6px; }
+
+  /* 데이터 표 */
+  .dtab { font-size: 15px; }
+  .dtab th, .dtab td { padding: 5px 10px; white-space: nowrap; }
+  .dtab td.n, .dtab th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .dtab code { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .dtab tr.hl td { background: var(--accent-2-soft); }
+  .dtab td.hc, .dtab th.hc { background: var(--accent-soft); }
+  .dict td { font-size: 17px; padding: 7px 14px; }
+  .dict td:first-child { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; color: var(--accent); }
+
+  /* 판단 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; min-height: 124px; display: flex; flex-direction: column; gap: 6px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .ic-badge { width: 42px; height: 42px; font-size: 22px; border-radius: 12px; }
+  .pcard .nm { font-size: 18px; font-weight: 800; line-height: 1.35; }
+  .pcard .ans { display: none; font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 16px; }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.yes { background: var(--ok-soft); border-color: var(--ok); } .pcard.open.yes .verdict { color: var(--ok); }
+  .pcard.open.no { background: var(--bad-soft); border-color: var(--bad); } .pcard.open.no .verdict { color: var(--bad); }
+  .pcard.open.mid { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.mid .verdict { color: var(--accent-2); }
+
+  /* 질문 조립기 */
+  .qprompt pre { font-size: 17px; min-height: 92px; }
+  .qprompt pre .add { color: var(--accent); font-weight: 700; }
+  .qans { font-size: 15px !important; line-height: 1.5 !important; max-width: 100% !important; }
+  .qans table { font-size: 14px; margin-top: 4px; }
+  .qans td, .qans th { padding: 3px 10px; }
+  .switch.sm button { font-size: 15px; padding: 6px 12px; }
+
+  /* 미니 표 검증 */
+  .vt { font-size: 13.5px; line-height: 1.35; }
+  .vt th, .vt td { padding: 3px 9px; white-space: nowrap; }
+  .vt th.col { cursor: pointer; text-align: right; }
+  .vt th.col:hover { color: var(--accent); }
+  .vt th.col.sel, .vt td.sel { background: var(--accent-soft); }
+  .vt td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .vt tr.off { display: none; }
+  .vt tfoot td { font-weight: 800; background: var(--surface-2); }
+  .fbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 14px; color: var(--muted); font-weight: 700; }
+  .fbar button { font: inherit; font-size: 14px; font-weight: 700; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .fbar button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .claim { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px; font-size: 15px; line-height: 1.45; }
+  .claim .cb { display: flex; gap: 6px; margin-top: 6px; }
+  .claim .cb button { font: inherit; font-size: 13.5px; font-weight: 800; padding: 3px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); cursor: pointer; }
+  .claim .cb button:disabled { cursor: default; }
+  .claim.right { border-color: var(--ok); background: var(--ok-soft); }
+  .claim.wrongc { border-color: var(--bad); background: var(--bad-soft); }
+  .claim .fb { display: none; font-size: 13.5px; margin-top: 4px; }
+  .claim.done .fb { display: block; }
+  .claim.done .cb { display: none; }
+  .sumbar { font-size: 15px; font-weight: 700; background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 6px 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; min-height: 44px; align-items: center; }
+  .sumbar b { color: var(--accent); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 7주차 1차시</p>
+    <h1>스프레드시트 데이터를<br>AI로 분석하기</h1>
+    <p class="lead" style="font-size:25px">AI에게 묻고,<br>숫자 두세 개는 내가 확인한다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>Gemini · Claude</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="30" y="60" width="300" height="300" rx="20" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <rect x="30" y="60" width="300" height="44" rx="20" class="f-accs"/>
+    <rect x="30" y="84" width="300" height="20" class="f-accs"/>
+    <g stroke="var(--line)" stroke-width="2"><path d="M30 148 H330 M30 192 H330 M30 236 H330 M30 280 H330 M30 324 H330"/><path d="M130 60 V360 M230 60 V360"/></g>
+    <rect x="230" y="104" width="100" height="256" class="f-accs" opacity=".5"/>
+    <rect x="30" y="192" width="300" height="44" fill="none" stroke="var(--accent-2)" stroke-width="4" rx="4" class="pulse"/>
+    <g fill="var(--muted)"><rect x="48" y="122" width="62" height="10" rx="5"/><rect x="148" y="122" width="56" height="10" rx="5"/><rect x="48" y="166" width="70" height="10" rx="5"/><rect x="148" y="166" width="46" height="10" rx="5"/><rect x="48" y="210" width="58" height="10" rx="5"/><rect x="148" y="210" width="64" height="10" rx="5"/><rect x="48" y="254" width="66" height="10" rx="5"/><rect x="148" y="254" width="50" height="10" rx="5"/><rect x="48" y="298" width="54" height="10" rx="5"/><rect x="148" y="298" width="60" height="10" rx="5"/></g>
+    <g fill="var(--accent)"><rect x="262" y="122" width="50" height="10" rx="5"/><rect x="254" y="166" width="58" height="10" rx="5"/><rect x="270" y="210" width="42" height="10" rx="5"/><rect x="258" y="254" width="54" height="10" rx="5"/><rect x="266" y="298" width="46" height="10" rx="5"/></g>
+    <rect x="300" y="200" width="200" height="120" rx="22" class="f-acc"/>
+    <path d="M330 320 l-10 34 l40 -34z" class="f-acc"/>
+    <g transform="translate(318 216) scale(1.6)" style="color:var(--surface)"><use href="#i-sparkles" width="24" height="24"/></g>
+    <rect x="364" y="226" width="116" height="12" rx="6" fill="var(--surface)" opacity=".9"/>
+    <rect x="364" y="250" width="90" height="12" rx="6" fill="var(--surface)" opacity=".6"/>
+    <rect x="320" y="278" width="160" height="12" rx="6" fill="var(--surface)" opacity=".6"/>
+    <circle cx="420" cy="120" r="54" class="f-acc2s" stroke="var(--accent-2)" stroke-width="3"/>
+    <path d="M396 120 l16 16 l30 -32" fill="none" stroke="var(--accent-2)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">표 읽기</div><div class="d">행·열이 무엇을 뜻하는지, 열 이름이 무엇을 담는지 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">안전하게 올리기</div><div class="d">AI에 올려도 되는 데이터인지 먼저 판단하고 CSV를 올린다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">좋은 데이터 질문</div><div class="d">기준·범위·계산 방법을 밝혀 질문하고 계산 과정을 요청한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">직접 검증</div><div class="d">스프레드시트 합계·정렬로 AI가 낸 숫자를 확인한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 표 데이터 이해하기</b></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>② AI에게 데이터 질문하기</b><small>직접 해 보기 2</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 직접 검증하기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘의 원칙 하나: <strong>“AI가 낸 숫자는 결론이 아니라 확인할 후보다.”</strong></p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>바다결 대표님의 부탁</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:36px">
+    <div style="flex:1">
+      <div class="chat">
+        <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> 사내 메신저 (가상 상황)</div>
+        <div class="msg ai"><span class="who">대표</span>오픈마켓 광고비는 계속 느는 것 같은데, 매출은 그만큼 안 느는 느낌이에요. 1~9월 판매 파일 보내 드릴 테니 <b>숫자로</b> 확인해 줄 수 있어요?</div>
+        <div class="msg user"><span class="who">나 (신입 직원)</span>네, AI로 정리해 보고 숫자는 제가 다시 확인해서 드리겠습니다.</div>
+      </div>
+      <p class="muted frag" style="margin-top:20px;font-size:20px">“느낌”을 <strong style="color:var(--text)">숫자</strong>로 바꾸는 일 — 엑셀을 잘 못 다뤄도 AI와 함께라면 시작할 수 있습니다.</p>
+    </div>
+    <div class="tile" style="width:390px;flex:none">
+      <span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span>
+      <div class="h">오늘의 실습 파일</div>
+      <div style="font-size:19px"><code>sales_2026.csv</code><br>바다결 2026년 1~9월<br>제품 5종 × 채널 3개 × 9개월 = <strong>135행</strong></div>
+      <a class="btn" href="../materials/sales_2026.csv" download><svg class="ic"><use href="#i-database"/></svg> 실습 자료 받기</a>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시 · 주식회사 바다결은 실습용 가상 회사</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>표 데이터 이해하기</h2><p>AI에게 묻기 전에, 내가 먼저 표를 읽을 줄 알아야 합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-database"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 행과 열 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 표 데이터 이해하기</span></div>
+  <h2>표 = <span class="mark">행</span>(기록 한 건) × <span class="mark">열</span>(항목)</h2>
+  <div class="body" style="justify-content:flex-start">
+    <table class="dtab">
+      <thead><tr><th>month</th><th>product</th><th>channel</th><th class="n">price</th><th class="n">units</th><th class="n hc">revenue</th><th class="n">ad_spend</th><th class="n">returns</th></tr></thead>
+      <tbody>
+        <tr><td>2026-01</td><td>오리지널 그래놀라</td><td>자사몰</td><td class="n">9,800</td><td class="n">345</td><td class="n hc">3,381,000</td><td class="n">855,381</td><td class="n">3</td></tr>
+        <tr class="hl"><td>2026-01</td><td>오리지널 그래놀라</td><td>오픈마켓</td><td class="n">9,800</td><td class="n">566</td><td class="n hc">5,546,800</td><td class="n">1,404,826</td><td class="n">15</td></tr>
+        <tr><td>2026-01</td><td>오리지널 그래놀라</td><td>오프라인 매장</td><td class="n">9,800</td><td class="n">248</td><td class="n hc">2,430,400</td><td class="n">117,479</td><td class="n">1</td></tr>
+        <tr><td>2026-01</td><td>다크초코 그래놀라</td><td>자사몰</td><td class="n">11,800</td><td class="n">224</td><td class="n hc">2,643,200</td><td class="n">759,737</td><td class="n">3</td></tr>
+        <tr><td colspan="8" style="text-align:center;color:var(--muted)">⋮ (모두 135행)</td></tr>
+      </tbody>
+    </table>
+    <div class="grid g2" style="margin-top:20px;gap:20px">
+      <div class="tile row frag show" style="padding:16px 20px;background:var(--accent-2-soft);border-color:transparent"><span class="ic-badge o"><svg class="ic"><use href="#i-log"/></svg></span><div><div class="h" style="font-size:21px">행(가로 한 줄) = 기록 한 건</div><div class="d">“1월 · 오리지널 그래놀라 · 오픈마켓”에서 566개 팔고, 15개 반품</div></div></div>
+      <div class="tile row frag" style="padding:16px 20px;background:var(--accent-soft);border-color:transparent"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:21px">열(세로 한 줄) = 항목</div><div class="d">맨 위 칸이 열 이름. 같은 열에는 같은 종류의 값만 들어간다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시 · CSV = 쉼표로 칸을 나눈 표 파일. 스프레드시트(구글 스프레드시트·엑셀)로 열 수 있다</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 열 이름 사전 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 표 데이터 이해하기</span></div>
+  <h2>열 이름 사전: 무엇을 담고 있나?</h2>
+  <div class="body" style="flex-direction:row;gap:30px;align-items:center">
+    <table class="dict" style="flex:1">
+      <tr><td>month</td><td>판매 월 (2026-01 ~ 2026-09)</td></tr>
+      <tr><td>product</td><td>제품 이름 (5종)</td></tr>
+      <tr><td>channel</td><td>판매 채널: 자사몰 · 오픈마켓 · 오프라인 매장</td></tr>
+      <tr><td>price</td><td>개당 가격 (원)</td></tr>
+      <tr><td>units</td><td>판매량 (개)</td></tr>
+      <tr><td>revenue</td><td>매출 (원) = price × units</td></tr>
+      <tr><td>ad_spend</td><td>광고비 (원)</td></tr>
+      <tr><td>returns</td><td>반품 <strong>건수</strong> (개) — 비율이 아님</td></tr>
+    </table>
+    <div style="width:400px;flex:none;display:grid;gap:14px">
+      <div class="tile frag show" style="padding:18px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-alert"/></svg> 헷갈리기 쉬운 열</div><div class="d"><b>revenue</b>(매출)과 <b>ad_spend</b>(광고비)는 둘 다 “원” 단위 큰 숫자 — 사람도 AI도 바꿔 읽기 쉽다.<br><b>returns</b>는 개수 — 반품률은 직접 나눠야 한다.</div></div>
+      <div class="tile frag" style="padding:18px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent)"><use href="#i-bulb"/></svg> 수익은 알 수 없다</div><div class="d">원가 열이 없다 → 이 표로는 <b>매출</b>까지만. “수익이 늘었다”는 이 데이터로 답할 수 없는 질문.</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시 · AI도 열 이름을 보고 뜻을 “짐작”한다 → 질문할 때 열의 뜻을 알려 주면 정확해진다</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 올려도 될까 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 표 데이터 이해하기 · 1-3 규칙 다시 보기</span></div>
+  <h2>올리기 전에: 이 파일, AI에 올려도 될까?</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show" style="border:2px solid var(--ok)"><span class="ic-badge lg" style="background:var(--ok-soft);color:var(--ok)"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">수업 실습 파일</div><div class="d"><b>sales_2026.csv</b> — 가상 회사의 가상 데이터. 개인정보·기밀이 없어 <b>올려도 된다</b>.</div></div>
+      <div class="tile frag" style="border:2px solid var(--accent-2)"><span class="ic-badge lg o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">실제 회사·가게 매출</div><div class="d">아르바이트·현장실습 회사의 매출표는 <b>영업 기밀</b>일 수 있다. 담당자 허락과 회사 지침이 먼저.</div></div>
+      <div class="tile frag" style="border:2px solid var(--bad)"><span class="ic-badge lg" style="background:var(--bad-soft);color:var(--bad)"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">고객 이름·연락처가 든 표</div><div class="d">주문자 명단, 회원 목록 = <b>개인정보</b>. 올리지 않는다. 꼭 분석해야 하면 해당 열을 지운 뒤 허락받고.</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">채팅창에 올린 파일은 <strong style="color:var(--text)">외부 서버로 전송</strong>됩니다. 1주 3차시의 규칙 — <strong style="color:var(--text)">개인정보·기밀은 넣지 않는다</strong> — 는 파일에도 그대로 적용됩니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>AI에게 데이터 질문하기</h2><p>무엇을, 어떤 기준으로 계산할지 분명히 물을수록 답이 정확해집니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chat"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 올리는 방법 + 첫 질문 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI에게 데이터 질문하기</span></div>
+  <h2>CSV 올리기, 그리고 첫 질문은 “제대로 읽었니?”</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:stretch;justify-content:flex-start">
+    <div style="width:360px;flex:none;display:grid;gap:10px;align-content:start">
+      <div class="tile row" style="padding:12px 16px;gap:14px"><span class="ic-badge" style="width:46px;height:46px;font-size:24px">1</span><div style="font-size:18px">Gemini 또는 Claude에서 <b>새 채팅</b> 열기</div></div>
+      <div class="tile row" style="padding:12px 16px;gap:14px"><span class="ic-badge" style="width:46px;height:46px;font-size:24px">2</span><div style="font-size:18px">파일 첨부로 <b>sales_2026.csv</b> 올리기<br><span class="muted" style="font-size:15px">첨부가 안 되면 표를 복사해 붙여 넣기</span></div></div>
+      <div class="tile row" style="padding:12px 16px;gap:14px"><span class="ic-badge" style="width:46px;height:46px;font-size:24px">3</span><div style="font-size:18px">본격 질문 전에 <b>구조부터 확인</b></div></div>
+      <div class="callout" style="font-size:15.5px">한쪽이 사용량 한도에 걸리면 같은 파일·같은 프롬프트로 <b>다른 도구에서 이어서</b> 하세요. 첨부 버튼 위치 등 서비스 화면은 바뀔 수 있습니다.</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;min-width:0">
+      <div class="prompt"><div class="prompt-h">프롬프트 ① 구조 확인<button class="copy" type="button">복사</button></div><pre>첨부한 파일은 가상 회사 '바다결'의 2026년 1~9월 판매 기록이야.
+분석하기 전에 먼저 확인해 줘.
+1) 행과 열이 각각 몇 개인지
+2) 열 이름과 각 열이 담은 내용(단위 포함)
+3) month 열에 들어 있는 기간</pre></div>
+      <div class="chat" style="flex:1">
+        <div class="chat-h">AI 채팅 (화면은 단순화한 예시) <span class="ex-tag">예시 답변 — 실제 답은 매번 다를 수 있음</span></div>
+        <div class="msg ai" style="font-size:15.5px">1) 135행, 8열입니다.
+2) month(월), product(제품), channel(채널), price(가격·원), units(판매량·개), revenue(매출·원), ad_spend(광고비·원), returns(반품 수·개)
+3) 2026-01부터 2026-09까지 9개월입니다.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시 · 행·열 수가 135·8이 아니면 파일을 잘못 읽은 것 → 다시 올리기</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 직접 해 보기 1: 좋은 데이터 질문 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI에게 데이터 질문하기 · 직접 해 보기 1</span></div>
+  <h2>좋은 데이터 질문 만들기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 350px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px;padding:14px">
+      <div class="prompt qprompt"><div class="prompt-h">프롬프트 ② 데이터 질문<button class="copy" type="button">복사</button></div><pre id="qb-pre"></pre></div>
+      <div class="chat" style="flex:1;min-height:0;overflow:hidden">
+        <div class="chat-h">AI 채팅 (화면은 단순화한 예시) <span class="ex-tag">예시 답변 — 숫자는 실제 파일로 계산한 값</span></div>
+        <div class="msg ai qans" id="qb-ans"></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="switch sm" id="qb-topic" style="margin:0;align-self:stretch;justify-content:space-between">
+        <button type="button" data-t="rev" aria-pressed="true">채널별 매출</button>
+        <button type="button" data-t="roas" aria-pressed="false">광고비 대비</button>
+        <button type="button" data-t="ret" aria-pressed="false">반품률</button>
+      </div>
+      <div class="toggles">
+        <button class="tgl" type="button" data-k="scope" aria-pressed="false"><span class="chk"></span>① 대상·기간 밝히기</button>
+        <button class="tgl" type="button" data-k="calc" aria-pressed="false"><span class="chk"></span>② 계산 기준(어떤 열로 어떻게)</button>
+        <button class="tgl" type="button" data-k="show" aria-pressed="false"><span class="chk"></span>③ 계산 과정 보여 달라기</button>
+        <button class="tgl" type="button" data-k="fmt" aria-pressed="false"><span class="chk"></span>④ 표 형식·정렬 정하기</button>
+      </div>
+      <div class="meter"><div class="lbl">질문 완성도</div><div class="val" id="qb-n">0 / 4</div><div class="track"><i id="qb-bar"></i></div></div>
+      <div class="status bad" id="qb-st"><b class="k">막연한 질문</b>AI가 무엇을 계산할지 스스로 정합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시 · 완성된 프롬프트를 복사해 Gemini·Claude에서 직접 물어보세요</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 정답 숫자 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI에게 데이터 질문하기</span></div>
+  <h2>정답 확인용: 실제로 계산한 세 가지 숫자</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show" style="gap:8px">
+        <div class="h">채널별 매출 합계</div><div class="d">revenue 합계 · 1~9월</div>
+        <svg viewBox="0 0 320 150" aria-label="채널별 매출 합계 막대">
+          <g id="ans-rev"></g>
+        </svg>
+        <div style="font-size:17px">가장 큰 채널: <b style="color:var(--accent)">오픈마켓</b> (전체의 46.6%)</div>
+      </div>
+      <div class="tile frag" style="gap:8px">
+        <div class="h">광고비 대비 매출</div><div class="d">revenue 합계 ÷ ad_spend 합계</div>
+        <svg viewBox="0 0 320 150" aria-label="채널별 광고비 대비 매출 막대"><g id="ans-roas"></g></svg>
+        <div style="font-size:17px">광고비 1원당 매출 — 오픈마켓이 <b style="color:var(--accent-2)">가장 낮다</b></div>
+      </div>
+      <div class="tile frag" style="gap:8px">
+        <div class="h">반품률</div><div class="d">returns 합계 ÷ units 합계 × 100</div>
+        <svg viewBox="0 0 320 150" aria-label="채널별 반품률 막대"><g id="ans-ret"></g></svg>
+        <div style="font-size:17px">오픈마켓 반품률이 자사몰의 <b style="color:var(--accent-2)">약 2.2배</b></div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:20px">매출이 가장 큰 오픈마켓이 광고 효율은 가장 낮고, 반품도 가장 많다 — 대표님의 “느낌”이 숫자로 <strong style="color:var(--text)">일부 확인</strong>됩니다. (수익은 원가가 없어 알 수 없음)</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시 · sales_2026.csv(가상 데이터) 전체 135행으로 직접 계산한 값</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 계산 과정 보여 줘 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI에게 데이터 질문하기</span></div>
+  <h2>“어떻게 계산했는지 보여 줘”</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:stretch">
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;min-width:0">
+      <div class="prompt"><div class="prompt-h">프롬프트 ③ 계산 과정 요청<button class="copy" type="button">복사</button></div><pre>방금 답한 <mark>오픈마켓 광고비 대비 매출</mark>을 어떻게 계산했는지 보여 줘.
+- 사용한 열 이름
+- 더한 행의 개수
+- 중간 합계와 최종 계산식</pre></div>
+      <div class="chat" style="flex:1">
+        <div class="chat-h">AI 채팅 (화면은 단순화한 예시) <span class="ex-tag">예시 답변</span></div>
+        <div class="msg ai" style="font-size:15.5px">· 사용한 열: channel, revenue, ad_spend
+· channel이 '오픈마켓'인 행: 45개 (5제품 × 9개월)
+· revenue 합계: 165,957,900원
+· ad_spend 합계: 66,657,472원
+· 165,957,900 ÷ 66,657,472 ≈ <b>2.49</b> (광고비 1원당 매출 약 2.49원)</div>
+      </div>
+    </div>
+    <div style="width:380px;flex:none;display:grid;gap:12px;align-content:center">
+      <div class="tile frag show" style="padding:16px 18px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent)"><use href="#i-eye"/></svg> 열 이름을 보면</div><div class="d">엉뚱한 열(예: price, units)을 썼는지 바로 보인다</div></div>
+      <div class="tile frag" style="padding:16px 18px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent)"><use href="#i-filter"/></svg> 행 개수를 보면</div><div class="d">오픈마켓은 45행이어야 한다. 숫자가 다르면 일부만 읽은 것</div></div>
+      <div class="tile frag" style="padding:16px 18px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-check"/></svg> 중간 합계를 보면</div><div class="d">스프레드시트로 <b>그 합계 하나만</b> 확인하면 된다 → ③에서</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시 · 3주차 “대화로 결과 다듬기” — 한 번에 끝내지 말고 이어서 묻기</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 직접 해 보기 2: 답할 수 있는 질문? -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② AI에게 데이터 질문하기 · 직접 해 보기 2</span></div>
+  <h2>이 질문, 이 표로 답할 수 있을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 생각하고 카드를 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="qcards"></div>
+    <div class="callout b" style="margin-top:14px;font-size:16.5px">표에 없는 것을 물으면 AI는 <strong>그럴듯한 답을 지어낼 수 있습니다</strong>(2주차 환각). “이 데이터로 답할 수 없으면 없다고 말해 줘”를 덧붙이세요. <span class="muted" id="qc-score">0 / 6 확인</span></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>직접 검증하기</h2><p>전부 다시 계산할 필요는 없습니다. <strong>핵심 숫자 두세 개</strong>만.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 틀리는 방식 + 확인 방법 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 직접 검증하기</span></div>
+  <h2>AI가 숫자를 틀리는 방식과, 확인하는 방법</h2>
+  <div class="body" style="flex-direction:row;gap:28px;align-items:stretch">
+    <div style="width:430px;flex:none;display:grid;gap:12px;align-content:center">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-cpu"/></svg></span><div><div class="h" style="font-size:20px">계산 실수</div><div class="d" style="font-size:16px">큰 숫자를 여러 개 더하다 틀리거나, 계산하지 않고 그럴듯한 값을 내놓기도</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:20px">열을 잘못 읽기</div><div class="d" style="font-size:16px">광고비(ad_spend)를 매출로, 반품 수를 반품률로</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h" style="font-size:20px">일부만 읽기·지어내기</div><div class="d" style="font-size:16px">앞부분 행만 보고 답하거나, 표에 없는 원인을 덧붙이기</div></div></div>
+    </div>
+    <div class="tile" style="flex:1;padding:22px 26px;border:2px solid var(--accent)">
+      <div class="h" style="font-size:24px"><svg class="ic" style="color:var(--accent)"><use href="#i-check"/></svg> 스프레드시트로 확인하기</div>
+      <ol style="font-size:19px;margin:0;line-height:1.55">
+        <li>CSV를 <b>구글 스프레드시트</b>나 <b>엑셀</b>로 연다</li>
+        <li><b>필터</b>로 channel = 오픈마켓만 남긴다</li>
+        <li>revenue 열의 숫자 칸을 <b>드래그해 선택</b> → 화면 아래쪽에 <b>합계</b>가 보인다</li>
+        <li>AI가 말한 숫자와 비교한다 (가장 큰 값은 <b>내림차순 정렬</b>로 확인)</li>
+      </ol>
+      <div class="muted" style="font-size:15.5px">함수로 하려면 빈 칸에 <code>=SUM(</code> 입력 후 범위 선택. 메뉴 이름·위치는 프로그램 버전에 따라 다를 수 있음.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 직접 해 보기 3: 미니 표 검증 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 직접 검증하기 · 직접 해 보기 3</span></div>
+  <h2>AI 답변 세 줄, 표로 직접 확인해 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 400px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;padding:12px 14px">
+      <div class="fbar" id="vt-f"><span>필터 · channel</span></div>
+      <table class="vt" id="vt"></table>
+    </div>
+    <div class="side">
+      <div class="sumbar" id="vt-sum"><span>열 이름(숫자 열)을 눌러 선택해 보세요</span></div>
+      <div class="muted" style="font-size:14.5px;font-weight:700">9월 데이터에 대한 AI 답변 <span class="ex-tag">미리 써 둔 예시</span></div>
+      <div id="claims" style="display:grid;gap:8px"></div>
+      <div class="callout b" id="vt-msg" style="font-size:15px">필터를 고르고 열 이름을 누르면 스프레드시트처럼 <strong>선택한 칸의 합계</strong>가 나옵니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시 · sales_2026.csv 중 2026-09 15행(가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 틀린 답을 찾았다면 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 직접 검증하기</span></div>
+  <h2>틀린 숫자를 찾았다면: 근거를 들어 다시 묻기</h2>
+  <div class="body" style="flex-direction:row;gap:28px;align-items:stretch">
+    <div class="chat" style="flex:1">
+      <div class="chat-h">AI 채팅 (화면은 단순화한 예시) <span class="ex-tag">예시 대화 — 실제 답은 매번 다를 수 있음</span></div>
+      <div class="msg ai warn" style="font-size:16px"><span class="who">AI</span>9월 자사몰 매출 합계는 4,657,948원입니다.</div>
+      <div class="msg user" style="font-size:16px">스프레드시트로 확인하니 9월 자사몰 revenue 합계는 15,921,200원이야. 어떤 열을 더했는지 확인하고 다시 계산해 줘.</div>
+      <div class="msg ai" style="font-size:16px"><span class="who">AI</span>확인해 보니 revenue가 아니라 ad_spend(광고비) 열을 더했습니다. 다시 계산하면 9월 자사몰 매출은 15,921,200원입니다.</div>
+    </div>
+    <div style="width:380px;flex:none;display:grid;gap:12px;align-content:center">
+      <div class="prompt frag show"><div class="prompt-h">프롬프트 ④ 다시 묻기<button class="copy" type="button">복사</button></div><pre>내가 확인한 값은 <mark>[내가 계산한 숫자]</mark>야.
+어떤 열과 행을 썼는지 확인하고 다시 계산해 줘.</pre></div>
+      <div class="tile frag" style="padding:16px 18px"><div class="h" style="font-size:20px">AI가 인정했다고 끝이 아니다</div><div class="d">고친 숫자도 <b>내 계산과 같은지</b> 한 번 더 본다. 보고서에는 확인을 마친 숫자만 쓴다.</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">표를 먼저 읽는다</div><div style="font-size:21px">행 = 기록 한 건, 열 = 항목. <strong>열의 뜻과 단위</strong>를 알고, 올려도 되는 파일인지 먼저 판단</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">질문은 구체적으로</div><div style="font-size:21px">대상·기간 + <strong>계산 기준</strong> + 계산 과정 + 형식. 표에 없는 것은 “없다”고 답하게</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">숫자 두세 개는 직접</div><div style="font-size:21px">필터 + 합계 + 정렬로 확인. 틀리면 <strong>근거를 들어</strong> 다시 묻기</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="표의 가로 한 줄(행)은 기록 한 건입니다. sales_2026.csv에서는 ‘어느 달·어느 제품·어느 채널’ 조합 하나가 한 행입니다.">
+      <p class="q-title"><b>Q1.</b> sales_2026.csv에서 <u>행 하나</u>가 뜻하는 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">한 제품의 9개월 전체 판매 기록</button>
+        <button type="button" data-v="b">한 채널의 모든 제품 판매 기록</button>
+        <button type="button" data-v="c">한 달·한 제품·한 채널의 판매 기록 한 건</button>
+        <button type="button" data-v="d">열 이름 목록</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="반품률은 반품 수를 판매량으로 나눈 값입니다. returns는 개수이므로 returns 합계 ÷ units 합계 × 100으로 계산합니다.">
+      <p class="q-title"><b>Q2.</b> 채널별 반품률을 묻는 질문에 넣을 계산 기준으로 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">returns 열의 합계</button>
+        <button type="button" data-v="b">returns 합계 ÷ units 합계 × 100</button>
+        <button type="button" data-v="c">returns 합계 ÷ revenue 합계</button>
+        <button type="button" data-v="d">returns 열에서 가장 큰 값</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="표에는 반품 수만 있고 반품 사유 열이 없습니다. 이 데이터로 답할 수 없는 질문이며, AI가 그럴듯한 이유를 지어낼 수 있습니다.">
+      <p class="q-title"><b>Q3.</b> sales_2026.csv만으로 답할 수 <u>없는</u> 질문은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">9월 매출이 가장 큰 채널은?</button>
+        <button type="button" data-v="b">선물 세트가 많이 팔린 달은?</button>
+        <button type="button" data-v="c">채널별 광고비 합계는?</button>
+        <button type="button" data-v="d">고객들이 반품한 이유는?</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="AI가 낸 숫자 중 핵심 몇 개를 스프레드시트 필터·합계로 직접 확인하는 것이 가장 확실합니다. 같은 질문을 반복하거나 AI의 확신 표현을 믿는 것은 검증이 아닙니다.">
+      <p class="q-title"><b>Q4.</b> AI가 “9월 자사몰 매출은 4,657,948원”이라고 답했다. 가장 좋은 다음 행동은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">스프레드시트에서 9월·자사몰 revenue 합계를 직접 확인한다</button>
+        <button type="button" data-v="b">AI가 확신하는 말투면 그대로 보고서에 쓴다</button>
+        <button type="button" data-v="c">같은 질문을 똑같이 한 번 더 한다</button>
+        <button type="button" data-v="d">숫자를 반올림해서 쓴다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">7-2</div>
+    <h2>차트 만들기와 해석</h2>
+    <p>오늘 확인한 숫자를 그림으로 바꿉니다. 목적에 맞는 차트를 고르고, 차트에서 <strong>한 문장 인사이트</strong>를 뽑아 봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week06/lesson03.html">← 6-3 조사 결과 정리 실습</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">7주 1차시 · 스프레드시트 데이터를 AI로 분석하기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

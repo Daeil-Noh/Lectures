@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11주 3차시 · 정확도·정밀도·재현율 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 11주 3차시 교안: 혼동행렬, 정확도·정밀도·재현율, 판정 기준(확률 기준값) 조절과 오류 비용, 과제2(불량품 분류) 안내">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-bad { fill: var(--bad); } .f-ok { fill: var(--ok); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  pre.code { font-size: 16.5px; }
+  .cg { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start; }
+  @media (prefers-reduced-motion: reduce) { .slidek { animation: none !important; } }
+  .slidek { animation: knob 5s ease-in-out infinite; }
+  @keyframes knob { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-120px); } }
+
+  /* 혼동행렬 */
+  .cm { display: grid; grid-template-columns: 110px 1fr 1fr; grid-template-rows: 40px 1fr 1fr; gap: 8px; }
+  .cm .hd { display: grid; place-items: center; font-size: 16px; font-weight: 800; color: var(--muted); text-align: center; line-height: 1.25; }
+  .cm .c { border-radius: 16px; padding: 10px 14px; display: flex; flex-direction: column; justify-content: center; border: 3px solid transparent; font: inherit; text-align: left; color: var(--text); }
+  .cm .c .t { font-size: 14px; font-weight: 800; color: var(--muted); letter-spacing: .02em; }
+  .cm .c .nm { font-size: 21px; font-weight: 800; }
+  .cm .c .n { font-size: 40px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .cm .tp { background: var(--ok-soft); } .cm .tp .nm, .cm .tp .n { color: var(--ok); }
+  .cm .fn { background: var(--bad-soft); } .cm .fn .nm, .cm .fn .n { color: var(--bad); }
+  .cm .fp { background: var(--accent-2-soft); } .cm .fp .nm, .cm .fp .n { color: var(--accent-2); }
+  .cm .tn { background: var(--accent-soft); } .cm .tn .nm, .cm .tn .n { color: var(--accent); }
+  button.c { cursor: pointer; }
+  button.c[aria-pressed="true"] { border-color: var(--text); }
+  .cm.sm { grid-template-columns: 84px 1fr 1fr; grid-template-rows: 30px 1fr 1fr; gap: 6px; }
+  .cm.sm .c { padding: 6px 10px; } .cm.sm .c .nm { font-size: 16px; } .cm.sm .c .n { font-size: 28px; } .cm.sm .hd { font-size: 13.5px; }
+
+  .pgrid { display: grid; grid-template-columns: repeat(30, 1fr); gap: 3px; width: 100%; }
+  .pgrid i { aspect-ratio: 1; border-radius: 4px; background: var(--surface-2); transition: background .2s, opacity .2s; }
+  .pgrid i.tp { background: var(--ok); } .pgrid i.fn { background: var(--bad); } .pgrid i.fp { background: var(--accent-2); } .pgrid i.tn { background: var(--accent); opacity: .55; }
+  .pgrid.focus i:not(.sel) { opacity: .12; }
+  .mbtn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+
+  /* 세 지표 */
+  .mrow { display: grid; grid-template-columns: 70px 1fr 64px; gap: 8px; align-items: center; font-size: 15px; font-weight: 800; }
+  .mrow .tr { height: 14px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+  .mrow .tr i { display: block; height: 100%; border-radius: 99px; transition: width .2s; }
+  .mrow b { text-align: right; font-variant-numeric: tabular-nums; }
+  .counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .counts .meter { padding: 6px 12px; }
+  .counts .meter .val { font-size: 28px; }
+  .metric .h { display: flex; align-items: center; gap: 10px; }
+  .fml { font-size: 19px; background: var(--surface-2); border-radius: 10px; padding: 8px 12px; text-align: center; }
+  .fml b { font-variant-numeric: tabular-nums; }
+  .rub td, .rub th { padding: 8px 14px; font-size: 17px; }
+  .rub td:last-child, .rub th:last-child { text-align: right; white-space: nowrap; }
+  .chk { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 18px; }
+  .chk li { margin: 0; display: flex; gap: 10px; align-items: flex-start; line-height: 1.4; }
+  .chk li svg { color: var(--accent); margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 11주차 3차시</p>
+    <h1>정확도·정밀도·<br>재현율</h1>
+    <p class="lead" style="font-size:25px">놓친 불량과 잘못 경보,<br>따로 세어야 보인다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>코드 실습 차시</span><span>직접 해 보기 3개</span><span>과제2 안내</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <text x="300" y="40" text-anchor="middle" class="t-sub" style="font-size:15px;font-weight:700">AI의 판정</text>
+    <text x="210" y="70" text-anchor="middle" class="t-main">불량</text><text x="390" y="70" text-anchor="middle" class="t-main">정상</text>
+    <text x="60" y="160" text-anchor="middle" class="t-main">실제</text><text x="60" y="182" text-anchor="middle" class="t-main">불량</text>
+    <text x="60" y="290" text-anchor="middle" class="t-main">실제</text><text x="60" y="312" text-anchor="middle" class="t-main">정상</text>
+    <rect x="120" y="86" width="176" height="120" rx="18" fill="var(--ok-soft)"/><text x="208" y="140" text-anchor="middle" style="font-size:20px;font-weight:800;fill:var(--ok)">잡은 불량</text><text x="208" y="176" text-anchor="middle" style="font-size:30px;font-weight:800;fill:var(--ok)">9</text>
+    <rect x="304" y="86" width="176" height="120" rx="18" fill="var(--bad-soft)"/><text x="392" y="140" text-anchor="middle" style="font-size:20px;font-weight:800;fill:var(--bad)">놓친 불량</text><text x="392" y="176" text-anchor="middle" style="font-size:30px;font-weight:800;fill:var(--bad)">12</text>
+    <rect x="120" y="214" width="176" height="120" rx="18" class="f-acc2s"/><text x="208" y="268" text-anchor="middle" style="font-size:20px;font-weight:800;fill:var(--accent-2)">잘못 경보</text><text x="208" y="304" text-anchor="middle" style="font-size:30px;font-weight:800;fill:var(--accent-2)">2</text>
+    <rect x="304" y="214" width="176" height="120" rx="18" class="f-accs"/><text x="392" y="268" text-anchor="middle" style="font-size:20px;font-weight:800;fill:var(--accent)">정상 통과</text><text x="392" y="304" text-anchor="middle" style="font-size:30px;font-weight:800;fill:var(--accent)">126</text>
+    <rect x="120" y="380" width="360" height="10" rx="5" class="f-line"/>
+    <rect x="120" y="380" width="240" height="10" rx="5" class="f-acc"/>
+    <g class="slidek"><circle cx="360" cy="385" r="15" class="f-surface" stroke="var(--accent)" stroke-width="4"/></g>
+    <text x="120" y="420" class="t-sub" style="font-size:15px">판정 기준을 옮기면 네 칸의 숫자가 바뀐다</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">혼동행렬</div><div class="d">판정 결과를 잡은 불량·놓친 불량·잘못 경보·정상 통과로 나눈다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">정밀도·재현율</div><div class="d">정확도만으로는 안 보이는 것을 두 지표로 잰다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h">판정 기준</div><div class="d">불량 확률 기준값을 옮길 때 생기는 맞바꿈을 설명한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">과제2</div><div class="d">기준을 골라 근거와 함께 보고하는 과제를 이해한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 + 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 혼동행렬</b><small>직접 해 보기 1</small></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>② 정밀도·재현율</b></div>
+      <div style="flex:8;background:var(--accent-2-soft)"><b>③ 판정 기준</b><small>직접 해 보기 2</small></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>과제2</b></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:24px;margin-top:28px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week11/lesson03.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <p class="muted" style="margin:0;font-size:19px">지난 시간의 나무(max_depth=3)를 그대로 다시 만들고, <strong style="color:var(--text)">평가 방법</strong>만 바꿔 봅니다.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · lesson03.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>정확도 90.6%의 두 얼굴</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile frag show" style="padding:26px;align-items:center;text-align:center">
+        <span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span>
+        <div style="font-size:60px;font-weight:800;color:var(--accent);line-height:1.1">135 / 149</div>
+        <div class="h">시험 제품을 맞혔다</div>
+        <div class="d">품질팀 보고: “AI 정확도 90.6%입니다.”</div>
+      </div>
+      <div class="tile frag" style="padding:26px;align-items:center;text-align:center;border:2px solid var(--bad)">
+        <span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span>
+        <div style="font-size:60px;font-weight:800;color:var(--bad);line-height:1.1">12 / 21</div>
+        <div class="h">불량을 놓쳤다</div>
+        <div class="d">공장장의 질문: “그래서 불량이 고객에게 몇 개 나갔나?”</div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:21px">불량이 드문 데이터에서 정확도는 <strong style="color:var(--text)">정상 제품이 거의 다 채운 점수</strong>입니다. 틀림을 종류별로 나눠 세어야 합니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · 11-2의 나무(max_depth=3), 시험 데이터 149개</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>혼동행렬</h2><p>맞음과 틀림을 네 칸으로 나눠 셉니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 4칸 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 혼동행렬</span></div>
+  <h2>혼동행렬: 실제 × 판정 = 네 칸</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div class="cm" style="flex:1;height:400px">
+      <div></div><div class="hd">판정: 불량</div><div class="hd">판정: 정상</div>
+      <div class="hd">실제<br>불량</div>
+      <div class="c tp frag show"><span class="t">TP · 진양성</span><span class="nm">잡은 불량</span><span class="n">9</span></div>
+      <div class="c fn frag"><span class="t">FN · 위음성</span><span class="nm">놓친 불량</span><span class="n">12</span></div>
+      <div class="hd">실제<br>정상</div>
+      <div class="c fp frag"><span class="t">FP · 위양성</span><span class="nm">잘못 경보</span><span class="n">2</span></div>
+      <div class="c tn frag"><span class="t">TN · 진음성</span><span class="nm">정상 통과</span><span class="n">126</span></div>
+    </div>
+    <div style="width:330px;flex:none;display:grid;gap:12px">
+      <div class="tile" style="padding:14px 18px;gap:6px"><div class="h" style="font-size:19px">이름 읽는 법</div><div class="d" style="font-size:16px"><strong>양성(Positive)</strong> = 찾으려는 것 = 불량 판정<br><strong>참(True)/거짓(False)</strong> = 판정이 맞았나</div></div>
+      <div class="callout b">FN은 “거짓으로 음성(정상)이라고 했다” → <strong>놓친 불량</strong>. FP는 “거짓으로 양성(불량)이라고 했다” → <strong>잘못 경보</strong>.</div>
+      <div class="callout">대각선(잡은 불량 + 정상 통과)이 맞힌 것: 9 + 126 = <strong>135</strong></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · max_depth=3 나무, 시험 데이터 149개 (불량 21 · 정상 128) · 1주 2차시 비전 검사의 그 이름들</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 혼동행렬 · 직접 해 보기 1</span></div>
+  <h2>네 칸을 눌러 어떤 제품인지 확인해 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:14px;padding:14px 20px">
+      <div class="cm sm" id="cm1" style="height:220px">
+        <div></div><div class="hd">판정: 불량</div><div class="hd">판정: 정상</div>
+        <div class="hd">실제 불량</div>
+        <button type="button" class="c tp" data-k="tp" aria-pressed="false"><span class="nm">잡은 불량</span><span class="n">-</span></button>
+        <button type="button" class="c fn" data-k="fn" aria-pressed="false"><span class="nm">놓친 불량</span><span class="n">-</span></button>
+        <div class="hd">실제 정상</div>
+        <button type="button" class="c fp" data-k="fp" aria-pressed="false"><span class="nm">잘못 경보</span><span class="n">-</span></button>
+        <button type="button" class="c tn" data-k="tn" aria-pressed="false"><span class="nm">정상 통과</span><span class="n">-</span></button>
+      </div>
+      <div class="pgrid" id="cm-grid" role="img" aria-label="시험 제품 149개를 혼동행렬 칸 색으로 칠한 그림"></div>
+    </div>
+    <div class="side">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn ghost mbtn" type="button" data-m="tree" aria-pressed="true">나무 (깊이 3)</button>
+        <button class="btn ghost mbtn" type="button" data-m="lazy" aria-pressed="false">게으른 검사기</button>
+      </div>
+      <div class="tile" style="flex:1;padding:16px 18px;gap:8px">
+        <div class="h" id="cm-h" style="font-size:21px">칸을 눌러 보세요</div>
+        <div id="cm-d" style="font-size:17px">아래 점 하나가 시험 제품 하나입니다. 색은 그 제품이 들어간 칸입니다.</div>
+        <div class="d" id="cm-c" style="font-size:16px"></div>
+      </div>
+      <div class="callout b" id="cm-acc">-</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · 시험 데이터 149개 (제품번호 순서) · 게으른 검사기 = 전부 “정상”</span><span class="no"></span></div>
+</section>
+
+<!-- 8. confusion_matrix 코드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 혼동행렬</span></div>
+  <h2>confusion_matrix: 순서에 주의</h2>
+  <div class="body">
+    <div class="cg" style="align-items:center">
+      <div style="display:grid;gap:12px">
+        <pre class="code">from sklearn.metrics import confusion_matrix
+pred = model.predict(X_test)
+cm = confusion_matrix(y_test, pred)   # (실제, 판정) 순서
+print(cm)</pre>
+        <pre class="out">[[126   2]
+ [ 12   9]]</pre>
+        <div class="box warn frag" style="margin:0;padding:14px 18px"><p style="margin:0;font-size:18px">sklearn은 라벨을 <strong>작은 수부터</strong>(0 정상, 1 불량) 놓습니다. 그래서 <strong>왼쪽 위가 정상 통과</strong>, 오른쪽 아래가 잡은 불량 — 앞 장의 그림과 칸 위치가 다릅니다.</p></div>
+      </div>
+      <div class="cm sm" style="height:260px">
+        <div></div><div class="hd">판정 0<br>(정상)</div><div class="hd">판정 1<br>(불량)</div>
+        <div class="hd">실제 0<br>(정상)</div>
+        <div class="c tn"><span class="t">TN</span><span class="nm">정상 통과</span><span class="n">126</span></div>
+        <div class="c fp"><span class="t">FP</span><span class="nm">잘못 경보</span><span class="n">2</span></div>
+        <div class="hd">실제 1<br>(불량)</div>
+        <div class="c fn"><span class="t">FN</span><span class="nm">놓친 불량</span><span class="n">12</span></div>
+        <div class="c tp"><span class="t">TP</span><span class="nm">잡은 불량</span><span class="n">9</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · 실습 파일 4단계 · 행 = 실제, 열 = 판정</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>정밀도·재현율</h2><p>“경보를 믿을 수 있나?”와 “불량을 다 잡았나?”</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 세 지표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 정밀도·재현율</span></div>
+  <h2>세 가지 눈금, 세 가지 질문</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile metric frag show"><div class="h"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span>정확도 accuracy</div><div style="font-size:19px">“전체 중 몇 개 맞혔나?”</div><div class="fml">(잡은 불량 + 정상 통과) ÷ 전체<br><b>(9 + 126) ÷ 149 = 90.6%</b></div><div class="d">정상이 많으면 저절로 높아진다</div></div>
+      <div class="tile metric frag"><div class="h"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span>정밀도 precision</div><div style="font-size:19px">“<strong>불량이라고 한 것</strong> 중 진짜 불량은?”</div><div class="fml">잡은 불량 ÷ (잡은 불량 + 잘못 경보)<br><b>9 ÷ 11 = 81.8%</b></div><div class="d">낮으면 경보가 자주 헛울린다</div></div>
+      <div class="tile metric frag" style="border:2px solid var(--accent)"><div class="h"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span>재현율 recall</div><div style="font-size:19px">“<strong>진짜 불량</strong> 중 몇 개를 잡았나?”</div><div class="fml">잡은 불량 ÷ (잡은 불량 + 놓친 불량)<br><b>9 ÷ 21 = 42.9%</b></div><div class="d">낮으면 불량이 고객에게 간다</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:20px">같은 나무, 같은 판정인데 <strong style="color:var(--text)">90.6% · 81.8% · 42.9%</strong>. 어느 숫자를 보고하느냐에 따라 전혀 다른 이야기가 됩니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · 재현율은 민감도(sensitivity)라고도 부른다</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 지표 코드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 정밀도·재현율</span></div>
+  <h2>sklearn으로 한 번에: 그리고 게으른 검사기와 비교</h2>
+  <div class="body">
+    <div class="cg">
+      <div style="display:grid;gap:12px">
+        <pre class="code">from sklearn.metrics import (accuracy_score,
+    precision_score, recall_score, f1_score)
+print(accuracy_score(y_test, pred))
+print(precision_score(y_test, pred))
+print(recall_score(y_test, pred))
+print(f1_score(y_test, pred))</pre>
+        <pre class="out">0.9060402684563759
+0.8181818181818182
+0.42857142857142855
+0.5625</pre>
+      </div>
+      <div style="display:grid;gap:12px">
+        <table style="font-size:18px">
+          <thead><tr><th></th><th>게으른 검사기</th><th>나무</th></tr></thead>
+          <tbody>
+            <tr><td>정확도</td><td>85.9%</td><td><b>90.6%</b></td></tr>
+            <tr><td>정밀도</td><td>계산 불가<br><span class="muted" style="font-size:15px">(경보 0번)</span></td><td><b>81.8%</b></td></tr>
+            <tr><td>재현율</td><td style="color:var(--bad);font-weight:800">0%</td><td><b>42.9%</b></td></tr>
+          </tbody>
+        </table>
+        <div class="callout frag"><strong>F1 점수</strong> = 정밀도와 재현율의 조화평균. 둘 중 하나라도 낮으면 낮아진다 → 0.56. 이번 강의에서는 이름만 알아 두세요.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · 실습 파일 5~6단계 · 경보가 0번이면 정밀도 분모가 0 → sklearn은 경고와 함께 0으로 표시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>판정 기준</h2><p>불량 확률 몇 이상을 “불량”이라고 부를까요?</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-gauge"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 2: 기준 슬라이더 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 판정 기준 · 직접 해 보기 2</span></div>
+  <h2>판정 기준을 옮겨 보자: 정밀도와 재현율의 맞바꿈 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 350px">
+    <div class="plot"><svg id="th-svg" viewBox="0 0 700 430" aria-label="시험 제품 149개를 불량 확률 순으로 세우고 판정 기준선을 그은 그림"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>불량 판정 기준 (불량 확률) <output id="th-o">0.50 이상</output></label><input id="th" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="불량 판정 기준"></div>
+      <div class="counts">
+        <div class="meter"><div class="lbl">잡은 불량</div><div class="val" id="th-tp" style="color:var(--ok)">-</div></div>
+        <div class="meter"><div class="lbl">놓친 불량</div><div class="val" id="th-fn" style="color:var(--bad)">-</div></div>
+        <div class="meter"><div class="lbl">잘못 경보</div><div class="val o" id="th-fp">-</div></div>
+      </div>
+      <div class="ctrl" style="display:grid;gap:6px">
+        <div class="mrow"><span>정확도</span><span class="tr"><i id="th-ab" style="background:var(--muted)"></i></span><b id="th-a">-</b></div>
+        <div class="mrow"><span>정밀도</span><span class="tr"><i id="th-pb" style="background:var(--accent-2)"></i></span><b id="th-p">-</b></div>
+        <div class="mrow"><span>재현율</span><span class="tr"><i id="th-rb" style="background:var(--accent)"></i></span><b id="th-r">-</b></div>
+      </div>
+      <div class="callout b" id="th-msg" style="font-size:15.5px">-</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · max_depth=3 나무의 predict_proba (시험 149개) · 확률이 잎 7개의 값뿐이라 계단처럼 바뀐다 · 1주 2차시 비전 검사와 같은 원리</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 직접 해 보기 3: 비용 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 판정 기준 · 직접 해 보기 3</span></div>
+  <h2>어느 기준이 가장 쌀까? 오류의 값을 매겨 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 350px">
+    <div class="plot"><svg id="co-svg" viewBox="0 0 700 420" aria-label="판정 기준에 따른 총비용 그래프"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>놓친 불량 1건의 비용 <output id="co-o">잘못 경보 5건</output></label><input id="co" type="range" min="0" max="8" step="1" value="3" aria-label="놓친 불량 1건의 비용"></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">가장 싼 기준</div><div class="val" id="co-t" style="font-size:28px">-</div></div>
+        <div class="meter"><div class="lbl">그때 총비용</div><div class="val o" id="co-c" style="font-size:28px">-</div></div>
+      </div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">놓친 불량</div><div class="val" id="co-fn" style="font-size:28px;color:var(--bad)">-</div></div>
+        <div class="meter"><div class="lbl">잘못 경보</div><div class="val o" id="co-fp" style="font-size:28px">-</div></div>
+      </div>
+      <div class="callout" id="co-msg" style="font-size:15.5px">-</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · 총비용 = 잘못 경보 수 × 1 + 놓친 불량 수 × (설정한 배수) · 비용은 설명용 가정 · 같은 나무, 시험 149개</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 어떤 오류가 더 비쌀까 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 판정 기준</span></div>
+  <h2>공장에서는 어떤 오류가 더 비쌀까?</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:24px">
+      <div class="tile" style="padding:22px;border-top:6px solid var(--bad)">
+        <div class="h" style="font-size:24px;color:var(--bad)">놓친 불량 (FN)</div>
+        <ul style="font-size:19px;margin:0">
+          <li>불량품이 고객에게 출하 → 반품·클레임</li>
+          <li>안전 부품이면 사고·리콜 위험</li>
+          <li>회사 신뢰도 하락</li>
+        </ul>
+        <div class="callout b" style="margin-top:auto">이 비용이 크면 → 기준을 <strong>낮춰</strong> <strong>재현율</strong>을 올린다</div>
+      </div>
+      <div class="tile" style="padding:22px;border-top:6px solid var(--accent-2)">
+        <div class="h" style="font-size:24px;color:var(--accent-2)">잘못 경보 (FP)</div>
+        <ul style="font-size:19px;margin:0">
+          <li>재검사 시간·인건비</li>
+          <li>멀쩡한 제품 폐기, 라인 정지</li>
+          <li>경보가 잦으면 작업자가 경보를 무시</li>
+        </ul>
+        <div class="callout b" style="margin-top:auto">이 비용이 크면 → 기준을 <strong>높여</strong> <strong>정밀도</strong>를 올린다</div>
+      </div>
+    </div>
+    <div class="box think frag" style="margin-top:20px"><p style="margin:0;font-size:20px"><svg class="ic"><use href="#i-user"/></svg> 정답 기준은 없습니다. 비용과 위험을 아는 <strong>사람이 정하고, 근거를 남깁니다</strong> — 1주 2차시의 결론, 그리고 과제2의 핵심.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 기준 코드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 판정 기준</span></div>
+  <h2>코드로 기준 바꾸기: predict_proba + 비교</h2>
+  <div class="body">
+    <div class="cg">
+      <div style="display:grid;gap:12px">
+        <pre class="code">proba = model.predict_proba(X_test)[:, 1]   # 불량 확률
+for t in [0.2, 0.3, 0.5, 0.9]:
+    p = (proba >= t).astype(int)      # 기준 이상 → 1(불량)
+    tn, fp, fn, tp = confusion_matrix(y_test, p).ravel()
+    print(t, tp, fn, fp,
+          round(precision_score(y_test, p), 3),
+          round(recall_score(y_test, p), 3))</pre>
+        <pre class="out">0.2 17 4 28 0.378 0.81
+0.3 10 11 3 0.769 0.476
+0.5 9 12 2 0.818 0.429
+0.9 3 18 2 0.6 0.143</pre>
+      </div>
+      <div style="display:grid;gap:12px">
+        <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div><div class="h" style="font-size:19px">predict = 기준 0.5</div><div class="d" style="font-size:16px">기준을 바꾸려면 predict_proba로 직접 비교</div></div></div>
+        <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:19px">0.2로 낮추면</div><div class="d" style="font-size:16px">놓친 불량 12 → 4, 대신 잘못 경보 2 → 28</div></div></div>
+        <div class="callout">출력 순서: 기준, 잡은 불량, 놓친 불량, 잘못 경보, 정밀도, 재현율. 실습 파일은 이 표를 <strong>DataFrame</strong>으로 보기 좋게 만듭니다.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · 실습 파일 7~8단계 · ravel() = 2×2 표를 한 줄로 펴기 (tn, fp, fn, tp 순서)</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 과제2 개요 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">과제2 · 불량품 분류</span></div>
+  <h2>과제2: 불량품 분류기를 만들고, 판정 기준을 정하라</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:26px">
+    <div style="flex:1;display:grid;gap:10px">
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h" style="font-size:19px">① 분류 모델 만들기</div><div class="d" style="font-size:16px">process.csv → defect 판정. 특성·max_depth 등은 자유. 나누기는 test_size=0.3, stratify=y, random_state=42 고정</div></div></div>
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:19px">② 혼동행렬 + 세 지표</div><div class="d" style="font-size:16px">내가 고른 기준에서 혼동행렬, 정확도·정밀도·재현율. “전부 정상” 기준선과 비교</div></div></div>
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-gauge"/></svg></span><div><div class="h" style="font-size:19px">③ 판정 기준과 근거</div><div class="d" style="font-size:16px">기준을 2개 이상 비교한 표 + 왜 그 기준인지 (어떤 오류가 더 비싼 공장인지 가정을 밝히고)</div></div></div>
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h" style="font-size:19px">④ 1쪽 해석</div><div class="d" style="font-size:16px">결과를 공장 말로, 한계와 개선 아이디어, 생성형AI 사용 내역</div></div></div>
+    </div>
+    <div style="width:330px;flex:none;display:grid;gap:12px;align-content:start">
+      <div class="tile" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:19px"><svg class="ic" style="color:var(--accent)"><use href="#i-log"/></svg> 제출물</div><div class="d" style="font-size:16px">실행 결과가 남은 <strong>.ipynb</strong> + 1쪽 해석 <strong>PDF</strong></div></div>
+      <div class="tile" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:19px"><svg class="ic" style="color:var(--accent)"><use href="#i-clock"/></svg> 제출·기한</div><div class="d" style="font-size:16px">LMS 과제 게시판 · 기한은 <strong>LMS 공지 기준</strong></div></div>
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week11/assignment2.ipynb" target="_blank" rel="noopener">과제2 시작 파일 열기</a>
+      <div class="callout" style="font-size:15.5px">시작 파일은 그대로도 실행됩니다. <strong>“바꿀 곳”</strong> 표시된 셀을 내 선택으로 채우세요. Colab에서 <strong>사본 저장</strong> 먼저!</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · assignment2.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 과제2 평가 기준 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">과제2 · 불량품 분류</span></div>
+  <h2>과제2 평가 기준</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:26px">
+    <table class="rub" style="flex:1">
+      <thead><tr><th>항목</th><th>보는 것</th><th>배점</th></tr></thead>
+      <tbody>
+        <tr><td><b>모델과 실행</b></td><td>처음부터 끝까지 오류 없이 실행, 고정된 방식으로 나누기, 기준선 비교</td><td>20</td></tr>
+        <tr><td><b>평가 지표</b></td><td>혼동행렬·정확도·정밀도·재현율이 코드 결과와 일치, 네 칸을 공장 말로 설명</td><td>25</td></tr>
+        <tr><td><b>판정 기준의 근거</b></td><td>기준 2개 이상 비교, 오류 비용 가정과 선택이 논리적으로 연결</td><td>25</td></tr>
+        <tr><td><b>해석과 한계</b></td><td>특성 중요도를 원인으로 단정하지 않음, 한계·개선 아이디어</td><td>20</td></tr>
+        <tr><td><b>형식·AI 활용</b></td><td>1쪽 분량, 생성형AI 사용 여부와 검증 방법을 밝힘</td><td>10</td></tr>
+      </tbody>
+    </table>
+    <div style="width:330px;flex:none;display:grid;gap:12px">
+      <div class="tile" style="padding:16px 18px;gap:8px"><div class="h" style="font-size:19px">제출 전 확인</div>
+        <ul class="chk">
+          <li><svg class="ic"><use href="#i-check"/></svg>런타임 → 모두 실행 후 저장했다</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>보고서 숫자 = 노트북 출력 숫자</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>“정확도가 높아서 좋다”로 끝내지 않았다</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>시험 데이터를 학습에 쓰지 않았다</li>
+        </ul>
+      </div>
+      <div class="callout b" style="font-size:15.5px">정답 기준은 없습니다. 같은 숫자라도 <strong>근거가 분명한</strong> 선택이 높은 점수를 받습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시 · 세부 사항과 기한은 LMS 공지가 우선</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">혼동행렬</div><div style="font-size:21px">잡은 불량·놓친 불량·잘못 경보·정상 통과로 <strong>틀림의 종류</strong>를 센다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">정밀도 vs 재현율</div><div style="font-size:21px">경보를 믿을 수 있나 vs 불량을 다 잡았나 — <strong>함께</strong> 본다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h">기준은 사람이</div><div style="font-size:21px">기준을 낮추면 재현율↑ 정밀도↓. <strong>오류 비용</strong>으로 정하고 근거를 남긴다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="실제로는 불량인데 정상이라고 판정한 경우가 FN(위음성), 즉 놓친 불량입니다. 불량품이 그대로 출하됩니다.">
+      <p class="q-title"><b>Q1.</b> “실제 불량인데 정상으로 판정”한 칸은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">TP · 잡은 불량</button>
+        <button type="button" data-v="b">FP · 잘못 경보</button>
+        <button type="button" data-v="c">FN · 놓친 불량</button>
+        <button type="button" data-v="d">TN · 정상 통과</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="재현율 = 잡은 불량 ÷ 실제 불량 = 18 ÷ 20 = 90%. 정밀도는 잡은 불량 ÷ 불량 판정 전체 = 18 ÷ 30 = 60%입니다.">
+      <p class="q-title"><b>Q2.</b> 실제 불량 20개 중 18개를 잡았고, 불량 판정은 모두 30번이었다. 재현율은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">90%</button>
+        <button type="button" data-v="b">60%</button>
+        <button type="button" data-v="c">67%</button>
+        <button type="button" data-v="d">18%</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="기준을 낮추면 더 많은 제품을 불량으로 판정하므로 놓친 불량이 줄어 재현율이 오르고, 정상인데 경보가 울리는 경우가 늘어 정밀도는 보통 내려갑니다.">
+      <p class="q-title"><b>Q3.</b> 불량 판정 기준을 0.5에서 0.2로 낮추면 일반적으로?</p>
+      <div class="opts">
+        <button type="button" data-v="a">재현율↓ 정밀도↑</button>
+        <button type="button" data-v="b">재현율↑ 정밀도↓</button>
+        <button type="button" data-v="c">둘 다 오른다</button>
+        <button type="button" data-v="d">모델을 다시 학습해야만 바뀐다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="브레이크 부품처럼 불량 하나가 사고로 이어질 수 있다면 놓친 불량(FN)의 비용이 매우 큽니다. 재검사 비용이 늘더라도 재현율을 우선합니다.">
+      <p class="q-title"><b>Q4.</b> 자동차 브레이크 부품 검사라면 어떤 지표를 가장 우선할까?</p>
+      <div class="opts">
+        <button type="button" data-v="a">정확도 — 전체를 많이 맞히는 것이 중요하다</button>
+        <button type="button" data-v="b">정밀도 — 잘못 경보를 줄여야 한다</button>
+        <button type="button" data-v="c">어느 것도 상관없다</button>
+        <button type="button" data-v="d">재현율 — 불량을 놓치면 사고로 이어진다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 12주차 군집과 이상탐지</span></div>
+    <div class="big">12-1</div>
+    <h2>비슷한 것끼리 묶기: 군집</h2>
+    <p>정답(defect)이 없다면? 데이터 스스로 비슷한 것끼리 묶는 비지도 학습을 만납니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week12/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 11주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">11주 3차시 · 정확도·정밀도·재현율</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

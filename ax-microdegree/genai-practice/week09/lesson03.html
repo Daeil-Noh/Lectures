@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9주 3차시 · 맞춤형 AI 비서 만들기(Gemini Gems·Claude 프로젝트) | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 9주 3차시 교안: 지침·참고 자료·대화로 이루어진 맞춤형 AI 비서, 역할·할 일·하지 말 것·답변 형식·참고 파일로 지침 설계하기, Gemini Gems와 Claude 프로젝트로 만들기, 테스트 질문으로 점검하기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .slide.section .big { margin-bottom: 24px; }
+  .floaty { animation: floaty 3.2s ease-in-out infinite; }
+  @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @media (prefers-reduced-motion: reduce) { .floaty, .flowdot { animation: none; display: none; } }
+  .chat .msg { font-size: 15px; line-height: 1.5; }
+
+  /* 도입 비교 */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .two .cap { font-size: 18px; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .msg .rep { background: rgba(255,255,255,.18); border-radius: 6px; padding: 0 4px; }
+
+  /* 세 요소 */
+  .eq { display: grid; grid-template-columns: 1fr 50px 1fr 50px 1fr 50px 1.1fr; align-items: stretch; }
+  .eq .op { display: grid; place-items: center; font-size: 38px; font-weight: 800; color: var(--muted); }
+  .eq .tile { padding: 20px; gap: 10px; }
+  .eq .ex { font-size: 15.5px; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; line-height: 1.45; }
+  .eq .res { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .eq .res .d { color: var(--surface); opacity: .9; }
+  .eq .res .ic-badge { background: rgba(255,255,255,.18); color: var(--surface); }
+
+  /* 비교 표 */
+  .vs { font-size: 18px; }
+  .vs th, .vs td { padding: 10px 16px; }
+  .vs td:first-child { font-weight: 800; white-space: nowrap; }
+
+  /* 다섯 칸 */
+  .five { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .five .tile { padding: 16px 14px; gap: 8px; }
+  .five .num { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--surface); font-weight: 800; display: grid; place-items: center; font-size: 17px; }
+  .five .ex { font-size: 14.5px; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; line-height: 1.45; }
+
+  /* 조립기 */
+  .tgroups { display: grid; gap: 6px; overflow: auto; }
+  .tg-h { font-size: 13.5px; font-weight: 800; color: var(--muted); margin-top: 2px; }
+  .tgl { font: inherit; font-size: 14.5px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.3; }
+  .tgl .chk { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 8px; height: 5px; border-left: 2.5px solid #fff; border-bottom: 2.5px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .bld { width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 10px; padding: 4px; }
+  .bld .prompt { display: flex; flex-direction: column; min-height: 0; }
+  .bld .prompt pre { font-size: 14.5px; line-height: 1.5; overflow: auto; flex: 1; min-height: 0; }
+  .bld .prompt pre .sec { color: var(--accent); font-weight: 800; }
+  .bld .prompt pre .new { background: var(--accent-2-soft); border-radius: 4px; }
+  .pv { display: grid; grid-template-columns: 1fr 1.25fr; gap: 10px; align-items: start; }
+  .pv .msg { max-width: 100%; font-size: 14.5px; }
+  .pv .note { font-size: 13.5px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+  .dots5 { display: flex; gap: 6px; }
+  .dots5 i { flex: 1; height: 10px; border-radius: 5px; background: var(--surface); }
+  .dots5 i.on { background: var(--accent); }
+
+  /* 참고 자료 */
+  .refs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .refs .tile { padding: 20px 22px; }
+  .refs ul { margin: 0; padding-left: 1.1em; font-size: 18px; line-height: 1.5; }
+  .refs li { margin: 4px 0; }
+
+  /* 만드는 순서 */
+  .howto { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .howto .tile { padding: 16px; gap: 8px; }
+  .howto .num { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--surface); font-weight: 800; display: grid; place-items: center; font-size: 17px; }
+  .howto .h { font-size: 21px; }
+  .howto .d { font-size: 17px; line-height: 1.5; }
+
+  /* 테스트 */
+  .tests { display: grid; gap: 6px; }
+  .tbtn { font: inherit; font-size: 15px; font-weight: 700; text-align: left; display: flex; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.3; }
+  .tbtn[aria-pressed="true"] { border: 2px solid var(--accent); background: var(--accent-soft); }
+  .tbtn .mk { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 800; flex: none; background: var(--surface-2); color: var(--muted); }
+  .tbtn .mk.p { background: var(--ok); color: #fff; } .tbtn .mk.f { background: var(--bad); color: #fff; }
+  .tview { width: 100%; display: flex; flex-direction: column; gap: 12px; padding: 8px 14px; }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); }
+  .crit { font-size: 15px; color: var(--muted); }
+  .crit b { color: var(--text); }
+
+  /* 연결 */
+  .ideas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .ideas .tile { padding: 18px; gap: 8px; }
+  .ideas .k { font-size: 14px; font-weight: 800; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 9주차 3차시</p>
+    <h1 style="font-size:62px">맞춤형<br>AI 비서 만들기</h1>
+    <p class="lead" style="font-size:24px">Gemini Gems · Claude 프로젝트로<br>“매번 같은 설명”을 저장해 둔다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 2개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <g transform="translate(40 60)"><rect width="150" height="96" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/><text x="20" y="34" style="font-size:17px;font-weight:800;fill:var(--accent)">지침</text><rect x="20" y="48" width="110" height="9" rx="4" class="f-line"/><rect x="20" y="66" width="80" height="9" rx="4" class="f-line"/></g>
+    <g transform="translate(40 180)"><rect width="150" height="96" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/><text x="20" y="34" style="font-size:17px;font-weight:800;fill:var(--accent-2)">참고 자료</text><g transform="translate(20 46) scale(1.5)" style="color:var(--accent-2)"><use href="#i-log" width="24" height="24"/></g><g transform="translate(64 46) scale(1.5)" style="color:var(--accent-2)"><use href="#i-book" width="24" height="24"/></g></g>
+    <g transform="translate(40 300)"><rect width="150" height="96" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/><text x="20" y="34" style="font-size:17px;font-weight:800;fill:var(--muted)">대화</text><g transform="translate(20 46) scale(1.5)" style="color:var(--muted)"><use href="#i-chat" width="24" height="24"/></g></g>
+    <path id="a1" d="M195 108 C 260 108, 260 228, 320 228" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 8"/>
+    <path id="a2" d="M195 228 H320" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 8"/>
+    <path id="a3" d="M195 348 C 260 348, 260 228, 320 228" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 8"/>
+    <circle r="6" class="f-acc flowdot"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#a1"/></animateMotion></circle>
+    <circle r="6" class="f-acc2 flowdot"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#a2"/></animateMotion></circle>
+    <circle r="6" class="f-muted flowdot"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#a3"/></animateMotion></circle>
+    <g class="floaty"><circle cx="410" cy="228" r="86" class="f-acc"/><g transform="translate(360 178) scale(4.2)" style="color:var(--surface)"><use href="#i-bot" width="24" height="24"/></g>
+    <g transform="translate(456 140) scale(1.6)" style="color:var(--accent-2)"><use href="#i-sparkles" width="24" height="24"/></g></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">AI 비서의 구조</div><div class="d">지침 + 참고 자료 + 대화로 이루어진다는 것을 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">지침 설계</div><div class="d">역할·할 일·하지 말 것·답변 형식·참고 파일로 지침을 쓴다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">직접 만들기</div><div class="d">Gemini Gems나 Claude 프로젝트로 비서를 만든다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">테스트하기</div><div class="d">거절해야 할 질문까지 넣어 비서를 점검하고 고친다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>① AI 비서란?</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② 지침 설계하기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>③ Gems·프로젝트로 만들기</b></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>④ 테스트하기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘의 예제: <strong>바다결 고객 응대 비서</strong>. 9-2의 메일 답장 프롬프트를 “저장해 두고 계속 쓰는 비서”로 바꿉니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입: 매번 같은 설명?</span></div>
+  <h2>문의가 올 때마다 회사 소개부터 다시?</h2>
+  <div class="body">
+    <div class="two">
+      <div>
+        <div class="cap"><span class="ic-badge g" style="width:40px;height:40px;font-size:22px;border-radius:12px"><svg class="ic"><use href="#i-chat"/></svg></span>보통 채팅</div>
+        <div class="chat">
+          <div class="chat-h">AI 채팅 (화면은 단순화한 예시)</div>
+          <div class="msg user"><span class="rep">너는 바다결 응대 담당이야. 응대 원칙은… 답장 형식은… 지어내지 마…</span> 배송 언제 와요?</div>
+          <div class="msg user"><span class="rep">너는 바다결 응대 담당이야. 응대 원칙은… 답장 형식은…</span> 교환 되나요?</div>
+          <div class="msg ai warn"><span class="who">예시 답변</span>(설명을 하나 빠뜨린 날) 네, 언제든 교환해 드립니다!</div>
+        </div>
+      </div>
+      <div>
+        <div class="cap"><span class="ic-badge" style="width:40px;height:40px;font-size:22px;border-radius:12px"><svg class="ic"><use href="#i-bot"/></svg></span>맞춤형 AI 비서</div>
+        <div class="chat">
+          <div class="chat-h">바다결 응대 비서 (화면은 단순화한 예시)</div>
+          <div class="msg user">배송 언제 와요?</div>
+          <div class="msg user">교환 되나요?</div>
+          <div class="msg ai"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>제품 문제라면 받은 날부터 7일 안에 교환·환불해 드립니다. 단순 변심은 뜯지 않은 제품만 가능합니다.</div>
+        </div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:18px;font-size:20px">설명(지침)과 자료(FAQ)를 <strong style="color:var(--text)">한 번 저장</strong>해 두면, 질문만 하면 됩니다. 빠뜨리는 날도 없어집니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시 · 가상 회사 바다결</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>맞춤형 AI 비서란?</h2><p>지침과 자료를 저장해 둔, 나만의 대화 공간입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-bot"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 세 요소 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① AI 비서란?</span></div>
+  <h2>AI 비서 = 지침 + 참고 자료 + 대화</h2>
+  <div class="body">
+    <div class="eq">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">지침</div><div class="d">어떻게 행동할지 정한 글</div><div class="ex">역할, 할 일, 하지 말 것, 답변 형식</div></div>
+      <div class="op">+</div>
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">참고 자료</div><div class="d">답의 근거가 되는 파일</div><div class="ex">FAQ, 응대 원칙, 제품 정보, 양식</div></div>
+      <div class="op">+</div>
+      <div class="tile frag show"><span class="ic-badge lg g"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">대화</div><div class="d">그때그때의 질문</div><div class="ex">“이 메일에 답장 초안 써 줘”</div></div>
+      <div class="op">=</div>
+      <div class="tile res frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">맞춤형 비서</div><div class="d">지침과 자료는 저장돼 있고, 질문만 바뀐다</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">지침은 3주차의 <strong style="color:var(--text)">역할·맥락·지시·형식</strong>, 4주차의 <strong style="color:var(--text)">업무 프롬프트 템플릿</strong>을 “항상 켜 둔 것”과 같습니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. Gems vs 프로젝트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① AI 비서란?</span></div>
+  <h2>이 수업의 두 도구: Gemini Gems · Claude 프로젝트</h2>
+  <div class="body">
+    <table class="vs">
+      <tr><th></th><th>Gemini — Gems(젬)</th><th>Claude — 프로젝트(Projects)</th></tr>
+      <tr><td>지침</td><td>Gem을 만들 때 지침(instructions)을 적는다</td><td>프로젝트 지침(project instructions)을 적는다</td></tr>
+      <tr><td>참고 자료</td><td>지식(knowledge)에 파일 추가 — 내 기기 또는 Google Drive</td><td>프로젝트 지식(project knowledge)에 파일 추가</td></tr>
+      <tr><td>대화</td><td>만든 Gem을 골라 대화</td><td>그 프로젝트 안에서 새 대화</td></tr>
+      <tr><td>계정</td><td><b>학교 Google 계정</b>으로 사용</td><td>무료 계정도 사용 가능 (무료는 프로젝트 최대 5개)</td></tr>
+    </table>
+    <div class="box warn frag" style="margin-top:18px;padding:16px 22px"><p style="font-size:18px;margin:0;line-height:1.55"><svg class="ic"><use href="#i-alert"/></svg> Google은 Gems를 점차 <strong>‘스킬(skills)’</strong>로 바꾸겠다고 공지했습니다. 교육용 계정은 당분간 Gems를 쓸 수 있지만 <strong>메뉴 위치가 바뀔 수 있습니다</strong>(2026년 11월 기준: 왼쪽 아래 계정 이름 옆 <b>설정</b> → <b>Gems</b>). 이름이 바뀌어도 오늘 배우는 <strong>지침 설계는 그대로</strong> 쓰입니다. 서비스 화면은 바뀔 수 있습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시 · 2026년 11월 확인: Google Gemini 도움말·Workspace 업데이트 공지, Claude 도움말 센터 · 기능·한도는 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>지침 설계하기</h2><p>비서의 품질은 지침에서 결정됩니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-log"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 다섯 칸 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 지침 설계하기</span></div>
+  <h2>지침에 들어갈 다섯 칸</h2>
+  <div class="body">
+    <div class="five">
+      <div class="tile frag show"><span class="num">1</span><div class="h" style="font-size:20px">역할</div><div class="d" style="font-size:15.5px">누구로서 일하나?</div><div class="ex">“바다결의 고객 응대 도우미. 담당 직원의 답장 초안을 돕는다.”</div></div>
+      <div class="tile frag show"><span class="num">2</span><div class="h" style="font-size:20px">할 일</div><div class="d" style="font-size:15.5px">무엇을 해 주나?</div><div class="ex">“문의를 네 유형으로 분류하고, 답장 초안을 3~4문장으로 쓴다.”</div></div>
+      <div class="tile frag show" style="border:2px solid var(--accent-2)"><span class="num" style="background:var(--accent-2)">3</span><div class="h" style="font-size:20px">하지 말 것</div><div class="d" style="font-size:15.5px">절대 하면 안 되는 일</div><div class="ex">“없는 정책을 지어내지 않는다. 개인정보를 받지 않는다.”</div></div>
+      <div class="tile frag show"><span class="num">4</span><div class="h" style="font-size:20px">답변 형식</div><div class="d" style="font-size:15.5px">매번 같은 모양으로</div><div class="ex">“① 분류 ② 답장 초안 ③ 담당자 확인 필요”</div></div>
+      <div class="tile frag show"><span class="num">5</span><div class="h" style="font-size:20px">참고 파일</div><div class="d" style="font-size:15.5px">무엇을 근거로?</div><div class="ex">“FAQ 파일을 근거로, 없으면 [담당자 확인 필요].”</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:21px">가장 빠뜨리기 쉬운 칸은 <strong style="color:var(--accent-2)">3. 하지 말 것</strong> — 비서가 고객 앞에서 실수하지 않게 막는 칸입니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 직접 해 보기 1: 지침 조립기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 지침 설계하기 · 직접 해 보기 1</span></div>
+  <h2>지침 조립기: 칸을 골라 지침을 완성하자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="align-items:stretch;padding:12px">
+      <div class="bld">
+        <div class="prompt"><div class="prompt-h">완성된 지침 · Gem·프로젝트의 지침 칸에 붙여 넣기 <span class="dots5" id="b-dots" style="width:110px"><i></i><i></i><i></i><i></i><i></i></span><span id="b-n">2 / 5칸</span><button class="copy" type="button">복사</button></div><pre id="b-out"></pre></div>
+        <div class="pv">
+          <div class="msg user" style="align-self:start">선물 세트 30개 사면 할인돼요?</div>
+          <div><div class="msg ai" id="b-ans"></div><div class="note" id="b-note"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="tgroups" id="b-tg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시 · 오른쪽 아래 답은 미리 써 둔 예시 — 실제 답은 매번 다를 수 있음 · 여기서 고른 지침은 16장 테스트에 이어집니다</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 참고 자료 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 지침 설계하기 · 참고 파일</span></div>
+  <h2>참고 자료: 넣을 것과 넣지 말 것</h2>
+  <div class="body">
+    <div class="refs">
+      <div class="tile" style="border:2px solid var(--ok)"><div style="display:flex;align-items:center;gap:12px"><span class="ic-badge" style="background:var(--ok-soft);color:var(--ok)"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">넣을 것</div></div>
+        <ul><li>공개해도 되는 <strong>정책·FAQ</strong> (배송, 교환·환불)</li><li><strong>제품 정보</strong>와 가격</li><li>회사 <strong>말투</strong>·답장 예시, 문서 양식</li><li>내가 <strong>확인한</strong> 최신 내용</li></ul></div>
+      <div class="tile" style="border:2px solid var(--bad)"><div style="display:flex;align-items:center;gap:12px"><span class="ic-badge" style="background:var(--bad-soft);color:var(--bad)"><svg class="ic"><use href="#i-x"/></svg></span><div class="h">넣지 말 것</div></div>
+        <ul><li>고객 <strong>이름·연락처·주문 목록</strong> (개인정보)</li><li>공개 전 <strong>기밀</strong>(원가, 계약 조건, 인사 정보)</li><li>오래되거나 <strong>확인 안 된</strong> 내용</li><li>다른 사람의 <strong>저작물</strong>을 허락 없이 통째로</li></ul></div>
+    </div>
+    <div style="display:flex;gap:14px;align-items:center;margin-top:20px;flex-wrap:wrap">
+      <a class="btn" href="materials/badagyeol_faq.txt" download><svg class="ic"><use href="#i-log"/></svg> 실습 자료 받기 (바다결 FAQ)</a>
+      <span class="muted" style="font-size:17px">가상 회사 FAQ — 개인정보·기밀이 없어 참고 자료로 올려도 됩니다 (1-3 규칙)</span>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시 · 참고 자료가 틀리면 비서도 틀립니다 — 자료를 바꾸면 비서도 다시 테스트</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>Gems · 프로젝트로 만들기</h2><p>둘 중 하나로 만들고, 한쪽이 한도에 걸리면 다른 쪽으로.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-sparkles"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. Gemini Gems -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 만들기 · Gemini Gems</span></div>
+  <h2>Gemini에서 Gem 만들기 (일반적인 순서)</h2>
+  <div class="body">
+    <div class="howto">
+      <div class="tile frag show"><span class="num">1</span><div class="h">학교 계정으로 로그인</div><div class="d">웹 브라우저에서 Gemini를 열고 <b>학교 Google 계정</b>으로 로그인 (1-2에서 준비)</div></div>
+      <div class="tile frag show"><span class="num">2</span><div class="h">Gems에서 새 Gem</div><div class="d">왼쪽 아래 <b>계정 이름 옆 설정</b> → <b>Gems</b> → <b>새 Gem</b>. 이름은 “바다결 응대 비서”</div></div>
+      <div class="tile frag show"><span class="num">3</span><div class="h">지침 + 지식 파일</div><div class="d">지침 칸에 <b>조립기에서 복사한 지침</b>을 붙여 넣고, 지식에 <b>badagyeol_faq.txt</b> 추가</div></div>
+      <div class="tile frag show"><span class="num">4</span><div class="h">미리 보고 저장</div><div class="d">미리보기 창에서 질문 몇 개로 <b>테스트</b>한 뒤 저장. 이후 대화는 그 Gem을 골라서</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:20px;padding:14px 20px"><p style="font-size:18px;margin:0;line-height:1.55"><svg class="ic"><use href="#i-alert"/></svg> 메뉴 이름·위치는 화면 언어와 업데이트에 따라 다를 수 있습니다. Gems가 보이지 않으면 왼쪽 아래 계정 이름 옆 <b>설정</b>을 먼저 열어 보고, 그래도 없으면 Gemini 도움말에서 “Gems”를 검색하세요. Gems가 <strong>스킬</strong>로 바뀌어도 <strong>지침을 붙여 넣는 칸</strong>은 같은 역할을 합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시 · Google Gemini 도움말 「Use Gems in Gemini Apps」 기준으로 정리 · 서비스 화면은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 14. Claude 프로젝트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 만들기 · Claude 프로젝트</span></div>
+  <h2>Claude에서 프로젝트 만들기 (일반적인 순서)</h2>
+  <div class="body">
+    <div class="howto">
+      <div class="tile frag show"><span class="num">1</span><div class="h">프로젝트 메뉴</div><div class="d">Claude 웹에 로그인 → 왼쪽의 <b>프로젝트(Projects)</b> → <b>새 프로젝트</b></div></div>
+      <div class="tile frag show"><span class="num">2</span><div class="h">이름·설명</div><div class="d">“바다결 응대 비서”. 이름·설명은 <b>사람이 알아보기 위한 것</b> — Claude가 읽는 곳은 지침 칸</div></div>
+      <div class="tile frag show"><span class="num">3</span><div class="h">지침 + 프로젝트 지식</div><div class="d"><b>프로젝트 지침</b>에 조립기 지침을 붙여 넣고 저장, <b>프로젝트 지식</b>에 FAQ 파일 추가</div></div>
+      <div class="tile frag show"><span class="num">4</span><div class="h">안에서 새 대화</div><div class="d">프로젝트 <b>안에서</b> 대화를 시작해야 지침과 파일이 적용된다</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:20px;padding:14px 20px"><p style="font-size:18px;margin:0;line-height:1.55"><svg class="ic"><use href="#i-bulb"/></svg> 무료 계정도 프로젝트를 만들 수 있습니다(최대 5개). 수업용 비서 하나, 내 개선안용 비서 하나 — 이렇게 나눠 써 보세요. 메뉴 이름·한도는 바뀔 수 있습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시 · Claude 도움말 센터 「What are projects?」·「How can I create and manage projects?」 기준 · 서비스 화면은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 섹션 ④ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">④</div><h2>비서 테스트하기</h2><p>만들었으면 끝이 아니라, <strong>일부러 곤란한 질문</strong>을 던져 봅니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-shield"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 2: 테스트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 테스트하기 · 직접 해 보기 2</span></div>
+  <h2>테스트 질문 여섯 개로 비서 점검하기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="align-items:center"><div class="tview">
+      <div class="chat" style="border:0;padding:0">
+        <div class="chat-h">바다결 응대 비서 (화면은 단순화한 예시)</div>
+        <div class="msg user" id="x-q"></div>
+        <div class="msg ai" id="x-a"></div>
+      </div>
+      <div class="crit" id="x-c"></div>
+      <div class="status ok" id="x-st"></div>
+    </div></div>
+    <div class="side">
+      <div class="tests" id="x-list"></div>
+      <div class="meter"><div class="lbl">10장에서 고른 지침으로 통과</div><div class="val" id="x-n" style="font-size:32px">0 / 6</div></div>
+      <a class="btn ghost" href="#10" style="text-decoration:none;font-size:16px;padding:8px 12px"><svg class="ic"><use href="#i-reset"/></svg> 10장 지침 조립기로 돌아가 고치기</a>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시 · 답은 미리 써 둔 예시 — 실제 답은 매번 다를 수 있음 · 실제 Gem·프로젝트에도 같은 질문을 넣어 확인하세요</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 테스트 → 고치기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 테스트하기</span></div>
+  <h2>테스트 → 고치기 → 다시 테스트</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">테스트 질문</div><div class="d">자주 오는 질문<br>+ 곤란한 질문<br>+ <b>거절해야 할 질문</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">문제 찾기</div><div class="d">지어냈나? 형식이 다른가?<br>개인정보를 받았나?</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">지침 한 줄 추가</div><div class="d">“~하지 않는다”<br>“모르면 ~라고 쓴다”</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">같은 질문 다시</div><div class="d">고친 뒤에도<br>여러 번 확인</div></div>
+    </div>
+    <div class="tiles frag" style="grid-template-columns:repeat(3,1fr);margin-top:22px;gap:14px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="d" style="font-size:16px;color:var(--text)">지침이 있어도 <b>항상 지키는 건 아니다</b> — 답은 여전히 사람이 확인</div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="d" style="font-size:16px;color:var(--text)">비서를 <b>공유하기 전에</b> 지침·참고 자료에 개인정보·기밀이 없는지 확인</div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-book"/></svg></span><div class="d" style="font-size:16px;color:var(--text)">정책이 바뀌면 <b>참고 파일도 갱신</b>하고 다시 테스트</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 내 개선안과 연결 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 내 개선안과 연결</span></div>
+  <h2>내 업무 개선안에도 비서를 넣어 볼까?</h2>
+  <div class="body">
+    <div class="ideas">
+      <div class="tile frag show"><span class="k">경영·마케팅</span><div class="h" style="font-size:20px">주간 보고 비서</div><div class="d">보고서 양식 + 작성 원칙을 넣어 두고, 표를 붙이면 초안</div></div>
+      <div class="tile frag show"><span class="k">어문·미디어</span><div class="h" style="font-size:20px">보도자료 교정 비서</div><div class="d">표기 원칙·금지 표현 목록을 참고 자료로</div></div>
+      <div class="tile frag show"><span class="k">관광·서비스</span><div class="h" style="font-size:20px">외국어 안내문 비서</div><div class="d">시설 안내 원문 + “원문에 없는 내용 금지” 지침</div></div>
+      <div class="tile frag show"><span class="k">행정·사무</span><div class="h" style="font-size:20px">공문 초안 비서</div><div class="d">기관 공문 양식 + 맞춤법 원칙, 수신처는 사람이 확인</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:22px"><p style="font-size:21px;margin:0">9-1 주제 양식의 <strong>4. AI 활용 아이디어</strong> 칸에 “맞춤형 비서(지침 + 참고 자료)”를 쓸 수 있습니다. 지침의 <strong>하지 말 것</strong>은 <strong>6. 위험과 대응</strong> 칸과 이어집니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시 · 전공별 아이디어 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">지침 + 참고 자료 + 대화</div><div style="font-size:21px">Gemini <strong>Gems</strong>, Claude <strong>프로젝트</strong> — 설명과 자료를 한 번 저장해 둔다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">지침의 다섯 칸</div><div style="font-size:21px">역할 · 할 일 · <strong>하지 말 것</strong> · 답변 형식 · 참고 파일</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">테스트하고 고친다</div><div style="font-size:21px"><strong>거절해야 할 질문</strong>까지 넣어 점검하고, 답은 여전히 사람이 확인</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="맞춤형 AI 비서는 저장해 둔 지침과 참고 자료 위에서 대화를 이어 가는 구조입니다. Gemini에서는 Gems, Claude에서는 프로젝트로 만듭니다.">
+      <p class="q-title"><b>Q1.</b> 맞춤형 AI 비서를 이루는 세 가지로 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">로고 + 이름 + 비밀번호</button>
+        <button type="button" data-v="b">지침 + 참고 자료 + 대화</button>
+        <button type="button" data-v="c">이미지 + 영상 + 음성</button>
+        <button type="button" data-v="d">유료 요금제 + 코딩 + 서버</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="비서는 개인정보를 받거나 기록하지 않고, 공식 경로(자사몰 주문 내역·1:1 문의)를 안내해야 합니다. 이런 질문은 테스트에 꼭 넣어 거절하는지 확인합니다.">
+      <p class="q-title"><b>Q2.</b> 고객이 “주문번호와 휴대폰 번호를 알려 줄 테니 배송 조회해 줘요”라고 할 때 좋은 비서의 답은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">번호를 받아 적고 조회했다고 답한다</button>
+        <button type="button" data-v="b">배송이 곧 도착한다고 추측해서 답한다</button>
+        <button type="button" data-v="c">채팅에 개인정보를 적지 말라고 하고 공식 조회 경로를 안내한다</button>
+        <button type="button" data-v="d">아무 답도 하지 않는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="고객 연락처 명단은 개인정보입니다. 참고 자료에는 공개해도 되는 정책·FAQ·제품 정보처럼 개인정보·기밀이 없는 자료만 넣습니다.">
+      <p class="q-title"><b>Q3.</b> 비서의 참고 자료로 올리면 <u>안 되는</u> 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">고객 이름·연락처가 담긴 주문 명단</button>
+        <button type="button" data-v="b">공개된 배송·교환 정책 FAQ</button>
+        <button type="button" data-v="c">제품 이름과 가격표</button>
+        <button type="button" data-v="d">회사 답장 말투 예시</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="참고 파일에 없는 내용은 지어내지 말고 '[담당자 확인 필요]'처럼 표시하게 하면, 사람이 확인할 곳이 분명해지고 잘못된 약속을 막을 수 있습니다.">
+      <p class="q-title"><b>Q4.</b> 비서가 FAQ에 없는 할인율을 지어냈다. 지침에 추가할 문장으로 가장 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">“더 친절하게 답해 줘.”</button>
+        <button type="button" data-v="b">“답을 더 길게 써 줘.”</button>
+        <button type="button" data-v="c">“할인은 항상 10%라고 답해.”</button>
+        <button type="button" data-v="d">“참고 파일에 없는 정책은 지어내지 말고 ‘[담당자 확인 필요]’라고 써.”</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 10주차 마케팅 콘텐츠</span></div>
+    <div class="big">10-1</div>
+    <h2>타깃 고객과 페르소나 설정</h2>
+    <p>바다결의 고민 ③ “20~30대 신규 고객을 늘리고 싶다” — 누구에게 말할지부터 정합니다. 개선안 주제 제출(LMS 공지 기준)도 잊지 마세요.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week10/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-user"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">9주 3차시 · 맞춤형 AI 비서 만들기(Gemini Gems·Claude 프로젝트)</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

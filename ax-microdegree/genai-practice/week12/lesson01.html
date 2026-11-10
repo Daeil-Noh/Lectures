@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12주 1차시 · AI와 스토리텔링 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 12주 1차시 교안: 비즈니스 스토리의 구조(문제→전환→해결), 고객이 주인공인 브랜드 이야기, 사실에서 출발하기, AI로 각도를 찾고 내 목소리로 다듬기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .walker { display: none; } .pulse { animation: none !important; } }
+  .pulse { animation: pulse 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  @keyframes pulse { 50% { transform: scale(1.12); } }
+
+  /* 꾸민 부분 표시 */
+  .inv { text-decoration: underline wavy var(--bad); text-underline-offset: 4px; font-weight: 700; }
+  .src { font-size: .8em; font-weight: 800; color: var(--accent); }
+
+  /* 이야기 조립기 */
+  .sb { display: grid; gap: 10px; width: 100%; padding: 6px 8px; }
+  .sb-row { display: grid; grid-template-columns: 84px repeat(3, 1fr); gap: 8px; align-items: stretch; }
+  .sb-lab { display: flex; flex-direction: column; justify-content: center; font-size: 16px; font-weight: 800; color: var(--accent); line-height: 1.25; }
+  .sb-lab small { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .pick { font: inherit; font-size: 15.5px; font-weight: 700; line-height: 1.35; text-align: left; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); cursor: pointer; min-height: 62px; }
+  .pick:hover { border-color: var(--accent); }
+  .pick[aria-pressed="true"] { background: var(--accent-soft); border: 2px solid var(--accent); padding: 8px 11px; }
+  .story { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; min-height: 150px; }
+  .story .ph { color: var(--muted); }
+  .story .bad { background: var(--bad-soft); border-radius: 4px; padding: 0 2px; }
+  .checks { display: grid; gap: 6px; }
+  .chk-row { display: flex; align-items: center; gap: 10px; font-size: 15.5px; font-weight: 700; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 7px 12px; }
+  .chk-row .mk { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; color: var(--surface); background: var(--line); flex: none; }
+  .chk-row.ok .mk { background: var(--ok); } .chk-row.no .mk { background: var(--bad); }
+  .chk-row .v { margin-left: auto; color: var(--muted); font-weight: 600; font-size: 14px; }
+
+  /* 판단 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; min-height: 128px; display: flex; flex-direction: column; gap: 7px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .ic-badge { width: 42px; height: 42px; font-size: 22px; border-radius: 12px; flex: none; }
+  .pcard .nm { font-size: 17px; font-weight: 800; line-height: 1.38; }
+  .pcard .ans { display: none; font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 15.5px; }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.yes { background: var(--ok-soft); border-color: var(--ok); } .pcard.open.yes .verdict { color: var(--ok); }
+  .pcard.open.no { background: var(--bad-soft); border-color: var(--bad); } .pcard.open.no .verdict { color: var(--bad); }
+  .pcard.open.mid { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.mid .verdict { color: var(--accent-2); }
+
+  /* 내 목소리로 */
+  .draft { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 22px; font-size: 21px; line-height: 1.7; width: 100%; }
+  .draft .cut { text-decoration: line-through; color: var(--muted); opacity: .7; }
+  .draft .add { background: var(--accent-soft); border-radius: 4px; padding: 0 3px; }
+  .draft .hype { background: var(--bad-soft); border-radius: 4px; padding: 0 3px; }
+  .draft .refs { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 14.5px; color: var(--muted); line-height: 1.55; }
+  .stage-lbl { font-size: 15px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
+  .steps-mini { display: grid; gap: 4px; font-size: 15px; }
+  .steps-mini span { padding: 4px 10px; border-radius: 8px; color: var(--muted); }
+  .steps-mini span.on { background: var(--accent-soft); color: var(--accent); font-weight: 800; }
+
+  .chat .msg { font-size: 16px; }
+  .prompt pre { font-size: 16.5px; line-height: 1.55; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 12주차 1차시</p>
+    <h1>AI와<br>스토리텔링</h1>
+    <p class="lead" style="font-size:25px">사실에서 출발하고,<br>고객을 주인공으로</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="20" y="40" width="480" height="300" rx="26" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <path id="arc" d="M60 270 C 130 270, 150 250, 200 230 S 260 110, 300 110 S 380 200, 460 160" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="60" cy="270" r="11" class="f-s2" stroke="var(--muted)" stroke-width="3"/>
+    <circle cx="200" cy="230" r="12" class="f-acc2s" stroke="var(--accent-2)" stroke-width="3"/>
+    <circle cx="300" cy="110" r="14" class="f-acc pulse"/>
+    <circle cx="460" cy="160" r="12" class="f-accs" stroke="var(--accent)" stroke-width="3"/>
+    <text x="60" y="305" text-anchor="middle" class="t-sub" style="font-size:16px">상황</text>
+    <text x="200" y="268" text-anchor="middle" class="t-acc2" style="font-size:17px">문제</text>
+    <text x="300" y="84" text-anchor="middle" class="t-acc" style="font-size:17px">전환</text>
+    <text x="460" y="198" text-anchor="middle" class="t-acc" style="font-size:17px">해결</text>
+    <g class="walker" style="color:var(--accent-2)"><g transform="translate(-14 -40) scale(1.2)"><use href="#i-user" width="24" height="24"/></g><animateMotion dur="7s" repeatCount="indefinite"><mpath href="#arc"/></animateMotion></g>
+    <!-- 사실 메모 -->
+    <rect x="300" y="262" width="190" height="150" rx="16" class="f-surface" stroke="var(--accent)" stroke-width="2.5"/>
+    <text x="322" y="294" class="t-acc" style="font-size:16px">사실 메모</text>
+    <g fill="var(--line)"><rect x="350" y="312" width="118" height="10" rx="5"/><rect x="350" y="340" width="96" height="10" rx="5"/><rect x="350" y="368" width="108" height="10" rx="5"/></g>
+    <g fill="none" stroke="var(--ok)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M324 317 l5 5 l10 -10"/><path d="M324 345 l5 5 l10 -10"/><path d="M324 373 l5 5 l10 -10"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">이야기의 구조</div><div class="d">상황 → 문제 → 전환 → 결과로 비즈니스 이야기를 짠다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">고객이 주인공</div><div class="d">회사 자랑이 아니라 고객의 문제와 변화를 중심에 둔다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">사실에서 출발</div><div class="d">AI가 창업 이야기·수상 경력을 지어내지 않게 사실 메모로 쓴다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">내 목소리로</div><div class="d">AI에게 각도를 여러 개 받고, 고른 뒤 내 말투로 고쳐 쓴다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 오늘의 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>① 비즈니스 이야기의 구조</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② 사실로 쓰는 브랜드 이야기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ AI로 각도 찾고, 내 목소리로</b><small>직접 해 보기 1 · 실습</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-factory"/></svg> 오늘의 상황: 가상 회사 <strong>바다결</strong>의 홍보 담당이 되어 <strong>자사몰 첫 화면에 올릴 브랜드 이야기</strong>를 씁니다.</p></div>
+    <p class="muted" style="margin-top:18px;font-size:20px"><svg class="ic"><use href="#i-hand"/></svg> 손 모양이 보이는 슬라이드는 <strong>직접 조작</strong>해 볼 수 있습니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>같은 회사, 두 가지 소개</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile frag show" style="padding:26px">
+        <div class="muted" style="font-size:17px;font-weight:800">A · 나열형</div>
+        <div style="font-size:22px;line-height:1.65">바다결은 부산의 건강 간식 회사입니다. 그래놀라, 견과 믹스, 해조류 스낵 등 제품 5종을 자사몰·오픈마켓·매장 2곳에서 판매합니다.</div>
+      </div>
+      <div class="tile frag" style="padding:26px;border:2px solid var(--accent)">
+        <div style="font-size:17px;font-weight:800;color:var(--accent)">B · 이야기형</div>
+        <div style="font-size:22px;line-height:1.65">부산 여행에서 맛본 간식, 집에 와서 다시 찾고 싶었던 적 있나요? 매장에서 먹어 본 바다결을 자사몰에서 다시 주문하는 손님이 많습니다.</div>
+      </div>
+    </div>
+    <div class="box think frag" style="margin-top:22px"><p style="font-size:21px;margin:0">둘 다 <strong>사실</strong>입니다. B에는 <strong>사람(고객)·문제·해결</strong>이 있어서 읽는 사람이 자기 이야기로 받아들입니다. 그 뼈대가 오늘의 주제입니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · B의 근거: 후기 “부산 여행 때 매장에서 먹어 보고 주문했어요” 13건(reviews_2026.csv)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>비즈니스 이야기의 구조</h2><p>문제가 있어야 이야기가 움직입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-trend"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 구조 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 비즈니스 이야기의 구조</span></div>
+  <h2>상황 → <span style="color:var(--accent-2)">문제</span> → <span style="color:var(--accent)">전환</span> → 결과</h2>
+  <svg viewBox="0 0 1120 450" style="flex:1;min-height:0" role="img" aria-label="상황, 문제, 전환, 결과로 이어지는 이야기 곡선과 바다결 예시">
+    <path d="M70 250 C 200 250, 260 300, 330 300 S 520 110, 610 110 S 820 180, 1050 160" fill="none" stroke="var(--line)" stroke-width="6" stroke-linecap="round"/>
+    <g class="frag show">
+      <circle cx="70" cy="250" r="16" class="f-s2" stroke="var(--muted)" stroke-width="3"/>
+      <text x="40" y="215" class="t-main" style="font-size:24px">상황</text>
+      <rect x="10" y="300" width="250" height="130" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <text x="30" y="335" class="t-sub" style="font-size:15px">평범한 일상과 주인공</text>
+      <text x="30" y="370" class="t-main" style="font-size:18px">아침마다 아이에게</text>
+      <text x="30" y="398" class="t-main" style="font-size:18px">뭘 먹일지 고민하는 부모</text>
+    </g>
+    <g class="frag">
+      <circle cx="330" cy="300" r="16" class="f-acc2s" stroke="var(--accent-2)" stroke-width="3"/>
+      <text x="290" y="355" class="t-acc2" style="font-size:24px">문제</text>
+      <rect x="290" y="370" width="250" height="74" rx="16" class="f-acc2s"/>
+      <text x="310" y="402" class="t-main" style="font-size:17px">시리얼은 너무 달고,</text>
+      <text x="310" y="428" class="t-main" style="font-size:17px">굶기엔 하루가 길다</text>
+    </g>
+    <g class="frag">
+      <circle cx="610" cy="110" r="18" class="f-acc"/>
+      <text x="580" y="68" class="t-acc" style="font-size:24px">전환</text>
+      <rect x="520" y="170" width="260" height="110" rx="16" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+      <text x="540" y="204" class="t-sub" style="font-size:15px">브랜드는 해결을 돕는 안내자</text>
+      <text x="540" y="238" class="t-main" style="font-size:18px">단맛을 줄인</text>
+      <text x="540" y="264" class="t-main" style="font-size:18px">바다결 그래놀라를 만남</text>
+    </g>
+    <g class="frag">
+      <circle cx="1050" cy="160" r="16" class="f-accs" stroke="var(--accent)" stroke-width="3"/>
+      <text x="1000" y="125" class="t-main" style="font-size:24px">결과</text>
+      <rect x="830" y="210" width="280" height="120" rx="16" class="f-surface" stroke="var(--accent)" stroke-width="2"/>
+      <text x="850" y="244" class="t-sub" style="font-size:15px">주인공이 달라진 모습</text>
+      <text x="850" y="278" class="t-main" style="font-size:18px">아이도 잘 먹는 아침,</text>
+      <text x="850" y="304" class="t-main" style="font-size:18px">다시 주문하는 집</text>
+    </g>
+  </svg>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · 예시 문장의 근거: 사실 메모 5번, 후기 18건 “재구매했어요. 아이들도 잘 먹네요”</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 영웅은 고객 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 비즈니스 이야기의 구조</span></div>
+  <h2>주인공은 <span class="mark">고객</span>, 브랜드는 <span class="mark">안내자</span></h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile frag show" style="padding:24px">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg g"><svg class="ic"><use href="#i-factory"/></svg></span><div><div class="muted" style="font-size:16px;font-weight:700">회사가 주인공</div><div class="h" style="font-size:26px">“우리가 얼마나 대단한가”</div></div></div>
+        <div style="font-size:19px;background:var(--surface-2);border-radius:10px;padding:12px 16px">바다결은 엄선한 재료와 뛰어난 기술로 최고의 간식을 만듭니다.</div>
+        <div class="d">고객은 구경꾼이 된다. 근거 없는 자랑이 끼어들기 쉽다</div>
+      </div>
+      <div class="tile frag" style="padding:24px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div><div class="muted" style="font-size:16px;font-weight:700">고객이 주인공</div><div class="h" style="font-size:26px">“고객의 하루가 어떻게 달라지나”</div></div></div>
+        <div style="font-size:19px;background:var(--accent-soft);border-radius:10px;padding:12px 16px">아침마다 고민하던 부모가, 아이도 잘 먹는 한 그릇을 찾았습니다. 바다결은 그 아침을 돕습니다.</div>
+        <div class="d">고객은 자기 이야기로 읽는다. 브랜드는 <strong>문제를 푸는 도구·조언자</strong>로 등장</div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">AI에게 맡기면 기본값이 <strong style="color:var(--text)">회사 자랑</strong>이 되기 쉽습니다. 프롬프트에 <strong style="color:var(--text)">“주인공은 고객”</strong>이라고 적어 줍니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · 참고: 고객을 주인공, 브랜드를 안내자로 보는 관점은 도널드 밀러 『무기가 되는 스토리』(StoryBrand)로 널리 알려짐</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 직접 해 보기 1: 이야기 조립기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 비즈니스 이야기의 구조 · 직접 해 보기 1</span></div>
+  <h2>카드를 골라 이야기를 조립해 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot" style="align-items:stretch;padding:12px"><div class="sb" id="sb"></div></div>
+    <div class="side">
+      <div class="story" id="sb-story" aria-live="polite"><span class="ph">줄마다 카드를 하나씩 고르면 여기에 이야기가 완성됩니다.</span></div>
+      <div class="checks">
+        <div class="chk-row" id="ck-hero"><span class="mk">?</span>주인공이 고객인가<span class="v"></span></div>
+        <div class="chk-row" id="ck-fact"><span class="mk">?</span>문장마다 근거가 있는가<span class="v"></span></div>
+        <div class="chk-row" id="ck-flow"><span class="mk">?</span>이야기 줄기가 이어지는가<span class="v"></span></div>
+      </div>
+      <div class="callout b" id="sb-msg">근거는 사실 메모와 후기 파일(reviews_2026.csv)로 판정합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · 문장은 미리 써 둔 예시 · 바다결은 가상 회사</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>사실로 쓰는 브랜드 이야기</h2><p>감동적인 이야기보다 <strong>믿을 수 있는</strong> 이야기.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-shield"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. AI가 꾸민 이야기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 사실로 쓰는 브랜드 이야기</span></div>
+  <h2>“감동적으로 써 줘”만 하면 생기는 일</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:flex-start">
+    <div class="chat" style="flex:1.25">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">바다결 브랜드 스토리를 감동적으로 써 줘.</div>
+      <div class="msg ai warn"><span class="who">AI · 예시 답변 — 꾸며 낸 내용이 섞인 예 (실제 답은 매번 다를 수 있음)</span><span class="inv">2015년 해운대의 작은 부엌</span>. <span class="inv">해녀였던 할머니의 레시피</span>를 이어받은 <span class="inv">김바다 대표</span>는 바다의 맛을 간식에 담기로 했습니다. 그 진심은 <span class="inv">3년 연속 ‘올해의 건강 간식상’</span>으로 이어졌습니다…</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-x"/></svg></span><div><div class="h" style="font-size:20px">연도·장소·인물·상</div><div class="d">사실 메모 어디에도 없다. AI는 <strong>그럴듯한 문장</strong>을 만들 뿐 (2주 3차시 환각)</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-user"/></svg></span><div><div class="h" style="font-size:20px">고객은 사실로 읽는다</div><div class="d">나중에 꾸민 것이 드러나면 브랜드 신뢰가 무너진다</div></div></div>
+      <div class="box warn frag" style="margin:0;padding:14px 18px"><p style="font-size:17px;margin:0">사실과 다른 내용으로 소비자를 오인하게 하는 광고는 <strong>거짓·과장 광고</strong>가 될 수 있습니다. 「표시·광고의 공정화에 관한 법률」 제3조</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · 물결 밑줄 = 근거 없이 만들어진 부분 · 인물·상 이름은 설명용으로 지어낸 것</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 사실 재료 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 사실로 쓰는 브랜드 이야기</span></div>
+  <h2>이야기 재료는 세 곳에서 모은다</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">회사 기록</div><div class="d">회사 소개, 제품 설명서, 담당자가 확인한 사실</div><div style="font-size:18px;background:var(--accent-soft);border-radius:10px;padding:8px 12px">“그래놀라는 단맛을 줄여 만든다” <span class="src">메모 5</span></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">고객의 목소리</div><div class="d">후기·문의 — 고객이 실제로 쓴 말</div><div style="font-size:18px;background:var(--accent-soft);border-radius:10px;padding:8px 12px">후기 120건 중 별점 4~5점 <b>82건</b><br>“재구매했어요…” <b>18건</b></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">판매 기록</div><div class="d">어디서 무엇이 팔리는지 — 숫자는 직접 계산</div><div style="font-size:18px;background:var(--accent-soft);border-radius:10px;padding:8px 12px">다음 차시 발표 실습에서 사용</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:22px" class="frag">
+      <a class="btn" href="materials/badagyeol_facts.txt" download style="white-space:nowrap;flex:none"><svg class="ic"><use href="#i-log"/></svg> 실습 자료 받기 · 사실 메모</a>
+      <span class="muted" style="font-size:18px">가상 회사의 가상 자료라 <strong style="color:var(--text)">AI 채팅창에 올려도 되는 자료</strong>입니다. 실제 회사 자료는 1주 3차시 규칙부터.</span>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · 후기 수치는 공통 파일 reviews_2026.csv(2026년 1~9월, 120건)에서 직접 센 값</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 2: 사실 vs 꾸민 이야기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 사실로 쓰는 브랜드 이야기 · 직접 해 보기 2</span></div>
+  <h2>사실일까, AI가 꾸민 이야기일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 사실 메모와 대조한 뒤 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="fcards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px" id="fc-score">0 / 8 확인</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · 문장은 AI 답변을 흉내 내 미리 써 둔 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 사실만 쓰게 하는 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 사실로 쓰는 브랜드 이야기</span></div>
+  <h2>사실만 쓰게 하는 프롬프트</h2>
+  <div class="body" style="flex-direction:row;gap:24px;align-items:stretch">
+    <div class="prompt" style="flex:1.15">
+      <div class="prompt-h">프롬프트 · 사실 메모를 첨부하고 붙여 넣기<button class="copy" type="button">복사</button></div>
+<pre>너는 건강 간식 회사 <mark>바다결</mark>의 홍보 담당자야.
+첨부한 [사실 메모]에 있는 내용만 써서 <mark>자사몰 첫 화면</mark>에 올릴 브랜드 이야기를 <mark>300자 안팎</mark>으로 써 줘.
+- 주인공은 고객이고, 바다결은 고객을 돕는 안내자로 써.
+- 구조: 상황 → 문제 → 전환 → 결과
+- 메모에 없는 연도·인물·수상·순위·수치는 만들지 마.
+- 문장마다 근거가 된 메모 번호를 괄호로 달아. 근거가 없으면 [확인 필요]라고 표시해.</pre>
+    </div>
+    <div class="chat" style="flex:1">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg ai"><span class="who">AI · 예시 답변 — 실제 답은 매번 다를 수 있음</span>바쁜 아침, 달지 않은 한 그릇을 찾는 집이 있습니다(11). 바다결은 그 아침을 위해 단맛을 줄인 그래놀라를 만듭니다(5). “바삭하고 많이 달지 않아서 아침에 먹기 좋아요.” 바다결 후기에 자주 나오는 말입니다(11). “재구매했어요. 아이들도 잘 먹네요”라는 후기도 18건입니다(10).</div>
+      <div class="callout" style="font-size:15.5px">괄호 번호를 메모와 <strong>하나씩 대조</strong>하는 것은 내 몫. 번호가 붙어 있어도 틀릴 수 있습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · Gemini·Claude 어느 쪽에서도 같은 프롬프트로 따라 할 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>AI로 각도 찾고, 내 목소리로</h2><p>AI는 후보를 넓히고, 고르고 다듬는 것은 사람.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-sparkles"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 각도 받기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI로 각도 찾고, 내 목소리로</span></div>
+  <h2>같은 사실, 다른 <span class="mark">각도</span> 세 가지</h2>
+  <div class="body" style="flex-direction:row;gap:24px;align-items:stretch">
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="prompt">
+        <div class="prompt-h">프롬프트<button class="copy" type="button">복사</button></div>
+<pre>같은 [사실 메모]로 브랜드 이야기의 각도를 <mark>3가지</mark> 제안해 줘.
+각도마다 주인공(어떤 고객)·문제·전환·결과를 한 줄씩 쓰고, 근거 메모 번호를 붙여 줘. 아직 완성 글은 쓰지 마.</pre>
+      </div>
+      <div class="box think frag" style="margin:0"><p style="font-size:19px;margin:0"><strong>고르는 기준</strong> — 이 글을 읽을 고객은 누구인가? 회사의 고민과 맞는가? 근거가 충분한가?<br>예: 고민 15번 “20~30대 신규 고객”이 목표라면 <strong>② 여행의 기억</strong>.</p></div>
+    </div>
+    <div class="chat" style="flex:1.05">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg ai"><span class="who">AI · 예시 답변 — 실제 답은 매번 다를 수 있음</span><b>① 아침 식탁</b> — 주인공: 아이를 둔 부모 / 문제: 달지 않은 아침거리 / 전환: 단맛을 줄인 그래놀라 / 결과: 다시 주문 (5·10·11)
+<b>② 여행의 기억</b> — 주인공: 부산 여행객 / 문제: 집에선 그 맛을 찾기 어렵다 / 전환: 매장 시식 → 자사몰 / 결과: 여행의 맛이 식탁으로 (4·8·12)
+<b>③ 마음을 전하는 선물</b> — 주인공: 선물을 고르는 사람 / 문제: 무난하지 않은 선물 / 전환: 꼼꼼한 포장의 선물 세트 / 결과: 받는 사람의 기쁨 (3·13)</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · 괄호 숫자 = 사실 메모 번호</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 3: 내 목소리로 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI로 각도 찾고, 내 목소리로 · 직접 해 보기 3</span></div>
+  <h2>AI 초안을 내 목소리로 다듬기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="padding:16px;flex-direction:column;align-items:stretch;justify-content:center">
+      <div class="stage-lbl" id="v-lbl">0단계 · AI 초안 그대로</div>
+      <div class="draft" id="v-draft"></div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>다듬기 단계 <output id="v-o">0 / 4</output></label><input id="v-s" type="range" min="0" max="4" step="1" value="0" aria-label="다듬기 단계"></div>
+      <div class="steps-mini" id="v-steps"><span>① 근거 없는 꾸밈말 빼기</span><span>② 고객의 장면 넣기</span><span>③ 우리 말투로 (담백·따뜻)</span><span>④ 근거 표시 달기</span></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">근거 없는 꾸밈말</div><div class="val o" id="v-hype">5</div></div>
+        <div class="meter"><div class="lbl">느낌표</div><div class="val o" id="v-ex">3</div></div>
+      </div>
+      <div class="callout b" id="v-msg">AI 초안은 어느 회사에나 붙일 수 있는 문장입니다. 바다결만의 글로 바꿔 봅시다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · 초안과 수정문 모두 미리 써 둔 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 실습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI로 각도 찾고, 내 목소리로 · 실습</span></div>
+  <h2>Gemini·Claude에서 따라 해 보기</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">① 사실 메모</div><div class="d">실습 자료를 받아<br>첨부하거나 붙여 넣기</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">② 각도 3개</div><div class="d">15번 슬라이드<br>프롬프트로 요청</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">③ 하나 고르기</div><div class="d">고른 이유를<br>한 줄로 적기</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">④ 초안 받기</div><div class="d">13번 프롬프트<br>(근거 번호 달기)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">⑤ 대조·고쳐 쓰기</div><div class="d">메모와 대조하고<br>내 말투로 다듬기</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:18px">
+      <div class="callout b" style="font-size:18px"><svg class="ic"><use href="#i-reset"/></svg> 한쪽이 사용량 한도에 걸리면 <strong>다른 도구에서 같은 프롬프트로</strong> 이어 하면 됩니다. 두 도구의 답을 비교해 보는 것도 좋습니다.</div>
+      <div class="callout" style="font-size:18px"><svg class="ic"><use href="#i-alert"/></svg> 완성한 글에 AI 도움을 받았다면, 회사·수업 규칙에 따라 <strong>사용 사실을 밝힙니다</strong> (11주 3차시).</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시 · 서비스 화면과 메뉴 이름은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 점검표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI로 각도 찾고, 내 목소리로</span></div>
+  <h2>올리기 전 스토리 점검표</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile row"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div><div class="h">주인공이 고객인가?</div><div class="d">첫 문장의 주어가 회사라면 다시 보기</div></div></div>
+      <div class="tile row"><span class="ic-badge lg"><svg class="ic"><use href="#i-trend"/></svg></span><div><div class="h">문제와 전환이 보이는가?</div><div class="d">고객의 불편이 무엇이고, 무엇이 달라졌는지</div></div></div>
+      <div class="tile row"><span class="ic-badge lg o"><svg class="ic"><use href="#i-shield"/></svg></span><div><div class="h">모든 문장에 근거가 있는가?</div><div class="d">연도·인물·수상·순위·‘최초’·‘1위’는 특히 의심</div></div></div>
+      <div class="tile row"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div><div class="h">우리 말투인가?</div><div class="d">어느 회사에나 붙일 수 있는 문장이면 고쳐 쓰기</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">구조: 상황 → 문제 → 전환 → 결과</div><div style="font-size:21px">주인공은 <strong>고객</strong>, 브랜드는 문제를 푸는 <strong>안내자</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">사실에서 출발</div><div style="font-size:21px">사실 메모·후기·판매 기록만 재료로. AI가 지어낸 <strong>역사·인물·수상은 지운다</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">AI는 각도, 선택은 나</div><div style="font-size:21px">각도를 여러 개 받고, 골라서 <strong>내 목소리로</strong> 고쳐 쓴다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="비즈니스 이야기의 주인공은 문제를 가진 고객입니다. 브랜드는 그 문제를 푸는 데 도움을 주는 안내자로 등장합니다.">
+      <p class="q-title"><b>Q1.</b> 고객 중심 브랜드 이야기에서 ‘주인공’은 누구일까요?</p>
+      <div class="opts">
+        <button type="button" data-v="a">회사 대표</button>
+        <button type="button" data-v="b">문제를 가진 고객</button>
+        <button type="button" data-v="c">제품 그 자체</button>
+        <button type="button" data-v="d">광고 모델</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="사실 메모에 없는 창업 연도·인물 이야기는 AI가 만들어 낸 것일 수 있습니다. 지우거나 [확인 필요]로 표시하고, 메모에 있는 사실만으로 다시 쓰게 합니다.">
+      <p class="q-title"><b>Q2.</b> AI 초안에 사실 메모에 없는 “2015년, 할머니의 레시피로 시작한 대표” 이야기가 들어갔다. 알맞은 대응은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">감동적이니 그대로 올린다</button>
+        <button type="button" data-v="b">연도만 지우고 나머지는 둔다</button>
+        <button type="button" data-v="c">지우고, 메모에 있는 사실만으로 다시 쓰게 한다</button>
+        <button type="button" data-v="d">다른 AI에게 맞는지 물어보고 맞다고 하면 쓴다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="후기 파일에서 직접 센 값(120건 중 82건)은 근거가 있는 사실입니다. ‘1위’, ‘국내 최초’, ‘3대째 비법’은 확인된 기록이 없습니다.">
+      <p class="q-title"><b>Q3.</b> 바다결 자료로 <u>근거를 댈 수 있는</u> 문장은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">“후기 120건 중 82건이 별점 4~5점입니다.”</button>
+        <button type="button" data-v="b">“국내 건강 간식 판매 1위 브랜드입니다.”</button>
+        <button type="button" data-v="c">“국내 최초로 미역귀 칩을 만들었습니다.”</button>
+        <button type="button" data-v="d">“3대째 이어 온 비법으로 만듭니다.”</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="AI는 후보(각도)를 넓혀 주는 역할입니다. 목적과 고객에 맞는 것을 고르고, 사실과 대조한 뒤 내 말투로 고쳐 쓰는 것은 사람의 몫입니다.">
+      <p class="q-title"><b>Q4.</b> AI에게 이야기 각도 3개를 받은 뒤 할 일로 가장 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">세 개를 모두 이어 붙여 한 편으로 쓴다</button>
+        <button type="button" data-v="b">가장 긴 것을 그대로 올린다</button>
+        <button type="button" data-v="c">AI에게 가장 좋은 것을 골라 달라고 하고 끝낸다</button>
+        <button type="button" data-v="d">목적에 맞는 하나를 골라 사실과 대조하고 내 말투로 다듬는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">12-2</div>
+    <h2>AI로 발표 자료 만들기</h2>
+    <p>이야기의 뼈대를 발표로 옮깁니다. 바다결 <strong>3분기 실적 발표</strong>를 목차·슬라이드·원고까지 만들고, 숫자는 직접 확인합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week11/lesson03.html">← 11-3</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">12주 1차시 · AI와 스토리텔링</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

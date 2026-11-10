@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>14주 1차시 · 예시 프로젝트: AI와 함께 분석 전 과정 따라 하기 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 14주 1차시 교안: 공정 데이터 하나로 질문·정리·탐색·모델·해석·한계까지 분석 전 과정을 따라 하며, 생성형AI를 쓴 곳과 직접 검증한 곳을 기록한다">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  @media (prefers-reduced-motion: reduce) { .flowdot { display: none; } .pt { transition: none !important; } }
+  .slide.section .big { margin-bottom: 24px; }
+
+  /* AI에게 물은 것 / 내가 확인한 것 */
+  .ask, .vfy { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--accent-2); border-radius: 12px; padding: 8px 14px; font-size: 15.5px; line-height: 1.45; }
+  .vfy { border-left-color: var(--ok); }
+  .ask .k, .vfy .k { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: var(--accent-2); margin-bottom: 2px; }
+  .vfy .k { color: var(--ok); }
+  .ask q { quotes: "“" "”"; }
+
+  /* 토글 (1주 3차시와 같은 모양) */
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 16px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .status { border-radius: 14px; padding: 9px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 정리 표 */
+  .rtab { font-size: 15.5px; font-variant-numeric: tabular-nums; }
+  .rtab td, .rtab th { padding: 5px 10px; transition: background .3s, color .3s; }
+  .rtab td.prob { background: var(--bad-soft); color: var(--bad); font-weight: 800; }
+  .rtab td.fix { background: var(--ok-soft); color: var(--ok); font-weight: 800; }
+  .rtab tr.gone td { text-decoration: line-through; opacity: .35; }
+  .probs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .probs .meter .val { font-size: 28px; }
+
+  /* 변수 선택 버튼 */
+  .vbtns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .vbtns .btn { padding: 8px 4px; font-size: 15px; }
+  .vbtns .btn[aria-pressed="true"], .mbtn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+
+  /* 막대 */
+  .bars { display: grid; gap: 8px; }
+  .brow .lbl { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+  .brow .lbl span:last-child { font-variant-numeric: tabular-nums; }
+  .brow .track { height: 20px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+  .brow .track i { display: block; height: 100%; border-radius: 8px; }
+
+  /* 뒤집는 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; transition: background .2s, border-color .2s; min-height: 118px; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .top { display: flex; align-items: center; gap: 10px; }
+  .pcard .ic-badge { width: 40px; height: 40px; font-size: 21px; border-radius: 11px; }
+  .pcard .stg { font-size: 13px; font-weight: 800; color: var(--muted); }
+  .pcard .nm { font-size: 17px; font-weight: 800; line-height: 1.35; }
+  .pcard .ans { display: none; font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+  .pcard .ans b { color: var(--ok); }
+  .pcard.open .ans { display: block; }
+  .pcard.open { background: var(--ok-soft); border-color: var(--ok); }
+
+  /* 프로젝트 지도 */
+  .stages { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; position: relative; }
+  .stg-b { font: inherit; cursor: pointer; border: 2px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 6px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 15px; font-weight: 800; transition: background .2s, border-color .2s; }
+  .stg-b .ic { font-size: 22px; color: var(--accent); }
+  .stg-b small { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .stg-b:hover { border-color: var(--accent); }
+  .stg-b[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .stg-b[aria-pressed="true"] .ic, .stg-b[aria-pressed="true"] small { color: var(--surface); }
+  .stg-b.seen:not([aria-pressed="true"]) { border-color: var(--ok); }
+  .mapcode pre.code { font-size: 13.5px; line-height: 1.5; padding: 10px 14px; }
+  .mapcode pre.out { font-size: 13px; line-height: 1.45; padding: 8px 14px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 14주차 1차시</p>
+    <h1>예시 프로젝트:<br>AI와 함께 분석<br>전 과정 따라 하기</h1>
+    <p class="lead" style="font-size:25px">질문부터 한계까지, 데이터 하나로 끝까지</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 6개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:500px;flex:none" aria-hidden="true">
+    <path id="cv-path" d="M60 360 C 60 250, 200 300, 200 200 S 340 80, 460 80" fill="none" stroke="var(--line)" stroke-width="5" stroke-dasharray="3 11" stroke-linecap="round"/>
+    <circle r="9" class="f-acc2 flowdot"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#cv-path"/></animateMotion></circle>
+    <g transform="translate(22 322)"><rect width="76" height="76" rx="20" class="f-accs"/><g transform="translate(16 16) scale(1.83)" style="color:var(--accent)"><use href="#i-target" width="24" height="24"/></g></g>
+    <g transform="translate(118 246)"><rect width="76" height="76" rx="20" class="f-accs"/><g transform="translate(16 16) scale(1.83)" style="color:var(--accent)"><use href="#i-filter" width="24" height="24"/></g></g>
+    <g transform="translate(206 164)"><rect width="76" height="76" rx="20" class="f-accs"/><g transform="translate(16 16) scale(1.83)" style="color:var(--accent)"><use href="#i-chart" width="24" height="24"/></g></g>
+    <g transform="translate(300 96)"><rect width="76" height="76" rx="20" class="f-accs"/><g transform="translate(16 16) scale(1.83)" style="color:var(--accent)"><use href="#i-trend" width="24" height="24"/></g></g>
+    <g transform="translate(422 42)"><rect width="76" height="76" rx="20" class="f-acc"/><g transform="translate(16 16) scale(1.83)" style="color:var(--surface)"><use href="#i-bulb" width="24" height="24"/></g></g>
+    <!-- AI 말풍선과 확인 표시 -->
+    <g transform="translate(300 250)">
+      <rect width="190" height="74" rx="18" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/>
+      <path d="M30 74 l-8 20 l26 -20z" class="f-acc2s"/>
+      <g transform="translate(16 20) scale(1.4)" style="color:var(--accent-2)"><use href="#i-sparkles" width="24" height="24"/></g>
+      <text x="60" y="44" class="t-acc2" style="font-size:18px">AI에게 묻고</text>
+    </g>
+    <g transform="translate(330 350)">
+      <rect width="170" height="64" rx="18" class="f-surface" stroke="var(--ok)" stroke-width="2"/>
+      <circle cx="32" cy="32" r="16" class="f-ok"><animate attributeName="r" values="16;19;16" dur="2s" repeatCount="indefinite"/></circle>
+      <g transform="translate(22 22) scale(.85)" style="color:var(--surface)"><use href="#i-check" width="24" height="24"/></g>
+      <text x="58" y="39" style="font-size:18px;font-weight:800;fill:var(--ok)">내가 확인</text>
+    </g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">전 과정</div><div class="d">질문 → 정리 → 탐색 → 모델 → 해석 → 한계를 한 흐름으로 따라 간다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">AI 활용 지점</div><div class="d">단계마다 생성형AI에게 무엇을 물으면 좋은지 안다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">검증 습관</div><div class="d">AI의 답을 출력·그림·범위로 확인하고 고친다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-cap"/></svg></span><div class="h">내 보고서로</div><div class="d">예시 프로젝트의 뼈대를 전공 분석 보고서에 옮긴다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 질문·정리</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② 탐색</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>③ 모델·해석</b><small>직접 해 보기 2</small></div>
+      <div style="flex:4;background:var(--accent-2-soft)"><b>④ 한계·AI 검증</b><small>직접 해 보기 2</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 단계마다 두 칸을 채웁니다: <strong style="color:var(--accent-2)">AI에게 물은 것</strong> · <strong style="color:var(--ok)">내가 확인한 것</strong> — 그대로 보고서의 <strong>AI 활용 내역</strong>이 됩니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>13주 동안 배운 것을 한 줄로 잇기</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">질문</div><div class="d">데이터로 답할 수<br>있는 질문<br><b>9주</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">정리</div><div class="d">결측·오류값·<br>자료형<br><b>5주</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">탐색</div><div class="d">통계·그룹 비교·<br>그래프<br><b>6~7주</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">모델</div><div class="d">회귀·분류,<br>시험 데이터<br><b>9~11주</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="h">해석</div><div class="d">숫자를 말로,<br>상관 ≠ 인과<br><b>7·10주</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">한계</div><div class="d">데이터·방법의<br>약점을 정직하게<br><b>1·4주</b></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">오늘은 <strong style="color:var(--text)">사출 성형 공정 데이터</strong> 하나로 이 여섯 단계를 끝까지 갑니다. 생성형AI는 단계마다 <strong style="color:var(--text)">조수</strong>, 판단과 책임은 <strong style="color:var(--text)">나</strong>.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>질문 정하기와 데이터 정리</h2><p>무엇을 알고 싶은지 정하고, 믿을 수 있는 데이터로 만듭니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 질문 다듬기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 질문·정리</span></div>
+  <h2>막연한 질문 → 데이터로 답할 수 있는 질문</h2>
+  <div class="body" style="justify-content:flex-start;gap:16px">
+    <div style="display:grid;grid-template-columns:300px 40px 1fr;align-items:stretch">
+      <div class="tile frag show" style="justify-content:center;text-align:center;background:var(--surface-2)"><div class="muted" style="font-size:16px;font-weight:700">처음 떠오른 질문</div><div class="h" style="font-size:25px">“품질을 좋게<br>하려면?”</div><div class="d">무엇을 재서 무엇과 비교할지 없음</div></div>
+      <div class="arrow" style="display:grid;place-items:center;color:var(--muted);font-size:30px">›</div>
+      <div class="tile frag show" style="border:2px solid var(--accent)">
+        <div class="muted" style="font-size:16px;font-weight:700">분석 질문</div>
+        <div class="h" style="font-size:24px">어떤 공정 조건이 <span class="mark">인장강도</span>를 좌우하고, 조건만으로 강도를 <span class="mark">예측</span>할 수 있는가?</div>
+        <div class="grid g3" style="gap:10px;font-size:16px">
+          <div style="background:var(--accent-soft);border-radius:10px;padding:8px 12px"><b style="color:var(--accent)">결과 변수</b><br>strength (MPa)</div>
+          <div style="background:var(--accent-soft);border-radius:10px;padding:8px 12px"><b style="color:var(--accent)">입력 변수</b><br>온도·압력·속도·습도·두께</div>
+          <div style="background:var(--accent-soft);border-radius:10px;padding:8px 12px"><b style="color:var(--accent)">성공 기준</b><br>“평균으로 찍기”보다 오차가 확실히 작다</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid g2 frag" style="gap:14px">
+      <div class="ask"><div class="k"><svg class="ic"><use href="#i-sparkles"/></svg> AI에게 물은 것</div><q>사출 성형 공정 데이터(온도·압력·속도·습도·두께·인장강도)로 2학년 수준의 분석 질문 3개를 제안해 줘. 결과 변수와 입력 변수도 같이.</q></div>
+      <div class="vfy"><div class="k"><svg class="ic"><use href="#i-check"/></svg> 내가 확인한 것</div>제안 중 “불량 원인 규명”은 <strong>인과</strong>를 묻는 질문 — 관찰 기록만으로는 답하기 어렵다. <strong>관계·예측</strong> 질문으로 좁혔다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시 · 질문 만들기는 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 정리 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 질문·정리 · 직접 해 보기 1</span></div>
+  <h2>process_raw.csv 정리하기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 350px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:12px;padding:16px">
+      <table class="rtab" id="cl-tab"></table>
+      <div class="probs">
+        <div class="meter"><div class="lbl">행 수</div><div class="val" id="cl-rows">499</div></div>
+        <div class="meter"><div class="lbl">중복 행</div><div class="val o" id="cl-dup">5</div></div>
+        <div class="meter"><div class="lbl">문자 섞인 두께</div><div class="val o" id="cl-mm">24</div></div>
+        <div class="meter"><div class="lbl">오류값 · 결측</div><div class="val o" id="cl-na">8 · 28</div></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">정리 단계를 켜 보세요 (순서도 중요!)</div>
+      <div class="toggles">
+        <button class="tgl" type="button" data-c="dup" aria-pressed="false"><span class="chk"></span>① 중복 행 제거</button>
+        <button class="tgl" type="button" data-c="mm" aria-pressed="false"><span class="chk"></span>② 두께의 ‘mm’ 지우고 숫자로</button>
+        <button class="tgl" type="button" data-c="err" aria-pressed="false"><span class="chk"></span>③ 온도 999.9 · -1.0 → 결측</button>
+        <button class="tgl" type="button" data-c="fill" aria-pressed="false"><span class="chk"></span>④ 결측 → 중앙값으로 채우기</button>
+      </div>
+      <div class="status bad" id="cl-st"><b class="k">정리 전</b>문제가 네 종류 섞여 있습니다. 이대로 분석하면 평균부터 틀립니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시 · process_raw.csv 실제 행 일부 · 숫자는 전체 499행 기준 · 정리 방법은 5주</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>탐색: 숫자와 그림으로 보기</h2><p>모델을 만들기 전에, 데이터가 하는 말을 먼저 듣습니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 탐색 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 탐색 · 직접 해 보기 2</span></div>
+  <h2>어떤 조건이 강도와 관계있을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot"><svg id="ex-plot" viewBox="0 0 640 430" aria-label="선택한 공정 조건과 인장강도의 산점도"></svg></div>
+    <div class="side">
+      <div class="vbtns" id="ex-btns"></div>
+      <button class="tgl" type="button" id="ex-band" aria-pressed="false"><span class="chk"></span>구간별 평균 선 겹쳐 보기</button>
+      <div class="meter"><div class="lbl">상관계수 r (직선 관계의 세기)</div><div class="val" id="ex-r">0.69</div></div>
+      <div class="callout b" id="ex-msg">변수를 하나씩 눌러 보세요.</div>
+      <div class="ask" style="font-size:14.5px"><div class="k"><svg class="ic"><use href="#i-sparkles"/></svg> AI에게 물은 것</div><q>온도와 강도의 상관이 -0.11이야. 관계없다고 써도 돼?</q></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시 · 정리 후 494개 (가상 데이터) · 상관계수의 한계는 7주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 그룹 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 탐색</span></div>
+  <h2>그룹으로 나눠 비교하기</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile frag show">
+        <div class="h">압력 구간별 평균 인장강도</div>
+        <div class="bars">
+          <div class="brow"><div class="lbl"><span>75 bar 이하 <small class="muted">(99개)</small></span><span>35.56 MPa</span></div><div class="track"><i style="width:79%;background:var(--accent);opacity:.4"></i></div></div>
+          <div class="brow"><div class="lbl"><span>75~80 bar <small class="muted">(123개)</small></span><span>37.89 MPa</span></div><div class="track"><i style="width:84%;background:var(--accent);opacity:.6"></i></div></div>
+          <div class="brow"><div class="lbl"><span>80~85 bar <small class="muted">(164개)</small></span><span>39.45 MPa</span></div><div class="track"><i style="width:88%;background:var(--accent);opacity:.8"></i></div></div>
+          <div class="brow"><div class="lbl"><span>85 bar 초과 <small class="muted">(108개)</small></span><span>41.76 MPa</span></div><div class="track"><i style="width:93%;background:var(--accent)"></i></div></div>
+        </div>
+        <div class="d">압력이 높은 구간일수록 평균 강도가 높다 (막대는 0 MPa부터)</div>
+      </div>
+      <div class="tile frag">
+        <div class="h">근무조별 불량률과 평균 습도</div>
+        <div class="bars">
+          <div class="brow"><div class="lbl"><span>주간 불량률 <small class="muted">(243개)</small></span><span>7.0%</span></div><div class="track"><i style="width:28%;background:var(--accent)"></i></div></div>
+          <div class="brow"><div class="lbl"><span>야간 불량률 <small class="muted">(251개)</small></span><span>20.3%</span></div><div class="track"><i style="width:81%;background:var(--accent-2)"></i></div></div>
+          <div class="brow"><div class="lbl"><span>주간 평균 습도</span><span>54.1%</span></div><div class="track"><i style="width:54%;background:var(--accent);opacity:.55"></i></div></div>
+          <div class="brow"><div class="lbl"><span>야간 평균 습도</span><span>61.9%</span></div><div class="track"><i style="width:62%;background:var(--accent-2);opacity:.55"></i></div></div>
+        </div>
+        <div class="d">불량률 막대는 25%를 끝으로, 습도 막대는 100%를 끝으로 그림</div>
+      </div>
+    </div>
+    <div class="box warn frag" style="margin-top:14px;padding:14px 24px"><p style="font-size:19px;margin:0">야간은 <strong>습도도 높다</strong> → “야간 근무조 때문에 불량”이라고 단정할 수 없다 (교란 변수, 7주 3차시). 이 질문은 14-3에서 다시 점검합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시 · 정리 후 494개 (가상 데이터) · 그룹별 집계는 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>모델과 해석</h2><p>강도를 예측하는 모델을 만들고, 숫자를 말로 바꿉니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-trend"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 모델 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 모델·해석</span></div>
+  <h2>모델 1: 다섯 조건으로 선형 회귀</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:center">
+    <div style="flex:1;display:grid;gap:10px">
+      <pre class="code" style="font-size:14.5px">train, test = train_test_split(df, test_size=0.2, random_state=42)
+model1 = LinearRegression().fit(train[features], train[target])
+pred1 = model1.predict(test[features])
+print('시험 MAE :', round(mean_absolute_error(test[target], pred1), 2), 'MPa')
+print('시험 R²  :', round(r2_score(test[target], pred1), 3))
+# 비교 기준: 훈련 데이터 평균으로 찍기
+base = np.full(len(test), train[target].mean())
+print('평균으로 찍기 MAE:', round(mean_absolute_error(test[target], base), 2), 'MPa')</pre>
+      <pre class="out">시험 MAE : 1.48 MPa
+시험 R²  : 0.654
+평균으로 찍기 MAE: 2.58 MPa</pre>
+    </div>
+    <div style="width:330px;display:grid;gap:12px">
+      <div class="tile frag show" style="gap:6px"><div class="muted" style="font-size:16px;font-weight:700">시험 데이터 99개에서 평균 오차</div>
+        <div class="brow"><div class="lbl"><span>평균으로 찍기</span><span>2.58</span></div><div class="track"><i style="width:100%;background:var(--muted);opacity:.5"></i></div></div>
+        <div class="brow"><div class="lbl"><span>모델 1</span><span>1.48</span></div><div class="track"><i style="width:57%;background:var(--accent)"></i></div></div>
+        <div class="d">MPa · 짧을수록 좋다</div></div>
+      <div class="vfy frag"><div class="k"><svg class="ic"><use href="#i-check"/></svg> 내가 확인한 것</div><strong>기준(평균 찍기)</strong>을 같이 출력해서 “1.48이 좋은 건지”를 판단했다. 오차가 약 43% 줄었다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시 · 훈련 395개 / 시험 99개 · MAE·R²는 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 모델 비교 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 모델·해석 · 직접 해 보기 3</span></div>
+  <h2>모델이 어디서 틀리는지 보고 고치기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot"><svg id="md-plot" viewBox="0 0 700 420" aria-label="시험 데이터의 실제 강도와 예측 강도, 온도 구간별 평균 잔차"></svg></div>
+    <div class="side">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn ghost mbtn" type="button" data-m="1" aria-pressed="true">모델 1<br><small style="font-weight:600">조건 5개</small></button>
+        <button class="btn ghost mbtn" type="button" data-m="2" aria-pressed="false">모델 2<br><small style="font-weight:600">+ 온도²</small></button>
+      </div>
+      <div class="grid g2" style="gap:8px">
+        <div class="meter"><div class="lbl">시험 MAE</div><div class="val" id="md-mae" style="font-size:32px">1.48</div></div>
+        <div class="meter"><div class="lbl">시험 R²</div><div class="val" id="md-r2" style="font-size:32px">0.654</div></div>
+      </div>
+      <div class="callout b" id="md-msg">오른쪽 막대: 온도 구간별 평균 <strong>잔차</strong>(실제 − 예측). 양 끝이 크게 음수 — 직선이 <strong>곡선을 놓쳤다</strong>.</div>
+      <div class="ask" style="font-size:14.5px"><div class="k"><svg class="ic"><use href="#i-sparkles"/></svg> AI에게 물은 것</div><q>잔차가 온도 양 끝에서 음수야. 곡선을 반영하려면?</q> → “온도 제곱 열 추가”</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시 · 시험 데이터 99개 · 온도² = (온도 − 210)²</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 해석 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 모델·해석 · 직접 해 보기 4</span></div>
+  <h2>숫자를 말로: 무엇이 강도를 좌우하나? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:10px;padding:16px 22px">
+      <div class="muted" style="font-size:16px;font-weight:700">각 조건이 1 표준편차만큼 늘 때 예측 강도 변화 (모델 2)</div>
+      <svg id="ef-plot" viewBox="0 0 640 250" aria-label="조건별 1 표준편차 효과 막대"></svg>
+      <div class="grid g2" style="gap:10px;font-size:15.5px">
+        <div style="background:var(--accent-soft);border-radius:10px;padding:8px 12px"><b style="color:var(--accent)">결과</b> (사실) — 압력이 약 6 bar 높을 때 예측 강도는 약 <b>2.1 MPa</b> 높다.</div>
+        <div style="background:var(--accent-2-soft);border-radius:10px;padding:8px 12px"><b style="color:var(--accent-2)">해석</b> (의미) — 관찰 범위 안에서는 압력이 강도를 가장 크게 좌우하는 조건으로 <b>보인다</b>.</div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>압력 <output id="wi-p-o">85 bar</output></label><input id="wi-p" type="range" min="50" max="120" step="1" value="85" aria-label="압력"></div>
+      <div class="ctrl"><label>온도 <output id="wi-t-o">210℃</output></label><input id="wi-t" type="range" min="180" max="245" step="1" value="210" aria-label="온도"></div>
+      <div class="meter"><div class="lbl">예측 인장강도 (속도 1200·습도 55·두께 2.0)</div><div class="val" id="wi-y">41.63</div></div>
+      <div class="status ok" id="wi-st"><b class="k">관찰 범위 안</b>데이터가 있는 조건이라 예측을 참고할 수 있습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시 · 관찰 범위: 압력 62~97.5 bar, 온도 191.9~235.3℃</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 한계 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 한계·AI 검증</span></div>
+  <h2>이 분석의 한계, 숨기지 않고 적는다</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ic-badge o"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h">데이터 범위</div><div class="d">가상 데이터, <b>30일(평일)</b>·공장 한 곳 → 계절·원료 변화는 없다</div></div>
+      <div class="tile frag"><span class="ic-badge o"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">관찰 ≠ 실험</div><div class="d">관계는 보였지만 <b>인과</b>는 확인하지 못했다. 압력의 효과는 실험으로 확인할 일</div></div>
+      <div class="tile frag"><span class="ic-badge o"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">정리의 흔적</div><div class="d">결측 <b>36개(약 7%)</b>를 중앙값으로 채움 → 그 행들의 변동이 작게 들어갔다</div></div>
+      <div class="tile frag"><span class="ic-badge o"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">점수의 흔들림</div><div class="d">분할(random_state)을 바꾸면 시험 R² <b>0.79~0.87</b>. 관찰 범위 밖은 예측 불가</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:21px">한계를 적는 것은 약점 고백이 아니라, 결과를 <strong style="color:var(--text)">어디까지 믿을 수 있는지</strong> 알려 주는 정보입니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시 · random_state 0, 1, 7, 42, 2026으로 다시 나눠 본 결과</span><span class="no"></span></div>
+</section>
+
+<!-- 16. AI 답 검증 카드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 한계·AI 검증 · 직접 해 보기 5</span></div>
+  <h2>AI의 답을 그대로 믿지 않은 여섯 장면 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 눌러서 확인</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="ai-cards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px" id="ai-score">0 / 6 확인</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시 · AI 답변은 흔히 나오는 유형으로 재구성한 예시 · AI 코드 검증은 4주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 프로젝트 지도 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 한계·AI 검증 · 직접 해 보기 6</span></div>
+  <h2>프로젝트 지도: 단계를 눌러 코드와 검증 보기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot mapcode" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;padding:12px">
+      <div class="stages" id="pm-stages"></div>
+      <pre class="code" id="pm-code">#</pre>
+      <pre class="out" id="pm-out"></pre>
+    </div>
+    <div class="side">
+      <div class="ask" id="pm-ask"></div>
+      <div class="vfy" id="pm-vfy"></div>
+      <div class="callout b" id="pm-rep" style="font-size:15px"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시 · 코드와 결과는 실습 파일 lesson01.ipynb 그대로</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">실습 파일</span></div>
+  <h2>실습: 예시 프로젝트를 처음부터 끝까지 실행하기</h2>
+  <div class="body" style="flex-direction:row;gap:36px;align-items:center">
+    <div style="flex:1">
+      <ol style="font-size:21px">
+        <li><b>0~2단계</b> 준비 · 질문 · process_raw.csv 정리 → process.csv와 대조</li>
+        <li><b>3단계</b> 상관계수 → 산점도 5개 → 구간별 평균</li>
+        <li><b>4단계</b> 모델 1 → 잔차 그림 → 모델 2 (온도²)</li>
+        <li><b>5~6단계</b> 1 표준편차 효과 · 조건 바꿔 예측 · 분할 바꿔 보기</li>
+        <li><b>직접 바꿔 보기</b> 변수 하나 빼 보기, 내 조건으로 예측하기</li>
+      </ol>
+      <p class="muted" style="font-size:18px">단계마다 <b style="color:var(--accent-2)">[AI에게 물은 것]</b> <b style="color:var(--ok)">[내가 확인한 것]</b>이 적혀 있습니다. 내 보고서에서 같은 모양으로 쓰세요.</p>
+    </div>
+    <div class="tile" style="width:380px;align-items:center;text-align:center;gap:16px">
+      <span class="ic-badge lg"><svg class="ic"><use href="#i-code"/></svg></span>
+      <div class="h">lesson01.ipynb</div>
+      <div class="d">코드 셀 15개 · 마지막에 AI 활용 내역 표</div>
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week14/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">한 흐름으로</div><div style="font-size:21px">질문 → 정리 → 탐색 → 모델 → 해석 → 한계. 이 순서가 <strong>보고서의 뼈대</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">숫자는 그림으로 확인</div><div style="font-size:21px">r = -0.11의 온도도 <strong>곡선</strong>이었다. 점수는 <strong>시험 데이터</strong>로, 기준과 비교해서</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">AI는 조수, 확인은 나</div><div style="font-size:21px">물은 것과 확인한 것을 <strong>단계마다 기록</strong> → 그대로 AI 활용 내역</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="상관계수는 직선 관계만 잽니다. 온도처럼 가운데가 볼록한 곡선 관계는 r이 작게 나올 수 있으므로 산점도·구간 평균으로 먼저 확인합니다.">
+      <p class="q-title"><b>Q1.</b> 온도와 강도의 상관계수가 -0.11이다. 가장 알맞은 다음 행동은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">온도는 강도와 관계없다고 보고서에 쓴다</button>
+        <button type="button" data-v="b">온도 열을 데이터에서 지운다</button>
+        <button type="button" data-v="c">산점도와 구간별 평균으로 곡선 관계인지 확인한다</button>
+        <button type="button" data-v="d">상관계수가 커질 때까지 데이터를 고른다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="훈련 데이터 점수는 모델이 이미 본 데이터라 좋게 나옵니다. 처음 보는 시험 데이터의 점수를, 평균으로 찍기 같은 기준과 함께 보고합니다.">
+      <p class="q-title"><b>Q2.</b> 보고서에 모델 성능으로 적어야 할 숫자는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">가장 높게 나온 훈련 데이터 R²</button>
+        <button type="button" data-v="b">시험 데이터의 MAE·R²와 기준(평균 찍기)의 오차</button>
+        <button type="button" data-v="c">random_state를 여러 번 바꿔 가장 좋았던 값 하나</button>
+        <button type="button" data-v="d">AI가 알려 준 일반적인 정확도</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="결측을 지웠는지 채웠는지, 몇 개였는지에 따라 결과가 달라집니다. 다른 사람이 같은 결과를 낼 수 있도록 방법과 개수를 적고, 한계에도 남깁니다.">
+      <p class="q-title"><b>Q3.</b> 결측 36개를 중앙값으로 채웠다. 보고서에 꼭 남겨야 할 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">몇 개를 어떤 방법으로 처리했는지</button>
+        <button type="button" data-v="b">아무것도 — 결과에는 영향이 없다</button>
+        <button type="button" data-v="c">결측이 있었다는 사실만</button>
+        <button type="button" data-v="d">AI가 처리했다는 사실만</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="120 bar는 데이터에 없는 조건(관찰 범위 62~97.5 bar 밖)이고, 관찰 데이터의 관계를 ‘올리면 오른다’는 인과로 단정했습니다. 두 가지 모두 고쳐야 합니다.">
+      <p class="q-title"><b>Q4.</b> AI가 “압력을 120 bar로 올리면 강도가 높아집니다”라고 썼다. 문제는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">문제없다 — 압력 계수가 양수다</button>
+        <button type="button" data-v="b">숫자를 소수 둘째 자리로 쓰지 않았다</button>
+        <button type="button" data-v="c">압력 대신 온도를 말해야 한다</button>
+        <button type="button" data-v="d">관찰 범위 밖 예측이고, 관계를 인과로 단정했다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">14-2</div>
+    <h2>분석 보고서 작성법</h2>
+    <p>오늘의 예시 프로젝트를 보고서로 옮깁니다. 결과와 해석을 나눠 쓰고, 그림 캡션과 한계·출처·AI 활용 내역을 적는 법.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week13/lesson03.html">← 13-3 생성형AI의 원리</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-log"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">14주 1차시 · 예시 프로젝트: AI와 함께 분석 전 과정 따라 하기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

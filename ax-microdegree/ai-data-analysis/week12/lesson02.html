@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12주 2차시 · 이상탐지와 설비 예지보전 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 12주 2차시 교안: 이상의 뜻, 고정 기준·z-점수(3σ)·이동평균 규칙, 여러 센서 함께 보기, IsolationForest의 원리, 잘못 경보와 놓친 고장, 실제 진동 기록으로 3호기 고장을 며칠 전에 알 수 있는지">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .ring1 { transform-box: fill-box; transform-origin: center; animation: ring 2.2s ease-out infinite; }
+  @keyframes ring { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(1.8); opacity: 0; } }
+  .drawline { stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: draw 4s ease-out forwards infinite; }
+  @keyframes draw { 0% { stroke-dashoffset: 1400; } 70%, 100% { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) { .ring1 { animation: none; opacity: 0; } .drawline { animation: none; stroke-dashoffset: 0; } }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .demo .meter.sm .val { font-size: 30px; }
+  .demo .meter .sub { font-size: 14px; color: var(--muted); font-weight: 700; }
+  .zrow { display: grid; grid-template-columns: 64px 1fr 58px; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; }
+  .zrow .track { height: 18px; background: var(--surface-2); border-radius: 6px; overflow: hidden; position: relative; }
+  .zrow .track i { display: block; height: 100%; border-radius: 6px; transition: width .2s, background .2s; }
+  .zrow .track b { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--bad); left: 50%; }
+  .zrow .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chips .btn { font-size: 15px; padding: 7px 12px; }
+  .seg { display: flex; gap: 8px; }
+  .seg .btn { flex: 1; font-size: 15.5px; padding: 9px 10px; }
+  .seg .btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .mtx { display: grid; grid-template-columns: 120px 1fr 1fr; gap: 8px; font-size: 18px; }
+  .mtx > div { border-radius: 12px; padding: 12px 14px; line-height: 1.4; }
+  .mtx .hd { background: transparent; font-weight: 800; color: var(--muted); font-size: 16px; display: flex; align-items: center; justify-content: center; text-align: center; }
+  .mtx .good { background: var(--ok-soft); } .mtx .fa { background: var(--accent-2-soft); } .mtx .miss { background: var(--bad-soft); }
+  .mtx b.t { display: block; font-size: 19px; }
+  .mtx .good b.t { color: var(--ok); } .mtx .fa b.t { color: var(--accent-2); } .mtx .miss b.t { color: var(--bad); }
+  .cmp td, .cmp th { padding: 9px 14px; font-size: 18px; }
+  .cmp td.n { font-variant-numeric: tabular-nums; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 12주차 2차시</p>
+    <h1>이상탐지와<br>설비 예지보전</h1>
+    <p class="lead" style="font-size:25px">“평소와 다르다”를<br>고장보다 먼저 알아채기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>이론 + 실습 파일</span><span>직접 해 보기 4개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="20" y="40" width="480" height="340" rx="28" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <rect x="50" y="210" width="420" height="70" rx="10" class="f-accs" opacity=".7"/>
+    <text x="60" y="300" class="t-sub" style="font-size:14px">평소 범위</text>
+    <line x1="50" y1="170" x2="470" y2="170" stroke="var(--accent-2)" stroke-width="2.5" stroke-dasharray="8 6"/>
+    <text x="250" y="162" text-anchor="middle" class="t-acc2" style="font-size:14px">경보 기준</text>
+    <polyline class="drawline" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"
+      points="55,248 75,240 95,252 115,236 135,246 155,250 175,160 195,244 215,238 235,250 255,242 275,236 295,232 315,226 335,214 355,200 375,184 395,160 415,140 435,112 455,90"/>
+    <circle cx="175" cy="160" r="9" fill="none" stroke="var(--bad)" stroke-width="3"/>
+    <text x="175" y="140" text-anchor="middle" class="t-sub" style="font-size:13px;fill:var(--bad);font-weight:800">순간 튐</text>
+    <circle cx="395" cy="160" r="12" class="f-acc2"/>
+    <circle cx="395" cy="160" r="12" fill="none" stroke="var(--accent-2)" stroke-width="3" class="ring1"/>
+    <text x="395" y="198" text-anchor="middle" class="t-acc2" style="font-size:14px">경보!</text>
+    <line x1="458" y1="60" x2="458" y2="350" stroke="var(--bad)" stroke-width="2.5" stroke-dasharray="4 4"/>
+    <text x="452" y="364" text-anchor="end" class="t-sub" style="fill:var(--bad);font-weight:800;font-size:14px">고장</text>
+    <path d="M395 330 H458" stroke="var(--muted)" stroke-width="2" marker-end="url(#ahc)"/>
+    <defs><marker id="ahc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" class="f-muted"/></marker></defs>
+    <text x="388" y="335" text-anchor="end" class="t-sub" style="font-size:13px;font-weight:700">미리 안 시간</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">이상이란?</div><div class="d">드물고 정상과 다른 데이터를 세 가지 모양으로 구분한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h">규칙으로 찾기</div><div class="d">고정 기준·z-점수(3σ)·이동평균의 장단점을 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">여러 센서와 AI</div><div class="d">센서를 함께 보는 이유와 IsolationForest의 아이디어를 설명한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h">경보의 대가</div><div class="d">잘못 경보와 놓친 고장, 미리 안 시간을 따져 방법을 고른다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:3;background:var(--accent-soft)"><b>① 이상이란?</b></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>② 규칙으로 찾기</b><small>직접 해 보기 2</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>③ 여러 센서와 AI</b><small>직접 해 보기 2</small></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>④ 경보의 대가</b></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0">오늘의 질문: <strong>“실제 진동 기록으로, 96일째 고장 난 3호기를 며칠 전에 알아챌 수 있을까?”</strong></p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입: 6대 × 120일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>1-2의 예지보전, 이번엔 실제 기록으로</h2>
+  <div class="body" style="gap:12px">
+    <svg id="multi6" viewBox="0 0 1120 410" role="img" aria-label="설비 6대의 120일 진동 세기(rms) 그래프"></svg>
+    <p class="muted" style="font-size:19px;margin:0">vibration.csv: 설비 6대 × 120일, 하루 한 번 <strong style="color:var(--text)">진동 세기(rms)·최대 진동(peak)·온도·전류</strong>를 기록. 고장 뒤에는 정비해서 다시 정상으로 돌아옵니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시 · vibration.csv (가상 데이터) · rms = 진동 세기의 평균적인 크기</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>이상이란?</h2><p>드물고, 정상과 다른 것</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 이상의 세 얼굴 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 이상이란?</span></div>
+  <h2>이상(anomaly)의 세 가지 모양</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><svg id="sp-spike" viewBox="0 0 300 120" aria-hidden="true"></svg><div class="h">순간 튐</div><div class="d">하루만 툭 튀고 돌아온다 — 센서 잡음·충격일 때가 많다<br><b>예: 3호기 27일째 rms 1.41</b></div></div>
+      <div class="tile frag"><svg id="sp-trend" viewBox="0 0 300 120" aria-hidden="true"></svg><div class="h">서서히 커짐</div><div class="d">부품이 닳으며 조금씩 올라간다 — 예지보전이 잡고 싶은 것<br><b>예: 3호기 72일째부터</b></div></div>
+      <div class="tile frag"><svg id="sp-combo" viewBox="0 0 300 120" aria-hidden="true"></svg><div class="h">함께 어긋남</div><div class="d">하나씩 보면 애매한데, 여러 센서가 <b>같이</b> 조금씩 높다<br><b>예: 3호기 81일째 진동·온도·전류</b></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:21px">이상 = <strong style="color:var(--text)">드물고(rare)</strong>, <strong style="color:var(--text)">평소(정상) 패턴과 다른</strong> 데이터. 12-1에서 본 “어느 무리와도 먼 점”과 같은 생각입니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시 · vibration.csv 3호기 실제 기록</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 왜 분류가 아닌가 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 이상이란?</span></div>
+  <h2>고장 기록으로 분류 모델을 배우면 안 될까?</h2>
+  <div class="body" style="gap:14px">
+    <svg id="cells720" viewBox="0 0 1120 250" role="img" aria-label="설비 6대 120일, 720일 중 고장 기록은 2칸"></svg>
+    <div class="grid g2" style="gap:20px">
+      <div class="tile frag show row" style="padding:16px 20px"><span class="ic-badge o"><svg class="ic"><use href="#i-x"/></svg></span><div><div class="h" style="font-size:21px">고장 예시가 너무 적다</div><div class="d">720일 중 고장 표시는 <b>2일 (0.3%)</b>. 11주 분류처럼 “불량 예시”로 배우기 어렵다</div></div></div>
+      <div class="tile frag row" style="padding:16px 20px;border:2px solid var(--accent)"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:21px">정상을 배우고, 벗어남을 찾는다</div><div class="d">정상 기록은 넘친다 → <b>“평소 모습”</b>을 기준으로 삼아 거기서 먼 날을 표시</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시 · vibration.csv · 연한 칸 = 실제로 마모가 진행 중이던 날 (데이터를 만들 때의 설정, 현장에서는 모름)</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>규칙으로 찾기</h2><p>고정 기준 → 평소 기준(z-점수) → 이동평균</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-gauge"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. z-점수 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 규칙으로 찾기</span></div>
+  <h2>“평소”를 숫자로: 평균과 표준편차, 그리고 3σ</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1;display:grid;gap:14px">
+      <div class="tile frag show" style="padding:16px 20px;gap:6px"><div class="k" style="font-weight:800;color:var(--muted);font-size:16px">규칙 ① 고정 기준</div><div style="font-size:20px">“rms가 <b>1.5</b>를 넘으면 경보”</div><div class="d">간단하지만, 설비마다 평소 값이 다르면 기준도 달라야 한다</div></div>
+      <div class="tile frag" style="padding:16px 20px;gap:6px;border:2px solid var(--accent)"><div class="k" style="font-weight:800;color:var(--accent);font-size:16px">규칙 ② 평소 기준 (z-점수)</div><div style="font-size:20px">z = (오늘 값 − <span style="color:var(--accent)">정상 평균</span>) ÷ <span style="color:var(--accent-2)">정상 표준편차</span></div><div class="d">12-1의 표준화와 같은 계산. <b>z &gt; 3</b> (평균에서 표준편차 3개 넘게)이면 경보 = <b>3σ 규칙</b></div></div>
+      <p class="muted frag" style="font-size:18px;margin:0">값이 정규분포를 따른다면 정상일 때 ±3σ 밖으로 나갈 확률은 약 0.3% — 그래서 3σ 밖은 “드문 일”로 봅니다.</p>
+    </div>
+    <div style="width:520px;flex:none"><svg id="hist" viewBox="0 0 520 380" role="img" aria-label="3호기 정상 구간 60일 rms 분포와 평균, 3σ 선"></svg></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시 · 3호기 1~60일(정상 기준 구간) 실제 값: 평균 1.016, 표준편차 0.115 → 3σ 선 1.36</span><span class="no"></span></div>
+</section>
+
+<!-- 10. z 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 규칙으로 찾기 · 직접 해 보기 1</span></div>
+  <h2>3호기, 몇 σ에서 경보를 울릴까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="zplot" viewBox="0 0 640 420" aria-label="3호기 96일 rms와 z-점수 경보 기준선"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>경보 기준 z &gt; <output id="z-k-o">3.0</output></label><input id="z-k" type="range" min="1.5" max="5" step="0.5" value="3" aria-label="z-점수 경보 기준"></div>
+      <div class="muted" style="font-size:15px;margin-top:-4px" id="z-line">= rms 1.36 넘으면 경보</div>
+      <div class="row2">
+        <div class="meter sm"><div class="lbl">첫 경보</div><div class="val" id="z-first">-</div><div class="sub" id="z-lead"></div></div>
+        <div class="meter sm"><div class="lbl">잘못 경보</div><div class="val o" id="z-fa">-</div><div class="sub" id="z-fad"></div></div>
+      </div>
+      <div class="legend"><span><i class="dot" style="border:3px solid var(--bad)"></i>잘못 경보</span><span><i class="dot" style="background:var(--accent-2)"></i>고장 전 경보</span></div>
+      <div class="callout b" id="z-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시 · vibration.csv 3호기 실제 값 · 평균·표준편차는 1~60일로 계산 · 67~96일(고장 전 30일)의 경보를 ‘맞은 경보’로 셈</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 이동평균 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 규칙으로 찾기</span></div>
+  <h2>규칙 ③ 이동평균: 최근 며칠의 평균으로 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1"><svg id="maexp" viewBox="0 0 640 360" role="img" aria-label="3호기 20~34일 rms와 7일 이동평균"></svg></div>
+    <div style="width:400px;flex:none;display:grid;gap:14px">
+      <div class="box key" style="margin:0;padding:16px 20px"><p style="margin:0;font-size:21px">오늘의 7일 이동평균<br>= <b>오늘 포함 최근 7일</b> 값의 평균</p></div>
+      <div class="tile frag show" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:20px">튐은 1/7로 묽어진다</div><div class="d">27일 rms <b>1.41</b> → 7일 평균 <b>1.05</b></div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:20px">대신 반응이 늦어진다</div><div class="d">며칠 쌓여야 평균이 올라간다 → 진짜 변화도 <b>늦게</b> 잡힌다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시 · vibration.csv 3호기 실제 값 · pandas: s.rolling(7).mean()</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 이동평균 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 규칙으로 찾기 · 직접 해 보기 2</span></div>
+  <h2>며칠짜리 이동평균이 좋을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="maplot" viewBox="0 0 640 420" aria-label="3호기 rms 원래 값과 이동평균, 3σ 경보선"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>이동평균 기간 <output id="ma-w-o">1일</output></label><input id="ma-w" type="range" min="0" max="5" step="1" value="0" aria-label="이동평균 기간"></div>
+      <div class="muted" style="font-size:15px;margin-top:-4px">경보선은 그대로: 3σ = rms 1.36</div>
+      <div class="row2">
+        <div class="meter sm"><div class="lbl">첫 경보</div><div class="val" id="ma-first">-</div><div class="sub" id="ma-lead"></div></div>
+        <div class="meter sm"><div class="lbl">잘못 경보</div><div class="val o" id="ma-fa">-</div><div class="sub" id="ma-fad"></div></div>
+      </div>
+      <div class="legend"><span><i class="dot" style="background:var(--muted);opacity:.6"></i>원래 값</span><span><i style="display:inline-block;width:22px;border-top:3px solid var(--accent)"></i>이동평균</span></div>
+      <div class="callout b" id="ma-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시 · vibration.csv 3호기 실제 값 · 이동평균은 오늘까지의 값만 사용 (앞날 값을 미리 쓰지 않음)</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>여러 센서와 AI</h2><p>진동 하나만 볼까, 진동·온도·전류를 함께 볼까?</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 여러 센서 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 여러 센서와 AI · 직접 해 보기 3</span></div>
+  <h2>센서 셋을 나란히 놓고 하루씩 짚어 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="msplot" viewBox="0 0 640 430" aria-label="3호기 rms, 온도, 전류 96일 그래프와 날짜 커서"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>날짜 <output id="ms-d-o">27일째</output></label><input id="ms-d" type="range" min="1" max="96" step="1" value="27" aria-label="날짜"></div>
+      <div class="chips"><button class="btn ghost" type="button" data-d="27">27일 (튐)</button><button class="btn ghost" type="button" data-d="81">81일</button><button class="btn ghost" type="button" data-d="90">90일</button></div>
+      <div class="meter" style="display:grid;gap:6px;padding:10px 14px">
+        <div class="lbl">오늘의 z-점수 (빨간 선 = 3)</div>
+        <div class="zrow"><span>진동 rms</span><div class="track"><i id="ms-b0"></i><b></b></div><span class="num" id="ms-z0"></span></div>
+        <div class="zrow"><span>온도</span><div class="track"><i id="ms-b1"></i><b></b></div><span class="num" id="ms-z1"></span></div>
+        <div class="zrow"><span>전류</span><div class="track"><i id="ms-b2"></i><b></b></div><span class="num" id="ms-z2"></span></div>
+      </div>
+      <div class="callout b" id="ms-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시 · vibration.csv 3호기 실제 값 · 센서마다 1~60일 평균·표준편차로 z-점수 계산 · 막대는 z = 6에서 잘림</span><span class="no"></span></div>
+</section>
+
+<!-- 15. IsolationForest 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 여러 센서와 AI · 직접 해 보기 4</span></div>
+  <h2>IsolationForest: 무작위로 잘라서 빨리 혼자 남으면 이상 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="isoplot" viewBox="0 0 640 420" aria-label="3호기 rms와 온도 산점도에 무작위 자르기를 하는 그림"></svg></div>
+    <div class="side">
+      <div class="seg" role="group" aria-label="고립시킬 날"><button class="btn ghost" type="button" id="iso-n" aria-pressed="true">30일째 (평범한 날)</button><button class="btn ghost" type="button" id="iso-a" aria-pressed="false">95일째</button></div>
+      <div style="display:flex;gap:8px"><button class="btn" type="button" id="iso-run" style="flex:1"><svg class="ic"><use href="#i-play"/></svg> 무작위로 자르기</button><button class="btn ghost" type="button" id="iso-100">100번 평균</button></div>
+      <div class="row2">
+        <div class="meter sm"><div class="lbl">이번에 자른 횟수</div><div class="val" id="iso-cnt">-</div></div>
+        <div class="meter sm"><div class="lbl">100번 평균</div><div class="val o" id="iso-avg">-</div></div>
+      </div>
+      <div class="callout b" id="iso-msg">점 하나를 고르고 <strong>무작위로 자르기</strong>를 눌러 보세요. 가로·세로 중 하나를 골라 아무 곳이나 자르고, 고른 점이 있는 쪽만 남깁니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시 · 3호기 1~96일 실제 값 2개(rms·온도)로 원리만 보인 그림 · 실제 IsolationForest는 이런 나무 100그루의 평균을 씀</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 경보의 대가 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 경보의 대가</span></div>
+  <h2>잘못 경보 vs 놓친 고장: 둘 다 비용이다</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1" class="mtx">
+      <div class="hd"></div><div class="hd">실제로 고장 징후 있음</div><div class="hd">실제로 정상</div>
+      <div class="hd">경보 울림</div><div class="good"><b class="t">맞은 경보</b>정비 일정을 미리 잡는다</div><div class="fa"><b class="t">잘못 경보</b>멀쩡한 설비를 세우고 점검 — 자주 울리면 아무도 안 믿는다</div>
+      <div class="hd">경보 없음</div><div class="miss"><b class="t">놓친 고장</b>갑자기 멈춘다 — 라인 정지, 급한 수리</div><div class="good"><b class="t">조용한 정상</b>그대로 가동</div>
+    </div>
+    <div style="width:390px;flex:none;display:grid;gap:14px">
+      <div class="tile frag show" style="padding:16px 20px;gap:6px"><div class="h" style="font-size:20px">11-3과 같은 저울</div><div class="d">기준을 낮추면 놓친 고장↓(재현율↑) 잘못 경보↑(정밀도↓). 반대도 마찬가지</div></div>
+      <div class="tile frag" style="padding:16px 20px;gap:6px"><div class="h" style="font-size:20px">예지보전의 세 번째 숫자</div><div class="d"><b>미리 안 시간(리드타임)</b> = 고장일 − 첫 경보일. 부품 주문·정비 계획에 필요한 날수가 기준</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 3호기 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 경보의 대가</span></div>
+  <h2>그래서, 3호기는 며칠 전에 알 수 있었나?</h2>
+  <div class="body">
+    <table class="cmp">
+      <thead><tr><th>방법</th><th>첫 경보</th><th>고장 며칠 전</th><th>그 전 잘못 경보</th><th>한 줄 평</th></tr></thead>
+      <tbody>
+        <tr class="frag show"><td>고정 기준 (rms &gt; 1.5)</td><td class="n">83일째</td><td class="n">13일</td><td class="n">0일</td><td>3호기엔 맞았지만, 1.5는 어디서 왔나?</td></tr>
+        <tr class="frag"><td>3σ 규칙 (원래 값)</td><td class="n">83일째</td><td class="n">13일</td><td class="n" style="color:var(--accent-2)">2일</td><td>27·47일 순간 튐에 반응</td></tr>
+        <tr class="frag"><td>7일 이동평균 + 3σ</td><td class="n">85일째</td><td class="n">11일</td><td class="n">0일</td><td>튐은 사라지고 2일 늦어짐</td></tr>
+        <tr class="frag" style="background:var(--accent-soft)"><td><b>IsolationForest</b> (rms·온도·전류)</td><td class="n">81일째</td><td class="n" style="color:var(--accent)">15일</td><td class="n" style="color:var(--accent-2)">1일</td><td>셋이 함께 어긋난 날을 가장 먼저</td></tr>
+      </tbody>
+    </table>
+    <div class="box think frag" style="margin-top:20px"><p style="font-size:20px;margin:0">가장 빠른 방법이 가장 좋은 방법은 아닙니다. <strong>3호기 하나</strong>만 봐서는 판단할 수 없습니다 → 다음 차시: <strong>6대 전체</strong>에서 잘못 경보까지 세어 봅니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시 · vibration.csv 실제 계산값 · IsolationForest(contamination=0.01, random_state=0)를 6대의 1~60일로 학습</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 경보의 대가</span></div>
+  <h2>실습 파일: 3호기로 규칙 만들어 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div style="flex:1">
+      <ol class="agenda">
+        <li><span class="n">1</span>3호기 rms·온도·전류 그래프 그리기</li>
+        <li><span class="n">2</span>정상 구간 평균·표준편차 → z-점수 3σ 경보</li>
+        <li><span class="n">3</span>7일 이동평균으로 순간 튐 걸러 내기</li>
+        <li><span class="n">4</span>세 센서의 z-점수를 한 그래프에</li>
+        <li><span class="n">5</span>IsolationForest 한 번 돌려 보기</li>
+      </ol>
+    </div>
+    <div style="width:380px;flex:none;display:grid;gap:16px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week12/lesson02.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <div class="callout b">직접 바꿔 보기: <strong>기준 z</strong>와 <strong>이동평균 기간</strong>을 바꾸면 첫 경보일과 잘못 경보가 어떻게 변할까? 대상을 <strong>5호기</strong>로 바꾸면?</div>
+      <div class="muted" style="font-size:16px">코드 셀 9개 · 위에서부터 차례로 ▶ 실행</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">정상을 기준으로</div><div style="font-size:21px">고장 예시는 드물다 → <strong>평소 모습</strong>을 배우고 거기서 벗어난 날을 찾는다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h">규칙마다 장단점</div><div style="font-size:21px">3σ는 간단하지만 튐에 약하고, 이동평균은 튐을 거르지만 <strong>늦다</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">함께 보면 더 일찍</div><div style="font-size:21px">여러 센서를 함께 보는 IsolationForest는 더 빨랐지만, <strong>잘못 경보</strong>도 함께 따져야 한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="720일 중 고장 표시는 2일뿐이라 고장 예시로 배우기 어렵습니다. 넘치는 정상 기록으로 ‘평소 모습’을 정하고, 거기서 벗어난 날을 찾습니다.">
+      <p class="q-title"><b>Q1.</b> 예지보전에서 분류 대신 이상탐지를 많이 쓰는 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">이상탐지는 항상 100% 정확하므로</button>
+        <button type="button" data-v="b">센서 데이터는 숫자가 아니므로</button>
+        <button type="button" data-v="c">정상 기록이 거의 없으므로</button>
+        <button type="button" data-v="d">고장 예시는 드물고 정상 기록은 많으므로</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="z = (2.0 − 1.0) ÷ 0.1 = 10. 평균에서 표준편차 10개만큼 떨어졌으니 3σ 기준(z &gt; 3)을 훌쩍 넘어 경보입니다.">
+      <p class="q-title"><b>Q2.</b> 정상 평균 1.0, 표준편차 0.1인 설비의 rms가 2.0이다. z-점수와 3σ 판정은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">z = 1, 정상</button>
+        <button type="button" data-v="b">z = 10, 경보</button>
+        <button type="button" data-v="c">z = 2, 정상</button>
+        <button type="button" data-v="d">z = 0.1, 정상</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="이동평균은 하루짜리 튐을 묽게 만들어 잘못 경보를 줄이지만, 진짜 변화도 며칠 쌓여야 평균에 반영되므로 경보가 늦어집니다. 3호기에서는 7일 이동평균이 2일 늦었습니다.">
+      <p class="q-title"><b>Q3.</b> 이동평균 기간을 늘리면 일반적으로 어떻게 될까?</p>
+      <div class="opts">
+        <button type="button" data-v="a">순간 튐에 의한 잘못 경보는 줄고, 첫 경보는 늦어진다</button>
+        <button type="button" data-v="b">잘못 경보도 줄고 첫 경보도 빨라진다</button>
+        <button type="button" data-v="c">아무 변화가 없다</button>
+        <button type="button" data-v="d">잘못 경보가 늘어난다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="IsolationForest는 무작위로 자르기를 반복해, 적은 횟수만에 혼자 떨어지는(고립되는) 점을 이상으로 봅니다. 정상인 점은 비슷한 점이 많아 오래 잘라야 고립됩니다.">
+      <p class="q-title"><b>Q4.</b> IsolationForest가 이상이라고 보는 점은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">무리의 중심에 가장 가까운 점</button>
+        <button type="button" data-v="b">값이 가장 작은 점</button>
+        <button type="button" data-v="c">무작위로 자를 때 적은 횟수만에 혼자 남는 점</button>
+        <button type="button" data-v="d">정답이 ‘고장’으로 표시된 점</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">12-3</div>
+    <h2>제공 코드로 이상탐지 실습</h2>
+    <p>6대 전체에 오늘의 규칙과 IsolationForest를 적용하고, 정비 관리자의 눈으로 “미리 안 시간”과 “잘못 경보”를 평가합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-code"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">12주 2차시 · 이상탐지와 설비 예지보전</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

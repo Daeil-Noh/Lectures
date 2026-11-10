@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6주 1차시 · 평균·중앙값·분산 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 6주 1차시 교안: 평균과 중앙값, 이상치가 평균에 주는 영향, 범위·분산·표준편차로 퍼짐 읽기, pandas describe()">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .anim { display: none; } }
+
+  /* 끌어서 옮기는 점 */
+  .drag { cursor: grab; } .drag:active { cursor: grabbing; }
+  .drag:focus { outline: none; } .drag:focus-visible circle { stroke: var(--text); stroke-width: 3; }
+  .mk { transition: transform .15s ease; }
+  @media (prefers-reduced-motion: reduce) { .mk { transition: none; } }
+
+  /* 두 설비 */
+  .mrow-lbl { font-size: 16px; font-weight: 800; }
+  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .vs .meter .val { font-size: 30px; }
+  .vs .meter .lbl { font-size: 14px; }
+
+  /* 표준편차 띠 */
+  .seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 16px; font-weight: 700; padding: 6px 16px; border-radius: 999px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+
+  /* describe 표 */
+  .desc { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; font-size: 18px; }
+  .desc th, .desc td { padding: 6px 16px; text-align: right; }
+  .desc th:first-child, .desc td:first-child { text-align: left; }
+  .desc tbody tr { cursor: pointer; transition: background .15s; }
+  .desc tbody tr:hover { background: var(--surface-2); }
+  .desc tbody tr.on { background: var(--accent-soft); }
+  .desc tbody tr.on td:first-child { color: var(--accent); font-weight: 800; }
+  .desc tbody tr:focus { outline: none; } .desc tbody tr:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+  .desc tbody tr.seen td:first-child::after { content: " ✓"; color: var(--ok); font-weight: 800; }
+
+  .codegrid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; align-items: start; }
+  .codegrid pre.code { font-size: 17px; }
+  .linenote { display: grid; gap: 8px; }
+  .linenote .tile { padding: 12px 16px; gap: 4px; font-size: 17px; flex-direction: row; align-items: center; }
+  .linenote .tile b { color: var(--accent); font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 16px; min-width: 132px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 6주차 1차시</p>
+    <h1>평균·중앙값·<br>분산</h1>
+    <p class="lead" style="font-size:25px">숫자 494개를<br>숫자 몇 개로 말하기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="30" y="40" width="460" height="360" rx="30" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <!-- 시소 -->
+    <rect x="70" y="232" width="380" height="8" rx="4" class="f-muted"/>
+    <g class="f-acc">
+      <circle cx="120" cy="216" r="13"/><circle cx="170" cy="216" r="13"/><circle cx="196" cy="216" r="13"/><circle cx="222" cy="216" r="13"/>
+      <circle cx="248" cy="216" r="13"/><circle cx="274" cy="216" r="13"/><circle cx="300" cy="216" r="13"/>
+    </g>
+    <circle cy="216" r="15" class="f-acc2"><animate class="anim" attributeName="cx" values="340;430;430;340;340" keyTimes="0;.3;.6;.9;1" dur="5s" repeatCount="indefinite"/></circle>
+    <g><path d="M0 0 L-22 38 H22 Z" class="f-acc2" transform="translate(237 242)"><animateTransform class="anim" attributeName="transform" type="translate" values="237 242;248 242;248 242;237 242;237 242" keyTimes="0;.3;.6;.9;1" dur="5s" repeatCount="indefinite"/></path></g>
+    <text x="260" y="320" text-anchor="middle" class="t-acc2" style="font-size:22px">평균 = 균형점</text>
+    <!-- 중앙값 깃발 -->
+    <line x1="248" y1="110" x2="248" y2="196" stroke="var(--accent)" stroke-width="4"/>
+    <path d="M248 110 h56 l-12 14 l12 14 h-56 z" class="f-acc"/>
+    <text x="260" y="96" text-anchor="middle" class="t-acc" style="font-size:22px">중앙값 = 한가운데</text>
+    <!-- 퍼짐 화살표 -->
+    <path d="M110 360 H410" stroke="var(--muted)" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>
+    <path d="M110 360 l14 -8 v16 z M410 360 l-14 -8 v16 z" class="f-muted"/>
+    <text x="260" y="388" text-anchor="middle" class="t-sub" style="font-size:16px;font-weight:700">퍼짐 = 표준편차</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">대표값</div><div class="d">평균과 중앙값이 각각 무엇을 ‘가운데’로 보는지 설명한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">이상치의 영향</div><div class="d">극단값 하나가 평균을 끌고 가는 이유를 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-activity"/></svg></span><div class="h">퍼짐</div><div class="d">범위·분산·표준편차로 데이터가 흩어진 정도를 읽는다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div class="h">describe()</div><div class="d">pandas로 요약 통계를 한 번에 구하고 해석한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>① 가운데는 어디?</b><small>직접 해 보기 1</small></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>② 얼마나 퍼져 있나?</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>③ pandas로 한 번에</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-database"/></svg> 오늘 데이터: 5주차에 정리한 <strong>사출 성형 공정 기록 process.csv</strong> (제품 494개, 가상 데이터)</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>인장강도 494개, 한마디로 말하면?</h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="tile" style="padding:12px 16px 6px">
+      <svg id="intro" viewBox="0 0 1100 272" role="img" aria-label="제품 494개의 인장강도를 점 하나씩 쌓은 그림"></svg>
+    </div>
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);margin-top:16px">
+      <div class="tile row frag show" style="padding:16px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h">가운데는 어디?</div><div class="d">평균 · 중앙값 → ①</div></div></div>
+      <div class="tile row frag" style="padding:16px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-activity"/></svg></span><div><div class="h">얼마나 퍼져 있나?</div><div class="d">범위 · 분산 · 표준편차 → ②</div></div></div>
+      <div class="tile row frag" style="padding:16px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-code"/></svg></span><div><div class="h">코드 한 줄로</div><div class="d">describe() → ③</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시 · process.csv 인장강도(MPa) · 점 하나 = 제품 하나 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>가운데는 어디인가: 대표값</h2><p>평균과 중앙값은 ‘가운데’를 서로 다르게 봅니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 평균 vs 중앙값 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 가운데는 어디?</span></div>
+  <h2>3호기 제품 9개의 사출 온도로 보면</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:24px">
+      <div class="tile frag show" style="padding:20px 22px">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge o"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:26px">평균 <span class="muted" style="font-size:17px;font-weight:600">mean</span></div><div class="muted" style="font-size:17px">모두 더해서 개수로 나눈 값 = <b style="color:var(--accent-2)">균형점</b></div></div></div>
+        <svg id="seesaw" viewBox="0 0 500 170" aria-label="온도 9개를 시소 위에 올린 그림. 받침점이 평균"></svg>
+        <div style="font-size:18px;background:var(--surface-2);border-radius:10px;padding:8px 14px">(216.1 + 204.6 + … + 198.5) ÷ 9 = <strong style="color:var(--accent-2)">206.9℃</strong></div>
+      </div>
+      <div class="tile frag" style="padding:20px 22px">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:26px">중앙값 <span class="muted" style="font-size:17px;font-weight:600">median</span></div><div class="muted" style="font-size:17px">크기순으로 줄 세웠을 때 <b style="color:var(--accent)">한가운데 값</b></div></div></div>
+        <svg id="sorted" viewBox="0 0 500 170" aria-label="온도 9개를 작은 값부터 줄 세운 막대. 다섯 번째가 중앙값"></svg>
+        <div style="font-size:18px;background:var(--surface-2);border-radius:10px;padding:8px 14px">9개 중 5번째 = <strong style="color:var(--accent)">205.4℃</strong> <span class="muted" style="font-size:16px">(짝수 개면 가운데 두 값의 평균)</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시 · process.csv 3호기 첫 제품 9개 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 이상치 끌기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 가운데는 어디? · 직접 해 보기 1</span></div>
+  <h2>점 하나가 멀리 가면 누가 따라갈까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="drag" viewBox="0 0 640 420" aria-label="온도 9개의 점 그림. 주황 점을 끌어 옮기면 평균과 중앙값 표시가 움직인다"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>주황 점의 온도 <output id="d-o">198.5℃</output></label><input id="d-s" type="range" min="195" max="300" step="0.1" value="198.5" aria-label="주황 점의 온도"></div>
+      <div style="display:flex;gap:10px"><button class="btn" id="d-err" type="button" style="flex:1"><svg class="ic"><use href="#i-alert"/></svg> 센서 오류 999.9</button><button class="btn ghost" id="d-reset" type="button" aria-label="처음으로"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">평균</div><div class="val o" id="d-mean" style="font-size:32px">206.9</div></div>
+        <div class="meter"><div class="lbl">중앙값</div><div class="val" id="d-med" style="font-size:32px">205.4</div></div>
+      </div>
+      <div class="callout b" id="d-msg">주황 점을 <strong>오른쪽으로 끌어</strong> 보세요. 평균(▲)과 중앙값(▼) 중 누가 더 크게 움직일까요?</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시 · process.csv 3호기 첫 제품 9개 · 999.9는 정리 전 파일(process_raw.csv)에 있던 센서 오류값</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 실제 데이터: 정리 전후 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 가운데는 어디?</span></div>
+  <h2>5주차에 센서 오류값을 정리한 이유</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile" style="padding:24px 26px;border:2px solid var(--accent-2)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:26px">정리 전 <span style="font-size:18px" class="muted">process_raw.csv</span></div><div class="muted" style="font-size:17px">온도 499개 중 <b>999.9 6개, −1.0 2개</b></div></div></div>
+        <div class="grid g2" style="gap:12px">
+          <div class="meter"><div class="lbl">온도 평균</div><div class="val o">220.1℃</div></div>
+          <div class="meter"><div class="lbl">온도 중앙값</div><div class="val">211.6℃</div></div>
+        </div>
+      </div>
+      <div class="tile" style="padding:24px 26px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:26px">정리 후 <span style="font-size:18px" class="muted">process.csv</span></div><div class="muted" style="font-size:17px">오류값·중복 행을 정리한 494개</div></div></div>
+        <div class="grid g2" style="gap:12px">
+          <div class="meter"><div class="lbl">온도 평균</div><div class="val">211.4℃</div></div>
+          <div class="meter"><div class="lbl">온도 중앙값</div><div class="val">211.6℃</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="frag" style="margin-top:24px;font-size:22px">오류값 8개(1.6%)가 평균을 <strong style="color:var(--accent-2)">8.6℃</strong>나 끌어올렸지만, 중앙값은 <strong style="color:var(--accent)">그대로</strong>입니다. 평균만 봤다면 “설비가 과열되고 있다”고 착각했을 것입니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시 · process_raw.csv / process.csv · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 언제 무엇을 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 가운데는 어디?</span></div>
+  <h2>평균을 쓸까, 중앙값을 쓸까?</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">좌우가 고르면</div><div class="d">평균 ≈ 중앙값 → 어느 쪽이든 괜찮다. 보통 <strong>평균</strong>을 쓴다</div><div style="font-size:17px;background:var(--surface-2);border-radius:10px;padding:8px 12px">온도: 평균 211.4 · 중앙값 211.6</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">한쪽에 극단값이 있으면</div><div class="d">평균이 끌려간다 → <strong>중앙값</strong>이 ‘보통’을 더 잘 보여 준다</div><div style="font-size:17px;background:var(--surface-2);border-radius:10px;padding:8px 12px">예: 설비 수리 시간, 납품 대기 일수</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">둘이 많이 다르면</div><div class="d">데이터에 <strong>극단값이나 오류</strong>가 있다는 신호 → 원본을 들여다본다</div><div style="font-size:17px;background:var(--surface-2);border-radius:10px;padding:8px 12px">정리 전 온도: 220.1 vs 211.6</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:19px">덧붙여: 불량 유형처럼 <strong style="color:var(--text)">글자로 된 값</strong>은 평균을 낼 수 없으니 가장 많이 나온 값(<strong style="color:var(--text)">최빈값</strong>)을 씁니다. 예: 불량 68개 중 가장 많은 유형은 치수불량(30개).</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>얼마나 퍼져 있나: 산포</h2><p>가운데가 같아도 흩어진 정도는 다를 수 있습니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-activity"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 범위·분산·표준편차 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 얼마나 퍼져 있나?</span></div>
+  <h2>퍼짐을 재는 세 가지 자</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:26px">
+    <div class="tile" style="flex:1.15;padding:14px 16px 8px">
+      <svg id="devs" viewBox="0 0 600 340" role="img" aria-label="온도 9개와 평균선, 각 점에서 평균까지의 거리(편차)"></svg>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-x"/></svg></span><div><div class="h">범위 = 최댓값 − 최솟값</div><div class="d">216.1 − 198.5 = <b>17.6℃</b> · 간단하지만 점 <b>두 개</b>만 본다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h">분산 = 편차²의 평균</div><div class="d">편차 = 값 − 평균. 제곱해서 +/−를 없앤 뒤 평균 → <b>25.7</b> (단위 ℃²)</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px;border:2px solid var(--accent)"><span class="ic-badge o"><svg class="ic"><use href="#i-activity"/></svg></span><div><div class="h">표준편차 = √분산</div><div class="d">원래 단위로 되돌린 값 → <b>5.1℃</b> · “평균에서 보통 이만큼 떨어져 있다”</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시 · pandas 의 var()·std()는 (개수 − 1)로 나눈 값 — 지금은 ‘편차의 대표 크기’로 이해하면 충분</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 2: 두 설비 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 얼마나 퍼져 있나? · 직접 해 보기 2</span></div>
+  <h2>평균이 같으면 같은 설비일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="mach" viewBox="0 0 640 420" aria-label="A설비와 B설비 제품 40개씩의 두께 점 그림과 규격 범위"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>B설비 표준편차 <output id="m-o">0.060mm</output></label><input id="m-s" type="range" min="0.01" max="0.08" step="0.005" value="0.06" aria-label="B설비 표준편차"></div>
+      <div class="vs">
+        <div class="meter"><div class="lbl">A 표준편차</div><div class="val" id="m-a">0.030mm</div></div>
+        <div class="meter"><div class="lbl">B 표준편차</div><div class="val o" id="m-b">0.060mm</div></div>
+        <div class="meter"><div class="lbl">A 규격 밖</div><div class="val" id="m-ao">0개</div></div>
+        <div class="meter"><div class="lbl">B 규격 밖</div><div class="val o" id="m-bo">-</div></div>
+      </div>
+      <div class="callout b" id="m-msg">두 설비 모두 평균 두께는 <strong>2.00mm</strong>. 규격은 1.90~2.10mm입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시 · 설명용 가상 제품 40개씩 · 규격 2.00±0.10mm는 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 표준편차 감 잡기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 얼마나 퍼져 있나?</span></div>
+  <h2>표준편차 감 잡기: 평균 ± 표준편차 안에 몇 개?</h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="tile" style="padding:12px 16px 4px">
+      <svg id="band" viewBox="0 0 1100 250" role="img" aria-label="인장강도 494개 점 그림 위에 평균 ± 표준편차 구간을 칠한 그림"></svg>
+    </div>
+    <div style="display:flex;align-items:center;gap:20px;margin-top:14px">
+      <div class="seg" role="group" aria-label="구간 선택"><button type="button" data-k="1" aria-pressed="true">평균 ± 1 표준편차</button><button type="button" data-k="2" aria-pressed="false">평균 ± 2 표준편차</button></div>
+      <div class="callout b" id="band-msg" style="flex:1;font-size:19px"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시 · process.csv 인장강도 · 종 모양 분포에서 대략 ⅔, 95% — 다음 차시에 분포 모양을 자세히</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>pandas로 한 번에</h2><p>손으로 하던 계산을 코드 한 줄씩으로 바꿉니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-code"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 코드: 하나씩 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ pandas로 한 번에</span></div>
+  <h2>열 하나를 골라 통계 메서드 붙이기</h2>
+  <div class="codegrid">
+    <div>
+<pre class="code">import pandas as pd
+DATA = '…/data/'          # 전체 주소는 실습 파일에
+df = pd.read_csv(DATA + 'process.csv')
+
+s = df['strength']              # 인장강도 열 하나
+print(round(s.mean(), 2))       # 평균
+print(round(s.median(), 2))     # 중앙값
+print(round(s.max() - s.min(), 2))  # 범위
+print(round(s.var(), 2))        # 분산
+print(round(s.std(), 2))        # 표준편차</pre>
+<p class="codecap">round(값, 2): 소수 둘째 자리까지 반올림해서 보기 좋게</p>
+    </div>
+    <div class="linenote">
+<pre class="out">38.79
+39.06
+20.04
+9.93
+3.15</pre>
+      <div class="tile frag show"><b>.mean() .median()</b><span>평균 38.79 &lt; 중앙값 39.06 → <strong>약한 제품 몇 개</strong>가 평균을 조금 끌어내림</span></div>
+      <div class="tile frag"><b>.var() .std()</b><span>분산 9.93 MPa², 표준편차 <strong>3.15 MPa</strong> — 해석은 표준편차로</span></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시 · process.csv · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 3: describe -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ pandas로 한 번에 · 직접 해 보기 3</span></div>
+  <h2>describe(): 요약 통계 여덟 줄 읽기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 400px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:12px;padding:16px 18px">
+      <pre class="code">df[['temp', 'strength']].describe().round(2)</pre>
+      <table class="desc" id="desc">
+        <thead><tr><th></th><th>temp</th><th>strength</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="side">
+      <div class="tile" style="flex:1;gap:10px">
+        <span class="ic-badge" id="ds-ic"><svg class="ic"><use href="#i-hand"/></svg></span>
+        <div class="h" id="ds-h">줄을 눌러 보세요</div>
+        <div id="ds-d" style="font-size:18px">왼쪽 표의 각 줄이 무엇을 뜻하는지 확인합니다.</div>
+        <div class="d" id="ds-ex"></div>
+        <div class="d" id="ds-wk" style="font-weight:700;color:var(--accent)"></div>
+      </div>
+      <div class="muted" style="font-size:16px" id="ds-score">0 / 8 확인</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시 · process.csv · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ pandas로 한 번에</span></div>
+  <h2>실습 파일: 내 손으로 요약 통계 구하기</h2>
+  <div class="body" style="flex-direction:row;gap:30px;align-items:stretch">
+    <div class="tile" style="flex:1.1;padding:24px 26px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week06/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <ol style="font-size:19px;margin:6px 0 0;line-height:1.5">
+        <li>process.csv 불러오기</li>
+        <li>인장강도의 평균·중앙값·범위·분산·표준편차</li>
+        <li>정리 전 파일로 <strong>오류값이 평균을 끄는 모습</strong> 확인</li>
+        <li>평균 ± 표준편차 안의 비율 세기</li>
+        <li>describe()로 숫자 열 한 번에 요약</li>
+        <li><b style="color:var(--accent-2)">직접 바꿔 보기</b> — 열 바꾸기, 값 하나 고장 내기</li>
+      </ol>
+    </div>
+    <div class="tile" style="flex:1;padding:24px 26px;background:var(--accent-soft);border-color:transparent">
+      <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge o"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">생성형AI에게 물어보기</div></div>
+      <div style="font-size:18px;background:var(--surface);border-radius:12px;padding:12px 16px;line-height:1.55">“pandas describe() 결과에서 <b>평균은 220, 중앙값은 211</b>로 차이가 커. 어떤 원인을 의심해 볼 수 있고, 확인하는 코드를 알려 줘.”</div>
+      <div class="d" style="font-size:17px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-check"/></svg> AI가 알려 준 코드를 실행하고, <strong>숫자가 실제 데이터와 맞는지</strong> 직접 확인합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">평균은 끌려가고, 중앙값은 버틴다</div><div style="font-size:21px">극단값·오류값 하나가 평균을 크게 옮긴다. <strong>둘을 함께</strong> 보자</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-activity"/></svg></span><div class="h">가운데만으로는 부족</div><div style="font-size:21px">평균이 같아도 퍼짐이 크면 <strong>규격 밖 제품</strong>이 많아진다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-code"/></svg></span><div class="h">표준편차 · describe()</div><div style="font-size:21px">표준편차는 원래 단위의 ‘보통 떨어진 거리’. <strong>describe()</strong>로 한 번에</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="평균은 모든 값을 더해서 나누므로 극단값 하나에 크게 끌려갑니다. 중앙값은 줄 세운 순서만 보므로 거의 변하지 않습니다(직접 해 보기 1: 206.9 → 295.9, 중앙값은 205.4 → 207.2).">
+      <p class="q-title"><b>Q1.</b> 온도 9개 중 하나가 센서 오류로 999.9가 되었다. 가장 크게 변하는 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">중앙값</button>
+        <button type="button" data-v="b">평균</button>
+        <button type="button" data-v="c">데이터 개수</button>
+        <button type="button" data-v="d">아무것도 변하지 않는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="평균이 같아도 표준편차가 크면 제품이 평균에서 더 멀리 흩어지므로, 규격(1.90~2.10mm)을 벗어나는 제품이 많아집니다.">
+      <p class="q-title"><b>Q2.</b> 두 설비 모두 평균 두께 2.00mm. A의 표준편차 0.02mm, B는 0.06mm. 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">평균이 같으니 두 설비의 품질은 같다</button>
+        <button type="button" data-v="b">A 제품이 규격을 더 자주 벗어난다</button>
+        <button type="button" data-v="c">B 제품이 규격을 벗어날 가능성이 더 크다</button>
+        <button type="button" data-v="d">표준편차는 품질과 상관없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="분산은 편차를 제곱했기 때문에 단위도 제곱(℃², MPa²)이 됩니다. 제곱근을 씌운 표준편차는 원래 단위로 돌아와 ‘평균에서 보통 이만큼 떨어져 있다’고 읽을 수 있습니다.">
+      <p class="q-title"><b>Q3.</b> 분산보다 표준편차로 해석하는 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">원래 데이터와 단위가 같아서</button>
+        <button type="button" data-v="b">항상 분산보다 큰 값이라서</button>
+        <button type="button" data-v="c">극단값의 영향을 전혀 받지 않아서</button>
+        <button type="button" data-v="d">계산할 때 평균이 필요 없어서</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="describe()의 50%는 ‘값을 줄 세웠을 때 50% 위치’, 즉 중앙값입니다. 25%와 75%는 다음 차시 상자그림에서 쓰는 사분위수입니다.">
+      <p class="q-title"><b>Q4.</b> describe() 결과의 <b style="color:var(--text)">50%</b> 줄이 뜻하는 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">전체 데이터의 절반 개수</button>
+        <button type="button" data-v="b">평균의 50%에 해당하는 값</button>
+        <button type="button" data-v="c">불량률 50%</button>
+        <button type="button" data-v="d">중앙값</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">6-2</div>
+    <h2>분포와 이상치</h2>
+    <p>숫자 몇 개로는 안 보이는 <strong>모양</strong>을 히스토그램과 상자그림으로 보고, 튀는 값이 오류인지 진짜인지 가려냅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week05/lesson03.html">← 5-3 결측치 처리와 자료형 정리</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">6주 1차시 · 평균·중앙값·분산</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

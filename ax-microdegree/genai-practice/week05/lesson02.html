@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5주 2차시 · 이메일·공문 작성 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 5주 2차시 교안: 업무 이메일의 구조, 받는 사람에 따른 어조, 공문 기본 형식, 사과·거절·요청 문장, 거래처·고객 답장 실습">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .slide.section .big { margin-bottom: 24px; }
+  a.btn { text-decoration: none; }
+  .orbit { animation: orb 9s linear infinite; transform-origin: 260px 230px; }
+  .orbit .keep { animation: orb 9s linear infinite reverse; transform-box: fill-box; transform-origin: center; }
+  @keyframes orb { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .orbit, .orbit .keep { animation: none; } }
+
+  /* 메일·공문 모형 */
+  .mail { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 22px; font-size: 18px; line-height: 1.6; }
+  .mail .hd { font-size: 14px; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-bottom: 8px; }
+  .mail .hd b { color: var(--text); }
+  .mail p { margin: 0 0 10px; }
+  .bd { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--surface); font-size: 13px; font-weight: 800; margin-right: 6px; vertical-align: 1px; flex: none; }
+  .bd.o { background: var(--accent-2); }
+  .legend6 { display: grid; gap: 8px; }
+  .legend6 > div { display: flex; align-items: flex-start; gap: 8px; font-size: 17px; line-height: 1.45; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
+  .legend6 b { display: block; }
+  .legend6.tight { gap: 5px; } .legend6.tight > div { padding: 5px 12px; font-size: 16px; } .legend6.tight .d { font-size: 14px; }
+  .legend6 .d { color: var(--muted); font-size: 15px; }
+  .inbox { display: grid; gap: 10px; }
+  .inbox .it { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; font-size: 16px; line-height: 1.5; }
+  .inbox .it b { display: block; font-size: 17px; }
+  .inbox .it .m { color: var(--muted); font-size: 14px; }
+  .gong { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 26px; font-size: 15.5px; line-height: 1.6; }
+  .gong .org { text-align: center; font-size: 22px; font-weight: 800; letter-spacing: .1em; border-bottom: 2px solid var(--text); padding-bottom: 4px; margin-bottom: 8px; }
+  .gong .row { display: flex; gap: 6px; } .gong .row .lb { width: 46px; flex: none; font-weight: 800; }
+  .gong .ind { padding-left: 2.2em; }
+  .gong .sign { text-align: center; font-size: 19px; font-weight: 800; margin-top: 8px; }
+  .gong p { margin: 0; }
+
+  /* 어조 슬라이더 */
+  .tone-out { font-size: 21px; line-height: 1.7; padding: 22px 26px !important; flex-direction: column; align-items: stretch !important; justify-content: center; gap: 10px; }
+  .tone-out .to { font-size: 14px; color: var(--muted); font-weight: 700; }
+  .tone-out .txt { white-space: pre-wrap; }
+  .scale { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 받는 사람 맞추기 */
+  .rcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .rcard { border: 1px solid var(--line); background: var(--surface); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .rcard .s { font-size: 16px; line-height: 1.5; flex: 1; }
+  .rcard .pick { display: flex; gap: 6px; }
+  .rcard .pick button { flex: 1; font: inherit; font-size: 14px; font-weight: 800; padding: 5px 0; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); cursor: pointer; }
+  .rcard .pick button:disabled { cursor: default; }
+  .rcard .pick button.right { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+  .rcard .pick button.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+  .rcard .why { display: none; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+  .rcard.done .why { display: block; }
+
+  /* 문장 고치기 카드 */
+  .fcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .fcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; min-height: 104px; }
+  .fcard:hover { border-color: var(--accent); }
+  .fcard .ty { font-size: 13px; font-weight: 800; color: var(--accent-2); }
+  .fcard .bad { font-size: 17px; font-weight: 700; line-height: 1.4; }
+  .fcard .pr, .fcard .good { display: none; font-size: 14.5px; line-height: 1.45; }
+  .fcard .pr { color: var(--bad); font-weight: 700; }
+  .fcard .good { background: var(--ok-soft); border-radius: 8px; padding: 5px 8px; }
+  .fcard.open { border-color: var(--ok); }
+  .fcard.open .bad { text-decoration: line-through; text-decoration-color: var(--bad); color: var(--muted); font-size: 15px; }
+  .fcard.open .pr, .fcard.open .good { display: block; }
+
+  .two { display: grid; grid-template-columns: 1.05fr 1fr; gap: 22px; align-items: start; }
+  .two .prompt pre { font-size: 15.5px; line-height: 1.55; }
+  .chat .msg { font-size: 15.5px; }
+  .ttable { font-size: 18px; }
+  .ttable th, .ttable td { padding: 10px 14px; }
+  .memo { font-size: 17px; line-height: 1.55; list-style: none; padding: 0; margin: 0; }
+  .memo li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+</svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 5주차 2차시</p>
+    <h1>이메일·공문<br>작성</h1>
+    <p class="lead" style="font-size:25px">같은 내용도<br>받는 사람에 따라 다르게</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span><span>Gemini · Claude</span></div>
+  </div>
+  <svg viewBox="0 0 520 460" style="width:520px;flex:none" aria-hidden="true">
+    <circle cx="260" cy="230" r="175" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 10"/>
+    <rect x="160" y="160" width="200" height="140" rx="20" class="f-acc"/>
+    <path d="M168 176 L260 240 L352 176" fill="none" stroke="var(--surface)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <g class="orbit">
+      <g transform="translate(260 55)"><g class="keep"><circle r="44" class="f-accs"/><g transform="translate(-24 -24) scale(2)" style="color:var(--accent)"><use href="#i-user" width="24" height="24"/></g></g></g>
+      <g transform="translate(108 318)"><g class="keep"><circle r="44" class="f-acc2s"/><g transform="translate(-24 -24) scale(2)" style="color:var(--accent-2)"><use href="#i-factory" width="24" height="24"/></g></g></g>
+      <g transform="translate(412 318)"><g class="keep"><circle r="44" class="f-accs"/><g transform="translate(-24 -24) scale(2)" style="color:var(--accent)"><use href="#i-cap" width="24" height="24"/></g></g></g>
+    </g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-mail"/></svg></span><div class="h">메일의 구조</div><div class="d">제목·용건·세부·요청·맺음의 순서로 쓴다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">받는 사람별 어조</div><div class="d">고객·거래처·상사에게 맞게 어조를 고른다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">공문 기본 형식</div><div class="d">수신·제목·본문·붙임의 모양을 안다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">사과·거절·요청</div><div class="d">탓하지 않고, 대안과 기한을 넣어 쓴다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 업무 이메일</b></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>② 받는 사람과 어조</b><small>직접 해 보기 3</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>③ 공문 기본 형식</b></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>④ 실습: 답장 쓰기</b><small>Gemini · Claude</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘의 질문: <strong>“AI는 문장을 잘 쓴다. 그런데 우리 회사 사정을 알까?”</strong></p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>오늘 아침, 바다결에 온 메일 두 통</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:center">
+    <div class="inbox" style="flex:1">
+      <div class="it"><span class="ic-badge o" style="width:48px;height:48px;font-size:26px"><svg class="ic"><use href="#i-factory"/></svg></span><div><b>카페 온담 · 윤재희 (거래처)</b>11월 2일 발주 건 납품 일정 문의드립니다<div class="m">“6일 도착이라더니 출고 안내가 없어요. 12일까지는 꼭 받아야 합니다.”</div></div></div>
+      <div class="it"><span class="ic-badge" style="width:48px;height:48px;font-size:26px"><svg class="ic"><use href="#i-user"/></svg></span><div><b>정민지 (자사몰 고객)</b>선물 세트 포장이 터져서 왔어요. 답변도 없고요.<div class="m">“부모님 선물인데 이대로는 못 드려요. 3일째 답이 없네요.”</div></div></div>
+    </div>
+    <div class="chat" style="flex:1.1">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">이 메일에 답장 써 줘 (거래처 메일 붙여 넣음)</div>
+      <div class="msg ai warn"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>윤재희 담당자님, 문의 주셔서 감사합니다. 택배사 사정으로 출고가 늦어진 점 양해 부탁드립니다. 내일 바로 전 품목 출고해 드리겠습니다.</div>
+      <div class="callout" style="font-size:16px">“택배사 사정”? “내일 바로”? — <strong>AI는 우리 사정을 모릅니다.</strong> 모르는 부분을 그럴듯하게 채웠습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · 가상 회사·가상 인물 · 미리 써 둔 예시 답변</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>업무 이메일의 구조</h2><p>읽는 사람이 첫 세 줄에서 용건을 알게.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-mail"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 메일 해부도 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 업무 이메일</span></div>
+  <h2>업무 메일 한 통의 여섯 부분</h2>
+  <div class="body" style="flex-direction:row;gap:24px;align-items:stretch">
+    <div class="mail" style="flex:1.35">
+      <div class="hd"><span class="bd">1</span><b>제목</b> [바다결] 선물 세트 납품 일정 변경 안내 (11. 12. 오전 도착)</div>
+      <p><span class="bd">2</span>윤재희 담당자님, 안녕하세요. 바다결 영업 담당 김하늘입니다.</p>
+      <p><span class="bd">3</span>선물 세트 출고 일정을 미리 알려 드리지 못해 죄송합니다. 일정이 아래와 같이 바뀌었습니다.</p>
+      <p><span class="bd">4</span>1) 오리지널 그래놀라 60봉: 11. 6.(금) 도착 — 변경 없음<br><span style="padding-left:28px;display:inline-block">2) 선물 세트 20개: 11. 12.(목) 오전 도착 · 두 번째 배송비는 저희가 냅니다</span></p>
+      <p><span class="bd o">5</span>이렇게 나눠 보내도 진열에 문제가 없을지 <strong>오늘 17시까지</strong> 회신 부탁드립니다.</p>
+      <p style="margin:0"><span class="bd">6</span>불편을 드려 다시 한번 죄송합니다. 김하늘 드림 · 바다결 영업 담당</p>
+    </div>
+    <div class="legend6" style="flex:1">
+      <div class="frag show"><span class="bd">1</span><div><b>제목: 용건 + 핵심</b><span class="d">“문의드립니다”보다 무엇에 대한 메일인지</span></div></div>
+      <div class="frag"><span class="bd">2</span><div><b>호칭·인사·소속</b><span class="d">누가 보냈는지 한 줄로</span></div></div>
+      <div class="frag"><span class="bd">3</span><div><b>용건 먼저 (두괄식)</b><span class="d">사과·결론을 앞에</span></div></div>
+      <div class="frag"><span class="bd">4</span><div><b>세부 내용은 번호로</b><span class="d">날짜·수량은 한눈에</span></div></div>
+      <div class="frag"><span class="bd o">5</span><div><b>요청·다음 행동 + 기한</b><span class="d">상대가 무엇을, 언제까지</span></div></div>
+      <div class="frag"><span class="bd">6</span><div><b>맺음 인사·서명</b><span class="d">이름·소속 (실제 연락처는 실습에선 생략)</span></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · 가상 인물의 예시 메일 · 회사마다 서명 양식은 다름</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 맡기는 법 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 업무 이메일</span></div>
+  <h2>AI에게 메일을 맡길 때 알려 줄 다섯 가지</h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="tiles" style="grid-template-columns:repeat(5,1fr);gap:12px">
+      <div class="tile" style="padding:14px;align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="h" style="font-size:19px">받는 사람·관계</div><div class="d" style="font-size:15px">거래처 구매 담당, 처음 거래</div></div>
+      <div class="tile" style="padding:14px;align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h" style="font-size:19px">목적 한 줄</div><div class="d" style="font-size:15px">일정 변경 사과와 분할 납품 제안</div></div>
+      <div class="tile" style="padding:14px;align-items:center;text-align:center;border:2px solid var(--accent-2)"><span class="ic-badge o"><svg class="ic"><use href="#i-log"/></svg></span><div class="h" style="font-size:19px">꼭 들어갈 사실</div><div class="d" style="font-size:15px">날짜·수량·조건 — <strong>내가 준다</strong></div></div>
+      <div class="tile" style="padding:14px;align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h" style="font-size:19px">어조</div><div class="d" style="font-size:15px">정중한 업무 메일</div></div>
+      <div class="tile" style="padding:14px;align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h" style="font-size:19px">길이·형식</div><div class="d" style="font-size:15px">제목 포함, 10문장 이내</div></div>
+    </div>
+    <div class="prompt" style="margin-top:16px"><div class="prompt-h">메일 프롬프트 틀<button class="copy" type="button">복사</button></div><pre><mark>[받는 사람과 관계]</mark>에게 보낼 업무 메일을 써 줘. 목적은 <mark>[목적 한 줄]</mark>이야.
+아래 사실만 써 주고, 여기에 없는 날짜·약속·보상은 만들지 마. 어조는 <mark>[어조]</mark>, 제목을 포함해 <mark>[길이]</mark>로.
+[사실] <mark>(날짜·수량·조건을 붙여 넣기)</mark></pre></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · 3주차 프롬프트 구성(역할·맥락·지시·형식)을 메일에 맞춘 것</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>받는 사람과 어조</h2><p>내용이 같아도 말투가 맞지 않으면 실례가 됩니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-user"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 받는 사람별 표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 받는 사람과 어조</span></div>
+  <h2>누구에게 보내는가: 고객·거래처·상사</h2>
+  <div class="body">
+    <table class="ttable">
+      <thead><tr><th style="width:150px">받는 사람</th><th>먼저 쓸 것</th><th>어조</th><th>피할 것</th></tr></thead>
+      <tbody>
+        <tr><td><b><svg class="ic" style="color:var(--accent)"><use href="#i-user"/></svg> 고객</b></td><td>공감과 사과, 고객이 고를 수 있는 해결책</td><td>정중하고 따뜻하게, 쉬운 말</td><td>회사 규정·내부 사정 설명, 어려운 용어</td></tr>
+        <tr><td><b><svg class="ic" style="color:var(--accent-2)"><use href="#i-factory"/></svg> 거래처</b></td><td>바뀐 사실(날짜·수량)과 대안, 조건</td><td>정중한 업무체, 정확하게</td><td>“쯤”, “최대한” 같은 흐린 약속, 남 탓</td></tr>
+        <tr><td><b><svg class="ic" style="color:var(--accent)"><use href="#i-cap"/></svg> 상사(사내)</b></td><td>결론과 내가 원하는 결정</td><td>짧고 공손하게, 결론부터</td><td>긴 경위 설명, 결정할 거리 없는 보고</td></tr>
+      </tbody>
+    </table>
+    <div class="box think frag" style="margin-top:20px"><p style="font-size:20px;margin:0">AI에게 <strong>“받는 사람: 화가 난 고객”</strong>처럼 상황까지 알려 주면 어조가 훨씬 잘 맞습니다. 그래도 마지막 판단은 그 사람을 아는 <strong>내가</strong>.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · 일반적인 경향 — 회사 문화와 관계에 따라 달라짐</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 직접 해 보기 1: 어조 슬라이더 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 받는 사람과 어조 · 직접 해 보기 1</span></div>
+  <h2>어조 슬라이더: 거래처에 보내는 같은 내용 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot tone-out">
+      <div class="to">받는 사람: 카페 온담 윤재희 구매 담당 (거래처) · 내용: 선물 세트 납품 일정 변경</div>
+      <div class="txt" id="t-txt"></div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>어조 <output id="t-o">정중한 업무체</output></label><input id="t-s" type="range" min="1" max="5" step="1" value="3" aria-label="어조"><div class="scale"><span>딱딱하게</span><span>가볍게</span></div></div>
+      <div class="meter"><div class="lbl">거래처 메일로 알맞은 정도</div><div class="track" style="height:14px"><i id="t-bar"></i></div></div>
+      <div class="status ok" id="t-st"></div>
+      <div class="callout b">AI에게는 “더 정중하게”, “조금 덜 딱딱하게”처럼 <strong>방향</strong>을 말하면 다시 써 줍니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · 미리 써 둔 다섯 가지 예시 문장 · 가상 인물</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 직접 해 보기 2: 받는 사람 맞추기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 받는 사람과 어조 · 직접 해 보기 2</span></div>
+  <h2>이 문장은 누구에게 보낸 것일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="rcards" id="rcards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px" id="r-score">0 / 6 맞힘</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · 오늘 실습 상황의 예시 문장</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 사과·거절·요청 공식 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 받는 사람과 어조</span></div>
+  <h2>사과·거절·요청, 순서가 있다</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">사과</div><div style="font-size:19px">① 무엇이 잘못됐는지 <strong>인정</strong><br>② 원인은 짧게<br>③ <strong>해결책</strong><br>④ 다시 안 생기게 할 일</div><div class="d">“드렸다면 죄송” ✗ → “드려 죄송합니다”</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-x"/></svg></span><div class="h">거절</div><div style="font-size:19px">① 요청에 대한 <strong>감사</strong><br>② 어려운 이유 한 줄<br>③ <strong>대신 할 수 있는 것</strong><br>④ 관계를 잇는 맺음</div><div class="d">“규정상 불가” ✗ → 대안 제시</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">요청</div><div style="font-size:19px">① 무엇을 원하는지 <strong>먼저</strong><br>② 왜 필요한지<br>③ <strong>기한</strong>과 방법<br>④ 감사 인사</div><div class="d">“빠른 회신” ✗ → “6일 12시까지”</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · AI에게 “사과 메일인데 이 순서로 써 줘”라고 순서를 지정할 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 3: 문장 고치기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 받는 사람과 어조 · 직접 해 보기 3</span></div>
+  <h2>이 문장, 무엇이 문제일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 생각하고 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="fcards" id="fcards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px" id="f-score">0 / 6 확인</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · AI 초안에서도 자주 보이는 표현들</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>공문 기본 형식</h2><p>회사와 회사, 회사와 기관이 공식적으로 주고받는 문서.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-log"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 공문 해부도 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 공문 기본 형식</span></div>
+  <h2>공문은 어떻게 생겼나</h2>
+  <div class="body" style="flex-direction:row;gap:24px;align-items:stretch">
+    <div class="gong" style="flex:1.4">
+      <div class="org"><span class="bd">1</span>주식회사 바다결</div>
+      <div class="row"><span class="bd">2</span><span class="lb">수신</span><span>카페 온담 대표 (참조: 구매 담당)</span></div>
+      <div class="row"><span class="bd">3</span><span class="lb">제목</span><span><b>선물 세트 납품 일정 변경 안내</b></span></div>
+      <div style="border-top:1px solid var(--line);margin:6px 0"></div>
+      <p class="ind" style="position:relative"><span class="bd" style="position:absolute;left:0;top:2px">4</span>1. 귀사의 협조에 감사드립니다.</p>
+      <p class="ind">2. 2026. 11. 2. 발주하신 물품의 납품 일정을 아래와 같이 변경하여 알려 드립니다.</p>
+      <p class="ind" style="padding-left:3.4em">가. 오리지널 그래놀라 60봉: 2026. 11. 6.(금) 도착 (변경 없음)<br>나. 선물 세트 20개: 2026. 11. 12.(목) 오전 도착<br>다. 추가 배송비: 당사 부담</p>
+      <p class="ind">3. 일정을 미리 알려 드리지 못해 죄송합니다.</p>
+      <p style="margin-top:4px"><span class="bd o">5</span><b>붙임</b>&nbsp; 변경 납품 일정표 1부. &nbsp;<span class="bd o">6</span><b>끝.</b></p>
+      <div class="sign"><span class="bd">7</span>주식회사 바다결 대표이사</div>
+    </div>
+    <div class="legend6 tight" style="flex:1">
+      <div class="frag show"><span class="bd">1</span><div><b>보내는 회사(기관) 이름</b></div></div>
+      <div class="frag"><span class="bd">2</span><div><b>수신</b><span class="d">받는 곳(대표·부서), 실제 처리자는 참조로</span></div></div>
+      <div class="frag"><span class="bd">3</span><div><b>제목</b><span class="d">내용이 드러나게 짧게</span></div></div>
+      <div class="frag"><span class="bd">4</span><div><b>본문</b><span class="d">항목은 1. → 가. → 1) → 가) 순서로</span></div></div>
+      <div class="frag"><span class="bd o">5</span><div><b>붙임</b><span class="d">함께 보내는 문서 이름과 부수</span></div></div>
+      <div class="frag"><span class="bd o">6</span><div><b>“끝.” 표시</b><span class="d">본문(붙임)이 끝났음을 표시</span></div></div>
+      <div class="frag"><span class="bd">7</span><div><b>발신 명의</b><span class="d">회사 대표 또는 부서장 명의</span></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · 행정기관 공문서 형식을 본뜬 흔한 모양 · 회사마다 서식이 다르니 사내 서식이 우선</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 공문 요령 + 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 공문 기본 형식</span></div>
+  <h2>공문 쓸 때 기억할 것, 그리고 AI에게 맡기는 법</h2>
+  <div class="two">
+    <div style="display:grid;gap:10px">
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h" style="font-size:19px">날짜는 2026. 11. 5.</div><div class="d" style="font-size:15.5px">연·월·일 글자 대신 온점, 시각은 14:00처럼</div></div></div>
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:19px">항목은 1. → 가. → 1) → 가)</div><div class="d" style="font-size:15.5px">하위 항목일수록 안쪽으로 들여 쓴다</div></div></div>
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h" style="font-size:19px">쉬운 말, 짧은 문장</div><div class="d" style="font-size:15.5px">“양지하시기 바랍니다” 같은 낡은 말보다 “알려 드립니다”</div></div></div>
+      <div class="tile row" style="padding:12px 16px"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:19px">숫자·날짜는 내가 확인</div><div class="d" style="font-size:15.5px">공문은 회사의 공식 약속 — 틀리면 그대로 책임</div></div></div>
+    </div>
+    <div class="prompt"><div class="prompt-h">공문으로 바꾸는 프롬프트<button class="copy" type="button">복사</button></div><pre>아래 내용을 회사 공문 형식으로 바꿔 줘.
+- 순서: 보내는 회사 이름 → 수신 → 제목 → 본문 → 붙임 → 발신 명의
+- 본문 항목은 1., 가. 순서로 쓰고, 날짜는 2026. 11. 12.처럼 써 줘.
+- 날짜·수량은 내가 준 것만 쓰고, 본문 끝에 “끝.”을 붙여 줘.
+- 쉬운 말로, 제목은 짧게.
+
+보내는 회사: <mark>주식회사 바다결</mark> / 받는 곳: <mark>카페 온담 대표</mark>
+[내용] <mark>(사내 확인 사항을 붙여 넣기)</mark></pre></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · 날짜·시각 표기: 「행정업무의 운영 및 혁신에 관한 규정」 제7조(문서 작성의 일반원칙)</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 실습 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 실습: 답장 쓰기</span></div>
+  <h2>실습 1: 거래처의 납기 문의에 답장하기</h2>
+  <div class="two">
+    <div style="display:grid;gap:12px">
+      <div class="prompt"><div class="prompt-h">프롬프트 · 거래처 답장<button class="copy" type="button">복사</button></div><pre>너는 <mark>건강 간식 회사 바다결의 영업 담당자</mark>야. 아래 [받은 메일]에 답장을 써 줘.
+- 받는 사람: 거래처 구매 담당자. 정중한 업무 메일 어조.
+- 순서: 사과 → 바뀐 일정 → 분할 납품 제안 → 회신 요청(기한 포함)
+- [사내 확인 사항]에 있는 날짜·사실만 쓰고, 없는 약속은 하지 마.
+- 제목을 포함해 본문 10문장 이내로.
+
+[받은 메일] <mark>(붙여 넣기)</mark>
+[사내 확인 사항] <mark>(붙여 넣기)</mark></pre></div>
+      <a class="btn" href="materials/email_supplier.txt" download><svg class="ic"><use href="#i-down"/></svg> 실습 자료 받기 (거래처 메일.txt)</a>
+    </div>
+    <div class="chat">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg ai"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>제목: [바다결] 11월 2일 발주 건 납품 일정 변경 안내
+
+윤재희 담당자님, 안녕하세요. 바다결 영업 담당 김하늘입니다.
+먼저 일정 변경을 미리 알려 드리지 못해 죄송합니다.
+오리지널 그래놀라 60봉은 예정대로 11. 6.(금)에 도착합니다.
+선물 세트 20개는 포장 상자 입고가 늦어져 11. 12.(목) 오전에 도착하도록 보내 드리겠습니다. 두 번째 배송비는 저희가 부담합니다.
+이렇게 나눠 받으셔도 괜찮을지 오늘 17시까지 회신 부탁드립니다. …</div>
+      <div class="callout b" style="font-size:15.5px">확인: 날짜가 사내 확인 사항과 같은가? “17시”처럼 <strong>AI가 정한 기한</strong>은 내가 정한 것인가?</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · 가상 자료라 Gemini·Claude에 올려도 됨 · 실제 거래처 메일은 회사 지침 먼저</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 실습: 답장 쓰기</span></div>
+  <h2>실습 2: 화가 난 고객에게 답장하기</h2>
+  <div class="two">
+    <div style="display:grid;gap:12px">
+      <div class="prompt"><div class="prompt-h">프롬프트 · 고객 답장<button class="copy" type="button">복사</button></div><pre>아래 고객 불만 메일에 바다결 고객센터 담당자로서 답장을 써 줘.
+- 받는 사람: 선물용으로 산 고객이고 화가 나 있어. 변명보다 <mark>공감과 사과</mark>를 먼저.
+- 처리 방법 두 가지(교환·환불)를 고객이 고를 수 있게 쉽게 안내해 줘.
+- [사내 확인 사항]의 보상·일정만 쓰고, 주소·전화번호는 쓰지 마.
+- 마지막에 고객이 할 일 한 가지만 분명하게.
+
+[받은 메일] <mark>(붙여 넣기)</mark>
+[사내 확인 사항] <mark>(붙여 넣기)</mark></pre></div>
+      <a class="btn" href="materials/email_customer.txt" download><svg class="ic"><use href="#i-down"/></svg> 실습 자료 받기 (고객 메일.txt)</a>
+    </div>
+    <div style="display:grid;gap:12px">
+      <div class="box" style="margin:0;padding:16px 20px">
+        <p class="box-title"><svg class="ic"><use href="#i-check"/></svg> 보내기 전 점검표</p>
+        <ul class="memo">
+          <li>☐ 고객 이름·주문 번호가 맞는가</li>
+          <li>☐ 약속한 일정·보상이 사내 확인 사항과 같은가</li>
+          <li>☐ 택배사·담당자 탓을 하지 않았나</li>
+          <li>☐ “드렸다면” 같은 조건부 사과가 없나</li>
+          <li>☐ 고객이 다음에 할 일이 한 가지로 분명한가</li>
+          <li>☐ 개인정보를 다시 적지 않았나</li>
+        </ul>
+      </div>
+      <div class="prompt"><div class="prompt-h">한 걸음 더 · 받는 사람 바꾸기<button class="copy" type="button">복사</button></div><pre>같은 건을 박서연 팀장님께 보고하는 메신저 메시지 3줄로 바꿔 줘. 결론과 내가 받아야 할 승인을 먼저.</pre></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시 · 두 도구에 같은 프롬프트를 넣고 어조를 비교해 보세요 · 한쪽이 사용량 한도에 걸리면 다른 쪽에서</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-mail"/></svg></span><div class="h">용건 먼저, 요청엔 기한</div><div style="font-size:21px">제목에 핵심, 첫 줄에 용건, 끝에 <strong>무엇을 언제까지</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">받는 사람이 어조를 정한다</div><div style="font-size:21px">고객은 공감, 거래처는 정확, 상사는 <strong>결론부터</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">사실과 약속은 내가</div><div style="font-size:21px">날짜·보상·조건은 <strong>사내 확인 사항</strong>에서 — 공문은 특히</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="제목만 보고도 무엇에 대한 메일인지, 핵심(바뀐 날짜)이 무엇인지 알 수 있어야 합니다.">
+      <p class="q-title"><b>Q1.</b> 업무 메일 제목으로 가장 좋은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">안녕하세요</button>
+        <button type="button" data-v="b">문의드립니다</button>
+        <button type="button" data-v="c">[바다결] 선물 세트 납품 일정 변경 안내 (11. 12. 도착)</button>
+        <button type="button" data-v="d">급합니다!!</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="화가 난 고객에게는 규정이나 원인 설명보다 먼저 불편에 공감하고 사과한 뒤, 고객이 고를 수 있는 해결책을 안내합니다.">
+      <p class="q-title"><b>Q2.</b> 고객 불만 메일에 답장할 때 가장 먼저 쓸 내용은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">회사의 교환·환불 규정 전문</button>
+        <button type="button" data-v="b">불편에 대한 공감과 사과</button>
+        <button type="button" data-v="c">택배사가 잘못한 이유</button>
+        <button type="button" data-v="d">담당자가 휴가였던 사정</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="공문은 보통 받는 곳(수신)과 제목을 먼저 밝히고, 본문을 쓴 뒤 함께 보내는 문서(붙임)와 “끝.” 표시로 마무리합니다.">
+      <p class="q-title"><b>Q3.</b> 공문의 일반적인 순서로 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">수신 → 제목 → 본문 → 붙임</button>
+        <button type="button" data-v="b">붙임 → 본문 → 제목 → 수신</button>
+        <button type="button" data-v="c">제목 → 붙임 → 수신 → 본문</button>
+        <button type="button" data-v="d">본문 → 수신 → 붙임 → 제목</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="요청에는 상대가 무엇을 언제까지 해야 하는지가 분명해야 합니다. “빠른”, “최대한”은 사람마다 다르게 받아들입니다.">
+      <p class="q-title"><b>Q4.</b> “빠른 회신 부탁드립니다”를 가장 잘 고친 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">“최대한 빠른 회신 부탁드립니다”</button>
+        <button type="button" data-v="b">“회신 꼭 부탁드립니다!!”</button>
+        <button type="button" data-v="c">“시간 나실 때 회신 주세요”</button>
+        <button type="button" data-v="d">“분할 납품 가능 여부를 11. 6.(금) 12:00까지 회신 부탁드립니다”</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">5-3</div>
+    <h2>요약과 교정</h2>
+    <p>긴 보고서를 줄이되 빠뜨리지 않고, 초안을 고치되 내 목소리는 남깁니다. <strong>과제1</strong> 안내도 있습니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-pen"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 5주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">5주 2차시 · 이메일·공문 작성</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

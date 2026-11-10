@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3주 1차시 · Google Colab 시작하기 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 3주 1차시 교안: Colab의 뜻, 실습 파일 열기, 코드 셀과 텍스트 셀, 셀 실행과 실행 순서, 세션 다시 시작, Drive에 사본 저장, URL로 CSV 읽기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .t-mono { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; }
+  @media (prefers-reduced-motion: reduce) { .flowdot, .pulse { display: none; } .blink { animation: none !important; } }
+  .slide.section .big { margin-bottom: 24px; }
+  .blink { animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+
+  /* 키 모양 */
+  .kbd { display: inline-block; font-family: inherit; font-weight: 800; font-size: .9em; padding: 2px 12px; border-radius: 9px; background: var(--surface); border: 1px solid var(--line); border-bottom-width: 4px; color: var(--text); line-height: 1.4; }
+
+  /* 미니 셀 */
+  .mcell { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 8px; }
+  .mcell .lab { font-size: 14px; font-weight: 800; color: var(--muted); }
+  .mcell .src { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; font-size: 16px; line-height: 1.55; background: var(--surface-2); border-radius: 10px; padding: 8px 12px; white-space: pre-wrap; }
+  .mcell .ren { border-left: 4px solid var(--accent); padding: 2px 12px; font-size: 18px; line-height: 1.45; }
+  .mcell .ren b.t { display: block; font-size: 22px; }
+  .runrow { display: flex; align-items: center; gap: 10px; }
+  .runrow .rb { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line); display: grid; place-items: center; color: var(--text); font-size: 15px; flex: none; }
+  .runrow pre.code { flex: 1; font-size: 16px; padding: 8px 12px; }
+
+  /* Colab 화면 둘러보기 */
+  .hot { cursor: pointer; }
+  .hot .hl { fill: var(--accent); fill-opacity: 0; stroke: var(--accent); stroke-opacity: 0; stroke-width: 3; transition: fill-opacity .2s, stroke-opacity .2s; }
+  .hot:hover .hl { stroke-opacity: .5; }
+  .hot.on .hl { fill-opacity: .08; stroke-opacity: 1; }
+  .hot:focus { outline: none; } .hot:focus-visible .hl { stroke-opacity: 1; }
+  .hot .nb circle { fill: var(--accent-2); } .hot .nb text { fill: #fff; font-size: 13px; font-weight: 800; }
+  .hot.seen .nb circle { fill: var(--muted); }
+
+  /* 가짜 노트북 */
+  .fnb { width: 100%; height: 100%; display: flex; flex-direction: column; gap: 10px; padding: 6px 8px; }
+  .fmenu { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+  .fmenu .t { font-weight: 800; color: var(--text); margin-right: auto; }
+  .fmenu button { font: inherit; font-size: 15px; font-weight: 700; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); border-radius: 9px; padding: 5px 12px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+  .fmenu button:disabled { opacity: .5; cursor: default; }
+  .fcell { display: grid; grid-template-columns: 54px 1fr; gap: 4px 8px; align-items: start; border-radius: 12px; padding: 6px 8px; border: 2px solid transparent; transition: border-color .2s, background .2s; }
+  .fcell.now { border-color: var(--accent); background: var(--accent-soft); }
+  .fcell .runb { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); display: grid; place-items: center; cursor: pointer; font-size: 18px; margin: 4px 0 0 6px; }
+  .fcell .runb:hover { border-color: var(--accent); color: var(--accent); }
+  .fcell .runb:disabled { cursor: default; opacity: .6; }
+  .fcell .cnt { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 14px; color: var(--muted); text-align: center; font-weight: 700; }
+  .fcell pre.code { font-size: 17px; padding: 9px 14px; }
+  .fcell .fout { grid-column: 2; font-family: "JetBrains Mono", "D2Coding", ui-monospace, monospace; font-size: 15.5px; line-height: 1.45; padding: 4px 14px; min-height: 1.45em; white-space: pre-wrap; }
+  .fcell .fout.err { color: var(--bad); background: var(--bad-soft); border-radius: 8px; font-weight: 700; }
+  .fcell .fout.pop { animation: pop .3s ease; }
+  @keyframes pop { 0% { opacity: 0; transform: translateY(-4px); } 100% { opacity: 1; transform: none; } }
+  .vbox { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 16px; }
+  .vbox .lbl { font-size: 15px; color: var(--muted); font-weight: 700; }
+  .vrow { display: flex; align-items: center; gap: 12px; margin-top: 6px; min-height: 52px; }
+  .vrow .nm { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 800; font-size: 18px; background: var(--accent); color: var(--surface); border-radius: 8px; padding: 2px 10px; }
+  .vrow .vv { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 26px; font-weight: 800; color: var(--accent); }
+  .vrow .empty { color: var(--muted); font-size: 16px; }
+  .hist { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 17px; font-weight: 700; color: var(--text); min-height: 1.4em; }
+
+  /* 데이터는 어디에 */
+  .zones { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 12px; }
+  .zone { background: var(--surface-2); border: 2px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 176px; transition: border-color .25s, opacity .25s; }
+  .zone .zh { font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .zone .zh small { font-weight: 600; color: var(--muted); font-size: 13px; font-family: ui-monospace, monospace; }
+  .zone.rt { border-color: var(--accent); background: var(--accent-soft); }
+  .zone.rt.off { border-style: dashed; opacity: .7; }
+  .zone .files { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 14.5px; font-weight: 700; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; }
+  .chip.new { animation: pop .4s ease; border-color: var(--accent-2); color: var(--accent-2); }
+  .chip.web { border-color: var(--accent); color: var(--accent); }
+  .chip.ghost { opacity: .35; border-style: dashed; }
+  .zst { font-size: 14px; font-weight: 700; color: var(--accent); }
+  .zst.off { color: var(--muted); }
+  .flash { animation: flash .8s ease; }
+  @keyframes flash { 0% { box-shadow: 0 0 0 0 var(--accent); } 40% { box-shadow: 0 0 0 6px var(--accent-soft); } 100% { box-shadow: none; } }
+  .dbtns .btn { font-size: 16px; justify-content: flex-start; padding: 10px 14px; }
+  .dbtns .btn code { font-family: ui-monospace, monospace; font-size: 14px; font-weight: 700; }
+
+  /* 데이터프레임 표 */
+  .dft { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 14px; }
+  .dft th, .dft td { padding: 5px 8px; text-align: right; white-space: nowrap; }
+  .dft th:first-child, .dft td:first-child { color: var(--muted); }
+  .note { display: flex; gap: 10px; align-items: flex-start; font-size: 17px; line-height: 1.45; }
+  .note .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--surface); display: grid; place-items: center; font-size: 15px; font-weight: 800; margin-top: 1px; }
+  .checks { display: grid; gap: 10px; font-size: 19px; }
+  .checks div { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 9px 16px; }
+  .checks b { color: var(--accent); }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M7 3v5h8V3"/><rect x="7" y="13" width="10" height="6" rx="1"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a5 5 0 0 1-.6-10 6 6 0 0 1 11.4 1.6A4 4 0 0 1 17.5 18z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M2 19h20"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6V4h16v2"/><path d="M12 4v16"/><path d="M9 20h6"/></symbol>
+</svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 3주차 1차시</p>
+    <h1>Google Colab<br>시작하기</h1>
+    <p class="lead" style="font-size:25px">설치 없이, 브라우저에서<br>첫 코드를 실행해 보자</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <!-- 서버 -->
+    <g transform="translate(390 20)"><rect width="110" height="96" rx="24" class="f-accs"/><g transform="translate(25 18) scale(2.5)" style="color:var(--accent)"><use href="#i-cloud" width="24" height="24"/></g></g>
+    <path id="cv-link" d="M445 116 C 445 160, 400 150, 380 170" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 8"/>
+    <circle r="6" class="f-acc flowdot"><animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#cv-link"/></animateMotion></circle>
+    <circle r="6" class="f-acc2 flowdot"><animateMotion dur="1.8s" begin=".9s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#cv-link"/></animateMotion></circle>
+    <!-- 브라우저 창 -->
+    <rect x="20" y="150" width="400" height="270" rx="20" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <path d="M20 170 a20 20 0 0 1 20 -20 h360 a20 20 0 0 1 20 20 v22 h-400z" class="f-s2"/>
+    <circle cx="44" cy="171" r="6" class="f-line"/><circle cx="64" cy="171" r="6" class="f-line"/><circle cx="84" cy="171" r="6" class="f-line"/>
+    <rect x="110" y="162" width="200" height="18" rx="9" class="f-surface"/>
+    <!-- 텍스트 셀 -->
+    <rect x="44" y="208" width="170" height="14" rx="7" class="f-text" opacity=".75"/>
+    <rect x="44" y="230" width="250" height="10" rx="5" class="f-line"/>
+    <!-- 코드 셀 1 -->
+    <circle cx="58" cy="276" r="15" class="f-acc"/><path d="M53 268 l13 8 -13 8z" fill="var(--surface)"/>
+    <rect x="84" y="258" width="310" height="36" rx="9" fill="#1f2430"/>
+    <rect x="98" y="271" width="70" height="10" rx="5" fill="#ffb86c"/><rect x="176" y="271" width="120" height="10" rx="5" fill="#a5d6a7"/>
+    <rect x="98" y="302" width="150" height="10" rx="5" class="f-acc"><animate attributeName="width" values="0;150;150" dur="3s" repeatCount="indefinite"/></rect>
+    <!-- 코드 셀 2 -->
+    <circle cx="58" cy="348" r="15" class="f-s2" stroke="var(--line)" stroke-width="2"/><path d="M53 340 l13 8 -13 8z" class="f-muted"/>
+    <rect x="84" y="330" width="310" height="36" rx="9" fill="#1f2430"/>
+    <rect x="98" y="343" width="54" height="10" rx="5" fill="#f3d27a"/><rect x="160" y="343" width="90" height="10" rx="5" fill="#8ab4f8"/>
+    <rect x="98" y="378" width="28" height="18" rx="4" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/><rect x="134" y="378" width="28" height="30" rx="4" class="f-accs" stroke="var(--accent)" stroke-width="2"/><rect x="170" y="378" width="28" height="12" rx="4" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+    <circle cx="58" cy="276" r="15" fill="none" stroke="var(--accent)" stroke-width="3" class="pulse"><animate attributeName="r" values="15;26" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="1.6s" repeatCount="indefinite"/></circle>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-cloud"/></svg></span><div class="h">Colab이란?</div><div class="d">설치 없이 브라우저에서 파이썬을 실행하는 원리를 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div class="h">셀 실행</div><div class="d">코드 셀과 텍스트 셀을 구분하고, ▶·Shift+Enter로 실행한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">실행 순서</div><div class="d">순서가 꼬였을 때 NameError를 읽고, 다시 시작해 해결한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-save"/></svg></span><div class="h">저장·데이터</div><div class="d">Drive에 사본을 저장하고, URL로 CSV 파일을 읽는다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>① Colab이란?</b><small>직접 해 보기 1</small></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>② 셀과 실행 순서</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 저장과 데이터</b><small>직접 해 보기 1</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-laptop"/></svg> 영상을 보면서 <strong>Colab 창을 옆에 함께 열어 두세요.</strong> 슬라이드에서 본 것을 바로 눌러 보는 것이 가장 빨리 익히는 방법입니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>파이썬 코드를 실행하려면 무엇이 필요할까?</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile frag show" style="padding:26px">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg g"><svg class="ic"><use href="#i-laptop"/></svg></span><div><div class="muted" style="font-size:17px;font-weight:700">방법 1</div><div class="h" style="font-size:27px">내 컴퓨터에 설치</div></div></div>
+        <div class="flow" style="font-size:16px">
+          <div class="stepbox" style="padding:12px 6px;gap:4px"><div class="h" style="font-size:17px">파이썬 설치</div></div><div class="arrow" style="width:22px">›</div>
+          <div class="stepbox" style="padding:12px 6px;gap:4px"><div class="h" style="font-size:17px">라이브러리 설치</div></div><div class="arrow" style="width:22px">›</div>
+          <div class="stepbox" style="padding:12px 6px;gap:4px"><div class="h" style="font-size:17px">편집기 설정</div></div>
+        </div>
+        <div class="d">컴퓨터마다 설정이 달라 <strong>“제 컴퓨터에선 안 돼요”</strong>가 자주 생긴다</div>
+      </div>
+      <div class="tile frag" style="padding:26px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg"><svg class="ic"><use href="#i-cloud"/></svg></span><div><div class="muted" style="font-size:17px;font-weight:700">방법 2 · 이 강의</div><div class="h" style="font-size:27px">Google Colab</div></div></div>
+        <div class="flow" style="font-size:16px">
+          <div class="stepbox" style="padding:12px 6px;gap:4px"><div class="h" style="font-size:17px">링크 클릭</div></div><div class="arrow" style="width:22px">›</div>
+          <div class="stepbox" style="padding:12px 6px;gap:4px"><div class="h" style="font-size:17px">Google 로그인</div></div><div class="arrow" style="width:22px">›</div>
+          <div class="stepbox goal" style="padding:12px 6px;gap:4px"><div class="h" style="font-size:17px">바로 실행</div></div>
+        </div>
+        <div class="d">모든 학생이 <strong>같은 환경</strong>에서 같은 결과를 본다</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>Colab이란?</h2><p>코드는 내 브라우저에서 쓰고, 계산은 Google의 컴퓨터가 합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-cloud"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. Colab 원리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① Colab이란?</span></div>
+  <h2>Colab = 브라우저에서 쓰는 <span class="mark">파이썬 노트북</span></h2>
+  <div class="body">
+    <svg viewBox="0 0 1120 300" role="img" aria-label="내 브라우저에서 코드를 보내면 Google 서버의 런타임이 실행하고 결과를 돌려준다">
+      <rect x="0" y="20" width="380" height="250" rx="22" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <g transform="translate(26 44) scale(2.2)" style="color:var(--muted)"><use href="#i-laptop" width="24" height="24"/></g>
+      <text x="96" y="72" class="t-main" style="font-size:24px">내 브라우저</text>
+      <text x="96" y="98" class="t-sub" style="font-size:16px">크롬 등 · 노트북 PC·태블릿</text>
+      <rect x="26" y="126" width="328" height="40" rx="10" fill="#1f2430"/><text x="42" y="152" class="t-mono" style="font-size:16px;fill:#e6e9ef">print(<tspan style="fill:#a5d6a7">'안녕하세요'</tspan>)</text>
+      <rect x="26" y="176" width="328" height="36" rx="10" class="f-s2"/><text x="42" y="200" class="t-mono" style="font-size:16px;fill:var(--text)">안녕하세요</text>
+      <text x="26" y="248" class="t-sub" style="font-size:16px">코드를 <tspan style="font-weight:800;fill:var(--text)">쓰고</tspan>, 결과를 <tspan style="font-weight:800;fill:var(--text)">본다</tspan></text>
+      <!-- 연결 -->
+      <path id="lk1" d="M400 110 H720" stroke="var(--line)" stroke-width="3" stroke-dasharray="5 8"/>
+      <path id="lk2" d="M720 190 H400" stroke="var(--line)" stroke-width="3" stroke-dasharray="5 8"/>
+      <circle r="7" class="f-acc flowdot"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#lk1"/></animateMotion></circle>
+      <circle r="7" class="f-acc2 flowdot"><animateMotion dur="2s" begin="1s" repeatCount="indefinite"><mpath href="#lk2"/></animateMotion></circle>
+      <text x="560" y="96" text-anchor="middle" class="t-acc" style="font-size:17px">코드 보내기 →</text>
+      <text x="560" y="220" text-anchor="middle" class="t-acc2" style="font-size:17px">← 결과 돌려받기</text>
+      <text x="560" y="152" text-anchor="middle" class="t-sub" style="font-size:16px">인터넷</text>
+      <!-- 서버 -->
+      <rect x="740" y="20" width="380" height="250" rx="22" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+      <g transform="translate(766 44) scale(2.2)" style="color:var(--accent)"><use href="#i-cloud" width="24" height="24"/></g>
+      <text x="836" y="72" class="t-main" style="font-size:24px">Google 서버의 컴퓨터</text>
+      <text x="836" y="98" class="t-sub" style="font-size:16px">= <tspan style="font-weight:800;fill:var(--accent)">런타임</tspan> (빌려 쓰는 컴퓨터)</text>
+      <rect x="766" y="126" width="328" height="40" rx="10" class="f-surface"/><text x="782" y="152" class="t-main" style="font-size:16px">파이썬이 이미 설치되어 있음</text>
+      <rect x="766" y="176" width="328" height="40" rx="10" class="f-surface"/><text x="782" y="202" class="t-sub" style="font-size:15.5px">pandas · matplotlib · scikit-learn …</text>
+      <text x="766" y="248" class="t-sub" style="font-size:16px">코드를 <tspan style="font-weight:800;fill:var(--text)">실제로 계산</tspan>한다</text>
+    </svg>
+    <div class="tiles frag" style="grid-template-columns:repeat(3,1fr);margin-top:18px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h" style="font-size:20px">설치할 것이 없다</div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="h" style="font-size:20px">Google 계정만 있으면 된다</div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-save"/></svg></span><div class="h" style="font-size:20px">파일은 Google Drive에</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시 · 기본 기능은 무료로 쓸 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 실습 파일 여는 법 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① Colab이란?</span></div>
+  <h2>수업 실습 파일 여는 법</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">① 링크 누르기</div><div class="d">교안의 주황색<br><b>「Colab에서 실습 파일 열기」</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">② 로그인</div><div class="d">Google 계정으로<br>(학교·개인 계정 모두 가능)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-play"/></svg></span><div class="h">③ 첫 셀 실행</div><div class="d">런타임에 연결되느라<br>처음엔 몇 초 걸림</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">④ 경고 창</div><div class="d">“Google에서 작성하지 않은<br>노트북” → <b>무시하고 계속하기</b></div></div>
+    </div>
+    <div class="box think frag" style="margin-top:24px;display:flex;align-items:center;gap:22px"><a class="colab" style="flex:none;white-space:nowrap" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week03/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a><p style="font-size:20px;margin:0">이런 버튼입니다. 경고는 교수가 GitHub에 올린 파일이라 뜨는 것이니, <strong>이 강의의 파일이면 계속</strong>해도 됩니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시 · 화면 문구는 Colab 버전에 따라 조금 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 8. Colab 화면 둘러보기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① Colab이란? · 직접 해 보기 1</span></div>
+  <h2>Colab 화면 둘러보기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 번호를 눌러 보세요</span></h2>
+  <div class="demo" style="grid-template-columns:1fr 370px">
+    <div class="plot">
+      <svg id="cui" viewBox="0 0 700 430" role="group" aria-label="Colab 화면 그림. 번호가 붙은 부분을 누르면 설명이 나온다">
+        <rect x="2" y="2" width="696" height="426" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+        <!-- 제목·메뉴 -->
+        <rect x="16" y="14" width="24" height="28" rx="4" class="f-acc2s" stroke="var(--accent-2)" stroke-width="1.5"/>
+        <text x="52" y="34" class="t-main" style="font-size:17px">lesson01.ipynb</text>
+        <text x="52" y="60" class="t-sub" style="font-size:14px;word-spacing:10px">파일 수정 보기 삽입 런타임 도구 도움말</text>
+        <line x1="2" y1="74" x2="698" y2="74" stroke="var(--line)" stroke-width="1.5"/>
+        <!-- 도구 막대 -->
+        <rect x="186" y="84" width="72" height="28" rx="8" class="f-s2" stroke="var(--line)"/><text x="222" y="103" text-anchor="middle" class="t-main" style="font-size:14px">+ 코드</text>
+        <rect x="266" y="84" width="84" height="28" rx="8" class="f-s2" stroke="var(--line)"/><text x="308" y="103" text-anchor="middle" class="t-main" style="font-size:14px">+ 텍스트</text>
+        <path d="M540 98 l5 5 9 -10" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linecap="round"/>
+        <text x="562" y="95" class="t-sub" style="font-size:11.5px">RAM</text><rect x="592" y="87" width="60" height="7" rx="3" class="f-line"/><rect x="592" y="87" width="16" height="7" rx="3" class="f-ok"/>
+        <text x="562" y="110" class="t-sub" style="font-size:11.5px">디스크</text><rect x="600" y="102" width="52" height="7" rx="3" class="f-line"/><rect x="600" y="102" width="22" height="7" rx="3" class="f-ok"/>
+        <!-- 왼쪽 막대 + 파일 패널 -->
+        <line x1="44" y1="74" x2="44" y2="428" stroke="var(--line)" stroke-width="1.5"/>
+        <g style="color:var(--muted)"><g transform="translate(12 92) scale(.85)"><use href="#i-log" width="24" height="24"/></g><text x="22" y="150" text-anchor="middle" class="t-sub t-mono" style="font-size:13px;font-weight:800">{x}</text><g transform="translate(12 172) scale(.85)" style="color:var(--accent)"><use href="#i-folder" width="24" height="24"/></g></g>
+        <rect x="44" y="118" width="128" height="310" class="f-s2"/>
+        <text x="56" y="144" class="t-main" style="font-size:15px">파일</text>
+        <g transform="translate(140 129) scale(.75)" style="color:var(--accent)"><use href="#i-upload" width="24" height="24"/></g>
+        <g transform="translate(56 158) scale(.7)" style="color:var(--muted)"><use href="#i-folder" width="24" height="24"/></g><text x="78" y="172" class="t-sub t-mono" style="font-size:12.5px">sample_data</text>
+        <line x1="172" y1="74" x2="172" y2="428" stroke="var(--line)" stroke-width="1.5"/>
+        <!-- 텍스트 셀 -->
+        <text x="196" y="152" class="t-main" style="font-size:21px">1. 첫 번째 셀 실행하기</text>
+        <text x="196" y="178" class="t-sub" style="font-size:14.5px">아래 셀을 클릭하고 Shift + Enter를 누르세요.</text>
+        <!-- 코드 셀 -->
+        <circle cx="206" cy="225" r="14" class="f-s2" stroke="var(--line)" stroke-width="1.5"/><path d="M201 217 l13 8 -13 8z" class="f-text"/>
+        <rect x="230" y="204" width="452" height="42" rx="8" class="f-s2" stroke="var(--line)"/>
+        <text x="244" y="231" class="t-mono" style="font-size:15px;fill:var(--text)">print(<tspan style="fill:var(--ok)">'안녕하세요, Colab!'</tspan>)</text>
+        <text x="244" y="274" class="t-mono" style="font-size:15px;fill:var(--text)">안녕하세요, Colab!</text>
+        <!-- 둘째 코드 셀 -->
+        <text x="206" y="320" text-anchor="middle" class="t-sub t-mono" style="font-size:13px">[2]</text>
+        <rect x="230" y="298" width="452" height="42" rx="8" class="f-s2" stroke="var(--line)"/>
+        <text x="244" y="325" class="t-mono" style="font-size:15px;fill:var(--text)">120 - 7   <tspan style="fill:var(--muted)"># 양품 수</tspan></text>
+        <text x="244" y="368" class="t-mono" style="font-size:15px;fill:var(--text)">113</text>
+      </svg>
+    </div>
+    <div class="side">
+      <div class="tile" style="flex:1">
+        <span class="ic-badge" id="cu-ic"><svg class="ic"><use href="#i-hand"/></svg></span>
+        <div class="h" id="cu-h">번호를 눌러 보세요</div>
+        <div id="cu-d" style="font-size:19px">Colab 화면은 크게 <strong>메뉴, 파일 패널, 셀</strong>로 나뉩니다. 실제 화면과 비교하며 하나씩 확인해 봅시다.</div>
+        <div class="d" id="cu-tip" style="font-weight:700;color:var(--accent)"></div>
+      </div>
+      <div class="muted" style="font-size:15px" id="cu-n">0 / 7 확인</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시 · 실제 Colab 화면을 단순화한 그림</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>셀과 실행 순서</h2><p>노트북은 셀 단위로 실행합니다. 순서가 결과를 바꿉니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-play"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 코드 셀 vs 텍스트 셀 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 셀과 실행 순서</span></div>
+  <h2>노트북 = 텍스트 셀 + 코드 셀</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile" style="padding:22px">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge"><svg class="ic"><use href="#i-text"/></svg></span><div><div class="h">텍스트 셀</div><div class="d">설명·제목·메모 — 실험 노트의 글</div></div></div>
+        <div class="mcell"><span class="lab">편집할 때 (두 번 클릭)</span><div class="src">## 3호기 온도 확인
+**평균 온도**를 계산한다</div></div>
+        <div class="mcell frag"><span class="lab">다 쓰고 나면 (Shift+Enter)</span><div class="ren"><b class="t">3호기 온도 확인</b><b>평균 온도</b>를 계산한다</div></div>
+      </div>
+      <div class="tile" style="padding:22px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div><div class="h">코드 셀</div><div class="d">파이썬 코드 — 실행하면 바로 아래에 결과</div></div></div>
+        <div class="mcell"><span class="lab">코드</span><div class="runrow"><span class="rb"><svg class="ic"><use href="#i-play"/></svg></span><pre class="code">(210.0 + 216.1) / 2   # 두 번 잰 온도의 평균</pre></div></div>
+        <div class="mcell frag"><span class="lab">실행 결과</span><div class="src" style="background:transparent;padding:0 12px">213.05</div></div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:20px">설명 → 코드 → 결과가 <strong style="color:var(--text)">한 문서에</strong> 차례로 쌓입니다. 그래서 분석 과정을 그대로 남기고 공유하기 좋습니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시 · 텍스트 셀은 마크다운(# 제목, **굵게**) 문법을 씀</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 실행 방법 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 셀과 실행 순서</span></div>
+  <h2>셀을 실행하는 세 가지 방법</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-play"/></svg></span><div class="h">▶ 버튼 누르기</div><div class="d">셀 왼쪽의 실행 버튼</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center;border:2px solid var(--accent)"><div style="font-size:26px;padding:14px 0"><span class="kbd">Shift</span> + <span class="kbd">Enter</span></div><div class="h">실행하고 다음 셀로</div><div class="d">가장 많이 쓰는 방법 — 셀을 차례로 실행할 때</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><div style="font-size:26px;padding:14px 0"><span class="kbd">Ctrl</span> + <span class="kbd">Enter</span></div><div class="h">실행하고 그 자리에</div><div class="d">같은 셀을 고쳐 가며 다시 실행할 때</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:22px">
+      <div class="note"><span class="n">1</span><span>셀의 <strong>마지막 줄 값</strong>은 <code>print</code> 없이도 결과로 보인다. <code>120 - 7</code> → <code>113</code></span></div>
+      <div class="note"><span class="n">2</span><span>실행하면 ▶ 자리에 <code>[1]</code>, <code>[2]</code>… 숫자가 남는다. <strong>몇 번째로 실행했는지</strong>를 뜻한다.</span></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시 · Mac에서는 Ctrl 대신 ⌘(Command)</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 가짜 노트북: 실행 순서 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 셀과 실행 순서 · 직접 해 보기 2</span></div>
+  <h2>순서를 바꿔 실행하면 어떻게 될까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="align-items:stretch;padding:12px">
+      <div class="fnb" id="fnb">
+        <div class="fmenu"><span class="t">order_test.ipynb</span><span>런타임 ▸</span>
+          <button type="button" id="nb-all"><svg class="ic"><use href="#i-play"/></svg> 모두 실행</button>
+          <button type="button" id="nb-restart"><svg class="ic"><use href="#i-reset"/></svg> 세션 다시 시작</button></div>
+        <div class="fcell" data-i="0"><div><button class="runb" type="button" aria-label="셀 1 실행"><svg class="ic"><use href="#i-play"/></svg></button><div class="cnt">[ ]</div></div><pre class="code"># 셀 ①  3호기 온도 저장
+temp = 211.5</pre><div class="fout"></div></div>
+        <div class="fcell" data-i="1"><div><button class="runb" type="button" aria-label="셀 2 실행"><svg class="ic"><use href="#i-play"/></svg></button><div class="cnt">[ ]</div></div><pre class="code"># 셀 ②  온도가 5도 올랐다
+temp = temp + 5</pre><div class="fout"></div></div>
+        <div class="fcell" data-i="2"><div><button class="runb" type="button" aria-label="셀 3 실행"><svg class="ic"><use href="#i-play"/></svg></button><div class="cnt">[ ]</div></div><pre class="code"># 셀 ③  지금 온도 출력
+print(temp)</pre><div class="fout"></div></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="vbox"><div class="lbl">런타임이 기억하는 변수</div><div class="vrow" id="nb-var"><span class="empty">(비어 있음)</span></div></div>
+      <div class="vbox"><div class="lbl">실행한 순서</div><div class="hist" id="nb-hist">-</div></div>
+      <div class="callout b" id="nb-msg">셀 왼쪽 ▶를 눌러 보세요. 먼저 <strong>③부터</strong> 눌러 보면 어떻게 될까요?</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시 · 실습 파일 2번 단계에서 실제로 똑같이 해 봄</span><span class="no"></span></div>
+</section>
+
+<!-- 13. NameError와 해결 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 셀과 실행 순서</span></div>
+  <h2>NameError가 보이면: “아직 그런 이름이 없다”</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:36px">
+    <div style="flex:1;display:grid;gap:12px">
+      <pre class="code">print(temp)</pre>
+      <pre class="out err">NameError: name 'temp' is not defined</pre>
+      <div class="grid g2" style="gap:10px;font-size:17px">
+        <div class="tile" style="padding:12px 16px;gap:4px"><b style="color:var(--bad)">NameError</b><span class="muted">이름(변수) 오류</span></div>
+        <div class="tile" style="padding:12px 16px;gap:4px"><b><code>'temp'</code> is not defined</b><span class="muted">temp가 정의되지 않았다</span></div>
+      </div>
+      <p class="muted" style="font-size:18px;margin:0">원인: temp를 만드는 셀(①)을 <strong style="color:var(--text)">실행하지 않았거나</strong>, 세션을 다시 시작해 <strong style="color:var(--text)">기억이 지워졌다.</strong></p>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:16px 20px"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div><div class="h" style="font-size:21px">1. 위 셀부터 차례로</div><div class="d">빠뜨린 셀을 찾아 위에서부터 실행한다</div></div></div>
+      <div class="tile row frag" style="padding:16px 20px"><span class="ic-badge o"><svg class="ic"><use href="#i-reset"/></svg></span><div><div class="h" style="font-size:21px">2. 꼬였으면 처음부터</div><div class="d">메뉴 <b>런타임 → 세션 다시 시작</b><br>(예전 화면: 런타임 다시 시작)</div></div></div>
+      <div class="tile row frag" style="padding:16px 20px;border:2px solid var(--accent)"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:21px">3. 런타임 → 모두 실행</div><div class="d">위에서 아래로 한 번씩 · 단축키 <span class="kbd" style="font-size:15px">Ctrl</span> + <span class="kbd" style="font-size:15px">F9</span></div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시 · 오류 메시지 읽는 법은 4주 2차시에 자세히</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>저장과 데이터 불러오기</h2><p>내 노트북은 Drive에, 실습 데이터는 인터넷 주소로.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-save"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 사본 저장 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 저장과 데이터</span></div>
+  <h2>고친 내용을 남기려면: <span class="mark">Drive에 사본 저장</span></h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg g"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">링크로 연 노트북</div><div class="d">교수의 GitHub 파일을<br><b>읽기만</b> 하는 상태</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-save"/></svg></span><div class="h">파일 → Drive에 사본 저장</div><div class="d">실습을 시작하기 전에<br><b>가장 먼저</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-folder"/></svg></span><div class="h">내 드라이브</div><div class="d"><b>Colab Notebooks</b> 폴더에<br>내 사본이 생긴다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">사본에서 작업</div><div class="d">고친 코드·결과가<br>자동으로 저장된다</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:24px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> 사본 없이 고치면 창을 닫을 때 <strong>바뀐 내용이 남지 않습니다.</strong> 다음에 링크를 다시 열면 원래 파일 그대로입니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 데이터는 어디에 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 저장과 데이터 · 직접 해 보기 3</span></div>
+  <h2>데이터 파일, 어디서 읽을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 350px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:12px;padding:16px">
+      <div class="zones">
+        <div class="zone" id="z-pc"><div class="zh"><svg class="ic"><use href="#i-laptop"/></svg> 내 컴퓨터</div><div class="files" id="f-pc"><span class="chip" id="chip-pc">process.csv</span></div></div>
+        <div class="zone rt" id="z-rt"><div class="zh"><svg class="ic"><use href="#i-cloud"/></svg> Colab 런타임 <small>/content</small></div><div class="files" id="f-rt"><span class="chip"><svg class="ic"><use href="#i-folder"/></svg>sample_data</span></div><div class="zst" id="rt-st">● 연결됨</div></div>
+        <div class="zone" id="z-web"><div class="zh"><svg class="ic"><use href="#i-globe"/></svg> 인터넷 (GitHub)</div><div class="files"><span class="chip web">…/data/process.csv</span><span class="muted" style="font-size:13.5px;line-height:1.4">수업용 데이터를 올려 둔 곳</span></div></div>
+      </div>
+      <pre class="code" id="code-local">df = pd.read_csv('process.csv')       # 런타임에 있는 파일
+print(df.shape)</pre>
+      <pre class="code" id="code-url" hidden>df = pd.read_csv(DATA + 'process.csv')  # 인터넷 주소의 파일
+print(df.shape)</pre>
+      <pre class="out" id="d-out">(아직 실행하지 않음)</pre>
+    </div>
+    <div class="side dbtns">
+      <button class="btn ghost" id="d-up" type="button"><svg class="ic"><use href="#i-upload"/></svg> 내 파일을 런타임에 업로드</button>
+      <button class="btn ghost" id="d-local" type="button"><svg class="ic"><use href="#i-play"/></svg> <code>read_csv('process.csv')</code></button>
+      <button class="btn" id="d-url" type="button"><svg class="ic"><use href="#i-play"/></svg> <code>read_csv(DATA + …)</code></button>
+      <button class="btn ghost" id="d-off" type="button"><svg class="ic"><use href="#i-clock"/></svg> 창 닫고 다음 날 다시 열기</button>
+      <div class="callout b" id="d-msg">파일이 <strong>내 컴퓨터</strong>에만 있으면 런타임(Google의 컴퓨터)은 읽을 수 없습니다. 먼저 가운데 버튼을 눌러 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시 · 업로드는 Colab 왼쪽 📁 파일 패널의 업로드 버튼</span><span class="no"></span></div>
+</section>
+
+<!-- 17. URL로 CSV 읽기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 저장과 데이터</span></div>
+  <h2>이 강의의 데이터 읽기: 주소(URL) 한 줄</h2>
+  <div class="body" style="justify-content:flex-start;gap:14px">
+    <pre class="code">import pandas as pd                      # 표 데이터 도구 불러오기
+DATA = 'https://raw.githubusercontent.com/Daeil-Noh/Lectures/main/ax-microdegree/ai-data-analysis/data/'
+df = pd.read_csv(DATA + 'process.csv')   # 주소 + 파일 이름으로 읽기
+df.head()                                # 앞의 5행 보기</pre>
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+      <div><table class="dft"><thead><tr><th></th><th>product_id</th><th>date</th><th>shift</th><th>line</th><th>machine</th><th>temp</th><th>…</th><th>defect</th></tr></thead><tbody>
+        <tr><td>0</td><td>P00001</td><td>2026-03-02</td><td>주간</td><td>1라인</td><td>2호기</td><td>211.7</td><td>…</td><td>0</td></tr>
+        <tr><td>1</td><td>P00002</td><td>2026-03-02</td><td>주간</td><td>3라인</td><td>6호기</td><td>208.4</td><td>…</td><td>0</td></tr>
+        <tr><td>2</td><td>P00003</td><td>2026-03-02</td><td>주간</td><td>2라인</td><td>4호기</td><td>210.2</td><td>…</td><td>0</td></tr>
+        <tr><td>3</td><td>P00004</td><td>2026-03-02</td><td>주간</td><td>3라인</td><td>5호기</td><td>214.5</td><td>…</td><td>0</td></tr>
+        <tr><td>4</td><td>P00005</td><td>2026-03-02</td><td>주간</td><td>1라인</td><td>1호기</td><td>219.5</td><td>…</td><td>0</td></tr>
+      </tbody></table><p class="codecap">실행 결과 (13개 열 중 일부) · 사출 성형 공정 기록 494행</p></div>
+      <div style="display:grid;gap:10px">
+        <div class="note"><span class="n">1</span><span><b>DATA</b>: 수업 데이터 폴더의 주소. 매 실습 파일에 들어 있다.</span></div>
+        <div class="note"><span class="n">2</span><span><b>업로드가 필요 없다</b>: 언제 열어도 실행만 하면 된다.</span></div>
+        <div class="note"><span class="n">3</span><span>코드의 뜻은 <b>3-3</b>과 <b>5주차</b>에. 오늘은 실행만!</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시 · process.csv는 실습용 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 저장과 데이터 · 실습</span></div>
+  <h2>실습 파일로 직접 해 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div class="checks" style="flex:1">
+      <div><b>0</b> 파일 → <strong>Drive에 사본 저장</strong>부터</div>
+      <div><b>1</b> 첫 셀 실행: <code>print('안녕하세요, Colab!')</code></div>
+      <div><b>2</b> 셀 ①②③ 순서 바꿔 실행 → <strong>NameError</strong> 만나기</div>
+      <div><b>3</b> 세션 다시 시작 → <strong>모두 실행</strong>으로 해결</div>
+      <div><b>4</b> URL로 <code>process.csv</code> 읽고 온도 그래프 보기</div>
+      <div><b>5</b> 직접 바꿔 보기 과제 3개</div>
+    </div>
+    <div style="flex:none;width:380px;display:grid;gap:16px;justify-items:start">
+      <span class="ic-badge lg" style="width:120px;height:120px;font-size:64px;border-radius:30px"><svg class="ic"><use href="#i-code"/></svg></span>
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week03/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <p class="muted" style="font-size:18px;margin:0">영상을 멈추고 직접 실행해 보세요.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시 · 실습 파일 lesson01.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-cloud"/></svg></span><div class="h">Colab = 브라우저 노트북</div><div style="font-size:21px">설치 없이, 계산은 <strong>Google의 런타임</strong>이 한다. 텍스트 셀 + 코드 셀</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">위에서 아래로</div><div style="font-size:21px">실행 <strong>순서</strong>가 결과를 바꾼다. 꼬이면 <strong>세션 다시 시작 → 모두 실행</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-save"/></svg></span><div class="h">사본 저장 · URL로 읽기</div><div style="font-size:21px">실습 전에 <strong>Drive에 사본 저장</strong>, 데이터는 <strong>DATA 주소</strong>로 읽는다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="Colab에서는 브라우저로 코드를 쓰고, 실제 계산은 Google 서버의 컴퓨터(런타임)가 합니다. 그래서 내 컴퓨터에 파이썬을 설치하지 않아도 됩니다.">
+      <p class="q-title"><b>Q1.</b> Google Colab에 대한 설명으로 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">먼저 내 컴퓨터에 파이썬을 설치해야 한다</button>
+        <button type="button" data-v="b">브라우저에서 코드를 쓰고, 계산은 Google 서버가 한다</button>
+        <button type="button" data-v="c">인터넷 연결 없이도 쓸 수 있다</button>
+        <button type="button" data-v="d">글만 쓸 수 있고 코드는 실행할 수 없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="temp를 만드는 셀 ①을 실행하지 않았거나 세션을 다시 시작해 기억이 지워졌기 때문입니다. 위에서부터 차례로(또는 모두 실행) 실행하면 해결됩니다.">
+      <p class="q-title"><b>Q2.</b> 노트북을 열자마자 <code>print(temp)</code> 셀만 실행했더니 <code>NameError</code>가 났다. 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">print 철자가 틀렸다</button>
+        <button type="button" data-v="b">Colab 서버가 고장 났다</button>
+        <button type="button" data-v="c">temp를 만드는 위쪽 셀을 아직 실행하지 않았다</button>
+        <button type="button" data-v="d">온도 값이 너무 크다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="강의 링크로 연 노트북은 원본을 읽기만 하는 상태입니다. 파일 → Drive에 사본 저장으로 내 드라이브(Colab Notebooks 폴더)에 사본을 만들어야 고친 내용이 남습니다.">
+      <p class="q-title"><b>Q3.</b> 강의 링크로 연 실습 파일에서 고친 내용을 남기려면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">파일 → Drive에 사본 저장</button>
+        <button type="button" data-v="b">런타임 → 세션 다시 시작</button>
+        <button type="button" data-v="c">셀을 모두 지운다</button>
+        <button type="button" data-v="d">아무것도 하지 않아도 자동으로 남는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="런타임에 업로드한 파일은 런타임이 끝나면 사라집니다. 인터넷 주소(URL)로 읽으면 언제 열어도 다시 실행만 하면 됩니다.">
+      <p class="q-title"><b>Q4.</b> 어제 업로드한 <code>process.csv</code>를 오늘 다시 읽었더니 <code>FileNotFoundError</code>가 났다. 가장 좋은 해결은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">파일 이름을 한글로 바꾼다</button>
+        <button type="button" data-v="b">컴퓨터를 다시 켠다</button>
+        <button type="button" data-v="c">print를 한 번 더 쓴다</button>
+        <button type="button" data-v="d">업로드 대신 인터넷 주소(URL)로 읽는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">3-2</div>
+    <h2>파이썬 최소 문법 ①: 변수·자료형·리스트</h2>
+    <p>오늘 본 <code>temp = 211.5</code>는 무슨 뜻일까? 값에 이름을 붙이고, 여러 값을 한 줄로 모으는 법을 배웁니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week02/lesson03.html">← 2-3 공공데이터·AI허브</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-code"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 3주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">3주 1차시 · Google Colab 시작하기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

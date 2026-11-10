@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9주 3차시 · 전공 문제를 데이터 문제로 바꾸기 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 9주 3차시 교안: 막연한 전공 질문을 목표 변수·입력 변수·데이터 출처·분석 유형·성공 기준으로 바꾸기, 실현 가능성 점검, 전공 분석 보고서 주제 제출 안내">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .floaty { animation: floaty 3.2s ease-in-out infinite; }
+  @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .slotin { animation: slotin 4.8s ease-in-out infinite; }
+  @keyframes slotin { 0%, 20% { opacity: .15; } 35%, 90% { opacity: 1; } 100% { opacity: .15; } }
+  @media (prefers-reduced-motion: reduce) { .floaty, .slotin { animation: none; opacity: 1; } }
+  .btn.ghost[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+  /* 5요소 */
+  .five { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .five .tile { padding: 16px; gap: 8px; }
+  .five .num { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--surface); font-weight: 800; display: grid; place-items: center; font-size: 18px; }
+  .five .ex { font-size: 15.5px; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; line-height: 1.45; }
+
+  /* 구체화 단계 */
+  .qpick { display: grid; gap: 8px; }
+  .qpick button { font: inherit; font-size: 16px; font-weight: 700; text-align: left; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.35; }
+  .qpick button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .qpick button small { display: block; font-size: 13px; color: var(--muted); font-weight: 700; }
+  .slots { display: grid; gap: 8px; width: 100%; }
+  .slot { display: grid; grid-template-columns: 34px 130px 1fr; gap: 12px; align-items: center; background: var(--surface-2); border-radius: 12px; padding: 8px 12px; font-size: 16.5px; line-height: 1.45; transition: background .3s; }
+  .slot .num { width: 30px; height: 30px; border-radius: 50%; background: var(--line); color: var(--muted); font-weight: 800; display: grid; place-items: center; font-size: 15px; transition: background .3s; }
+  .slot .k { font-weight: 800; color: var(--muted); }
+  .slot .v { color: var(--muted); opacity: .6; }
+  .slot.on { background: var(--accent-soft); }
+  .slot.on .num { background: var(--accent); color: var(--surface); }
+  .slot.on .k { color: var(--accent); }
+  .slot.on .v { color: var(--text); opacity: 1; }
+  .slot.new { animation: pop .35s ease; }
+  @keyframes pop { 0% { transform: scale(.97); } 100% { transform: scale(1); } }
+  .vague { font-size: 20px; font-weight: 800; padding: 10px 14px; border-radius: 12px; border: 2px dashed var(--muted); color: var(--muted); }
+  .final { font-size: 18px; font-weight: 700; line-height: 1.5; padding: 12px 16px; border-radius: 12px; background: var(--accent); color: var(--surface); }
+
+  /* 예시 표 */
+  .mtab { font-size: 16.5px; }
+  .mtab th, .mtab td { padding: 8px 12px; }
+  .mtab td:first-child { font-weight: 800; white-space: nowrap; }
+  .mtab .vq { color: var(--muted); }
+  .mtab .ty { font-weight: 800; color: var(--accent); white-space: nowrap; }
+
+  /* 질문 진단 카드 */
+  .qcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .qcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 16px 18px; min-height: 190px; display: flex; flex-direction: column; gap: 10px; transition: background .2s, border-color .2s; }
+  .qcard:hover { border-color: var(--accent); }
+  .qcard .nm { font-size: 19px; font-weight: 800; line-height: 1.4; }
+  .qcard .verdict, .qcard .ans { display: none; }
+  .qcard .verdict { font-weight: 800; font-size: 16.5px; }
+  .qcard .ans { font-size: 15.5px; line-height: 1.45; color: var(--muted); }
+  .qcard.open .verdict, .qcard.open .ans { display: block; }
+  .qcard.open.good { background: var(--ok-soft); border-color: var(--ok); }
+  .qcard.open.good .verdict { color: var(--ok); }
+  .qcard.open.fix { background: var(--accent-2-soft); border-color: var(--accent-2); }
+  .qcard.open.fix .verdict { color: var(--accent-2); }
+
+  /* 워크시트 */
+  .ws { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; align-content: center; width: 100%; }
+  .ws label { display: flex; flex-direction: column; gap: 3px; font-size: 13.5px; font-weight: 800; color: var(--muted); }
+  .ws .full { grid-column: 1 / -1; }
+  .ws input[type=text], .ws select { font: inherit; font-size: 15.5px; padding: 5px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--text); width: 100%; }
+  .ws input[type=text]:focus, .ws select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .ws input.miss { border-color: var(--accent-2); background: var(--accent-2-soft); }
+  .ws .chk { display: flex; gap: 14px; flex-wrap: wrap; font-size: 14.5px; font-weight: 700; color: var(--text); }
+  .ws .chk label { flex-direction: row; align-items: center; gap: 6px; font-size: 14.5px; color: var(--text); }
+  .ws .chk input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .ws .seg { display: flex; gap: 6px; }
+  .ws .seg button { flex: 1; font: inherit; font-size: 15px; font-weight: 800; padding: 4px 0; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .ws .seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .stmt { background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.55; }
+  .stmt .t { font-weight: 800; font-size: 16.5px; margin-bottom: 4px; }
+  .stmt .hole { color: var(--accent-2); font-weight: 800; background: var(--accent-2-soft); border-radius: 6px; padding: 0 4px; }
+  .flags { display: grid; gap: 4px; font-size: 14px; line-height: 1.4; margin: 0; padding: 0; list-style: none; }
+  .flags li { display: flex; gap: 6px; align-items: flex-start; margin: 0; }
+  .flags li.m { color: var(--accent-2); } .flags li.w { color: var(--muted); } .flags li.ok { color: var(--ok); font-weight: 800; }
+  .wsbar { display: flex; gap: 8px; }
+  .wsbar .btn { padding: 6px 12px; font-size: 15px; flex: 1; }
+
+  .sub { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .sub .tile { padding: 14px 16px; gap: 6px; }
+  .sub .n { font-size: 14px; font-weight: 800; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 9주차 3차시</p>
+    <h1 style="font-size:62px">전공 문제를<br>데이터 문제로 바꾸기</h1>
+    <p class="lead" style="font-size:25px">“품질을 높이고 싶다”를<br>데이터로 답할 수 있는 질문으로</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>보고서 주제 제출</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 480 440" style="width:400px;flex:none" aria-hidden="true">
+    <g class="floaty">
+      <circle cx="110" cy="120" r="70" class="f-s2" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 8"/>
+      <text x="110" y="142" text-anchor="middle" style="font-size:70px;font-weight:800;fill:var(--muted)">?</text>
+    </g>
+    <path d="M110 205 C 110 260, 170 270, 210 270" fill="none" stroke="var(--muted)" stroke-width="3" stroke-dasharray="5 7"/>
+    <rect x="200" y="60" width="270" height="330" rx="24" class="f-surface" stroke="var(--accent)" stroke-width="3"/>
+    <g>
+      <rect x="222" y="86" width="226" height="40" rx="10" class="f-accs slotin"/><circle cx="244" cy="106" r="11" class="f-acc"/><text x="244" y="111" text-anchor="middle" style="font-size:13px;font-weight:800;fill:var(--surface)">1</text><text x="266" y="112" class="t-acc">목표 변수</text>
+      <rect x="222" y="138" width="226" height="40" rx="10" class="f-accs slotin" style="animation-delay:.3s"/><circle cx="244" cy="158" r="11" class="f-acc"/><text x="244" y="163" text-anchor="middle" style="font-size:13px;font-weight:800;fill:var(--surface)">2</text><text x="266" y="164" class="t-acc">입력 변수</text>
+      <rect x="222" y="190" width="226" height="40" rx="10" class="f-accs slotin" style="animation-delay:.6s"/><circle cx="244" cy="210" r="11" class="f-acc"/><text x="244" y="215" text-anchor="middle" style="font-size:13px;font-weight:800;fill:var(--surface)">3</text><text x="266" y="216" class="t-acc">데이터 출처</text>
+      <rect x="222" y="242" width="226" height="40" rx="10" class="f-accs slotin" style="animation-delay:.9s"/><circle cx="244" cy="262" r="11" class="f-acc"/><text x="244" y="267" text-anchor="middle" style="font-size:13px;font-weight:800;fill:var(--surface)">4</text><text x="266" y="268" class="t-acc">분석 유형</text>
+      <rect x="222" y="294" width="226" height="40" rx="10" class="f-acc2s slotin" style="animation-delay:1.2s"/><circle cx="244" cy="314" r="11" class="f-acc2"/><text x="244" y="319" text-anchor="middle" style="font-size:13px;font-weight:800;fill:var(--surface)">5</text><text x="266" y="320" class="t-acc2">성공 기준</text>
+    </g>
+    <text x="335" y="370" text-anchor="middle" class="t-sub" style="font-size:15px">데이터 질문</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">다섯 가지 요소</div><div class="d">목표 변수·입력 변수·데이터 출처·분석 유형·성공 기준을 채운다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">분석 유형</div><div class="d">내 질문이 기술·진단·예측 중 무엇인지 고른다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">실현 가능성</div><div class="d">데이터가 있는지, 개인정보·크기 문제는 없는지 점검한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">보고서 주제 제출</div><div class="d">한 쪽짜리 주제 양식을 작성해 LMS에 제출한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>① 데이터 질문의 5요소</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② 전공별 예시</b><small>직접 해 보기 1</small></div>
+      <div style="flex:3;background:var(--accent-soft)"><b>③ 가능성 점검</b></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>④ 보고서 주제 제출</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 1주차에 <strong>“내 전공에서 매일 쌓이는 데이터”</strong>를 하나 떠올려 두었죠? 오늘 그것을 <strong>보고서 주제</strong>로 만듭니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입: before/after -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>모델은 막연한 질문에 답하지 못한다</h2>
+  <div class="body">
+    <div class="flow" style="align-items:center">
+      <div class="stepbox frag show" style="flex:1;border:2px dashed var(--muted)"><span class="ic-badge g lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="muted" style="font-size:16px;font-weight:700">막연한 질문</div><div class="h">“사출 제품 품질을<br>높이고 싶다”</div><div class="d">품질이 뭘까? 무엇을 재지?<br>데이터는 어디에? 어디까지 하면 성공?</div></div>
+      <div class="arrow" style="width:60px;font-size:40px">›</div>
+      <div class="stepbox goal frag" style="flex:1.5;text-align:left;align-items:stretch;padding:22px 26px"><div style="font-size:16px;font-weight:700;opacity:.85">데이터 질문</div><div class="h" style="font-size:22px;line-height:1.45">“process.csv의 공정 조건 5개(온도·압력·속도·습도·두께)로 <u>인장강도(MPa)</u>를 <u>예측</u>할 수 있는가? 평균 오차 <u>2 MPa 이내</u>면 성공.”</div><div class="d" style="font-size:16px">9-2에서 본 직선 회귀의 시험 오차 1.46 MPa → 이 기준이면 <b>성공</b></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">무엇을(<strong style="color:var(--text)">목표</strong>) · 무엇으로(<strong style="color:var(--text)">입력</strong>) · 어디서(<strong style="color:var(--text)">출처</strong>) · 어떻게(<strong style="color:var(--text)">유형</strong>) · 어디까지(<strong style="color:var(--text)">기준</strong>) — 이 다섯 칸을 채우는 것이 오늘의 일입니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시 · process.csv (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>데이터 질문의 5요소</h2><p>다섯 칸이 채워지면, 그 질문은 데이터로 답할 수 있습니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 5요소 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 데이터 질문의 5요소</span></div>
+  <h2>다섯 칸을 채우면 데이터 질문이 된다</h2>
+  <div class="body">
+    <div class="five">
+      <div class="tile frag show"><span class="num">1</span><div class="h" style="font-size:21px">목표 변수</div><div class="d">무엇을 알고 싶나? 숫자나 범주로 <b>잴 수 있게</b> (9-1의 y)</div><div class="ex">인장강도 (MPa)</div></div>
+      <div class="tile frag"><span class="num">2</span><div class="h" style="font-size:21px">입력 변수</div><div class="d">무엇으로 설명·예측하나? <b>미리 알 수 있는</b> 값 (X)</div><div class="ex">온도·압력·속도·습도·두께</div></div>
+      <div class="tile frag"><span class="num">3</span><div class="h" style="font-size:21px">데이터 출처</div><div class="d">어디서, 얼마나? 이름·위치·<b>행 수</b>·이용 조건</div><div class="ex">process.csv · 494행</div></div>
+      <div class="tile frag"><span class="num">4</span><div class="h" style="font-size:21px">분석 유형</div><div class="d">기술 · 진단 · 예측 중 무엇을 할까?</div><div class="ex">예측 (회귀, 10주)</div></div>
+      <div class="tile frag" style="border:2px solid var(--accent-2)"><span class="num" style="background:var(--accent-2)">5</span><div class="h" style="font-size:21px">성공 기준</div><div class="d">어디까지 되면 “답했다”고 할까? <b>숫자</b>로</div><div class="ex">평균 오차 2 MPa 이내</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:20px"><p style="font-size:20px;margin:0"><svg class="ic"><use href="#i-bulb"/></svg> 성공 기준을 먼저 정해 두면, 결과가 나왔을 때 <strong>“좋은가 나쁜가”를 나중에 꾸며 내지 않게</strong> 됩니다. 기준에 못 미친 결과도 보고서에서는 훌륭한 발견입니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 분석 유형 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 데이터 질문의 5요소</span></div>
+  <h2>④ 분석 유형: 질문의 모양으로 고른다</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><div class="k" style="color:var(--accent);font-weight:800;font-size:16px">기술 분석</div><div class="h">“지금 어떤 상태인가?”</div><div class="d" style="font-size:17px">평균·분포·그래프로 현황을 정리<br>예: 라인별 불량률, 월별 전력 사용량</div><div style="font-weight:800;color:var(--accent);font-size:16px">5~7주에 배운 방법</div></div>
+      <div class="tile frag"><div class="k" style="color:var(--accent);font-weight:800;font-size:16px">진단 분석</div><div class="h">“무엇과 관련 있나?”</div><div class="d" style="font-size:17px">상관·그룹 비교로 관계를 찾기<br>예: 야간에 불량이 많은가? 습도와 관련?</div><div style="font-weight:800;color:var(--accent);font-size:16px">6~7주 · 상관 ≠ 인과 주의</div></div>
+      <div class="tile frag" style="border:2px solid var(--accent)"><div class="k" style="color:var(--accent);font-weight:800;font-size:16px">예측 분석</div><div class="h">“새 데이터면 어떻게 될까?”</div><div class="d" style="font-size:17px">모델로 새 값 예측·판정·이상 찾기<br>예: 강도 예측, 불량 판정, 고장 징후</div><div style="font-weight:800;color:var(--accent);font-size:16px">10~12주 회귀·분류·이상탐지</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">보고서는 보통 <strong style="color:var(--text)">기술 → 진단 → 예측</strong> 순으로 쌓습니다. 예측까지 가려면 목표 변수(정답)가 들어 있는 데이터가 필요합니다 — 9-1의 <strong style="color:var(--text)">지도학습</strong> 조건.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시 · 분석의 네 질문(기술·진단·예측·처방)은 1-1에서 소개</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 데모 1: 구체화 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 데이터 질문의 5요소 · 직접 해 보기 1</span></div>
+  <h2>막연한 질문을 한 칸씩 구체화하기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:10px;padding:14px 18px">
+      <div class="vague" id="cz-q">“설비가 갑자기 멈추는 일을 줄이고 싶다”</div>
+      <div class="slots" id="cz-slots"></div>
+      <div class="final" id="cz-final" hidden></div>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">막연한 질문을 골라 보세요</div>
+      <div class="qpick" id="cz-pick"></div>
+      <div style="display:flex;gap:10px"><button class="btn" id="cz-next" type="button" style="flex:1"><svg class="ic"><use href="#i-play"/></svg> 한 칸 채우기</button><button class="btn ghost" id="cz-reset" type="button" aria-label="처음으로"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <div class="callout b" id="cz-msg" style="font-size:15.5px">버튼을 누를 때마다 한 칸씩 채워집니다. 누르기 전에 <strong>먼저 스스로 답해 보세요.</strong></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시 · 성공 기준의 숫자는 예시 · vibration.csv · lab_yield.csv 는 이 강의의 실습 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>전공별 예시</h2><p>전공은 달라도 다섯 칸의 모양은 같습니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-cap"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 전공별 표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 전공별 예시</span></div>
+  <h2>이공계 전공에서 만날 법한 데이터 질문</h2>
+  <div class="body">
+    <table class="mtab">
+      <thead><tr><th>분야</th><th>막연한 질문</th><th>목표 변수 (y)</th><th>입력 변수 (X)</th><th>유형</th></tr></thead>
+      <tbody>
+        <tr class="frag show"><td>기계</td><td class="vq">모터가 빨리 고장 난다</td><td>평소와 다른 진동이 나타난 날</td><td>진동 rms·peak, 온도, 전류</td><td class="ty">예측 · 이상탐지</td></tr>
+        <tr class="frag"><td>전자·전기</td><td class="vq">배터리가 빨리 닳는다</td><td>충방전 n회 뒤 용량 유지율 (%)</td><td>충전 전류, 온도, 방전 깊이</td><td class="ty">예측 · 회귀</td></tr>
+        <tr class="frag"><td>화학·신소재</td><td class="vq">반응 수율을 높이고 싶다</td><td>수율 (%)</td><td>반응 온도, 시간, 촉매량</td><td class="ty">진단 → 회귀</td></tr>
+        <tr class="frag"><td>건축·토목</td><td class="vq">콘크리트 강도가 들쭉날쭉하다</td><td>28일 압축강도 (MPa)</td><td>시멘트·물·골재 배합량, 양생 일수</td><td class="ty">예측 · 회귀</td></tr>
+        <tr class="frag"><td>환경</td><td class="vq">우리 동네 공기가 걱정된다</td><td>다음 날 초미세먼지 ‘나쁨’ 여부</td><td>오늘 농도, 기온, 풍속, 습도</td><td class="ty">예측 · 분류</td></tr>
+        <tr class="frag"><td>산업·품질</td><td class="vq">야간 불량이 많다는데?</td><td>근무조별 불량률 차이</td><td>근무조, 습도, 온도</td><td class="ty">기술 · 진단</td></tr>
+      </tbody>
+    </table>
+    <p class="muted frag" style="margin-top:14px;font-size:18px">마지막 줄처럼 <strong style="color:var(--text)">기술·진단만으로도</strong> 좋은 보고서가 됩니다. 모델을 꼭 써야 하는 것은 아닙니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시 · 주제 예시이며, 데이터는 각자 찾아 확인해야 합니다</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 데모 2: 질문 진단 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 전공별 예시 · 직접 해 보기 2</span></div>
+  <h2>이 주제, 바로 시작할 수 있을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 판단하고 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="qcards" id="qcards"></div>
+    <p class="muted" style="margin-top:14px;font-size:17px" id="qc-score">0 / 6 확인</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>실현 가능성 점검</h2><p>좋은 질문이어도 15주까지 답할 수 있어야 합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 점검표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실현 가능성 점검</span></div>
+  <h2>주제를 내기 전에 네 가지를 확인한다</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr;gap:14px">
+      <div class="tile row frag show" style="padding:16px 20px"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h">데이터를 지금 구할 수 있나?</div><div class="d">파일을 실제로 열어 보았는가. “나중에 모을 예정”은 위험 — 공공데이터포털·AI허브(2-3), 이 강의 실습 데이터, 직접 측정 기록</div></div></div>
+      <div class="tile row frag" style="padding:16px 20px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-shield"/></svg></span><div><div class="h">개인정보·이용 조건은?</div><div class="d">사람을 알아볼 수 있는 데이터는 쓰지 않는다(1-3). 연구실·기업 데이터는 <b>담당자 허락</b>, 공개 데이터는 출처 표시 조건 확인</div></div></div>
+      <div class="tile row frag" style="padding:16px 20px"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h">크기와 정답 열은?</div><div class="d">행이 수십 개뿐이면 모델보다 기술·진단 분석이 현실적. 예측을 하려면 <b>목표 변수 열이 채워져</b> 있어야 한다</div></div></div>
+      <div class="tile row frag" style="padding:16px 20px"><span class="ic-badge lg"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h">15주까지 끝낼 수 있나?</div><div class="d">10~14주 실습을 따라가며 내 데이터에 적용할 수 있는 크기로. 막히면 범위를 좁힌다 (설비 6대 → 1대, 1년 → 3개월)</div></div></div>
+    </div>
+    <div class="callout b frag" style="margin-top:16px;font-size:18px"><svg class="ic"><use href="#i-bulb"/></svg> 맞는 데이터가 도저히 없다면: 이 강의의 <strong>실습 데이터 4종</strong>(process · process_raw · vibration · lab_yield)으로 <strong>내 전공 관점의 질문</strong>을 세워도 됩니다.</div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ④ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">④</div><h2>보고서 주제 제출</h2><p>다섯 칸을 한 쪽짜리 양식에 담아 제출합니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-log"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 데모 3: 워크시트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 보고서 주제 제출 · 직접 해 보기 3</span></div>
+  <h2>내 주제 워크시트 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 칸을 채우면 문제 정의 문장이 만들어집니다</span></h2>
+  <div class="demo" style="grid-template-columns:1fr 410px">
+    <div class="plot" style="padding:12px 16px">
+      <div class="ws" id="ws">
+        <label>전공<input type="text" id="w-major" placeholder="예: 기계공학" maxlength="30"></label>
+        <label>주제 (한 줄)<input type="text" id="w-title" placeholder="예: 사출 공정 조건과 제품 강도" maxlength="60"></label>
+        <label>① 목표 변수 — 무엇을 알고 싶나?<input type="text" id="w-y" placeholder="예: 인장강도(MPa)" maxlength="50"></label>
+        <label>② 입력 변수 — 무엇으로?<input type="text" id="w-x" placeholder="예: 온도, 압력, 속도, 습도" maxlength="60"></label>
+        <label>③ 데이터 출처<select id="w-src">
+          <option value="">— 고르세요 —</option>
+          <option>이 강의 실습 데이터</option>
+          <option>공공데이터포털</option>
+          <option>AI허브</option>
+          <option>직접 측정·실험 기록</option>
+          <option>연구실·기업 데이터</option>
+          <option>기타 공개 데이터</option>
+          <option>아직 모름</option>
+        </select></label>
+        <label>③ 데이터 크기 (행 수)<input type="text" id="w-n" placeholder="예: 494" maxlength="20" inputmode="numeric"></label>
+        <label class="full">④ 분석 유형<div class="seg" id="w-type"><button type="button" data-v="기술" aria-pressed="false">기술 — 현황 정리</button><button type="button" data-v="진단" aria-pressed="false">진단 — 관계 찾기</button><button type="button" data-v="예측" aria-pressed="false">예측 — 새 값 맞히기</button></div></label>
+        <label class="full">⑤ 성공 기준 — 어디까지 되면 답했다고 할까?<input type="text" id="w-ok" placeholder="예: 시험 데이터 평균 오차 2 MPa 이내" maxlength="80"></label>
+        <div class="full chk"><label><input type="checkbox" id="w-priv"> 개인정보가 없다 (또는 가명처리했다)</label><label><input type="checkbox" id="w-terms"> 이용 조건·허락을 확인했다</label></div>
+      </div>
+    </div>
+    <div class="side" style="gap:8px">
+      <div class="stmt" id="w-stmt"></div>
+      <div class="meter" style="padding:6px 14px"><div class="lbl">완성도</div><div class="val" id="w-score" style="font-size:28px">0 / 9</div><div class="track"><i id="w-bar"></i></div></div>
+      <ul class="flags" id="w-flags"></ul>
+      <div class="wsbar"><button class="btn ghost" id="w-ex" type="button">예시 채우기</button><button class="btn ghost" id="w-clear" type="button">비우기</button><button class="btn" id="w-copy" type="button">문장 복사</button></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시 · 입력한 내용은 이 브라우저에만 임시 저장되며 어디로도 전송되지 않습니다</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 제출 안내 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 보고서 주제 제출</span></div>
+  <h2>보고서 주제 제출: 한 쪽짜리 양식</h2>
+  <div class="body">
+    <div class="sub">
+      <div class="tile frag show"><span class="n">1. 주제</span><div class="h" style="font-size:20px">제목 한 줄 + 전공</div><div class="d" style="font-size:16px">무엇에 관한 분석인지 한눈에</div></div>
+      <div class="tile frag"><span class="n">2. 분석 질문</span><div class="h" style="font-size:20px">목표 변수 · 입력 변수</div><div class="d" style="font-size:16px">“X로 y를 ○○할 수 있는가?” 한 문장</div></div>
+      <div class="tile frag"><span class="n">3. 데이터 출처</span><div class="h" style="font-size:20px">이름 · 위치 · 크기</div><div class="d" style="font-size:16px">링크(또는 보관 위치), 행·열 수, 이용 조건</div></div>
+      <div class="tile frag"><span class="n">4. 분석 계획</span><div class="h" style="font-size:20px">유형 · 방법 · 성공 기준</div><div class="d" style="font-size:16px">기술/진단/예측, 쓸 방법, 숫자로 된 기준</div></div>
+    </div>
+    <div class="grid g3 frag" style="margin-top:20px;gap:14px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div><div class="h" style="font-size:19px">어디에?</div><div class="d" style="font-size:16px"><b>LMS</b> 과제 게시판</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h" style="font-size:19px">언제까지?</div><div class="d" style="font-size:16px"><b>LMS 공지 기준</b> — 마감일·파일 형식은 공지를 확인</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div><div class="h" style="font-size:19px">그다음은?</div><div class="d" style="font-size:16px">10~14주 실습을 내 주제에 적용 → <b>15주 보고서 제출</b></div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시 · 제출 방법·마감·평가 세부 사항은 LMS 공지를 따릅니다</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 양식 + 생성형AI -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 보고서 주제 제출 · 양식</span></div>
+  <h2>양식 열기, 그리고 생성형AI와 함께 다듬기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:36px">
+    <div style="flex:none;width:340px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center">
+      <span class="ic-badge lg o" style="width:130px;height:130px;font-size:70px;border-radius:34px"><svg class="ic"><use href="#i-log"/></svg></span>
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week09/topic_form.ipynb" target="_blank" rel="noopener">Colab에서 주제 양식 열기</a>
+      <div class="muted" style="font-size:16px;line-height:1.5">topic_form.ipynb · 칸을 두 번 눌러 고쳐 쓰기<br>사본을 내 드라이브에 저장한 뒤 작성</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="tile" style="padding:16px 20px;gap:8px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-sparkles"/></svg> 이렇게 물어보세요</div>
+        <div style="font-size:17px;background:var(--surface-2);border-radius:10px;padding:10px 14px;line-height:1.55">“나는 <b>화학공학과 2학년</b>이고 <b>반응 수율</b>에 관심이 있어. 이 질문을 <b>목표 변수·입력 변수·데이터 출처·분석 유형·성공 기준</b> 다섯 칸으로 구체화해 줘. 실제로 구할 수 있는 공개 데이터 후보도 알려 줘.”</div></div>
+      <div class="box warn" style="margin:0;padding:14px 20px"><p style="font-size:18px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> <strong>검증 습관 (4-3):</strong> AI가 알려 준 데이터셋은 <strong>직접 사이트에 들어가 존재·크기·이용 조건을 확인</strong>합니다. 없는 데이터를 그럴듯하게 지어낼 수 있습니다. 주제 양식에는 <strong>내가 확인한 것만</strong> 적고, AI 도움을 받았다면 밝힙니다.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">다섯 칸</div><div style="font-size:21px"><strong>목표 · 입력 · 출처 · 유형 · 기준</strong>이 채워지면 데이터 질문</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">할 수 있는 질문인가</div><div style="font-size:21px">데이터를 <strong>지금</strong> 구할 수 있고, 개인정보 없고, 15주 안에 끝나는 크기</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">주제 제출</div><div style="font-size:21px">한 쪽 양식(주제·질문·출처·계획)을 <strong>LMS</strong>에 — 마감은 <strong>LMS 공지</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="“품질”은 무엇을 재는지 정해지지 않은 막연한 말입니다. 인장강도(MPa), 불량 여부처럼 숫자나 범주로 잴 수 있어야 목표 변수가 됩니다.">
+      <p class="q-title"><b>Q1.</b> 목표 변수로 가장 <u>부적절한</u> 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">인장강도 (MPa)</button>
+        <button type="button" data-v="b">불량 여부 (양품/불량)</button>
+        <button type="button" data-v="c">일별 전력 사용량 (kWh)</button>
+        <button type="button" data-v="d">제품의 전반적인 품질</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="근무조에 따라 불량률이 다른지, 무엇과 관련 있는지를 보는 것은 관계를 찾는 진단 분석입니다. 상관이 인과는 아니라는 점(7-3)도 함께 기억하세요.">
+      <p class="q-title"><b>Q2.</b> “야간 근무조의 불량률이 주간보다 높은가, 습도와 관련 있는가?”는 어떤 분석?</p>
+      <div class="opts">
+        <button type="button" data-v="a">기술 분석</button>
+        <button type="button" data-v="b">진단 분석</button>
+        <button type="button" data-v="c">예측 분석 · 회귀</button>
+        <button type="button" data-v="d">비지도학습 · 군집</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="성공 기준은 결과가 나왔을 때 답했는지 판단할 수 있도록 숫자로 정합니다. ‘잘 맞으면’, ‘최대한’ 같은 표현은 판단 기준이 되지 못합니다.">
+      <p class="q-title"><b>Q3.</b> 성공 기준으로 가장 좋은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">모델이 잘 맞으면 성공</button>
+        <button type="button" data-v="b">최대한 정확하게 예측한다</button>
+        <button type="button" data-v="c">시험 데이터 평균 오차 2 MPa 이내</button>
+        <button type="button" data-v="d">AI를 사용하면 성공</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="생성형AI는 존재하지 않는 데이터셋을 그럴듯하게 지어낼 수 있습니다. 반드시 직접 사이트에서 존재·크기·이용 조건을 확인하고, 확인한 내용만 양식에 적습니다.">
+      <p class="q-title"><b>Q4.</b> 생성형AI가 추천한 데이터셋을 주제 양식에 쓰기 전에 할 일은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">직접 사이트에서 존재·크기·이용 조건을 확인한다</button>
+        <button type="button" data-v="b">AI가 말했으니 그대로 적는다</button>
+        <button type="button" data-v="c">다른 AI에게 같은 질문을 한 번 더 한다</button>
+        <button type="button" data-v="d">데이터 이름만 적고 출처는 비워 둔다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 10주차 예측: 회귀</span></div>
+    <div class="big">10-1</div>
+    <h2>회귀의 개념</h2>
+    <p>9-1에서 그어 본 “압력 → 강도” 직선, 어떻게 찾는 걸까요? 숫자를 예측하는 <strong>회귀</strong>를 제대로 배웁니다. 주제 양식 제출도 잊지 마세요.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week10/lesson01.html">10-1 회귀의 개념 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-trend"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">9주 3차시 · 전공 문제를 데이터 문제로 바꾸기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

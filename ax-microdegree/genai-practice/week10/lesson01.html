@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10주 1차시 · 타깃 고객과 페르소나 설정 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 10주 1차시 교안: 세그먼트와 페르소나, 후기·판매 데이터로 페르소나 만들기, 고정관념(편향) 피하기, 데이터로 검증하기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  @media (prefers-reduced-motion: reduce) { .flowdot { display: none; } }
+  .slide.section .big { margin-bottom: 24px; }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 판정 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; min-height: 132px; display: flex; flex-direction: column; gap: 8px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .ic-badge { width: 44px; height: 44px; font-size: 23px; border-radius: 12px; }
+  .pcard .nm { font-size: 18px; font-weight: 800; line-height: 1.4; }
+  .pcard .ans { display: none; font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 16px; }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.seg { background: var(--accent-soft); border-color: var(--accent); } .pcard.open.seg .verdict { color: var(--accent); }
+  .pcard.open.per { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.per .verdict { color: var(--accent-2); }
+  .pcard.open.no { background: var(--bad-soft); border-color: var(--bad); } .pcard.open.no .verdict { color: var(--bad); }
+
+  /* 후기 막대 */
+  .rbars { display: grid; gap: 9px; }
+  .rbar { display: grid; grid-template-columns: 330px 1fr 92px; align-items: center; gap: 12px; font-size: 17px; }
+  .rbar .tr { height: 22px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+  .rbar .tr i { display: block; height: 100%; border-radius: 8px; background: var(--accent); }
+  .rbar.neg .tr i { background: var(--accent-2); }
+  .rbar .n { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; font-size: 16px; }
+  .rbar .n small { color: var(--muted); font-weight: 600; }
+
+  /* 후기 근거 고르기 */
+  .rchips { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; width: 100%; }
+  .rchip { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .rchip .t { font-size: 16.5px; font-weight: 700; line-height: 1.35; }
+  .rchip .m { font-size: 13px; color: var(--muted); }
+  .rchip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .rchip[aria-pressed="true"].warnc { border-color: var(--accent-2); background: var(--accent-2-soft); }
+  .slots { display: grid; gap: 6px; }
+  .slot { display: grid; grid-template-columns: 74px 1fr; gap: 8px; align-items: baseline; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 5px 10px; font-size: 14.5px; line-height: 1.4; }
+  .slot b { color: var(--accent); font-size: 14.5px; }
+  .slot span { color: var(--muted); }
+  .slot.fill span { color: var(--text); font-weight: 600; }
+
+  /* 판매 단서 차트 */
+  .seg-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seg-btns .btn { font-size: 16px; padding: 10px 10px; }
+  .seg-btns .btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+
+  /* 페르소나 빌더 */
+  .pb { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; width: 100%; align-content: start; }
+  .pb .grp { display: flex; flex-direction: column; gap: 4px; }
+  .pb .grp.wide { grid-column: 1 / -1; }
+  .pb .gh { font-size: 14px; font-weight: 800; color: var(--accent); }
+  .pb .opts2 { display: flex; flex-wrap: wrap; gap: 5px; }
+  .opt { font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); border-radius: 999px; padding: 3px 11px; line-height: 1.4; }
+  .opt[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .pcardx { background: var(--surface); border: 2px solid var(--accent); border-radius: 16px; padding: 10px 14px; display: grid; gap: 4px; }
+  .pcardx .top { display: flex; align-items: center; gap: 10px; }
+  .pcardx .top .ic-badge { width: 44px; height: 44px; font-size: 24px; border-radius: 50%; }
+  .pcardx .nm { font-size: 18px; font-weight: 800; line-height: 1.2; }
+  .pcardx .sub { font-size: 13px; color: var(--muted); }
+  .prow { display: grid; grid-template-columns: 58px 1fr auto; gap: 6px; align-items: baseline; font-size: 14px; line-height: 1.35; }
+  .prow b { color: var(--muted); font-size: 13px; }
+  .prow .v { font-weight: 600; }
+  .prow .v.none { color: var(--muted); font-weight: 400; }
+  .chip { font-size: 11.5px; font-weight: 800; border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
+  .chip.e { background: var(--ok-soft); color: var(--ok); }
+  .chip.h { background: var(--accent-2-soft); color: var(--accent-2); }
+  .chip.s { background: var(--bad-soft); color: var(--bad); }
+  .pb-q { display: flex; gap: 8px; }
+  .pb-q .btn { flex: 1; font-size: 14.5px; padding: 7px 8px; }
+
+  .vtable td, .vtable th { font-size: 18px; padding: 9px 14px; }
+  .vtable td:first-child { font-weight: 700; }
+  .chat .msg { font-size: 15.5px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 10주차 1차시</p>
+    <h1>타깃 고객과<br>페르소나 설정</h1>
+    <p class="lead" style="font-size:25px">“20~30대”라는 말 대신<br>근거가 있는 한 사람을 그린다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 4개</span><span>Gemini · Claude</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <!-- 후기 말풍선 -->
+    <g>
+      <rect x="10" y="40" width="150" height="46" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/><rect x="28" y="56" width="96" height="12" rx="6" class="f-line"/>
+      <rect x="0" y="190" width="150" height="46" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/><rect x="18" y="206" width="110" height="12" rx="6" class="f-line"/>
+      <rect x="20" y="340" width="150" height="46" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/><rect x="38" y="356" width="80" height="12" rx="6" class="f-line"/>
+    </g>
+    <path id="c1" d="M160 63 C 220 63, 220 160, 270 170" fill="none" stroke="var(--line)" stroke-width="2.5" stroke-dasharray="4 7"/>
+    <path id="c2" d="M150 213 C 200 213, 220 220, 270 220" fill="none" stroke="var(--line)" stroke-width="2.5" stroke-dasharray="4 7"/>
+    <path id="c3" d="M170 363 C 230 363, 220 280, 270 270" fill="none" stroke="var(--line)" stroke-width="2.5" stroke-dasharray="4 7"/>
+    <circle r="6" class="f-acc2 flowdot"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#c1"/></animateMotion></circle>
+    <circle r="6" class="f-acc flowdot"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#c2"/></animateMotion></circle>
+    <circle r="6" class="f-acc2 flowdot"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#c3"/></animateMotion></circle>
+    <!-- 페르소나 카드 -->
+    <rect x="270" y="70" width="240" height="300" rx="26" class="f-surface" stroke="var(--accent)" stroke-width="3"/>
+    <circle cx="390" cy="140" r="44" class="f-accs"/>
+    <g transform="translate(362 112) scale(2.35)" style="color:var(--accent)"><use href="#i-user" width="24" height="24"/></g>
+    <rect x="320" y="200" width="140" height="14" rx="7" class="f-acc"/>
+    <g fill="var(--line)"><rect x="300" y="236" width="180" height="11" rx="5"/><rect x="300" y="262" width="150" height="11" rx="5"/><rect x="300" y="288" width="170" height="11" rx="5"/><rect x="300" y="314" width="120" height="11" rx="5"/></g>
+    <rect x="440" y="257" width="44" height="20" rx="6" class="f-acc2s"/><rect x="440" y="309" width="44" height="20" rx="6" class="f-acc2s"/>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">세그먼트와 페르소나</div><div class="d">고객 집단(세그먼트)과 대표 인물(페르소나)을 구분한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">근거로 만들기</div><div class="d">후기·판매 데이터에서 페르소나의 근거를 찾는다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">다섯 가지 요소</div><div class="d">상황·목표·불편·채널·구매 이유로 페르소나를 쓴다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">검증하기</div><div class="d">고정관념과 가설을 가려내고, 확인할 데이터를 정한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 타깃과 페르소나</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>② 데이터에서 근거 찾기</b><small>직접 해 보기 2</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ AI와 페르소나 만들기</b><small>직접 해 보기 1 · 실습</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>검증·정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 이번 주는 바다결의 마케팅 담당자가 되어 <strong>페르소나 → 카피 → 홍보 기획</strong>까지 차례로 만듭니다. 오늘 만든 페르소나를 2·3차시에서 계속 씁니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>대표님의 한마디: “20~30대 손님을 늘려 봅시다”</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <div style="flex:1;display:grid;gap:14px">
+      <div class="tile row"><span class="ic-badge lg"><svg class="ic"><use href="#i-factory"/></svg></span><div><div class="h">주식회사 바다결 (가상)</div><div class="d">부산의 건강 간식 회사 · 제품 5종 · 자사몰·오픈마켓·오프라인 매장 2곳</div></div></div>
+      <div class="tile row"><span class="ic-badge lg o"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h">회사의 고민 ③</div><div class="d">20~30대 신규 고객을 늘리고 싶다 — 그런데 <strong style="color:var(--text)">20~30대는 누구일까?</strong></div></div></div>
+      <p class="muted" style="font-size:17px;margin:0"><a href="../materials/company.html" target="_blank" rel="noopener">바다결 회사 소개 다시 보기 →</a></p>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="box warn frag show" style="margin:0"><p style="font-size:21px;margin:0">“20~30대”에는 대학생, 신입 직장인, 자취생, 신혼부부, 아이를 키우는 부모가 모두 들어 있습니다.</p></div>
+      <div class="box think frag" style="margin:0"><p style="font-size:21px;margin:0">사는 모습이 이렇게 다른데 <strong>메시지 하나</strong>로 모두에게 닿을 수 있을까요? 오늘은 이 넓은 범위를 <strong>근거가 있는 한 사람</strong>으로 좁혀 봅니다.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시 · 바다결은 수업용 가상 회사</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>타깃과 페르소나</h2><p>고객을 나누고, 고르고, 한 사람으로 그린다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 세그먼트 → 타깃 → 페르소나 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 타깃과 페르소나</span></div>
+  <h2>나누고 → 고르고 → <span class="mark">한 사람으로</span> 그리기</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg g"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">전체 고객</div><div class="d">바다결 제품을 살 수 있는<br>모든 사람</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">세그먼트</div><div class="d">기준으로 나눈 <b>고객 집단</b><br>나이·지역·구매 채널·구매 횟수…</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">타깃</div><div class="d">그중 이번에 <b>집중할 집단</b><br>“아침을 간단히 먹는 20~30대”</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">페르소나</div><div class="d">타깃을 대표하는 <b>가상의 한 사람</b><br>이름·상황·목표·불편…</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">세그먼트는 <strong style="color:var(--text)">표의 한 줄</strong>, 페르소나는 <strong style="color:var(--text)">그 줄에 사는 사람의 하루</strong>. 카피를 쓸 때는 한 사람에게 말을 거는 편이 훨씬 쉽습니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 판정 카드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 타깃과 페르소나 · 직접 해 보기 1</span></div>
+  <h2>세그먼트일까, 페르소나일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 생각하고 카드를 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="segcards"></div>
+    <p class="muted" style="margin-top:14px;font-size:17px" id="seg-score">0 / 6 확인</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시 · 카드 속 인물은 가상</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 다섯 가지 요소 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 타깃과 페르소나</span></div>
+  <h2>페르소나를 이루는 다섯 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(5,1fr)">
+      <div class="tile frag show" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h">상황</div><div class="d">언제, 어디서<br>제품이 필요해지나?</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">목표</div><div class="d">무엇을 이루고<br>싶은가?</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">불편</div><div class="d">무엇이 걸리고<br>망설여지나?</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">채널</div><div class="d">어디서 정보를 보고<br>어디서 사나?</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">구매 이유</div><div class="d">결국 왜<br>이 제품을 고르나?</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:24px"><p style="font-size:21px;margin:0">이름·나이·사진은 기억하기 좋게 붙이는 <strong>꼬리표</strong>일 뿐입니다. 카피와 기획에 쓰이는 건 위 다섯 칸 — 그리고 각 칸에는 <strong>근거</strong>가 있어야 합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>데이터에서 근거 찾기</h2><p>머릿속 이미지가 아니라 고객이 남긴 기록에서.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-database"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 고정관념 페르소나 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터에서 근거 찾기</span></div>
+  <h2>근거 없이 물으면, AI는 <span class="mark">흔한 이미지</span>로 채운다</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:28px">
+    <div class="chat" style="flex:1.15">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">20대 고객 페르소나 하나 만들어 줘</div>
+      <div class="msg ai warn"><span class="who">예시 답변 — 고정관념이 섞인 답의 예</span>지수(25세, 여성). 늘 다이어트 중이고 인스타그램을 하루 3시간 본다. 트렌드에 민감한 MZ세대로, 예쁜 포장이면 가격을 따지지 않는다.</div>
+    </div>
+    <div style="flex:1;display:grid;gap:12px;align-content:center">
+      <div class="tile row frag show"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:20px">어디서 나온 이야기일까?</div><div class="d">“다이어트 중”, “인스타 3시간”, “가격을 안 따진다” — 바다결 데이터 어디에도 없습니다.</div></div></div>
+      <div class="tile row frag"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:20px">2-3에서 본 편향</div><div class="d">AI는 학습한 글에 많이 나온 <strong>흔한 이미지</strong>로 빈칸을 채웁니다. 나이·성별로 사람을 단정하는 고정관념이 그대로 나올 수 있습니다.</div></div></div>
+      <div class="tile row frag"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h" style="font-size:20px">해결: 근거를 주고, 근거를 묻는다</div><div class="d">후기·판매 데이터를 함께 주고, 칸마다 “근거가 무엇인지” 적게 합니다.</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시 · 예시 답변은 미리 써 둔 것 — 실제 답은 매번 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 후기에서 보이는 것 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터에서 근거 찾기</span></div>
+  <h2>바다결 후기 120건이 말해 주는 것</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div class="rbars" style="flex:1">
+      <div class="rbar"><span>재구매했어요. 아이들도 잘 먹네요</span><div class="tr"><i style="width:100%"></i></div><span class="n">18건 <small>★4.6</small></span></div>
+      <div class="rbar"><span>바삭하고 많이 달지 않아서 아침에 먹기 좋아요</span><div class="tr"><i style="width:83%"></i></div><span class="n">15건 <small>★4.5</small></span></div>
+      <div class="rbar"><span>배송이 빨랐어요</span><div class="tr"><i style="width:78%"></i></div><span class="n">14건 <small>★4.4</small></span></div>
+      <div class="rbar"><span>부산 여행 때 매장에서 먹어 보고 주문했어요</span><div class="tr"><i style="width:72%"></i></div><span class="n">13건 <small>★4.5</small></span></div>
+      <div class="rbar"><span>포장이 꼼꼼해서 선물하기 좋았습니다</span><div class="tr"><i style="width:72%"></i></div><span class="n">13건 <small>★4.5</small></span></div>
+      <div class="rbar"><span>견과가 넉넉하게 들어 있어요</span><div class="tr"><i style="width:50%"></i></div><span class="n">9건 <small>★4.8</small></span></div>
+      <div class="rbar neg"><span>생각보다 양이 적어요</span><div class="tr"><i style="width:39%"></i></div><span class="n">7건 <small>★1.7</small></span></div>
+      <div class="rbar neg"><span>조금 딱딱해서 우유에 오래 불려야 해요</span><div class="tr"><i style="width:33%"></i></div><span class="n">6건 <small>★1.8</small></span></div>
+    </div>
+    <div style="width:330px;display:grid;gap:12px">
+      <div class="box think frag show" style="margin:0;padding:16px 20px"><p style="font-size:18px;margin:0"><b>많이 나온 문장 = 고객이 실제로 느낀 것.</b> 상황(아침), 경험(여행 중 매장), 용도(선물)가 보입니다.</p></div>
+      <div class="box warn frag" style="margin:0;padding:16px 20px"><p style="font-size:18px;margin:0"><b>그런데 후기에는 나이 정보가 없습니다.</b> “20~30대가 쓴 후기”인지 알 수 없으니, 나이와 연결한 내용은 모두 <strong>가설</strong>입니다.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시 · 출처: ../materials/reviews_2026.csv (가상 후기 120건, 상위 8개 문장)</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 2: 후기 근거 고르기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터에서 근거 찾기 · 직접 해 보기 2</span></div>
+  <h2>페르소나의 근거가 될 후기를 골라 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot" style="padding:14px;align-items:flex-start"><div class="rchips" id="rchips"></div></div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">고른 후기가 채우는 칸</div>
+      <div class="slots" id="slots"></div>
+      <div class="status mid" id="rv-st"><b class="k">후기를 눌러 보세요</b>모든 후기가 페르소나의 근거가 되지는 않습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시 · 출처: ../materials/reviews_2026.csv (가상 후기)</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 3: 판매 데이터 단서 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터에서 근거 찾기 · 직접 해 보기 3</span></div>
+  <h2>판매 기록에도 단서가 있다 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot"><svg id="salesplot" viewBox="0 0 640 400" aria-label="2026년 1~9월 월별 판매 추이"></svg></div>
+    <div class="side">
+      <div class="seg-btns" id="sales-btns">
+        <button class="btn ghost" type="button" data-k="seaweed" aria-pressed="true">미역귀 현미칩</button>
+        <button class="btn ghost" type="button" data-k="gift" aria-pressed="false">선물 세트</button>
+        <button class="btn ghost" type="button" data-k="mall" aria-pressed="false">자사몰 매출</button>
+        <button class="btn ghost" type="button" data-k="orig" aria-pressed="false">오리지널 그래놀라</button>
+      </div>
+      <div class="meter"><div class="lbl" id="sp-lbl">여름(6~8월) 평균 vs 1~5월 평균</div><div class="val" id="sp-val">+26%</div></div>
+      <div class="callout b" id="sp-msg"></div>
+      <div class="callout" id="sp-q"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시 · 출처: ../materials/sales_2026.csv (가상 판매 기록, 모든 채널 합계)</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>AI와 페르소나 만들기</h2><p>근거를 주고, 칸마다 근거를 적게 한다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-sparkles"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 직접 해 보기 4: 페르소나 빌더 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI와 페르소나 만들기 · 직접 해 보기 4</span></div>
+  <h2>페르소나 빌더: 칸마다 하나씩 골라 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 390px">
+    <div class="plot" style="padding:12px 16px;align-items:flex-start"><div class="pb" id="pb"></div></div>
+    <div class="side">
+      <div class="pcardx">
+        <div class="top"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div><div class="nm">서윤 <span class="muted" style="font-size:14px;font-weight:600">(가상 인물 · 20~30대 가설)</span></div><div class="sub">바다결이 새로 만나고 싶은 고객</div></div></div>
+        <div id="pcard-rows"></div>
+      </div>
+      <div class="pb-q"><button class="btn ghost" type="button" id="pb-stereo">고정관념으로 채우기</button><button class="btn ghost" type="button" id="pb-evid">근거로 채우기</button></div>
+      <div class="status mid" id="pb-st"><b class="k">칸을 채워 보세요</b>왼쪽에서 칸마다 하나씩 고릅니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시 · <span style="color:var(--ok);font-weight:800">근거</span> = 후기·판매 데이터에 있음 · <span style="color:var(--accent-2);font-weight:800">가설</span> = 확인 필요 · <span style="color:var(--bad);font-weight:800">고정관념</span> = 근거 없는 일반화</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 실습 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI와 페르소나 만들기 · 실습</span></div>
+  <h2>따라 해 보기: 데이터를 주고 페르소나 요청하기</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:26px">
+    <div style="flex:1.35;display:flex;flex-direction:column;justify-content:center">
+      <div class="prompt"><div class="prompt-h">프롬프트 (파일 2개 첨부 후)<button class="copy" type="button">복사</button></div><pre>너는 <mark>부산의 건강 간식 회사 바다결</mark>의 마케팅 담당자를 돕는 조수야.
+첨부한 고객 후기(reviews_2026.csv)와 판매 기록(sales_2026.csv)만 근거로 <mark>20~30대 신규 고객</mark> 페르소나 1명을 만들어 줘.
+- 항목: 가상 이름과 한 줄 소개, 상황, 목표, 불편, 자주 쓰는 채널, 구매 이유
+- 항목마다 근거가 된 후기 문장이나 숫자를 괄호 안에 적어 줘.
+- 후기에는 나이 정보가 없어. 데이터로 확인할 수 없는 내용은 지어내지 말고 “가설 — 확인 필요”라고 표시해 줘.
+- 마지막에 가설을 확인하려면 어떤 자료가 더 필요한지 3가지 적어 줘.</pre></div>
+    </div>
+    <div style="flex:1;display:grid;gap:12px;align-content:center">
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn" href="../materials/reviews_2026.csv" download>후기 파일 받기</a><a class="btn" href="../materials/sales_2026.csv" download>판매 파일 받기</a></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="d" style="font-size:17px"><strong style="color:var(--text)">Gemini 또는 Claude</strong>에서 새 대화를 열고 파일 두 개를 첨부한 뒤 붙여 넣습니다. 한쪽이 사용량 한도에 걸리면 다른 쪽에서 이어 하세요.</div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="d" style="font-size:17px">이 파일은 개인정보·기밀이 없는 <strong style="color:var(--text)">수업용 가상 자료</strong>라서 올려도 됩니다. 실제 회사의 고객 정보는 1-3의 규칙대로 올리지 않습니다.</div></div>
+      <p class="muted" style="font-size:15px;margin:0">파일 첨부가 안 되면 CSV를 열어 내용을 복사해 붙여 넣어도 됩니다. 서비스 화면은 바뀔 수 있습니다.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시 · 주황색 부분은 상황에 맞게 바꿔 쓰기</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 예시 답변 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI와 페르소나 만들기 · 실습</span></div>
+  <h2>이런 답이 나오면: 근거와 가설이 나뉘어 있는가?</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:24px">
+    <div class="chat" style="flex:1.4">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg ai" style="max-width:100%"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span><b>서윤(가상) · 바쁜 아침을 간단히 해결하고 싶은 직장인</b>
+· 상황: 출근 전 아침을 간단히 먹고 싶다 (후기 “아침에 먹기 좋아요” 15건)
+· 목표: 너무 달지 않은 한 끼 (같은 후기, 평균 별점 4.5)
+· 불편: 양에 비해 가격이 부담 (“양이 적어요” 7건, “가격 부담” 3건)
+· 채널: 온라인 구매 — 판매량의 47%가 오픈마켓, 32%가 자사몰 (단, 전체 고객 기준)
+· 구매 이유: 부산 여행 중 매장에서 맛본 경험 (13건)
+· 20~30대 직장인이라는 점: <b>가설 — 확인 필요</b> (후기에 나이 정보 없음)</div>
+    </div>
+    <div style="flex:1;display:grid;gap:12px;align-content:center">
+      <div class="tile frag show" style="padding:16px 18px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--ok)"><use href="#i-check"/></svg> 숫자를 직접 확인</div><div class="d">15건, 47%… AI가 센 숫자가 맞는지 파일에서 다시 셉니다. (6-2·7-1에서 익힌 검증 습관)</div></div>
+      <div class="tile frag" style="padding:16px 18px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-alert"/></svg> 가설 표시가 있는지</div><div class="d">나이·직업·사는 방식처럼 데이터에 없는 내용이 <strong>단정</strong>으로 쓰였다면 다시 요청합니다.</div></div>
+      <div class="prompt frag"><div class="prompt-h">이어서 물어보기<button class="copy" type="button">복사</button></div><pre>방금 페르소나에서 근거가 약한 문장을 모두 찾아 “가설”로 바꾸고, 그 이유를 한 줄씩 적어 줘.</pre></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시 · 예시 답의 숫자는 가상 데이터로 직접 계산한 값</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 검증 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">검증</span></div>
+  <h2>가설은 확인해야 페르소나가 된다</h2>
+  <div class="body">
+    <table class="vtable">
+      <thead><tr><th>가설</th><th>확인 방법</th><th>주의</th></tr></thead>
+      <tbody>
+        <tr class="frag show"><td>아침 대용으로 사는 20~30대가 많다</td><td>자사몰 회원의 연령대 통계, 짧은 구매 이유 설문</td><td>개인별 정보가 아닌 <b>집계</b>만 사용 (1-3)</td></tr>
+        <tr class="frag"><td>여행 중 매장 경험이 온라인 구매로 이어진다</td><td>매장 직원에게 손님 이야기 듣기, 매장 안내 카드에 자사몰 쿠폰을 넣어 사용 수 세기</td><td>쿠폰 수는 작은 실험 — 10-3에서 계획</td></tr>
+        <tr class="frag"><td>양·가격이 걸려서 망설인다</td><td>“양이 적어요” 후기 7건이 모두 오프라인 매장 — 매장 제품 구성 확인</td><td>원인을 단정하지 말고 현장 확인</td></tr>
+        <tr class="frag"><td>짧은 영상으로 간식을 찾는다</td><td>같은 내용을 영상·사진으로 올려 반응 비교</td><td>조회 수보다 저장·방문을 함께 본다</td></tr>
+      </tbody>
+    </table>
+    <div style="display:flex;align-items:center;gap:16px;margin-top:18px" class="frag">
+      <a class="btn" href="materials/persona_card_template.md" download>페르소나 카드 양식 받기</a>
+      <span class="muted" style="font-size:18px">칸마다 <b style="color:var(--ok)">근거</b> / <b style="color:var(--accent-2)">가설</b>을 표시하는 양식 — 10-2·10-3에서 계속 씁니다.</span>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">집단 → 한 사람</div><div style="font-size:21px">세그먼트는 고객 집단, 페르소나는 그 집단을 대표하는 <strong>가상의 한 사람</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">칸마다 근거</div><div style="font-size:21px">상황·목표·불편·채널·구매 이유를 <strong>후기·판매 데이터</strong>로 채운다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">고정관념은 빼고, 가설은 표시</div><div style="font-size:21px">데이터에 없는 내용은 <strong>“가설 — 확인 필요”</strong>. AI의 흔한 이미지를 그대로 쓰지 않는다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="세그먼트는 나이·지역·구매 행동 같은 기준으로 나눈 고객 집단이고, 페르소나는 그 집단을 대표하도록 그린 가상의 한 사람입니다.">
+      <p class="q-title"><b>Q1.</b> 다음 중 <u>페르소나</u>에 해당하는 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">부산·경남에 사는 20~30대 고객</button>
+        <button type="button" data-v="b">자사몰에서 두 번 이상 산 고객</button>
+        <button type="button" data-v="c">출근 전 아침을 간단히 먹고 싶은 직장인 ‘서윤’</button>
+        <button type="button" data-v="d">오프라인 매장 방문 고객 전체</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="“아침에 먹기 좋아요”는 바다결 후기에 15건 있는 실제 근거입니다. 나머지는 나이·세대로 사람을 단정하는 고정관념입니다.">
+      <p class="q-title"><b>Q2.</b> 바다결 페르소나의 칸으로 <u>근거가 있는</u> 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">20대는 늘 다이어트 중이다</button>
+        <button type="button" data-v="b">바삭하고 덜 단 아침 간식을 원한다</button>
+        <button type="button" data-v="c">MZ세대는 예쁜 포장이면 가격을 안 본다</button>
+        <button type="button" data-v="d">20~30대는 인스타그램만 본다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="후기에 나이 정보가 없으므로 나이와 연결한 내용은 가설입니다. 가설로 표시하고, 연령대 집계나 설문처럼 확인할 방법을 정합니다.">
+      <p class="q-title"><b>Q3.</b> 후기에 나이 정보가 없을 때 올바른 태도는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 추측한 나이를 그대로 쓴다</button>
+        <button type="button" data-v="b">나이는 중요하지 않으니 타깃을 정하지 않는다</button>
+        <button type="button" data-v="c">후기 작성자에게 개인 연락해 나이를 묻는다</button>
+        <button type="button" data-v="d">‘가설’로 표시하고 확인할 데이터를 정한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="근거 자료를 주고, 칸마다 근거를 적게 하고, 근거가 없으면 지어내지 말고 가설로 표시하게 하면 고정관념이 섞일 여지가 줄어듭니다.">
+      <p class="q-title"><b>Q4.</b> AI에게 페르소나를 요청하는 프롬프트로 가장 좋은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">후기·판매 파일을 주고, 칸마다 근거를 적고 없으면 ‘가설’로 표시하게 한다</button>
+        <button type="button" data-v="b">“요즘 20대 특징을 최대한 많이 넣어 줘”</button>
+        <button type="button" data-v="c">“아무 페르소나나 빨리 만들어 줘”</button>
+        <button type="button" data-v="d">“실제 고객처럼 보이게 실명과 사진을 넣어 줘”</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">10-2</div>
+    <h2>카피와 SNS 게시물 작성</h2>
+    <p>오늘 만든 페르소나 ‘서윤’에게 말을 거는 핵심 메시지와 카피를 쓰고, 건강 간식 광고에서 조심할 표현을 점검합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week09/lesson03.html">← 9-3 맞춤형 AI 비서 만들기</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chat"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">10주 1차시 · 타깃 고객과 페르소나 설정</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

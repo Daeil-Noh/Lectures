@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2주 2차시 · 텍스트·이미지·영상 AI 도구 비교 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 2주 2차시 교안: 생성형AI 도구의 다섯 갈래(대화형 텍스트, 검색 결합, 이미지 생성, 영상·음성, 문서·발표 보조), 잘하는 것과 약한 것, 업무에 맞는 도구 고르기, 이 수업의 Gemini와 Claude">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .orbit { transform-origin: 260px 220px; animation: orbit 28s linear infinite; }
+  .orbit .up { animation: orbit 28s linear infinite reverse; transform-box: fill-box; transform-origin: center; }
+  @keyframes orbit { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .orbit, .orbit .up { animation: none; } }
+
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 갈래 탭 */
+  .ctabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ctabs button { font: inherit; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .ctabs button[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .outbox { flex: 1; min-height: 0; border-radius: 14px; background: var(--surface-2); padding: 14px 18px; font-size: 17px; line-height: 1.55; display: flex; flex-direction: column; gap: 8px; }
+  .outbox .lbl { font-size: 13px; font-weight: 800; color: var(--muted); }
+  .chip { display: inline-block; font-size: 13px; font-weight: 700; padding: 1px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); margin-right: 4px; }
+  .frames { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .frames div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 14px; line-height: 1.4; }
+  .frames b { display: block; font-size: 12px; color: var(--accent); }
+  .sl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .sl div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 14px; }
+  .sl b { color: var(--accent); margin-right: 6px; }
+
+  /* 강점 카드 */
+  .cap { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cap .tile { padding: 18px 22px; gap: 8px; }
+  .cap ul { margin: 0; padding-left: 1.1em; font-size: 20px; line-height: 1.55; }
+  .cap li { margin: 2px 0; }
+  .cap .good .h { color: var(--ok); } .cap .weak .h { color: var(--accent-2); }
+
+  /* 고르기 흐름 */
+  .qrow { display: grid; gap: 6px; }
+  .qrow .qh { font-size: 16px; font-weight: 800; }
+  .qrow .opts2 { display: flex; gap: 6px; flex-wrap: wrap; }
+  .qrow .opts2 button { font: inherit; font-size: 15.5px; font-weight: 700; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .qrow .opts2 button[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .qrow.off { opacity: .35; pointer-events: none; }
+
+  /* 매칭 카드 */
+  .mcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .mcard { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 14px 14px; display: flex; flex-direction: column; gap: 6px; }
+  .mcard .nm { font-size: 18px; font-weight: 800; line-height: 1.4; min-height: 50px; }
+  .mcard .bt { display: flex; gap: 4px; }
+  .mcard .bt button { flex: 1; font: inherit; font-size: 22px; padding: 6px 0; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); cursor: pointer; display: grid; place-items: center; }
+  .mcard .bt button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .mcard .bt button.right { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+  .mcard .bt button.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+  .mcard .ex { display: none; font-size: 14.5px; line-height: 1.4; color: var(--muted); }
+  .mcard.done .ex { display: block; }
+  .mcard.done.ok { border-color: var(--ok); } .mcard.done.no { border-color: var(--accent-2); }
+
+  .cmp { font-size: 17px; }
+  .cmp td, .cmp th { padding: 8px 14px; }
+  .cmp td.c { text-align: center; font-weight: 800; }
+  .cmp .y { color: var(--ok); } .cmp .n { color: var(--bad); }
+  .chat .note { font-size: 12.5px; color: var(--muted); align-self: flex-start; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-present" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="13" rx="2"/><path d="M12 16v4M8 21h8"/><path d="M7 12l3-3 2 2 4-4"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></symbol>
+</svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 2주차 2차시</p>
+    <h1 style="font-size:62px">텍스트·이미지·영상<br>AI 도구 비교</h1>
+    <p class="lead" style="font-size:25px">업무마다 맞는 도구는 따로 있다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>개념·비교 차시</span><span>직접 해 보기 4개</span><span>실습 자료 1개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <circle cx="260" cy="220" r="160" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 10"/>
+    <circle cx="260" cy="220" r="62" class="f-acc"/>
+    <g transform="translate(228 188) scale(2.65)" style="color:var(--surface)"><use href="#i-sparkles" width="24" height="24"/></g>
+    <g class="orbit">
+      <g transform="translate(222 22)"><g class="up"><rect width="76" height="76" rx="22" class="f-accs"/><g transform="translate(18 18) scale(1.67)" style="color:var(--accent)"><use href="#i-chat" width="24" height="24"/></g></g></g>
+      <g transform="translate(374 132)"><g class="up"><rect width="76" height="76" rx="22" class="f-accs"/><g transform="translate(18 18) scale(1.67)" style="color:var(--accent)"><use href="#i-search" width="24" height="24"/></g></g></g>
+      <g transform="translate(316 312)"><g class="up"><rect width="76" height="76" rx="22" class="f-acc2s"/><g transform="translate(18 18) scale(1.67)" style="color:var(--accent-2)"><use href="#i-image" width="24" height="24"/></g></g></g>
+      <g transform="translate(128 312)"><g class="up"><rect width="76" height="76" rx="22" class="f-accs"/><g transform="translate(18 18) scale(1.67)" style="color:var(--accent)"><use href="#i-video" width="24" height="24"/></g></g></g>
+      <g transform="translate(70 132)"><g class="up"><rect width="76" height="76" rx="22" class="f-accs"/><g transform="translate(18 18) scale(1.67)" style="color:var(--accent)"><use href="#i-present" width="24" height="24"/></g></g></g>
+    </g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">다섯 갈래</div><div class="d">생성형AI 도구를 결과물에 따라 다섯 갈래로 나눈다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">강점과 약점</div><div class="d">갈래마다 잘하는 일, 약한 일, 꼭 확인할 점을 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">업무에 맞게 고르기</div><div class="d">세 가지 질문으로 업무에 맞는 도구 종류를 고른다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">이 수업의 두 도구</div><div class="d">Gemini와 Claude로 할 수 있는 일과 나눠 쓰는 법을 안다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 도구의 다섯 갈래</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② 잘하는 것과 약한 것</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-2-soft)"><b>③ 업무에 맞게 고르기</b><small>직접 해 보기 2 · 실습</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 서비스 이름보다 <strong>“어떤 종류의 일을 하는 도구인가”</strong>를 보는 눈을 기릅니다. 서비스와 기능은 자주 바뀌지만, 고르는 기준은 오래갑니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>바다결 마케팅팀의 오늘 할 일</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <div style="flex:1;display:grid;gap:10px">
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h" style="font-size:20px">고객 후기 120건에서 불만 유형 정리하기</div></div>
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-search"/></svg></span><div class="h" style="font-size:20px">요즘 그래놀라 경쟁 제품 가격 알아보기</div></div>
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-image"/></svg></span><div class="h" style="font-size:20px">추석 선물 세트 SNS 배너 시안 만들기</div></div>
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-video"/></svg></span><div class="h" style="font-size:20px">신제품 15초 숏폼 영상 아이디어 내기</div></div>
+      <div class="tile row" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-present"/></svg></span><div class="h" style="font-size:20px">월간 실적 보고 발표 자료 준비하기</div></div>
+    </div>
+    <div style="width:380px;display:flex;flex-direction:column;gap:14px">
+      <div class="box think frag" style="margin:0"><p style="font-size:24px;margin:0;font-weight:800">이 다섯 가지를<br>한 도구로 다 할 수 있을까?</p></div>
+      <div class="tile frag"><div class="d" style="font-size:18px">결과물이 <strong>글·검색 결과·그림·영상·발표 자료</strong>로 모두 다릅니다. 결과물이 다르면 <strong>잘 맞는 도구도 다릅니다.</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시 · 바다결 = 수업용 가상 회사 (부산의 건강 간식 회사)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>생성형AI 도구의 다섯 갈래</h2><p>무엇을 넣고, 무엇을 받는가로 나눕니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 다섯 갈래 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 다섯 갈래</span></div>
+  <h2>넣는 것 → 받는 것으로 보는 다섯 갈래</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(5,1fr);gap:14px">
+      <div class="tile frag show" style="align-items:center;text-align:center;padding:18px 12px"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h" style="font-size:20px">대화형 텍스트</div><div style="font-size:16px;font-weight:700;color:var(--accent)">글 → 글</div><div class="d" style="font-size:15px">묻고 답하기, 초안·요약·번역. ChatGPT·Gemini·Claude 같은 채팅 AI</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center;padding:18px 12px"><span class="ic-badge lg"><svg class="ic"><use href="#i-search"/></svg></span><div class="h" style="font-size:20px">검색 결합</div><div style="font-size:16px;font-weight:700;color:var(--accent)">질문 → 검색 + 요약 + 출처</div><div class="d" style="font-size:15px">웹을 찾아보고 출처 링크와 함께 정리. 채팅 AI의 검색 기능, AI 검색 서비스</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center;padding:18px 12px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-image"/></svg></span><div class="h" style="font-size:20px">이미지 생성</div><div style="font-size:16px;font-weight:700;color:var(--accent-2)">설명 → 그림</div><div class="d" style="font-size:15px">글로 설명한 장면을 그림으로. 올린 사진의 배경 바꾸기 같은 편집도</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center;padding:18px 12px"><span class="ic-badge lg"><svg class="ic"><use href="#i-video"/></svg></span><div class="h" style="font-size:20px">영상·음성</div><div style="font-size:16px;font-weight:700;color:var(--accent)">설명·그림 → 영상<br>말 ↔ 글</div><div class="d" style="font-size:15px">짧은 영상 클립, 받아쓰기, 글 읽어 주기, 음성 대화</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center;padding:18px 12px"><span class="ic-badge lg"><svg class="ic"><use href="#i-present"/></svg></span><div class="h" style="font-size:20px">문서·발표 보조</div><div style="font-size:16px;font-weight:700;color:var(--accent)">자료 → 문서·슬라이드</div><div class="d" style="font-size:15px">보고서 초안, 발표 개요, 표 정리. 문서·발표 프로그램 속 AI 기능</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">요즘은 <strong style="color:var(--text)">한 서비스가 여러 갈래를 함께</strong> 제공하는 경우가 많습니다. 그래서 “서비스 이름”보다 <strong style="color:var(--text)">지금 쓰는 기능이 어느 갈래인지</strong>를 봅니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시 · 이 수업에서 정한 분류 — 정해진 표준 분류는 아니다</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 다섯 갈래 · 직접 해 보기 1</span></div>
+  <h2>같은 요청, 갈래마다 다른 결과물 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:12px;padding:16px 20px">
+      <div class="prompt" style="border-width:1px"><div class="prompt-h">요청</div><pre style="font-size:17px;padding:8px 14px">바다결 추석 선물 세트(32,000원) 홍보를 준비해 줘.</pre></div>
+      <div class="ctabs" id="o-tabs" role="group" aria-label="도구 갈래 고르기"></div>
+      <div class="outbox" id="o-box"></div>
+    </div>
+    <div class="side">
+      <div class="tile" style="padding:14px 18px;gap:6px"><div class="h" style="font-size:19px" id="o-h">-</div><div class="d" id="o-d" style="font-size:16px"></div></div>
+      <div class="callout" id="o-chk"></div>
+      <div class="callout b">같은 말로 요청해도 <strong>결과물의 형태</strong>가 갈래마다 다릅니다. 내가 <strong>받고 싶은 결과물</strong>부터 정하세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시 · 결과물은 모두 설명을 위해 미리 만든 예시 (그림은 직접 그린 설명용)</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>잘하는 것과 약한 것</h2><p>모든 일을 잘하는 도구는 없습니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 직접 해 보기 2: 강점 카드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 잘하는 것과 약한 것 · 직접 해 보기 2</span></div>
+  <h2>갈래별 능력 비교 카드 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="body" style="justify-content:center;gap:18px">
+    <div class="ctabs" id="c-tabs" role="group" aria-label="도구 갈래 고르기"></div>
+    <div class="cap">
+      <div class="tile good"><div class="h" style="font-size:20px"><svg class="ic"><use href="#i-check"/></svg> 잘하는 것</div><ul id="c-good"></ul></div>
+      <div class="tile weak"><div class="h" style="font-size:20px"><svg class="ic"><use href="#i-alert"/></svg> 약한 것</div><ul id="c-weak"></ul></div>
+      <div class="tile"><div class="h" style="font-size:20px"><svg class="ic"><use href="#i-factory"/></svg> 바다결 업무 예</div><div id="c-ex" style="font-size:19px"></div></div>
+      <div class="tile" style="border:2px solid var(--accent)"><div class="h" style="font-size:20px;color:var(--accent)"><svg class="ic"><use href="#i-shield"/></svg> 꼭 확인할 것</div><div id="c-chk" style="font-size:19px"></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시 · 일반적인 경향 — 서비스와 버전에 따라 차이가 크고 계속 바뀐다</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 이해 vs 생성 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 잘하는 것과 약한 것</span></div>
+  <h2>헷갈리기 쉬운 것: 그림을 “읽는” AI와 “그리는” AI</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile frag show" style="padding:24px">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="muted" style="font-size:17px;font-weight:700">그림·파일 → 글</div><div class="h" style="font-size:27px">이해 (읽기)</div></div></div>
+        <ul style="font-size:19px;margin:4px 0 0">
+          <li>표 캡처를 보고 숫자를 정리해 달라</li>
+          <li>제품 사진을 보고 상세 설명 초안을 써 달라</li>
+          <li>PDF 보고서를 읽고 요약해 달라</li>
+        </ul>
+        <div style="font-size:17px;font-weight:800;color:var(--accent)">Gemini · Claude 모두 가능</div>
+      </div>
+      <div class="tile frag" style="padding:24px;border:2px solid var(--accent-2)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-image"/></svg></span><div><div class="muted" style="font-size:17px;font-weight:700">글 → 그림</div><div class="h" style="font-size:27px">생성 (그리기)</div></div></div>
+        <ul style="font-size:19px;margin:4px 0 0">
+          <li>“가을 바다 배경의 선물 상자” 그림을 만들어 달라</li>
+          <li>올린 사진의 배경을 바꿔 달라</li>
+        </ul>
+        <div style="font-size:17px;font-weight:800;color:var(--accent-2)">Gemini 가능 · Claude는 그림을 생성하지 않음</div>
+        <div class="d" style="font-size:16px">Claude는 도표·간단한 시각 자료를 코드로 그려 줄 수는 있다</div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:19px">사진·파일을 올릴 때도 1주 3차시 규칙 그대로: <strong style="color:var(--text)">얼굴·개인정보·회사 기밀이 담긴 자료는 올리지 않는다.</strong></p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시 · 2026년 11월 각 서비스 공식 안내 기준 · 기능은 바뀔 수 있다</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 공통 약점 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 잘하는 것과 약한 것</span></div>
+  <h2>어느 갈래든 함께 가진 약점</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">그럴듯한 오류</div><div class="d">틀린 사실·숫자·출처를 자연스럽게 만든다 — <strong>환각</strong> (2주 3차시)</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">고정관념</div><div class="d">학습한 글·그림의 치우침이 결과에 묻어난다 — <strong>편향</strong> (2주 3차시)</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h">지식의 기준 시점</div><div class="d">배운 시점 이후 일은 모른다. 검색 기능이 있어도 <strong>날짜를 확인</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">입력한 정보</div><div class="d">넣은 자료는 외부 서버로 간다 — <strong>개인정보·기밀 금지</strong> (1주 3차시)</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">도구를 바꿔도 사라지지 않는 약점입니다. 그래서 <strong style="color:var(--text)">어떤 도구를 쓰든 마지막 확인은 사람</strong>이 합니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>업무에 맞게 고르기</h2><p>질문 세 개면 충분합니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 3: 고르는 질문 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 업무에 맞게 고르기 · 직접 해 보기 3</span></div>
+  <h2>세 가지 질문으로 도구 고르기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 400px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:18px;padding:18px 24px">
+      <div class="qrow" id="d-q1"><div class="qh">① 받고 싶은 결과물은?</div><div class="opts2"></div></div>
+      <div class="qrow" id="d-q2"><div class="qh">② 최신 정보나 출처가 필요한가?</div><div class="opts2"></div></div>
+      <div class="qrow" id="d-q3"><div class="qh">③ 넣을 자료에 개인정보·회사 기밀이 있는가?</div><div class="opts2"></div></div>
+    </div>
+    <div class="side">
+      <div class="tile" style="flex:1;padding:16px 20px;gap:8px">
+        <span class="ic-badge" id="d-ic"><svg class="ic"><use href="#i-hand"/></svg></span>
+        <div class="h" id="d-h">질문에 차례로 답해 보세요</div>
+        <div id="d-d" style="font-size:17px">결과물 → 최신성 → 입력 자료 순서로 따져 봅니다.</div>
+        <div class="d" id="d-tool" style="font-weight:700;color:var(--accent);font-size:16px"></div>
+      </div>
+      <div class="status ok" id="d-st" hidden></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시 · 고르는 순서를 보여 주는 단순화한 흐름</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 직접 해 보기 4: 매칭 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 업무에 맞게 고르기 · 직접 해 보기 4</span></div>
+  <h2>이 업무엔 어떤 종류의 도구? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 아이콘을 눌러 고르세요</span></h2>
+  <div class="body" style="justify-content:flex-start;gap:14px;padding-top:6px">
+    <div class="legend" style="font-size:16px"><span><svg class="ic"><use href="#i-chat"/></svg> 대화형 텍스트</span><span><svg class="ic"><use href="#i-search"/></svg> 검색 결합</span><span><svg class="ic"><use href="#i-image"/></svg> 이미지 생성</span><span><svg class="ic"><use href="#i-video"/></svg> 영상·음성</span><span><svg class="ic"><use href="#i-present"/></svg> 문서·발표 보조</span><span id="m-score" style="margin-left:auto;font-weight:800;color:var(--accent)">0 / 8 맞힘</span></div>
+    <div class="mcards" id="mcards"></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시 · 가장 잘 맞는 갈래 하나를 정답으로 — 다른 갈래와 함께 쓰는 경우도 많다</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 이 수업의 두 도구 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 업무에 맞게 고르기</span></div>
+  <h2>이 수업에서 쓰는 두 도구: Gemini와 Claude</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:28px">
+    <table class="cmp" style="flex:1">
+      <thead><tr><th>할 수 있는 일</th><th style="text-align:center">Gemini<br><span class="muted" style="font-size:14px;font-weight:600">학교 Google 계정</span></th><th style="text-align:center">Claude<br><span class="muted" style="font-size:14px;font-weight:600">무료 버전</span></th></tr></thead>
+      <tbody>
+        <tr><td>대화·글쓰기·요약·번역</td><td class="c y">○</td><td class="c y">○</td></tr>
+        <tr><td>사진·PDF 등 올린 파일 읽기</td><td class="c y">○</td><td class="c y">○</td></tr>
+        <tr><td>웹 검색으로 최신 정보 찾기</td><td class="c y">○</td><td class="c y">○</td></tr>
+        <tr><td>이미지 생성·편집</td><td class="c y">○</td><td class="c n">✕ <span style="font-size:14px;font-weight:600;color:var(--muted)">(도표는 코드로)</span></td></tr>
+        <tr><td>맞춤형 AI 비서 (9주)</td><td class="c">Gems</td><td class="c">프로젝트</td></tr>
+      </tbody>
+    </table>
+    <div style="width:360px;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show" style="padding:16px 20px;gap:6px"><div class="h" style="font-size:20px">이미지 실습은 Gemini로</div><div class="d">11주 이미지 생성 실습. Gemini가 만든 이미지에는 눈에 보이지 않는 <strong>AI 생성 표시(워터마크)</strong>가 들어간다</div></div>
+      <div class="tile frag" style="padding:16px 20px;gap:6px"><div class="h" style="font-size:20px">글 실습은 어느 쪽이든</div><div class="d">강의에서 보여 주는 과정은 <strong>두 도구 모두에서</strong> 그대로 됩니다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시 · 2026년 11월 각 서비스 공식 안내 기준 · 기능·요금제·사용 한도·화면은 바뀔 수 있다</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 함께 쓰기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 업무에 맞게 고르기</span></div>
+  <h2>두 도구를 함께 쓰는 세 가지 방법</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">한도에 걸리면 이어 하기</div><div class="d">한쪽이 사용량 한도에 걸리면, 지금까지 정한 내용을 요약해 <strong>다른 쪽에서 이어</strong> 갑니다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">교차 확인</div><div class="d">같은 질문을 두 도구에 물어 <strong>답이 다르면 확인 신호</strong>. 사실·숫자는 원자료로 (2주 3차시)</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">역할 나누기</div><div class="d">한쪽에서 홍보 문구 초안 → <strong>Gemini</strong>에서 그 문구에 맞는 이미지 시안</div></div>
+    </div>
+    <div class="prompt frag" style="margin-top:20px"><div class="prompt-h">이어 하기용 프롬프트<button class="copy" type="button">복사</button></div><pre>지금까지 대화에서 정한 <mark>조건과 결론</mark>을, 다른 AI에게 그대로 이어서 맡길 수 있도록 5줄 이내로 요약해 줘.</pre></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 실습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 업무에 맞게 고르기 · 실습</span></div>
+  <h2>실습: 우리 팀 업무에 맞는 도구 고르기</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:28px">
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px;justify-content:center">
+      <ol style="font-size:20px;margin:0;line-height:1.5">
+        <li>실습 자료(업무 목록 8개)를 받아 <strong>먼저 내 답</strong>을 적는다</li>
+        <li>Gemini나 Claude에 업무 목록과 함께 아래 프롬프트를 넣는다</li>
+        <li>AI의 답과 내 답을 비교하고, <strong>다른 곳은 이유를 따져</strong> 최종안을 정한다</li>
+      </ol>
+      <div class="prompt"><div class="prompt-h">프롬프트<button class="copy" type="button">복사</button></div><pre>아래는 건강 간식 회사 <mark>마케팅팀</mark>의 업무 목록이야. 업무마다 ① 가장 잘 맞는 생성형AI 도구 종류(대화형 텍스트, 검색 결합, 이미지 생성, 영상·음성, 문서·발표 보조 중 하나) ② 그렇게 고른 이유 ③ 결과를 쓰기 전에 사람이 꼭 확인할 점을 표로 정리해 줘.
+
+[업무 목록 붙여 넣기]</pre></div>
+    </div>
+    <div style="width:340px;display:flex;flex-direction:column;gap:14px;justify-content:center">
+      <a class="btn" href="materials/tool_choice_worksheet.txt" download><svg class="ic"><use href="#i-log"/></svg> 실습 자료 받기</a>
+      <div class="tile" style="padding:14px 18px;gap:6px"><div class="h" style="font-size:18px">tool_choice_worksheet.txt</div><div class="d" style="font-size:15px">바다결 마케팅팀 업무 8개 + 내 답 적는 칸</div></div>
+      <div class="callout b" style="font-size:16px">가상 회사의 가상 업무라 <strong>개인정보·기밀이 없어</strong> 그대로 넣어도 됩니다. 실제 회사 자료라면 1주 3차시 규칙을 먼저!</div>
+      <div class="callout" style="font-size:16px">AI의 표도 <strong>정답이 아니라 의견</strong>입니다. 판단은 내가 합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시 · 실습용 가상 자료</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">다섯 갈래</div><div style="font-size:21px">대화형 텍스트 · 검색 결합 · 이미지 생성 · 영상·음성 · 문서·발표 보조 — <strong>받는 결과물</strong>로 나눈다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">고르는 세 질문</div><div style="font-size:21px">결과물은? 최신 정보·출처가 필요? <strong>개인정보·기밀</strong>은 없나?</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">Gemini + Claude</div><div style="font-size:21px">글은 둘 다, <strong>이미지 생성은 Gemini</strong>. 한도·교차 확인·역할 나누기로 함께 쓴다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="최신 동향과 가격은 시점이 중요하고 출처 확인이 필요하므로 검색 결합 도구가 알맞습니다. 그래도 링크를 열어 원문과 날짜를 확인해야 합니다.">
+      <p class="q-title"><b>Q1.</b> “이번 달 경쟁 제품의 가격과 출시 소식”을 조사할 때 가장 알맞은 갈래는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">이미지 생성</button>
+        <button type="button" data-v="b">검색 결합 (출처 링크를 함께 주는 도구)</button>
+        <button type="button" data-v="c">검색 없는 대화형 텍스트만</button>
+        <button type="button" data-v="d">영상·음성</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="이 수업에서 이미지 생성 실습은 Gemini로 합니다. Claude는 올린 그림을 읽고 이해할 수는 있지만 그림을 생성하지는 않습니다.">
+      <p class="q-title"><b>Q2.</b> 이 수업의 두 도구에 대한 설명으로 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">Claude는 사진을 올려도 읽지 못한다</button>
+        <button type="button" data-v="b">Gemini는 글을 쓰지 못하고 그림만 그린다</button>
+        <button type="button" data-v="c">이미지 생성은 Gemini로 하고, Claude는 그림을 생성하지 않는다</button>
+        <button type="button" data-v="d">두 도구는 웹 검색을 전혀 할 수 없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="이미지 생성 AI는 그림 속 글자를 틀리게 그리거나 정확한 제품 모양을 재현하지 못하는 경우가 많습니다. 시안으로 쓰고, 글자·상표·실존 인물 등은 사람이 확인합니다.">
+      <p class="q-title"><b>Q3.</b> 이미지 생성 AI로 배너 시안을 만들 때 특히 확인할 점은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">글자 수가 몇 개인지</button>
+        <button type="button" data-v="b">파일 이름이 영어인지</button>
+        <button type="button" data-v="c">AI가 만든 그림은 확인할 필요가 없다</button>
+        <button type="button" data-v="d">그림 속 글자가 깨지지 않았는지, 실존 인물·상표가 들어가지 않았는지</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="환각·편향·지식의 기준 시점·입력 정보 보안은 갈래와 상관없이 생성형AI가 함께 가진 약점입니다. 도구를 바꿔도 사라지지 않으므로 사람이 확인해야 합니다.">
+      <p class="q-title"><b>Q4.</b> 다음 중 어느 갈래의 도구를 써도 공통으로 조심할 점은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">그럴듯하게 틀린 내용이 나올 수 있다</button>
+        <button type="button" data-v="b">결과물이 반드시 영상으로 나온다</button>
+        <button type="button" data-v="c">항상 최신 정보만 알려 준다</button>
+        <button type="button" data-v="d">개인정보를 넣어도 안전하다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">2-3</div>
+    <h2>AI의 한계: 환각과 편향</h2>
+    <p>어느 도구든 함께 가진 약점, 그럴듯한 거짓말과 고정관념을 알아보고 나를 지키는 확인 습관을 익힙니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 2주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">2주 2차시 · 텍스트·이미지·영상 AI 도구 비교</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

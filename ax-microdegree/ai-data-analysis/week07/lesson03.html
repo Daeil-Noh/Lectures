@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7주 3차시 · 상관관계와 인과관계: 공정 변수와 품질 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 7주 3차시 교안: 산점도와 상관계수(−1~1), 곡선 관계와 상관계수의 한계, 교란 변수와 상관≠인과, 통제 실험, 과제1(데이터 시각화) 안내">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .pulse { display: none; } }
+  .notes code, .tile code, .callout code, .status code, td code, li code { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: .9em; background: var(--surface-2); border-radius: 5px; padding: 0 5px; }
+
+  .segb { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .segb .btn { font-size: 15px; padding: 8px 4px; }
+  .btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 16px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+  .vbtns { display: grid; gap: 6px; }
+  .vbtns .btn { justify-content: flex-start; font-size: 16px; padding: 9px 14px; }
+  .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .scale .tile { padding: 10px; gap: 4px; align-items: center; text-align: center; }
+  .scale svg { width: 100%; }
+  .asg td, .asg th { font-size: 17px; padding: 8px 14px; }
+  .asg td:first-child { white-space: nowrap; }
+  .asg td.pt { font-weight: 800; color: var(--accent); white-space: nowrap; text-align: center; }
+  .cbar { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 7주차 3차시</p>
+    <h1>상관관계와<br>인과관계</h1>
+    <p class="lead" style="font-size:25px">공정 변수와 품질 —<br>“함께 움직인다” ≠ “원인이다”</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>개념 + 실습 차시</span><span>직접 해 보기 3개</span><span>과제1 안내</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="20" y="40" width="300" height="300" rx="22" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <g class="f-acc" fill-opacity=".7"><circle cx="60" cy="290" r="7"/><circle cx="82" cy="262" r="7"/><circle cx="98" cy="282" r="7"/><circle cx="116" cy="240" r="7"/><circle cx="132" cy="256" r="7"/><circle cx="150" cy="214" r="7"/><circle cx="166" cy="230" r="7"/><circle cx="180" cy="196" r="7"/><circle cx="198" cy="206" r="7"/><circle cx="214" cy="170" r="7"/><circle cx="232" cy="180" r="7"/><circle cx="248" cy="140" r="7"/><circle cx="266" cy="150" r="7"/><circle cx="282" cy="110" r="7"/><circle cx="140" cy="276" r="7"/><circle cx="240" cy="210" r="7"/></g>
+    <line x1="50" y1="300" x2="295" y2="96" stroke="var(--accent-2)" stroke-width="4" stroke-linecap="round"/>
+    <text x="300" y="80" text-anchor="end" style="font-size:26px;font-weight:800;fill:var(--accent-2)">r = 0.70</text>
+    <rect x="350" y="120" width="150" height="70" rx="18" class="f-accs" stroke="var(--accent)" stroke-width="2"/><text x="425" y="162" text-anchor="middle" class="t-main">상관</text>
+    <rect x="350" y="290" width="150" height="70" rx="18" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/><text x="425" y="332" text-anchor="middle" class="t-main">인과</text>
+    <path d="M425 196 V 282" stroke="var(--muted)" stroke-width="3" stroke-dasharray="6 6"/>
+    <circle cx="425" cy="240" r="22" class="f-surface" stroke="var(--accent-2)" stroke-width="3"><animate class="pulse" attributeName="r" values="20;25;20" dur="2.4s" repeatCount="indefinite"/></circle>
+    <text x="425" y="250" text-anchor="middle" style="font-size:28px;font-weight:800;fill:var(--accent-2)">?</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">상관계수</div><div class="d">r(−1~1)의 부호와 크기가 무엇을 뜻하는지 읽는다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">그래프 먼저</div><div class="d">곡선 관계는 r로 잡히지 않는다 — 숫자 전에 산점도를 그린다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">상관 ≠ 인과</div><div class="d">교란 변수를 찾고, 원인을 확인하는 실험을 설계한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">과제1</div><div class="d">목적이 다른 그래프 3장과 해석을 작성해 제출한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 상관계수</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② 공정 변수와 품질</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-2-soft)"><b>③ 상관 ≠ 인과</b><small>직접 해 보기 1</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>과제1</b></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘의 공정 질문: <strong>“무엇이 인장강도를 좌우하고, 왜 야간에 불량이 많은가?”</strong> — 모두 process.csv에서 직접 계산합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>압력을 올리면 강도가 올라갈까?</h2>
+  <div class="demo" style="grid-template-columns:1fr 400px">
+    <div class="plot"><svg id="c-intro" viewBox="0 0 640 420" role="img" aria-label="사출 압력과 인장강도 산점도"></svg></div>
+    <div class="side" style="justify-content:center;gap:14px">
+      <div class="tile frag show" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:20px;color:var(--accent)">질문 ① 얼마나 강하게?</div><div class="d" style="font-size:17px">“함께 움직이는 정도”를 숫자 하나로 → <strong style="color:var(--text)">상관계수</strong></div></div>
+      <div class="tile frag" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:20px;color:var(--accent-2)">질문 ② 정말 원인일까?</div><div class="d" style="font-size:17px">압력이 강도를 <strong style="color:var(--text)">바꾸는가</strong>, 아니면 함께 움직일 뿐인가 → <strong style="color:var(--text)">인과</strong></div></div>
+      <div class="callout b frag">7-1에서 본 산점도. 오른쪽 위로 올라가는 띠 — 오늘은 이것을 <strong>숫자로 재고, 의심합니다.</strong></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · process.csv 494개 제품 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>상관계수</h2><p>산점도의 “띠”를 숫자 하나로.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-link"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. r 개념 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 상관계수</span></div>
+  <h2>상관계수 r = 두 값이 <span class="mark">직선으로</span> 함께 움직이는 정도</h2>
+  <div class="body" style="justify-content:flex-start;gap:18px">
+    <div class="scale" id="scale"></div>
+    <svg viewBox="0 0 1120 56" aria-hidden="true" style="margin-top:-6px">
+      <line x1="40" y1="20" x2="1080" y2="20" stroke="var(--muted)" stroke-width="3"/>
+      <path d="M40 20 l14 -8 v16z M1080 20 l-14 -8 v16z" class="f-muted"/>
+      <text x="112" y="48" text-anchor="middle" class="t-acc2" style="font-size:17px">−1 반대로 딱 맞게</text>
+      <text x="560" y="48" text-anchor="middle" class="t-main" style="font-size:17px">0 직선 관계 없음</text>
+      <text x="1008" y="48" text-anchor="middle" class="t-acc" style="font-size:17px">+1 같이 딱 맞게</text>
+    </svg>
+    <div class="grid frag" style="grid-template-columns:1.15fr 1fr;gap:18px;align-items:center">
+      <div style="display:grid;gap:8px"><pre class="code" style="font-size:17px">df['pressure'].corr(df['strength'])</pre><pre class="out">0.696</pre></div>
+      <div class="tile" style="padding:14px 18px;gap:4px"><div style="font-size:19px"><strong>부호</strong> = 방향 (+ 같이 증가, − 반대로)</div><div style="font-size:19px"><strong>크기</strong> = 점들이 직선에 얼마나 가까운가</div><div class="d" style="font-size:15px">단위와 상관없다 — bar든 psi든 r은 같다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · 위 다섯 그림은 설명용 가상 점(각 120개), 아래 값은 process.csv</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 상관계수 · 직접 해 보기 1</span></div>
+  <h2>r을 움직이면 점구름은 어떻게 변할까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot"><svg id="rdemo" viewBox="0 0 640 430" role="img" aria-label="상관계수 값에 따라 바뀌는 점구름"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>목표 상관계수 <output id="rd-o">0.70</output></label><input id="rd-s" type="range" min="-1" max="1" step="0.05" value="0.7" aria-label="목표 상관계수"></div>
+      <div class="toggles">
+        <button class="tgl" type="button" id="rd-line" aria-pressed="false"><span class="chk"></span>추세선(직선) 그리기</button>
+        <button class="tgl" type="button" id="rd-out" aria-pressed="false"><span class="chk"></span>멀리 떨어진 점 1개 추가</button>
+      </div>
+      <div class="meter"><div class="lbl">점 200개로 계산한 r</div><div class="val" id="rd-r">0.70</div></div>
+      <div class="status ok" id="rd-st"></div>
+      <div class="muted" style="font-size:14px">대략적 기준: |r| ≥ 0.7 강함 · 0.3~0.7 보통 · 0.3 미만 약함 (분야마다 다름)</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · 고정 난수로 만든 설명용 가상 점 200개</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>공정 변수와 품질</h2><p>무엇이 인장강도와 함께 움직일까?</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-factory"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 직접 해 보기 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공정 변수와 품질 · 직접 해 보기 2</span></div>
+  <h2>인장강도와 가장 관계가 깊은 공정 변수는? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot"><svg id="vs" viewBox="0 0 640 430" role="img" aria-label="고른 공정 변수와 인장강도의 산점도"></svg></div>
+    <div class="side">
+      <div class="segb" id="vs-btns">
+        <button class="btn ghost" type="button" data-v="pressure" aria-pressed="true">압력</button>
+        <button class="btn ghost" type="button" data-v="thickness" aria-pressed="false">두께</button>
+        <button class="btn ghost" type="button" data-v="humidity" aria-pressed="false">습도</button>
+        <button class="btn ghost" type="button" data-v="speed" aria-pressed="false">속도</button>
+        <button class="btn ghost" type="button" data-v="temp" aria-pressed="false">온도</button>
+      </div>
+      <div class="toggles">
+        <button class="tgl" type="button" id="vs-line" aria-pressed="false"><span class="chk"></span>추세선(직선)</button>
+        <button class="tgl" type="button" id="vs-bin" aria-pressed="false"><span class="chk"></span>구간 평균선 (x를 8구간으로 나눈 평균)</button>
+      </div>
+      <div class="meter"><div class="lbl" id="vs-lbl">압력 ↔ 인장강도 상관계수</div><div class="val" id="vs-r">-</div></div>
+      <div class="status ok" id="vs-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · process.csv 494개 제품 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 온도의 함정 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공정 변수와 품질</span></div>
+  <h2>r = −0.11, 온도는 강도와 상관없다?</h2>
+  <div class="demo" style="grid-template-columns:1fr 400px">
+    <div class="plot"><svg id="c-temp" viewBox="0 0 640 430" role="img" aria-label="사출 온도와 인장강도 산점도와 곡선"></svg></div>
+    <div class="side" style="justify-content:center">
+      <div class="tile frag show" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:19px"><svg class="ic" style="color:var(--bad)"><use href="#i-x"/></svg> “r이 작으니 관계 없음”</div><div class="d" style="font-size:16px">r은 <strong style="color:var(--text)">직선</strong> 관계만 잰다. 올라갔다 내려가는 관계는 서로 상쇄돼 0에 가까워진다</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:19px"><svg class="ic" style="color:var(--ok)"><use href="#i-check"/></svg> 그래프가 보여 주는 것</div><div class="d" style="font-size:16px" id="tp-d">210℃ 부근에서 강도가 가장 높고, 너무 낮거나 높으면 약해진다 (<strong style="color:var(--text)">산 모양 곡선</strong>)</div></div>
+      <div class="box warn frag" style="margin:0;padding:14px 18px"><p style="font-size:18px;margin:0"><strong>숫자 전에 그래프부터.</strong> <code>corr()</code>만 보고 온도를 빼 버리면 중요한 공정 조건을 놓칩니다.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · process.csv · 곡선은 2차식으로 맞춘 선(10주차 회귀에서 자세히) · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 11. corr 한꺼번에 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공정 변수와 품질</span></div>
+  <h2>상관계수 한꺼번에 구하기: <code style="font-size:.85em">.corr()</code></h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:center">
+    <div style="flex:1.05;display:grid;gap:10px">
+      <pre class="code" style="font-size:16.5px">cols = ['temp', 'pressure', 'speed',
+        'humidity', 'thickness', 'strength']
+# 상관 행렬에서 강도(strength) 열만 꺼내기
+r = df[cols].corr()['strength']
+print(r.round(2).sort_values())</pre>
+      <pre class="out" id="corr-out"></pre>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile" style="padding:12px 14px"><svg id="c-corr" viewBox="0 0 520 300" role="img" aria-label="공정 변수별 인장강도와의 상관계수 막대"></svg></div>
+      <div class="callout b frag" style="font-size:17px">순위표는 출발점일 뿐 — <strong>온도</strong>처럼 r이 작아도 중요한 변수가 있습니다. 순위를 봤다면 <strong>산점도로 하나씩 확인</strong>.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · strength 자기 자신과의 상관(1.00)은 표에서 뺐음</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>상관 ≠ 인과</h2><p>함께 움직인다고 원인은 아니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 야간 불량 + 교란 변수 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 상관 ≠ 인과</span></div>
+  <h2>“야간 근무 때문에 불량이 3배?”</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:stretch">
+    <div class="tile" style="flex:1;padding:12px"><svg id="c-night" viewBox="0 0 520 380" role="img" aria-label="교대별 불량률, 평균 습도, 평균 온도 비교"></svg></div>
+    <div style="flex:1.05;display:flex;flex-direction:column;gap:12px;justify-content:center">
+      <svg viewBox="0 0 560 250" role="img" aria-label="야간 근무가 습도를 높이고 습도가 불량을 늘리는 교란 구조">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" class="f-muted"/></marker>
+          <marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" class="f-acc2"/></marker></defs>
+        <rect x="10" y="170" width="150" height="64" rx="16" class="f-accs" stroke="var(--accent)" stroke-width="2"/><text x="85" y="208" text-anchor="middle" class="t-main">야간 근무</text>
+        <rect x="400" y="170" width="150" height="64" rx="16" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/><text x="475" y="208" text-anchor="middle" class="t-main">불량 증가</text>
+        <path d="M166 202 H392" stroke="var(--muted)" stroke-width="3" stroke-dasharray="8 7" marker-end="url(#ah)"/>
+        <text x="279" y="192" text-anchor="middle" class="t-sub" style="font-size:15px">직접 원인? (눈에 보이는 상관)</text>
+        <g class="frag">
+          <rect x="205" y="14" width="150" height="64" rx="16" class="f-surface" stroke="var(--accent-2)" stroke-width="3"/><text x="280" y="44" text-anchor="middle" class="t-main">습도 ↑</text><text x="280" y="66" text-anchor="middle" class="t-sub">숨은 제3의 변수</text>
+          <path d="M100 166 Q 120 70 198 50" fill="none" stroke="var(--accent-2)" stroke-width="3" marker-end="url(#ah2)"/>
+          <path d="M362 50 Q 440 70 462 164" fill="none" stroke="var(--accent-2)" stroke-width="3" marker-end="url(#ah2)"/>
+          <text x="96" y="112" text-anchor="end" class="t-acc2" style="font-size:14px">야간에 더 습함</text>
+          <text x="468" y="112" class="t-acc2" style="font-size:14px">습하면 불량↑</text>
+        </g>
+      </svg>
+      <div class="box think frag" style="margin:0;padding:14px 18px"><p style="font-size:18px;margin:0"><strong>교란 변수</strong>: 두 변수 모두에 영향을 주어, 둘 사이에 실제보다 크거나 가짜인 관계를 만드는 제3의 변수. 여기서는 <strong>습도</strong>(그리고 온도)가 후보.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · process.csv 494개 제품 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 직접 해 보기 3 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 상관 ≠ 인과 · 직접 해 보기 3</span></div>
+  <h2>습도를 맞춰 놓고 비교하면? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot"><svg id="conf" viewBox="0 0 640 430" role="img" aria-label="교대별, 습도 구간별 불량률 비교"></svg></div>
+    <div class="side">
+      <div class="vbtns" id="cf-btns">
+        <button class="btn ghost" type="button" data-v="all" aria-pressed="true">① 전체: 교대별 불량률</button>
+        <button class="btn ghost" type="button" data-v="hum" aria-pressed="false">② 습도 구간별 불량률</button>
+        <button class="btn ghost" type="button" data-v="mix" aria-pressed="false">③ 구간마다 야간이 차지하는 비율</button>
+        <button class="btn ghost" type="button" data-v="strat" aria-pressed="false">④ 같은 습도끼리 교대 비교</button>
+      </div>
+      <div class="status mid" id="cf-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · process.csv · 막대 아래 숫자는 제품 수(n) · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 실험 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 상관 ≠ 인과</span></div>
+  <h2>원인인지 확인하려면: 하나만 바꾸는 실험</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h" style="font-size:20px">질문</div><div class="d">“습도가 불량을<br>늘리는가?”</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h" style="font-size:20px">나머지 고정</div><div class="d">같은 설비·원료<br>같은 교대·조건</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge o"><svg class="ic"><use href="#i-thermo"/></svg></span><div class="h" style="font-size:20px">하나만 바꾸기</div><div class="d">제습기 켬 / 끔<br>(습도만 다르게)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h" style="font-size:20px">무작위 배정</div><div class="d">켤 날·끌 날을<br>제비뽑기로</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h" style="font-size:20px">비교</div><div class="d">두 묶음의<br>불량률 차이</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:18px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge g"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h" style="font-size:20px">관찰 데이터 (process.csv)</div><div class="d" style="font-size:16px">있는 그대로 기록 → 여러 조건이 함께 바뀜 → <strong style="color:var(--text)">상관</strong>까지</div></div></div>
+      <div class="tile row" style="padding:14px 18px;border:2px solid var(--accent)"><span class="ic-badge"><svg class="ic"><use href="#i-flask"/></svg></span><div><div class="h" style="font-size:20px">통제 실험</div><div class="d" style="font-size:16px">하나만 바꾸고 나머지는 고정·무작위 → <strong style="color:var(--text)">인과</strong>를 말할 수 있음</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · 무작위 배정: 날씨·피로 같은 미처 못 잰 조건이 한쪽에 몰리지 않게</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 과제1 안내 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">과제1 · 데이터 시각화</span></div>
+  <h2>과제1: 목적이 다른 그래프 3장 + 해석</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:stretch">
+    <div style="flex:1.25;display:grid;gap:12px;align-content:center">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h" style="font-size:20px">데이터</div><div class="d" style="font-size:16px"><code>process.csv</code> (필요하면 <code>vibration.csv</code>도 사용 가능)</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:20px">그래프 3장, 목적은 모두 다르게</div><div class="d" style="font-size:16px">비교 · 추이 · 분포 · 관계 · 구성 중 <strong style="color:var(--text)">서로 다른 세 가지</strong></div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-chat"/></svg></span><div><div class="h" style="font-size:20px">그래프마다 세 가지</div><div class="d" style="font-size:16px">① 질문 한 문장 ② 그래프(제목·축 이름·단위) ③ <strong style="color:var(--text)">해석 2~3문장</strong></div></div></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;justify-content:center">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week07/assignment1.ipynb" target="_blank" rel="noopener">과제1 시작 파일 열기 (assignment1.ipynb)</a>
+      <div class="box key" style="margin:0;padding:16px 20px">
+        <div class="box-title"><svg class="ic"><use href="#i-log"/></svg> 제출</div>
+        <ul style="font-size:18px;margin:0;line-height:1.5">
+          <li>실행 결과(그래프)가 보이는 <strong>.ipynb</strong> 또는 <strong>PDF</strong></li>
+          <li>강의 <strong>LMS</strong>의 과제1 게시판에 업로드</li>
+          <li>마감: <strong>LMS 공지 기준</strong></li>
+        </ul>
+      </div>
+      <div class="callout" style="font-size:16px">생성형AI를 썼다면 <strong>어디에 썼는지 밝히고</strong>, 그래프 숫자는 직접 확인하세요 (1주차 약속).</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · 과제1 (데이터 시각화)</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 과제1 평가 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">과제1 · 데이터 시각화</span></div>
+  <h2>이렇게 평가합니다 + 해석 예시</h2>
+  <div class="body" style="flex-direction:row;gap:24px;align-items:center">
+    <table class="asg" style="flex:1.2">
+      <thead><tr><th>기준</th><th>확인하는 것</th><th>배점</th></tr></thead>
+      <tbody>
+        <tr><td><b>목적과 그래프</b></td><td>세 그래프의 목적이 서로 다르고, 목적에 맞는 종류를 골랐다</td><td class="pt">30</td></tr>
+        <tr><td><b>그래프 완성도</b></td><td>결론이 보이는 제목, 축 이름·단위, 막대는 0부터 (7-1 체크리스트)</td><td class="pt">30</td></tr>
+        <tr><td><b>해석</b></td><td>그래프에서 읽은 사실 + 의미 2~3문장, 상관을 인과로 단정하지 않음</td><td class="pt">30</td></tr>
+        <tr><td><b>제출 형식</b></td><td>코드가 오류 없이 실행된 결과 포함, AI 사용 표기</td><td class="pt">10</td></tr>
+      </tbody>
+    </table>
+    <div style="flex:1;display:grid;gap:10px">
+      <div class="muted" style="font-size:16px;font-weight:700">해석 예시 (교대별 불량률 막대그래프)</div>
+      <div class="tile" style="padding:16px 18px;font-size:17px;line-height:1.55;gap:6px">
+        <div><b style="color:var(--accent)">사실</b> 야간 불량률은 20.3%로 주간(7.0%)의 약 3배다.</div>
+        <div><b style="color:var(--accent)">의미</b> 야간에는 습도도 평균 7.8%p 높아, 차이의 일부는 습도 때문일 수 있다.</div>
+        <div><b style="color:var(--accent-2)">주의</b> 원인을 확정하려면 습도를 고정한 비교·실험이 필요하다.</div>
+      </div>
+      <div class="muted" style="font-size:15px">수업 예시와 똑같은 그래프 대신 <strong style="color:var(--text)">자기 질문</strong>으로 만들어 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · 세부 평가 기준과 일정은 LMS 공지를 따릅니다</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">실습</span></div>
+  <h2>실습 파일: 상관계수 구하고 의심해 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:36px">
+    <div class="cell-ui" style="flex:1.2">
+      <div class="cbar"><span class="run"><svg class="ic"><use href="#i-play"/></svg></span> lesson03.ipynb — 셀을 위에서부터 차례로 실행</div>
+      <pre class="code" style="font-size:16px"># 습도 구간을 같게 맞춰 교대 비교
+df['hum_band'] = pd.cut(df['humidity'], [0, 50, 60, 70, 100])
+df.groupby(['hum_band', 'shift'])['defect'].mean()</pre>
+      <pre class="out">습도 구간 × 교대별 불량률 표 → 직접 해 보기 3의 ④</pre>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:16px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week07/lesson03.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <div class="tile" style="padding:16px 20px;gap:6px"><div class="h" style="font-size:20px">직접 바꿔 보기</div>
+        <div class="d" style="font-size:17px">① 다른 변수(<code>thickness</code>, <code>speed</code>)와 강도의 r 구하기<br>② 온도 구간 경계를 바꿔 구간 평균 다시 보기<br>③ 습도 대신 온도로 나눠 교대 비교하기</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시 · <code>pd.cut</code>: 숫자를 구간(범주)으로 나누는 함수</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">상관계수 r</div><div style="font-size:21px">−1~1. 부호 = 방향, 크기 = <strong>직선</strong>에 가까운 정도. 압력↔강도 0.70</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">그래프 먼저</div><div style="font-size:21px">온도처럼 <strong>곡선 관계</strong>는 r이 작게 나온다. 숫자만 믿지 말고 산점도</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">상관 ≠ 인과</div><div style="font-size:21px"><strong>교란 변수</strong>(습도)를 의심하고, 원인은 <strong>하나만 바꾸는 실험</strong>으로 확인</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="r이 +0.70이면 압력이 높은 제품일수록 강도도 높은 경향이 꽤 강하다는 뜻입니다. 모든 제품이 그런 것은 아니고, 원인이라는 뜻도 아닙니다.">
+      <p class="q-title"><b>Q1.</b> 압력과 강도의 상관계수가 0.70이다. 옳은 해석은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">압력을 올리면 반드시 강도가 70% 오른다</button>
+        <button type="button" data-v="b">제품의 70%만 압력과 관계가 있다</button>
+        <button type="button" data-v="c">압력이 높을수록 강도도 높은 경향이 꽤 강하다</button>
+        <button type="button" data-v="d">압력과 강도는 반대로 움직인다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="상관계수는 직선 관계만 잽니다. 온도는 210℃ 부근에서 강도가 가장 높은 산 모양 관계라 r이 작게 나옵니다. 그래서 숫자 전에 산점도를 그려야 합니다.">
+      <p class="q-title"><b>Q2.</b> 온도↔강도 r = −0.11인데 산점도는 산 모양이다. 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">r이 작으니 온도는 분석에서 빼도 된다</button>
+        <button type="button" data-v="b">곡선 관계라 r이 작게 나왔을 뿐, 온도는 중요할 수 있다</button>
+        <button type="button" data-v="c">산점도가 잘못 그려졌다</button>
+        <button type="button" data-v="d">온도가 높을수록 강도가 직선으로 낮아진다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="야간에는 습도도 높고, 습도가 높으면 불량이 늘어납니다. 이렇게 두 변수 모두에 영향을 주는 제3의 변수를 교란 변수라고 합니다.">
+      <p class="q-title"><b>Q3.</b> 야간에 불량이 많지만 야간에는 습도도 높다. 이때 습도는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">교란 변수 후보</button>
+        <button type="button" data-v="b">이상치</button>
+        <button type="button" data-v="c">결측치</button>
+        <button type="button" data-v="d">관계없는 변수</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="원인을 확인하려면 다른 조건은 고정하고 습도만 바꾸며, 어느 날 바꿀지는 무작위로 정해 비교합니다. 데이터를 더 모으거나 r을 다시 계산하는 것만으로는 인과를 알 수 없습니다.">
+      <p class="q-title"><b>Q4.</b> “습도가 불량의 원인인가?”를 확인하는 가장 좋은 방법은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">상관계수를 소수점 넷째 자리까지 계산한다</button>
+        <button type="button" data-v="b">야간 데이터만 더 많이 모은다</button>
+        <button type="button" data-v="c">원그래프로 다시 그린다</button>
+        <button type="button" data-v="d">다른 조건은 고정하고 습도만 바꾸는 실험을 무작위로 배정한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 8주차 중간고사 → 9주차 머신러닝 시작하기</span></div>
+    <div class="big">9-1</div>
+    <h2>머신러닝이란? (지도·비지도 학습)</h2>
+    <p>오늘 찾은 관계를 컴퓨터가 데이터에서 스스로 배우게 합니다.</p>
+    <div class="box warn" style="margin:6px 0 0;padding:12px 18px;background:var(--surface)"><p style="font-size:19px;margin:0"><svg class="ic" style="color:var(--accent-2)"><use href="#i-cap"/></svg> <strong>8주차 중간고사</strong> — 1~7주 내용, 오프라인(대면) 평가, 객관식·단답형</p></div>
+    <p style="margin-top:18px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week09/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-bot"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">7주 3차시 · 상관관계와 인과관계: 공정 변수와 품질</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="w07data.js"></script>
+<script src="w07plot.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

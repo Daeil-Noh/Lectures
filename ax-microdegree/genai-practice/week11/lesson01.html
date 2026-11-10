@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11주 1차시 · 이미지 생성 AI 활용(Gemini) | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 11주 1차시 교안: 이미지 프롬프트 6요소(피사체·배경·구도·조명·스타일·비율), 이어서 고치기, 브랜드 일관성, 이미지 생성 AI의 한계와 금지 사항">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .spin, .flowdot { display: none; } }
+  /* 바다결(가상) 브랜드 색 — 내용으로서의 색 */
+  :root { --bd-navy: #1f4e79; --bd-sand: #eadbc3; --bd-coral: #e8836b; --sk-wood: #d2ad84; --sk-wood2: #c39a6e; --sk-sky: #bfe0f0; --sk-sea: #6fa8cf; --sk-bowl: #ffffff; --sk-gran: #b8834a; }
+  @media (prefers-color-scheme: dark) { :root { --sk-bowl: #f4f1ea; } }
+
+  /* 선택 칩 */
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { font: inherit; font-size: 14px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .chip:hover { border-color: var(--accent); }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .grp { display: grid; grid-template-columns: 52px 1fr; gap: 6px; align-items: start; }
+  .grp > b { font-size: 14px; color: var(--accent); padding-top: 4px; }
+  .grp.miss > b { color: var(--muted); }
+  .mini .prompt pre { font-size: 14px; line-height: 1.5; padding: 8px 12px; max-height: 250px; overflow: auto; }
+  .mini .prompt-h { padding: 5px 12px; font-size: 13px; }
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 15px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 판정 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 14px; min-height: 150px; display: flex; flex-direction: column; gap: 6px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .pq { font-size: 15.5px; line-height: 1.45; font-weight: 700; }
+  .pcard .pq::before { content: "“"; color: var(--accent); font-weight: 800; }
+  .pcard .pq::after { content: "”"; color: var(--accent); font-weight: 800; }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 16px; }
+  .pcard .ans { display: none; font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+  .pcard.open .verdict, .pcard.open .ans { display: block; }
+  .pcard.open.ok { background: var(--ok-soft); border-color: var(--ok); } .pcard.open.ok .verdict { color: var(--ok); }
+  .pcard.open.fix { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.fix .verdict { color: var(--accent-2); }
+  .pcard.open.no { background: var(--bad-soft); border-color: var(--bad); } .pcard.open.no .verdict { color: var(--bad); }
+  .swatch { display: inline-block; width: 18px; height: 18px; border-radius: 5px; vertical-align: -3px; border: 1px solid var(--line); }
+  .ratio { display: grid; place-items: center; border: 2px solid var(--accent); border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 18px; }
+  .chat .msg { font-size: 16px; }
+  .exlabel { font-size: 12.5px; font-weight: 800; color: var(--accent-2); }
+  .sk-frame { border-radius: 10px; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-crop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></symbol>
+</svg>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 11주차 1차시</p>
+    <h1>이미지 생성 AI<br>활용(Gemini)</h1>
+    <p class="lead" style="font-size:25px">말로 그리는 홍보 이미지 —<br>무엇을, 어떻게 말해야 할까?</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span><span>바다결 홍보 이미지</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="120" y="30" width="300" height="375" rx="22" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <rect x="140" y="50" width="260" height="335" rx="14" fill="var(--bd-sand)"/>
+    <rect x="140" y="270" width="260" height="115" fill="var(--sk-wood)"/>
+    <g stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 6" opacity=".7"><path d="M227 50v335M313 50v335M140 162h260M140 273h260"/></g>
+    <ellipse cx="250" cy="290" rx="78" ry="26" fill="var(--sk-bowl)" stroke="var(--bd-navy)" stroke-width="3"/>
+    <path d="M172 290 Q178 345 250 350 Q322 345 328 290" fill="var(--sk-bowl)" stroke="var(--bd-navy)" stroke-width="3"/>
+    <g fill="var(--sk-gran)"><circle cx="220" cy="286" r="6"/><circle cx="240" cy="281" r="7"/><circle cx="262" cy="288" r="6"/><circle cx="282" cy="282" r="5"/><circle cx="252" cy="294" r="5"/><circle cx="230" cy="294" r="4"/></g>
+    <rect x="320" y="70" width="64" height="44" rx="6" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>
+    <g transform="translate(150 60)"><g class="spin" style="transform-origin:22px 22px;animation:spin 14s linear infinite"><g transform="scale(1.85)" style="color:var(--accent-2)"><use href="#i-sun" width="24" height="24"/></g></g></g>
+    <g transform="translate(400 300) scale(2.6)" style="color:var(--accent)"><use href="#i-sparkles" width="24" height="24"/></g>
+    <g font-size="15" font-weight="800">
+      <rect x="10" y="90" width="84" height="32" rx="16" class="f-accs"/><text x="52" y="111" text-anchor="middle" class="t-acc">피사체</text>
+      <rect x="10" y="150" width="84" height="32" rx="16" class="f-accs"/><text x="52" y="171" text-anchor="middle" class="t-acc">배경</text>
+      <rect x="10" y="210" width="84" height="32" rx="16" class="f-accs"/><text x="52" y="231" text-anchor="middle" class="t-acc">구도</text>
+      <rect x="430" y="110" width="84" height="32" rx="16" class="f-acc2s"/><text x="472" y="131" text-anchor="middle" class="t-acc2">조명</text>
+      <rect x="430" y="170" width="84" height="32" rx="16" class="f-acc2s"/><text x="472" y="191" text-anchor="middle" class="t-acc2">스타일</text>
+      <rect x="430" y="230" width="84" height="32" rx="16" class="f-acc2s"/><text x="472" y="251" text-anchor="middle" class="t-acc2">비율</text>
+    </g>
+  </svg>
+  <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-image"/></svg></span><div class="h">6요소 프롬프트</div><div class="d">피사체·배경·구도·조명·스타일·비율을 넣어 이미지 프롬프트를 쓴다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-pen"/></svg></span><div class="h">이어서 고치기</div><div class="d">바꿀 것과 그대로 둘 것을 나눠 한 번에 하나씩 고친다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">브랜드 일관성</div><div class="d">스타일 고정 문구로 여러 장의 색·톤을 맞춘다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">한계와 금지</div><div class="d">글자 깨짐·제품 왜곡을 알고, 만들면 안 되는 이미지를 가려낸다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>① 이미지 프롬프트 6요소</b><small>직접 해 보기 1 · Gemini 실습</small></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② 고치고, 브랜드에 맞추기</b><small>직접 해 보기 2</small></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>③ 한계와 규칙</b><small>직접 해 보기 3</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 10주 3차시 <strong>캠페인 기획서</strong>를 옆에 두세요. 실습: 이미지는 <strong>Gemini</strong>(학교 Google 계정)로 만들고, 프롬프트 다듬기는 <strong>Gemini·Claude</strong> 어느 쪽이든. Claude는 이미지를 만들지 않습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>“그래놀라 사진 만들어 줘” — 무엇이 나올까?</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div class="chat" style="width:330px;flex:none">
+      <div class="chat-h">AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">그래놀라 사진 만들어 줘</div>
+      <div class="msg ai"><span class="exlabel">예시 — 실제 결과는 매번 다름</span>
+이미지를 만들었어요.</div>
+      <div class="muted" style="font-size:15px">같은 한 줄로 세 번 만들면?</div>
+    </div>
+    <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      <div class="frag show" style="display:grid;gap:8px">
+        <svg viewBox="0 0 200 200" aria-label="어두운 탁자 위 가로 구도 스케치"><rect width="200" height="200" rx="12" fill="#3b3530"/><rect y="120" width="200" height="80" fill="#5a4a3c"/><ellipse cx="100" cy="125" rx="50" ry="16" fill="#eee" /><g fill="var(--sk-gran)"><circle cx="85" cy="122" r="5"/><circle cx="100" cy="118" r="6"/><circle cx="114" cy="124" r="5"/></g></svg>
+        <div style="font-size:16px"><b>A</b> 어둡고 무거운 분위기</div>
+      </div>
+      <div class="frag" style="display:grid;gap:8px">
+        <svg viewBox="0 0 200 200" aria-label="숲 속 피크닉 스케치"><rect width="200" height="200" rx="12" fill="#bfe3b0"/><path d="M0 120 L40 60 L80 120 Z M60 120 L110 40 L160 120Z" fill="#5f9a55"/><rect y="120" width="200" height="80" fill="#e9d6a0"/><ellipse cx="130" cy="160" rx="34" ry="12" fill="#fff"/><g fill="var(--sk-gran)"><circle cx="122" cy="158" r="4"/><circle cx="136" cy="156" r="4"/></g></svg>
+        <div style="font-size:16px"><b>B</b> 숲 속 피크닉, 제품은 작게</div>
+      </div>
+      <div class="frag" style="display:grid;gap:8px">
+        <svg viewBox="0 0 200 200" aria-label="깨진 글자가 들어간 스케치"><rect width="200" height="200" rx="12" fill="#f6e6ef"/><ellipse cx="100" cy="130" rx="56" ry="18" fill="#fff" stroke="#d58fb0" stroke-width="2"/><g fill="var(--sk-gran)"><circle cx="86" cy="127" r="5"/><circle cx="102" cy="123" r="6"/><circle cx="116" cy="129" r="5"/></g><text x="100" y="60" text-anchor="middle" style="font-size:26px;font-weight:800;fill:#b04a7a">GRNAOLA</text><text x="100" y="86" text-anchor="middle" style="font-size:18px;font-weight:800;fill:#b04a7a">바다곁 그래널</text></svg>
+        <div style="font-size:16px"><b>C</b> 분홍 톤, <span style="color:var(--bad);font-weight:800">글자가 깨짐</span></div>
+      </div>
+      <div class="box warn frag" style="grid-column:1/-1;margin:0;padding:14px 20px"><p style="margin:0;font-size:20px">말하지 않은 칸(배경·구도·조명·색·비율)은 <strong>AI가 마음대로 채웁니다.</strong> 홍보에 쓰려면 <strong>원하는 것을 구체적으로</strong> 말해야 합니다.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시 · 그림은 설명용 스케치 (AI 생성 이미지 아님)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>이미지 프롬프트의 6요소</h2><p>사진작가에게 촬영을 부탁하듯 말합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-image"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 6요소 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 이미지 프롬프트 6요소</span></div>
+  <h2>무엇을 · 어디서 · 어떻게 찍을까</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);gap:14px">
+      <div class="tile row frag show" style="padding:16px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h">피사체</div><div class="d">무엇을, 몇 개, 어떤 상태로<br><b style="color:var(--text)">“그래놀라 한 그릇, 우유를 막 부은”</b></div></div></div>
+      <div class="tile row frag" style="padding:16px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div><div class="h">배경</div><div class="d">어디서, 주변에 무엇이<br><b style="color:var(--text)">“아침 햇살 드는 원목 식탁”</b></div></div></div>
+      <div class="tile row frag" style="padding:16px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-crop"/></svg></span><div><div class="h">구도</div><div class="d">어느 각도, 제품 위치, 여백<br><b style="color:var(--text)">“45도 각도, 오른쪽 위 여백”</b></div></div></div>
+      <div class="tile row frag" style="padding:16px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-sun"/></svg></span><div><div class="h">조명</div><div class="d">빛의 종류·방향·분위기<br><b style="color:var(--text)">“왼쪽 위 부드러운 자연광”</b></div></div></div>
+      <div class="tile row frag" style="padding:16px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-pen"/></svg></span><div><div class="h">스타일</div><div class="d">사진인지 그림인지, 색감<br><b style="color:var(--text)">“사실적인 제품 사진”</b></div></div></div>
+      <div class="tile row frag" style="padding:16px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-image"/></svg></span><div><div class="h">비율</div><div class="d">올릴 곳에 맞는 가로·세로<br><b style="color:var(--text)">“4:5 세로”</b></div></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:20px">3주차 프롬프트 4요소(역할·맥락·지시·형식)의 <strong style="color:var(--text)">이미지판</strong>이라고 생각하면 됩니다. 앞의 셋은 <span style="color:var(--accent);font-weight:800">무엇을</span>, 뒤의 셋은 <span style="color:var(--accent-2);font-weight:800">어떻게</span>.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 구도·비율 말 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 이미지 프롬프트 6요소</span></div>
+  <h2>구도와 비율, 이렇게 말하면 통한다</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile" style="padding:20px 22px">
+        <div class="h">구도 말하기</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;font-size:16px">
+          <div><svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="10" fill="var(--bd-sand)"/><circle cx="60" cy="60" r="34" fill="var(--sk-bowl)" stroke="var(--bd-navy)" stroke-width="3"/><g fill="var(--sk-gran)"><circle cx="50" cy="55" r="6"/><circle cx="66" cy="50" r="6"/><circle cx="62" cy="68" r="6"/><circle cx="48" cy="70" r="4"/></g></svg><b>위에서 내려다본</b><br><span class="muted">탑뷰 · 여러 제품 배치</span></div>
+          <div><svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="10" fill="var(--bd-sand)"/><rect y="70" width="120" height="50" fill="var(--sk-wood)"/><ellipse cx="60" cy="72" rx="36" ry="12" fill="var(--sk-bowl)" stroke="var(--bd-navy)" stroke-width="3"/><path d="M24 72 Q28 100 60 102 Q92 100 96 72" fill="var(--sk-bowl)" stroke="var(--bd-navy)" stroke-width="3"/></svg><b>45도 각도</b><br><span class="muted">식탁에 앉은 눈높이</span></div>
+          <div><svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="10" fill="var(--bd-sand)"/><circle cx="60" cy="80" r="70" fill="var(--sk-bowl)" stroke="var(--bd-navy)" stroke-width="3"/><g fill="var(--sk-gran)"><circle cx="40" cy="50" r="12"/><circle cx="72" cy="44" r="13"/><circle cx="60" cy="76" r="12"/><circle cx="92" cy="74" r="9"/></g></svg><b>가까이 클로즈업</b><br><span class="muted">질감·바삭함 강조</span></div>
+        </div>
+        <div class="callout b" style="font-size:16px">+ <b>여백</b>: “오른쪽 위에 글자 넣을 빈 공간” — 문구는 나중에 편집 앱에서</div>
+      </div>
+      <div class="tile" style="padding:20px 22px">
+        <div class="h">비율 말하기</div>
+        <div style="display:flex;align-items:flex-end;gap:16px;height:170px">
+          <div style="text-align:center;font-size:15px"><div class="ratio" style="width:100px;height:100px">1:1</div><span class="muted">정사각 피드</span></div>
+          <div style="text-align:center;font-size:15px"><div class="ratio" style="width:88px;height:110px">4:5</div><span class="muted">세로 피드</span></div>
+          <div style="text-align:center;font-size:15px"><div class="ratio" style="width:72px;height:128px;background:var(--accent-2-soft);border-color:var(--accent-2);color:var(--accent-2)">9:16</div><span class="muted">숏폼·스토리</span></div>
+          <div style="text-align:center;font-size:15px"><div class="ratio" style="width:150px;height:84px">16:9</div><span class="muted">가로 영상·배너</span></div>
+        </div>
+        <div class="callout" style="font-size:16px">올릴 곳을 <strong>먼저 정하고</strong> 비율을 고릅니다. 다 만든 뒤 자르면 제품이 잘릴 수 있어요.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시 · 플랫폼별 권장 크기는 바뀔 수 있으니 올리기 전에 확인</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 직접 해 보기 1: 프롬프트 조립기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 이미지 프롬프트 6요소 · 직접 해 보기 1</span></div>
+  <h2>이미지 프롬프트 조립기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 요소를 고르면 구도 스케치와 프롬프트가 바뀐다</span></h2>
+  <div class="demo" style="grid-template-columns:380px 1fr 330px;gap:16px">
+    <div class="side" style="gap:12px"><div id="pb-groups" style="display:grid;gap:7px"></div><div class="callout" style="font-size:15px">같은 칩을 다시 누르면 선택이 풀립니다. 하나씩 빼 보면서 <strong>스케치의 ? 표시</strong>가 어떻게 늘어나는지 보세요.</div></div>
+    <div class="plot" style="padding:8px;flex-direction:column;gap:4px">
+      <svg id="pb-sk" viewBox="0 0 400 400" aria-label="고른 요소에 따른 구도 미리보기 스케치" style="height:calc(100% - 26px)"></svg>
+      <div class="muted" style="font-size:13px;font-weight:700;text-align:center">구도 미리보기 — AI 이미지가 아닌 설명용 스케치</div>
+    </div>
+    <div class="side mini" style="gap:8px">
+      <div class="meter"><div class="lbl">6요소 중 고른 것</div><div class="val" id="pb-n" style="font-size:32px">1 / 6</div><div class="track"><i id="pb-bar"></i></div></div>
+      <div class="prompt"><div class="prompt-h">프롬프트 (Gemini에 붙여 넣기)<button class="copy" type="button">복사</button></div><pre id="pb-out"></pre></div>
+      <div class="callout b" id="pb-msg" style="font-size:15px"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시 · 바다결은 실습용 가상 회사</span><span class="no"></span></div>
+</section>
+
+<!-- 9. Gemini 실습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 이미지 프롬프트 6요소 · 따라 하기</span></div>
+  <h2>Gemini에서 그대로 따라 해 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:24px">
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="prompt"><div class="prompt-h">프롬프트 ① 기본<button class="copy" type="button">복사</button></div><pre><mark>사실적인 제품 사진</mark> 이미지를 만들어 줘.
+- 피사체: <mark>그래놀라 한 그릇, 우유를 막 부은 모습</mark>
+- 배경: <mark>아침 햇살이 드는 밝은 원목 식탁</mark>
+- 구도: <mark>45도 각도, 그릇은 화면 왼쪽</mark>
+- 조명: <mark>왼쪽 위에서 드는 부드러운 자연광</mark>
+- 비율: <mark>4:5 세로</mark>
+- 오른쪽 위에 글자를 넣을 빈 공간을 남겨 줘
+- 이미지 안에 글자·로고는 넣지 마</pre></div>
+      <div class="callout b" style="font-size:16px"><svg class="ic"><use href="#i-sparkles"/></svg> 같은 프롬프트로 <strong>2~3번</strong> 만들어 비교하고, 가장 가까운 것을 골라 다음 장처럼 고칩니다.</div>
+      <a class="btn ghost" href="materials/image_prompt_template.txt" download style="align-self:flex-start"><svg class="ic"><use href="#i-log"/></svg> 실습 자료 받기: 이미지 프롬프트 6요소 틀</a>
+    </div>
+    <div style="width:390px;flex:none;display:grid;gap:10px;align-content:start">
+      <div class="tile row" style="padding:12px 16px;gap:14px"><span class="ic-badge" style="width:46px;height:46px;font-size:24px">1</span><div class="d" style="font-size:17px;color:var(--text)"><b>학교 Google 계정</b>으로 Gemini 열기</div></div>
+      <div class="tile row" style="padding:12px 16px;gap:14px"><span class="ic-badge" style="width:46px;height:46px;font-size:24px">2</span><div class="d" style="font-size:17px;color:var(--text)">프롬프트 <b>복사 → 붙여 넣기</b> → 보내기</div></div>
+      <div class="tile row" style="padding:12px 16px;gap:14px"><span class="ic-badge" style="width:46px;height:46px;font-size:24px">3</span><div class="d" style="font-size:17px;color:var(--text)">결과를 보고 <b>6요소 중 어긋난 것</b> 찾기</div></div>
+      <div class="tile row" style="padding:12px 16px;gap:14px"><span class="ic-badge o" style="width:46px;height:46px;font-size:24px">4</span><div class="d" style="font-size:17px;color:var(--text)">마음에 드는 이미지 저장 + <b>프롬프트도 메모</b> (과제2에 제출)</div></div>
+      <div class="callout" style="font-size:15px">사용량 한도에 걸리면 잠시 뒤 다시 하거나, 그동안 Claude로 프롬프트를 다듬어 둡니다. 메뉴·버튼 위치는 서비스 화면에 따라 바뀔 수 있어요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시 · &lt;mark&gt; 부분을 내 기획에 맞게 바꿔 쓰기</span><span class="no"></span></div>
+</section>
+
+<!-- 10. Claude/Gemini로 프롬프트 만들기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 이미지 프롬프트 6요소 · 따라 하기</span></div>
+  <h2>프롬프트가 막막하면? AI에게 프롬프트를 쓰게 한다</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:24px">
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="prompt"><div class="prompt-h">프롬프트 ② Gemini·Claude 어느 쪽이든<button class="copy" type="button">복사</button></div><pre>너는 식품 광고 사진 디렉터야. 아래 브랜드 가이드를 읽고,
+<mark>페르소나 서윤(바쁜 아침을 간단히 해결하고 싶은 20~30대 직장인)</mark>에게
+<mark>오리지널 그래놀라</mark>를 알리는
+이미지 생성 프롬프트 3개를 써 줘.
+- 각 프롬프트에 피사체·배경·구도·조명·스타일·비율을 모두 넣어
+- 이미지 안에 글자·로고는 넣지 않게 하고, 글자 넣을 여백 위치를 정해
+- 사람이 나오면 얼굴 대신 손이나 뒷모습으로
+- 표로: 번호 / 장면 한 줄 요약 / 프롬프트 전문
+
+[브랜드 가이드]
+<mark>(badagyeol_brand_guide.txt 내용 붙여 넣기)</mark></pre></div>
+      <a class="btn ghost" href="materials/badagyeol_brand_guide.txt" download style="align-self:flex-start"><svg class="ic"><use href="#i-book"/></svg> 실습 자료 받기: 바다결 브랜드 가이드</a>
+    </div>
+    <div class="chat" style="width:400px;flex:none">
+      <div class="chat-h">AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">(위 프롬프트 + 브랜드 가이드)</div>
+      <div class="msg ai"><span class="exlabel">예시 답변 — 실제 답은 매번 다를 수 있음</span>
+<b>1. 출근 전 한 그릇</b>
+사실적인 제품 사진. 밝은 원목 식탁 위 그래놀라 한 그릇과 우유병, 45도 각도, 왼쪽 위 아침 자연광, 바다 남색 냅킨, 4:5 세로, 오른쪽 위 여백, 글자 없음
+
+<b>2. 가방 옆 간식</b> …
+<b>3. 창가의 바다</b> …</div>
+      <div class="muted" style="font-size:14.5px">받은 프롬프트를 <strong>Gemini</strong>에 넣어 이미지를 만듭니다. 브랜드 가이드는 가상 자료라서 붙여 넣어도 괜찮습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시 · 9주차 Gems·프로젝트에 브랜드 가이드를 넣어 두면 매번 붙여 넣지 않아도 된다</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>고치고, 브랜드에 맞추기</h2><p>한 장을 다듬고, 여러 장을 한 가족처럼.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-pen"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 이어서 고치기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 고치고, 맞추기</span></div>
+  <h2>처음부터 다시? 아니요, 이어서 고친다</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:26px">
+    <div class="chat" style="flex:1">
+      <div class="chat-h">AI 채팅 (화면은 단순화한 예시) · 앞 장의 이미지에 이어서</div>
+      <div class="msg user frag show">그릇과 구도는 그대로 두고, <b>배경만</b> 부산 바다가 멀리 보이는 창가로 바꿔 줘.</div>
+      <div class="msg ai frag"><span class="exlabel">예시</span>배경을 바꿨어요. (그릇 모양이 조금 달라졌을 수 있어요)</div>
+      <div class="msg user frag">그릇 모양은 <b>처음 것처럼</b> 둥글게. 색감만 조금 더 따뜻하게.</div>
+      <div class="msg user frag">오른쪽 위 빈 공간을 <b>조금 더 넓혀</b> 줘. 나머지는 바꾸지 마.</div>
+    </div>
+    <div style="width:420px;flex:none;display:grid;gap:12px;align-content:start">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">한 번에 하나씩</div><div class="d">여러 개를 한꺼번에 바꾸면 무엇 때문에 달라졌는지 모른다</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-shield"/></svg></span><div><div class="h" style="font-size:20px">그대로 둘 것도 말하기</div><div class="d">“그릇과 구도는 그대로” — 말하지 않으면 함께 바뀔 수 있다</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-image"/></svg></span><div><div class="h" style="font-size:20px">실제 사진에서 시작하기</div><div class="d">직접 찍은 제품 사진을 올리고 <b>배경만</b> 바꿔 달라고 할 수도 있다 — 제품 모양이 그대로인지 꼭 확인</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시 · 3주 3차시 “대화로 결과 다듬기”의 이미지판</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 2: 일관성 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 고치고, 맞추기 · 직접 해 보기 2</span></div>
+  <h2>SNS 게시물 4장, 한 브랜드처럼 보이게 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:10px;padding:16px">
+      <div id="cs-thumbs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px"></div>
+      <div class="muted" style="font-size:14px;text-align:center">게시물 4장 미리보기 (설명용 스케치) — 그래놀라 · 현미칩 · 견과 믹스 · 선물 세트</div>
+      <div style="display:flex;gap:14px;justify-content:center;align-items:center;font-size:15px;margin-top:6px"><b>바다결 브랜드 색</b><span><span class="swatch" style="background:var(--bd-navy)"></span> 바다 남색</span><span><span class="swatch" style="background:var(--bd-sand)"></span> 모래 베이지</span><span><span class="swatch" style="background:var(--bd-coral)"></span> 산호(포인트)</span></div>
+    </div>
+    <div class="side mini" style="gap:8px">
+      <div class="toggles" id="cs-tg">
+        <button class="tgl" type="button" data-k="pal" aria-pressed="false"><span class="chk"></span>① 색 팔레트 고정</button>
+        <button class="tgl" type="button" data-k="light" aria-pressed="false"><span class="chk"></span>② 조명 방향 고정</button>
+        <button class="tgl" type="button" data-k="angle" aria-pressed="false"><span class="chk"></span>③ 구도(각도) 고정</button>
+        <button class="tgl" type="button" data-k="space" aria-pressed="false"><span class="chk"></span>④ 여백 위치 고정</button>
+      </div>
+      <div class="status bad" id="cs-st"></div>
+      <div class="prompt"><div class="prompt-h">스타일 고정 문구 (모든 프롬프트 끝에)<button class="copy" type="button">복사</button></div><pre id="cs-out"></pre></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시 · 색 값은 가상 브랜드 가이드 기준</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 브랜드 일관성 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 고치고, 맞추기</span></div>
+  <h2>브랜드 일관성을 지키는 세 가지 습관</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">고정 문구를 매번 붙인다</div><div class="d">색·조명·구도·여백을 적은 <b>스타일 고정 문구</b>를 모든 프롬프트 끝에 그대로</div>
+        <div style="display:flex;gap:6px;align-items:center;font-size:15px"><span class="swatch" style="background:var(--bd-navy)"></span>바다 남색 <span class="swatch" style="background:var(--bd-sand)"></span>모래 베이지 <span class="swatch" style="background:var(--bd-coral)"></span>산호</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">가이드를 AI 비서에 넣어 둔다</div><div class="d">9주차에 만든 <b>Gemini Gem</b>이나 <b>Claude 프로젝트</b>에 브랜드 가이드를 넣어 두면 대화마다 다시 설명하지 않아도 된다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">나란히 놓고 본다</div><div class="d">한 장씩 보면 괜찮아도 <b>나란히 놓으면</b> 색·밝기가 튄다. 올리기 전에 전체를 한 번에 확인</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">그래도 장마다 조금씩 달라집니다. AI는 매번 새로 그리기 때문 — <strong style="color:var(--text)">완전히 같게</strong>는 어렵고, <strong style="color:var(--text)">한 가족처럼</strong>이 목표입니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>한계와 규칙</h2><p>그럴듯해 보여도, 광고에 쓰기 전에 한 번 더.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 한계 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 한계와 규칙</span></div>
+  <h2>이미지 AI가 자주 틀리는 곳</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr);gap:14px">
+      <div class="tile frag show" style="padding:16px">
+        <svg viewBox="0 0 200 110" aria-hidden="true"><rect width="200" height="110" rx="10" class="f-s2"/><text x="100" y="52" text-anchor="middle" style="font-size:24px;font-weight:800;fill:var(--bad)">바다곁 그래널</text><text x="100" y="86" text-anchor="middle" style="font-size:18px;font-weight:800;fill:var(--muted)">GRNAOLA</text></svg>
+        <div class="h" style="font-size:20px">글자가 깨진다</div><div class="d" style="font-size:16px">한글·상품명·가격이 틀리거나 뭉개진다 → <b>글자는 편집 앱에서</b></div></div>
+      <div class="tile frag" style="padding:16px">
+        <svg viewBox="0 0 200 110" aria-hidden="true"><rect width="200" height="110" rx="10" class="f-s2"/><g fill="#e9c9a8" stroke="var(--muted)" stroke-width="2"><rect x="70" y="52" width="60" height="42" rx="14"/><rect x="72" y="22" width="11" height="38" rx="5"/><rect x="85" y="16" width="11" height="42" rx="5"/><rect x="98" y="14" width="11" height="44" rx="5"/><rect x="111" y="18" width="11" height="40" rx="5"/><rect x="124" y="26" width="11" height="34" rx="5"/><rect x="137" y="34" width="10" height="30" rx="5"/></g><text x="178" y="30" text-anchor="middle" style="font-size:22px;font-weight:800;fill:var(--bad)">?</text></svg>
+        <div class="h" style="font-size:20px">손·숟가락이 이상하다</div><div class="d" style="font-size:16px">손가락 수, 물건을 쥔 모양이 어색할 때가 많다 → <b>확대해서 확인</b></div></div>
+      <div class="tile frag" style="padding:16px">
+        <svg viewBox="0 0 200 110" aria-hidden="true"><rect width="200" height="110" rx="10" class="f-s2"/><rect x="30" y="20" width="56" height="76" rx="6" fill="var(--bd-sand)" stroke="var(--bd-navy)" stroke-width="3"/><text x="58" y="104" text-anchor="middle" class="t-sub" style="font-size:11px">실제 봉지</text><path d="M118 24 Q140 14 166 26 L172 92 Q140 102 112 90 Z" fill="#f3c7d8" stroke="#b04a7a" stroke-width="3"/><text x="142" y="106" text-anchor="middle" class="t-sub" style="font-size:11px">AI가 그린 봉지</text></svg>
+        <div class="h" style="font-size:20px">실제 제품과 다르다</div><div class="d" style="font-size:16px">포장 색·모양·양이 실제와 다르게 나온다 → 그대로 광고하면 <b>소비자 오해</b></div></div>
+      <div class="tile frag" style="padding:16px">
+        <svg viewBox="0 0 200 110" aria-hidden="true"><rect width="200" height="110" rx="10" class="f-s2"/><ellipse cx="100" cy="66" rx="70" ry="22" fill="var(--sk-bowl)" stroke="var(--muted)" stroke-width="2"/><g fill="var(--sk-gran)"><circle cx="60" cy="56" r="9"/><circle cx="80" cy="46" r="10"/><circle cx="104" cy="42" r="11"/><circle cx="128" cy="46" r="10"/><circle cx="146" cy="56" r="9"/><circle cx="96" cy="30" r="9"/><circle cx="116" cy="26" r="8"/></g></svg>
+        <div class="h" style="font-size:20px">너무 좋아 보인다</div><div class="d" style="font-size:16px">실제보다 양이 많고 색이 진하게 나오기 쉽다 → <b>실제와 비교</b></div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:18px;padding:16px 24px"><p style="font-size:19px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> 광고에서 실제와 다르게 보이게 하면 「표시·광고의 공정화에 관한 법률」이 금지하는 <strong>거짓·과장 광고</strong>가 될 수 있습니다. 실제 제품 사진과 구분하고, 필요하면 <strong>“연출 이미지”</strong>라고 알립니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시 · 그림은 설명용 스케치</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 만들지 않는 것 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 한계와 규칙</span></div>
+  <h2>이런 이미지는 만들지 않는다</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile" style="align-items:center;text-align:center"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">실존 인물·유명인</div><div class="d">연예인·인플루언서·주변 사람의 얼굴이나 닮은 모델 — 초상권, 이름·얼굴의 상업적 가치 침해</div></div>
+      <div class="tile" style="align-items:center;text-align:center"><span class="ic-badge lg o"><svg class="ic"><use href="#i-box"/></svg></span><div class="h">남의 로고·캐릭터</div><div class="d">다른 회사의 로고·상표·포장, 애니메이션·게임 캐릭터 — 상표권·저작권 문제</div></div>
+      <div class="tile" style="align-items:center;text-align:center"><span class="ic-badge lg o"><svg class="ic"><use href="#i-image"/></svg></span><div class="h">남의 작품 베끼기</div><div class="d">특정 작가의 그림·사진을 넣고 “똑같이” — 일반적인 화풍(수채화풍 등)은 괜찮다</div></div>
+    </div>
+    <div class="callout b frag" style="margin-top:22px;font-size:19px">사람이 필요하면 <strong>손·뒷모습·소품</strong>으로. 왜 안 되는지, 어디까지 괜찮은지는 <strong>11주 3차시</strong>에서 자세히 다룹니다. 서비스 자체가 이런 요청을 거절하기도 합니다.</div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시 · 1주 3차시 “안전하게 쓰는 기본 규칙”과 연결</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 직접 해 보기 3: 판정 카드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 한계와 규칙 · 직접 해 보기 3</span></div>
+  <h2>이 이미지 프롬프트 괜찮을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 판단하고 카드를 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="vcards"></div>
+    <div style="display:flex;gap:18px;align-items:center;margin-top:12px;font-size:16px">
+      <span class="muted" id="vc-score">0 / 8 확인</span>
+      <span class="legend"><span><i class="dot" style="background:var(--ok)"></i>좋음</span><span><i class="dot" style="background:var(--accent-2)"></i>고쳐서 쓰기</span><span><i class="dot" style="background:var(--bad)"></i>만들지 않기</span></span>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시 · 인물·회사·캐릭터 이름은 넣지 않은 가상 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-image"/></svg></span><div class="h">6요소로 말한다</div><div style="font-size:21px">피사체·배경·구도·조명·스타일·비율. 말하지 않은 칸은 <strong>AI가 마음대로</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-pen"/></svg></span><div class="h">이어서, 하나씩</div><div style="font-size:21px">바꿀 것 + <strong>그대로 둘 것</strong>. 여러 장은 <strong>스타일 고정 문구</strong>로 한 가족처럼</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">광고 전에 확인</div><div style="font-size:21px">글자는 편집 앱에서, 실제 제품과 비교. <strong>실존 인물·남의 로고·캐릭터</strong>는 만들지 않는다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="피사체(그래놀라)·배경(원목 식탁)·구도(45도)·조명(자연광)·스타일(사진)은 있지만, 올릴 곳에 맞춘 비율이 빠졌습니다. 비율을 안 쓰면 AI가 마음대로 정합니다.">
+      <p class="q-title"><b>Q1.</b> “그래놀라 한 그릇, 원목 식탁, 45도, 자연광, 사실적 사진” — 6요소 중 빠진 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">피사체</button>
+        <button type="button" data-v="b">조명</button>
+        <button type="button" data-v="c">비율</button>
+        <button type="button" data-v="d">빠진 것 없음</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="바꿀 것 하나와 그대로 둘 것을 함께 말해야 다른 부분이 같이 바뀌는 것을 줄일 수 있습니다. 한꺼번에 여러 개를 바꾸면 원인을 알기 어렵습니다.">
+      <p class="q-title"><b>Q2.</b> 마음에 드는 이미지에서 배경만 바꾸고 싶다. 가장 좋은 요청은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">“다시 만들어 줘”</button>
+        <button type="button" data-v="b">“그릇과 구도는 그대로 두고, 배경만 창가로 바꿔 줘”</button>
+        <button type="button" data-v="c">“배경, 색감, 각도, 조명 전부 더 예쁘게 바꿔 줘”</button>
+        <button type="button" data-v="d">새 대화를 열고 처음부터 다른 프롬프트로</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="이미지 생성 AI는 글자를 자주 틀리게 그립니다. 이미지에는 빈 공간만 남기고, 상품명·가격 같은 문구는 편집 앱에서 정확하게 넣습니다.">
+      <p class="q-title"><b>Q3.</b> 이미지에 “신제품 9,800원” 문구를 넣고 싶다. 가장 안전한 방법은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">프롬프트에 문구를 크게 넣으라고 쓴다</button>
+        <button type="button" data-v="b">글자가 깨지면 깨진 대로 올린다</button>
+        <button type="button" data-v="c">글자가 맞게 나올 때까지 계속 다시 만든다</button>
+        <button type="button" data-v="d">이미지엔 여백만 남기고 문구는 편집 앱에서 넣는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="실존 유명인의 얼굴이나 닮은 모습을 광고에 쓰면 초상권과 이름·얼굴의 상업적 가치를 침해할 수 있습니다. 사람이 필요하면 손·뒷모습 등으로 표현합니다.">
+      <p class="q-title"><b>Q4.</b> 다음 중 만들지 <u>않아야</u> 할 이미지는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">인기 배우가 우리 그래놀라를 먹는 광고 이미지</button>
+        <button type="button" data-v="b">수채화풍의 부산 바다와 현미칩 봉지 일러스트</button>
+        <button type="button" data-v="c">손이 그래놀라 그릇을 들고 있는 45도 사진</button>
+        <button type="button" data-v="d">위에서 내려다본 제품 5종 배치 사진</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">11-2</div>
+    <h2>숏폼 영상 기획: 대본과 스토리보드</h2>
+    <p>오늘 만든 이미지를 컷으로 이어 붙이면? 첫 장면의 훅부터 행동 유도까지, 짧은 영상을 설계합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week10/lesson03.html">← 10주 3차시</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-play"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 11주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">11주 1차시 · 이미지 생성 AI 활용(Gemini)</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

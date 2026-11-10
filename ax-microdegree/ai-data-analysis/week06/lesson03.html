@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6주 3차시 · 그룹별 집계로 비교하기 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 6주 3차시 교안: groupby의 나누기-계산하기-합치기, 0/1 평균으로 불량률 구하기, 주야간·라인·호기 비교, agg·pivot_table·crosstab, 작은 그룹 주의">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .slide2 { animation: sl 4s ease-in-out infinite alternate; }
+  .slide2.r { animation-name: sr; }
+  @keyframes sl { 0%, 25% { transform: translateX(0); } 75%, 100% { transform: translateX(-26px); } }
+  @keyframes sr { 0%, 25% { transform: translateX(0); } 75%, 100% { transform: translateX(26px); } }
+  @media (prefers-reduced-motion: reduce) { .slide2 { animation: none; } }
+
+  .seg { display: inline-flex; flex-wrap: wrap; background: var(--surface-2); border-radius: 18px; padding: 4px; gap: 4px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 15.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+  .seglbl { font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: -6px; }
+
+  /* 나누기-계산하기-합치기 */
+  .sac { display: grid; grid-template-columns: 1.1fr 1.25fr .9fr; gap: 14px; width: 100%; height: 100%; align-items: stretch; }
+  .sac .col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .sac .ttl { font-size: 15px; font-weight: 800; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .sac .ttl b { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); color: var(--text); font-size: 13px; }
+  .sac .ttl.on b { background: var(--accent); color: var(--surface); }
+  .mini { width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .mini th, .mini td { padding: 3px 8px; line-height: 1.3; }
+  .mini td.g0 { background: var(--accent-soft); } .mini td.g1 { background: var(--accent-2-soft); } .mini td.g2 { background: var(--ok-soft); }
+  .mini td.bad { color: var(--accent-2); font-weight: 800; }
+  .gbox { border-radius: 12px; padding: 6px 10px; border: 2px solid var(--line); font-size: 14px; line-height: 1.4; opacity: 0; transform: translateX(-10px); transition: opacity .35s, transform .35s; }
+  .gbox.show { opacity: 1; transform: none; }
+  .gbox.g0 { border-color: var(--accent); background: var(--accent-soft); } .gbox.g1 { border-color: var(--accent-2); background: var(--accent-2-soft); } .gbox.g2 { border-color: var(--ok); background: var(--ok-soft); }
+  .gbox .chips { display: flex; flex-wrap: wrap; gap: 3px; margin: 3px 0; }
+  .gbox .chips i { width: 18px; height: 18px; border-radius: 4px; background: var(--surface); border: 1px solid var(--line); font-style: normal; font-size: 11px; font-weight: 800; display: grid; place-items: center; }
+  .gbox .chips i.b { background: var(--accent-2); color: var(--surface); border-color: var(--accent-2); }
+  .gbox .calc { font-weight: 800; opacity: 0; transition: opacity .35s; }
+  .gbox .calc.show { opacity: 1; }
+  .res { opacity: 0; transition: opacity .35s; } .res.show { opacity: 1; }
+
+  /* 코드 해부 */
+  .anat { display: flex; align-items: stretch; gap: 0; font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; font-size: 26px; }
+  .anat > div { padding: 14px 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .anat small { font-family: "Pretendard Variable", Pretendard, sans-serif; font-size: 15px; font-weight: 700; }
+  .anat .a { background: var(--surface-2); } .anat .b { background: var(--accent-soft); color: var(--accent); }
+  .anat .c { background: var(--ok-soft); color: var(--ok); } .anat .d { background: var(--accent-2-soft); color: var(--accent-2); }
+
+  /* 피벗 표 */
+  .heat td, .heat th { text-align: center; padding: 8px 14px; font-variant-numeric: tabular-nums; }
+  .heat td small { display: block; font-size: 12px; color: var(--muted); font-weight: 500; }
+  .codegrid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; align-items: start; }
+  .codegrid pre.code { font-size: 16.5px; }
+  pre.out.tight { font-size: 15px; line-height: 1.45; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 6주차 3차시</p>
+    <h1>그룹별 집계로<br>비교하기</h1>
+    <p class="lead" style="font-size:25px">나눠서 계산하면<br>숨어 있던 차이가 보인다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="30" y="30" width="460" height="380" rx="30" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <g class="slide2">
+      <g class="f-accs"><rect x="110" y="80" width="26" height="26" rx="5"/><rect x="142" y="80" width="26" height="26" rx="5"/><rect x="174" y="80" width="26" height="26" rx="5"/><rect x="110" y="112" width="26" height="26" rx="5"/><rect x="174" y="112" width="26" height="26" rx="5"/><rect x="110" y="144" width="26" height="26" rx="5"/><rect x="142" y="144" width="26" height="26" rx="5"/><rect x="174" y="144" width="26" height="26" rx="5"/></g>
+      <rect x="142" y="112" width="26" height="26" rx="5" class="f-acc2"/>
+      <text x="155" y="64" text-anchor="middle" class="t-acc" style="font-size:18px">주간</text>
+      <rect x="126" y="300" width="58" height="30" rx="6" class="f-acc"/>
+      <text x="155" y="290" text-anchor="middle" class="t-acc" style="font-size:18px">7.0%</text>
+    </g>
+    <g class="slide2 r">
+      <g class="f-accs"><rect x="320" y="80" width="26" height="26" rx="5"/><rect x="384" y="80" width="26" height="26" rx="5"/><rect x="320" y="112" width="26" height="26" rx="5"/><rect x="352" y="112" width="26" height="26" rx="5"/><rect x="352" y="144" width="26" height="26" rx="5"/><rect x="384" y="144" width="26" height="26" rx="5"/></g>
+      <g class="f-acc2"><rect x="352" y="80" width="26" height="26" rx="5"/><rect x="384" y="112" width="26" height="26" rx="5"/><rect x="320" y="144" width="26" height="26" rx="5"/></g>
+      <text x="365" y="64" text-anchor="middle" class="t-acc2" style="font-size:18px">야간</text>
+      <rect x="336" y="220" width="58" height="110" rx="6" class="f-acc2"/>
+      <text x="365" y="210" text-anchor="middle" class="t-acc2" style="font-size:18px">20.3%</text>
+    </g>
+    <rect x="80" y="330" width="360" height="3" class="f-line"/>
+    <text x="260" y="372" text-anchor="middle" class="t-sub" style="font-size:16px;font-weight:700">groupby → 나누기 · 계산하기 · 합치기</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">groupby 원리</div><div class="d">나누기 → 계산하기 → 합치기의 세 단계를 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">불량률 = 평균</div><div class="d">0/1 열의 평균이 비율이 되는 이유를 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">공정 비교</div><div class="d">주야간·라인·호기별 불량률을 agg·pivot_table·crosstab으로 비교한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">작은 그룹 주의</div><div class="d">개수가 적은 그룹의 극단적인 비율을 경계한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>① groupby의 원리</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>② 공정 비교하기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 표로 펼치기 · 주의할 점</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-link"/></svg> 1·2차시: 열 <strong>하나</strong>를 요약. 오늘: 데이터를 <strong>그룹으로 나눠서</strong> 요약하고 서로 비교합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>불량률 13.8%, 그래서 어디를 손봐야 할까?</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:22px">
+    <div class="tile" style="flex:1;padding:16px 18px;gap:6px">
+      <div class="h">전체 494개 <span class="muted" style="font-size:17px;font-weight:600">— 주황 = 불량 68개</span></div>
+      <svg id="i-all" viewBox="0 0 440 300" aria-label="제품 494개를 칸 하나씩으로 그린 그림"></svg>
+      <div style="font-size:20px">전체 불량률 <strong style="color:var(--accent-2)">13.8%</strong> — 하나의 숫자로는 <strong>어디서</strong> 나왔는지 모른다</div>
+    </div>
+    <div class="tile frag" style="flex:1.15;padding:16px 18px;gap:6px;border:2px solid var(--accent)">
+      <div class="h">주간과 야간으로 나눠 보면</div>
+      <svg id="i-split" viewBox="0 0 520 300" aria-label="주간 243개와 야간 251개로 나눈 그림"></svg>
+      <div style="font-size:20px">주간 <strong style="color:var(--accent)">7.0%</strong> vs 야간 <strong style="color:var(--accent-2)">20.3%</strong> — 나누자 차이가 보인다</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시 · process.csv 494개 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>groupby의 원리</h2><p>나누고, 계산하고, 합친다 — 손으로 하던 집계를 코드 한 줄로.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 0/1 평균 = 비율 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① groupby의 원리</span></div>
+  <h2>먼저 요령 하나: 0/1 열의 평균 = 비율</h2>
+  <div class="body">
+    <div class="tile" style="padding:22px 26px;gap:16px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap" id="zo"></div>
+      <div class="flow" style="margin-top:4px">
+        <div class="stepbox frag show"><div class="h">더하면</div><div class="d" style="font-size:20px">0+0+1+0+0+0+1+0+0+0<br>= <b style="color:var(--accent-2)">불량 개수 2</b></div></div>
+        <div class="arrow">›</div>
+        <div class="stepbox frag"><div class="h">개수로 나누면</div><div class="d" style="font-size:20px">2 ÷ 10 = <b style="color:var(--accent-2)">0.2</b></div></div>
+        <div class="arrow">›</div>
+        <div class="stepbox goal frag"><div class="h">= 불량률 20%</div><div class="d" style="font-size:20px">0/1의 평균은<br>‘1인 비율’</div></div>
+      </div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:18px;gap:18px;align-items:center">
+<pre class="code">df['defect'].mean()     # 전체 불량률</pre>
+<pre class="out">0.13765182186234817</pre>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시 · defect 열: 불량 1, 정상 0 · process.csv</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 나누기·계산하기·합치기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① groupby의 원리 · 직접 해 보기 1</span></div>
+  <h2>나누기 → 계산하기 → 합치기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 300px">
+    <div class="plot" style="padding:14px 16px;align-items:stretch">
+      <div class="sac">
+        <div class="col"><div class="ttl on"><b>0</b>원본 12행</div><table class="mini" id="sac-t"></table></div>
+        <div class="col"><div class="ttl" id="sac-t1"><b>1</b>나누기 <b>2</b>계산하기</div><div id="sac-g" style="display:grid;gap:8px"></div></div>
+        <div class="col"><div class="ttl" id="sac-t3"><b>3</b>합치기</div><table class="mini res" id="sac-r"></table><pre class="code res" id="sac-code" data-hl="off" style="font-size:13px;padding:8px 10px;margin-top:6px"></pre></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="seglbl">무엇으로 나눌까?</div>
+      <div class="seg" role="group" aria-label="나눌 기준"><button type="button" data-by="shift" aria-pressed="true">주야간 shift</button><button type="button" data-by="line" aria-pressed="false">라인 line</button></div>
+      <button class="btn" id="sac-go" type="button"><svg class="ic"><use href="#i-play"/></svg> 한 단계씩</button>
+      <button class="btn ghost" id="sac-reset" type="button"><svg class="ic"><use href="#i-reset"/></svg> 처음으로</button>
+      <div class="callout b" id="sac-msg">표에서 같은 값끼리 모아, 그룹마다 불량률(defect 평균)을 계산하고, 결과를 하나의 표로 합칩니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시 · process.csv 에서 주간 6행 + 야간 6행만 뽑은 예 · 12개로는 결론을 내지 않습니다</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 코드 해부 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① groupby의 원리</span></div>
+  <h2>코드 한 줄 해부: 무엇으로 · 어떤 열을 · 무슨 계산</h2>
+  <div class="body">
+    <div class="anat">
+      <div class="a frag show">df<small>표</small></div>
+      <div class="b frag show">.groupby('shift')<small>① 무엇으로 나눌까</small></div>
+      <div class="c frag">['defect']<small>② 어떤 열을</small></div>
+      <div class="d frag">.mean()<small>③ 무슨 계산을</small></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:22px;align-items:start">
+<pre class="out" style="font-size:19px">shift
+야간    0.203187
+주간    0.069959
+Name: defect, dtype: float64</pre>
+      <div class="tile" style="padding:16px 20px;gap:8px">
+        <div class="d" style="font-size:18px"><b style="color:var(--text)">.mean()</b> 자리에 <code>.median()</code> <code>.std()</code> <code>.max()</code> <code>.count()</code> 를 넣으면 그 계산을 그룹마다</div>
+        <div class="d" style="font-size:18px"><b style="color:var(--text)">'shift'</b> 자리에 <code>'line'</code> <code>'machine'</code> 을 넣으면 기준이 바뀐다</div>
+        <div class="d" style="font-size:16px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-alert"/></svg> 열은 <code>df['shift']</code>처럼 대괄호로. <code>df.shift</code>는 pandas에 이미 있는 다른 기능 이름입니다.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시 · process.csv · 결과는 가나다순(야간 → 주간)으로 정렬되어 나옵니다</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>공정 비교하기</h2><p>주야간, 라인, 호기 — 어디서 차이가 나는지 찾아봅니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-factory"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 직접 해 보기 2: 집계 탐색기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공정 비교하기 · 직접 해 보기 2</span></div>
+  <h2>기준과 계산을 골라 비교해 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 390px">
+    <div class="plot"><svg id="agg" viewBox="0 0 640 420" aria-label="선택한 기준으로 나눈 그룹별 막대그래프"></svg></div>
+    <div class="side">
+      <div class="seglbl">무엇으로 나눌까?</div>
+      <div class="seg" id="ag-by" role="group" aria-label="나눌 기준"><button type="button" data-v="shift" aria-pressed="true">주야간</button><button type="button" data-v="line" aria-pressed="false">라인</button><button type="button" data-v="machine" aria-pressed="false">호기</button><button type="button" data-v="date" aria-pressed="false">날짜</button></div>
+      <div class="seglbl">무엇을 계산할까?</div>
+      <div class="seg" id="ag-m" role="group" aria-label="계산"><button type="button" data-v="defect" aria-pressed="true">불량률</button><button type="button" data-v="strength" aria-pressed="false">평균 강도</button><button type="button" data-v="humidity" aria-pressed="false">평균 습도</button><button type="button" data-v="size" aria-pressed="false">제품 수</button></div>
+<pre class="code" id="ag-code" data-hl="off" style="font-size:14.5px;padding:10px 14px"></pre>
+      <div class="callout b" id="ag-msg" style="font-size:15.5px"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시 · process.csv 494개 · 막대 아래 n = 그룹의 제품 수 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 11. agg -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공정 비교하기</span></div>
+  <h2>agg(): 계산 여러 개를 한 번에</h2>
+  <div class="codegrid">
+    <div>
+<pre class="code">g = df.groupby('shift')
+
+# 불량률과 함께 개수도 꼭 같이
+g['defect'].agg(['mean', 'sum', 'count']).round(3)
+
+# 인장강도 요약을 그룹마다
+cols = ['mean', 'median', 'std', 'count']
+g['strength'].agg(cols).round(2)</pre>
+      <div class="tile frag show" style="margin-top:14px;padding:14px 18px;gap:6px"><div class="h" style="font-size:20px">읽는 법</div><div class="d">mean = 불량률, sum = 불량 개수, count = 제품 수. <strong>“야간 20.3%”는 251개 중 51개</strong>라는 뜻</div></div>
+    </div>
+    <div style="display:grid;gap:12px">
+<pre class="out" style="font-size:17px">          mean  sum  count
+shift
+야간     0.203   51    251
+주간     0.070   17    243</pre>
+<pre class="out" style="font-size:17px">        mean  median   std  count
+shift
+야간    38.42   38.63  3.21    251
+주간    39.17   39.28  3.05    243</pre>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시 · process.csv · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 해석 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공정 비교하기</span></div>
+  <h2>야간 불량률이 3배 가까이 높다. 왜일까?</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:26px">
+    <div class="tile" style="flex:1.2;padding:14px 18px 8px"><svg id="why" viewBox="0 0 620 330" role="img" aria-label="주간과 야간의 불량률, 평균 습도, 평균 온도 비교 막대"></svg></div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h" style="font-size:20px">찾은 것: 차이</div><div class="d">야간이 불량률도, 습도도, 온도도 조금씩 높다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:20px">아직 모르는 것: 원인</div><div class="d">습도 때문? 온도 때문? 야간 작업 자체 때문? 함께 움직이는 것만 봐서는 알 수 없다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px;border:2px solid var(--accent)"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div><div class="h" style="font-size:20px">7주 3차시에서</div><div class="d">상관관계와 인과관계 — 공정 변수와 품질</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시 · process.csv groupby('shift') 결과 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>표로 펼치기 · 주의할 점</h2><p>기준 두 개를 가로세로로 펼치고, 작은 그룹을 조심합니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. pivot_table -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 표로 펼치기 · 주의할 점</span></div>
+  <h2>pivot_table: 호기 × 주야간 불량률</h2>
+  <div class="codegrid" style="grid-template-columns:1fr 1.1fr">
+    <div>
+<pre class="code">df.pivot_table(index='machine',    # 행
+               columns='shift',    # 열
+               values='defect',    # 값
+               aggfunc='mean')     # 계산</pre>
+      <div class="tile frag show" style="margin-top:14px;padding:14px 18px;gap:6px"><div class="d"><b style="color:var(--text)">호기 전체</b>로만 보면 11.1~15.5%로 비슷하다</div></div>
+      <div class="tile frag" style="margin-top:10px;padding:14px 18px;gap:6px"><div class="d">펼쳐 보면 <b style="color:var(--text)">모든 호기에서 야간이 더 높다.</b> 주간에도 3·5호기는 2~3%, 1·4호기는 10% 남짓</div></div>
+      <div class="tile frag" style="margin-top:10px;padding:14px 18px;gap:6px"><div class="d"><svg class="ic" style="color:var(--accent-2)"><use href="#i-alert"/></svg> 칸마다 제품은 <b style="color:var(--text)">33~52개</b>뿐. 3.0%는 33개 중 1개 — 칸이 작을수록 우연에 흔들린다</div></div>
+    </div>
+    <div class="tile" style="padding:12px"><table class="heat" id="heat"></table></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시 · process.csv · 칸 아래 작은 숫자 = 불량 수/제품 수 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 15. crosstab -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 표로 펼치기 · 주의할 점</span></div>
+  <h2>crosstab: 범주 두 개의 개수 세기</h2>
+  <div class="codegrid">
+    <div>
+<pre class="code">pd.crosstab(df['shift'], df['defect_type'])
+
+# 행마다 비율로 (각 행의 합 = 1)
+pd.crosstab(df['shift'], df['defect_type'],
+            normalize='index').round(3)</pre>
+      <div class="tile frag show" style="margin-top:14px;padding:14px 18px;gap:6px"><div class="d"><b style="color:var(--text)">찍힘</b>: 야간 21개 vs 주간 2개, <b style="color:var(--text)">치수불량</b>: 24개 vs 6개 — 야간 불량은 주로 이 두 유형</div></div>
+      <div class="tile frag" style="margin-top:10px;padding:14px 18px;gap:6px"><div class="d">스크래치는 오히려 주간이 조금 많다(9 vs 6). 불량 유형마다 <b style="color:var(--text)">다른 원인</b>을 의심할 수 있다</div></div>
+    </div>
+    <div style="display:grid;gap:12px">
+      <div class="seg" id="ct-seg" role="group" aria-label="보기 방식" style="justify-self:start"><button type="button" data-v="n" aria-pressed="true">개수</button><button type="button" data-v="p" aria-pressed="false">행 비율 (normalize='index')</button></div>
+      <div class="tile" style="padding:12px"><table class="heat" id="ct"></table></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시 · process.csv · crosstab = 교차표 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 3: 작은 그룹 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 표로 펼치기 · 주의할 점 · 직접 해 보기 3</span></div>
+  <h2>불량률 100%인 날이 있다? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="small" viewBox="0 0 640 420" aria-label="날짜와 호기로 나눈 169개 그룹의 제품 수와 불량률 산점도"></svg></div>
+    <div class="side">
+<pre class="code" data-hl="off" style="font-size:14px;padding:10px 14px">g = df.groupby(['date', 'machine'])
+g['defect'].agg(['mean', 'count'])</pre>
+      <div class="ctrl"><label>제품이 몇 개 이상인 그룹만? <output id="sm-o">1개 이상</output></label><input id="sm-s" type="range" min="1" max="7" step="1" value="1" aria-label="최소 제품 수"></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">남은 그룹</div><div class="val" id="sm-n" style="font-size:32px">-</div></div>
+        <div class="meter"><div class="lbl">가장 높은 불량률</div><div class="val o" id="sm-max" style="font-size:32px">-</div></div>
+      </div>
+      <div class="callout b" id="sm-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시 · process.csv 날짜 30일 × 호기 6대 중 제품이 있는 169개 그룹 · 점이 겹치지 않게 가로로 조금 흩뜨림</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 체크리스트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 표로 펼치기 · 주의할 점</span></div>
+  <h2>그룹을 비교할 때 네 가지 습관</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile row frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h">개수를 함께 본다</div><div class="d">비율 옆에는 늘 count. “100%”가 1개 중 1개인지, 251개 중 51개인지</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h">작으면 묶거나 늘린다</div><div class="d">하루 단위가 작으면 주 단위로, 호기가 작으면 라인으로 — 또는 데이터를 더 모은다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h">기준을 먼저 정한다</div><div class="d">이리저리 나눠 보다 우연히 큰 차이를 ‘발견’하지 않게, 무엇으로 비교할지 먼저 정한다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h">차이 ≠ 원인</div><div class="d">야간이 높다는 것은 사실, <strong>왜</strong>인지는 다른 변수까지 함께 봐야 안다 (7주차)</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 표로 펼치기 · 주의할 점</span></div>
+  <h2>실습 파일: 나눠서 비교하기</h2>
+  <div class="body" style="flex-direction:row;gap:30px;align-items:stretch">
+    <div class="tile" style="flex:1.1;padding:24px 26px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week06/lesson03.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <ol style="font-size:19px;margin:6px 0 0;line-height:1.5">
+        <li>0/1 평균으로 전체 불량률</li>
+        <li>groupby로 주야간·라인·호기 불량률</li>
+        <li>agg로 불량률 + 개수 함께 보기</li>
+        <li>pivot_table · crosstab으로 펼치기</li>
+        <li>날짜 × 호기 작은 그룹 확인</li>
+        <li><b style="color:var(--accent-2)">직접 바꿔 보기</b> — 기준 열, 계산 열, 최소 개수</li>
+      </ol>
+    </div>
+    <div class="tile" style="flex:1;padding:24px 26px;background:var(--accent-soft);border-color:transparent">
+      <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge o"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">생성형AI에게 물어보기</div></div>
+      <div style="font-size:18px;background:var(--surface);border-radius:12px;padding:12px 16px;line-height:1.55">“pandas에서 <b>shift별, machine별 불량률(defect 평균)과 제품 수</b>를 한 표로 보여 주는 코드를 짜 줘. 제품 수가 30개 미만인 칸은 표시해 줘.”</div>
+      <div class="d" style="font-size:17px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-check"/></svg> 결과의 <strong>개수 합계가 494</strong>인지, 야간 불량률이 20.3%로 나오는지 확인합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">groupby = 나누기·계산·합치기</div><div style="font-size:21px"><code style="font-size:16px;background:var(--surface-2);border-radius:6px;padding:2px 6px">df.groupby(기준)[열].계산()</code><br>기준·열·계산만 바꿔 끼운다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">0/1 평균 = 비율</div><div style="font-size:21px">불량률은 <strong>defect의 평균</strong>. 야간 20.3% vs 주간 7.0%</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">개수와 함께, 원인은 신중히</div><div style="font-size:21px">작은 그룹의 극단적인 비율을 조심하고, <strong>차이 ≠ 원인</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="불량이 1, 정상이 0이면 모두 더한 값은 불량 개수이고, 이를 전체 개수로 나눈 평균은 불량의 비율(불량률)이 됩니다.">
+      <p class="q-title"><b>Q1.</b> defect 열(불량 1, 정상 0)의 평균 0.138이 뜻하는 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">불량 제품의 평균 강도</button>
+        <button type="button" data-v="b">불량 제품 0.138개</button>
+        <button type="button" data-v="c">불량률 13.8%</button>
+        <button type="button" data-v="d">아무 의미 없는 숫자</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="groupby 괄호 안은 ‘무엇으로 나눌까’(라인), 대괄호 안은 ‘어떤 열을’(strength), 마지막은 ‘무슨 계산’(mean)입니다.">
+      <p class="q-title"><b>Q2.</b> 라인별 평균 인장강도를 구하는 코드는?</p>
+      <div class="opts">
+        <button type="button" data-v="a"><code>df.groupby('strength')['line'].mean()</code></button>
+        <button type="button" data-v="b"><code>df.groupby('line')['strength'].mean()</code></button>
+        <button type="button" data-v="c"><code>df['line'].mean()</code></button>
+        <button type="button" data-v="d"><code>df.groupby('line').count()</code></button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="제품이 1개뿐이면 그 1개가 불량이기만 해도 100%가 됩니다. 비율을 볼 때는 늘 개수(count)를 함께 확인하고, 작은 그룹은 묶거나 데이터를 더 모읍니다.">
+      <p class="q-title"><b>Q3.</b> 어느 날 4호기 불량률이 100%로 나왔다. 가장 먼저 확인할 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">4호기를 바로 멈춘다</button>
+        <button type="button" data-v="b">평균 대신 중앙값을 쓴다</button>
+        <button type="button" data-v="c">그날의 습도</button>
+        <button type="button" data-v="d">그날 4호기에서 만든 제품 수</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="그룹 사이의 차이를 찾은 것이지 원인을 밝힌 것은 아닙니다. 야간에는 습도·온도도 함께 높았으므로, 다른 변수까지 함께 살펴야 합니다(7주 3차시).">
+      <p class="q-title"><b>Q4.</b> “야간 불량률 20.3%, 주간 7.0%”에서 말할 수 있는 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">야간에 불량이 더 많이 나왔다는 사실</button>
+        <button type="button" data-v="b">야간 작업자의 실력이 부족하다는 원인</button>
+        <button type="button" data-v="c">습도가 불량의 원인이라는 결론</button>
+        <button type="button" data-v="d">주간에는 앞으로도 불량이 7%만 나온다는 보장</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 7주차 데이터 시각화</span></div>
+    <div class="big">7-1</div>
+    <h2>목적에 맞는 그래프 고르기</h2>
+    <p>분포·비교·관계·추세 — 이번 주에 계산한 숫자를 어떤 그래프로 보여 줘야 한눈에 읽힐까요?</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week07/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 6주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">6주 3차시 · 그룹별 집계로 비교하기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

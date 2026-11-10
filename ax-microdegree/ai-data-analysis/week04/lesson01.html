@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4주 1차시 · 생성형AI로 코드 만들고 실행하기 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 4주 1차시 교안: 생성형AI 코딩 도우미, 좋은 코딩 프롬프트의 네 요소, Colab에서 실행하고 대화로 다듬기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .caret { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .flowdot { display: none; } .caret { animation: none; } }
+
+  /* 토글 (1주 3차시와 같은 모양) */
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 16px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .tgl .tg { margin-left: auto; font-size: 13px; font-weight: 800; padding: 1px 8px; border-radius: 6px; color: var(--surface); }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+  .status ul { margin: 2px 0 0; padding-left: 1.1em; } .status li { margin: 2px 0; }
+
+  /* 네 요소 색 */
+  .c-goal { --pc: var(--accent); } .c-data { --pc: var(--accent-2); } .c-cond { --pc: var(--ok); } .c-out { --pc: var(--muted); }
+  .tg.c-goal, .tg.c-data, .tg.c-cond, .tg.c-out { background: var(--pc); }
+
+  /* 채팅 말풍선 */
+  .bubble { background: var(--surface-2); border-radius: 16px 16px 4px 16px; padding: 10px 14px; font-size: 15.5px; line-height: 1.5; border: 1px solid var(--line); }
+  .bubble .who { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: var(--muted); margin-bottom: 2px; }
+  .bubble .pp { display: block; border-left: 4px solid var(--pc, var(--line)); padding-left: 8px; margin: 3px 0; }
+  .bubble .pp.vague { --pc: var(--line); color: var(--muted); }
+  .ai-who { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: var(--accent); }
+  pre.code.sm { font-size: 14.5px; line-height: 1.5; padding: 10px 14px; }
+  pre.out.sm { font-size: 14px; line-height: 1.45; padding: 8px 14px; }
+  .chip { display: flex; align-items: center; gap: 8px; border-radius: 10px; padding: 7px 12px; font-size: 15px; font-weight: 700; }
+  .chip.ok { background: var(--ok-soft); color: var(--ok); } .chip.bad { background: var(--bad-soft); color: var(--bad); } .chip.mid { background: var(--accent-2-soft); color: var(--accent-2); }
+  .chip span { color: var(--text); font-weight: 500; }
+
+  /* 완성도 막대 */
+  .segs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; }
+  .segs i { height: 10px; border-radius: 99px; background: var(--surface-2); transition: background .2s; }
+  .segs i.on { background: var(--accent); }
+
+  /* 판단 카드 (1주 3차시와 같은 모양) */
+  .pcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; min-height: 150px; display: flex; flex-direction: column; gap: 6px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .nm { font-size: 17px; font-weight: 700; line-height: 1.45; }
+  .pcard .nm::before { content: "“"; color: var(--muted); } .pcard .nm::after { content: "”"; color: var(--muted); }
+  .pcard .ans { display: none; font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 16px; }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.yes { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.yes .verdict { color: var(--accent-2); }
+  .pcard.open.no { background: var(--ok-soft); border-color: var(--ok); } .pcard.open.no .verdict { color: var(--ok); }
+  .pcard.open.mid { background: var(--surface-2); border-color: var(--muted); }
+
+  /* 노트북 셀 */
+  .cell-ui .cbar { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+  .cell-ui .run { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); font-size: 13px; }
+  .cell-ui.ran .run { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .reqbtn { font-size: 17px; padding: 9px 14px; justify-content: flex-start; }
+  #it-code { font-size: 13.5px; }
+  .ai-say { font-size: 15px !important; }
+  .reqbtn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .ai-say { background: var(--accent-soft); border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.55; }
+  .newline { background: rgba(255, 184, 108, .18); display: inline-block; width: 100%; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 4주차 1차시</p>
+    <h1>생성형AI로 코드<br>만들고 실행하기</h1>
+    <p class="lead" style="font-size:25px">말로 요청하고, 코드를 받아,<br>Colab에서 직접 돌려 본다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <!-- 요청 말풍선 -->
+    <rect x="20" y="40" width="250" height="110" rx="22" class="f-s2" stroke="var(--line)" stroke-width="2"/>
+    <path d="M230 150 l20 26 l4 -26z" class="f-s2"/>
+    <rect x="44" y="70" width="170" height="12" rx="6" class="f-acc"/>
+    <rect x="44" y="94" width="200" height="12" rx="6" class="f-acc2"/>
+    <rect x="44" y="118" width="120" height="12" rx="6" class="f-ok" opacity=".8"/>
+    <rect x="170" y="116" width="3" height="18" class="f-text caret"/>
+    <!-- 흐름 -->
+    <path id="cv-flow" d="M270 120 C 360 120, 380 160, 390 200" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 8"/>
+    <circle r="6" class="f-acc flowdot"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#cv-flow"/></animateMotion></circle>
+    <circle r="6" class="f-acc2 flowdot"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite"><mpath href="#cv-flow"/></animateMotion></circle>
+    <!-- AI -->
+    <circle cx="420" cy="80" r="52" class="f-acc"/>
+    <g transform="translate(389 49) scale(2.6)" style="color:var(--surface)"><use href="#i-sparkles" width="24" height="24"/></g>
+    <!-- 코드 셀 -->
+    <rect x="150" y="200" width="350" height="150" rx="18" fill="#1f2430"/>
+    <circle cx="178" cy="226" r="12" class="f-acc"/><path d="M174 220 l10 6 l-10 6z" fill="#fff"/>
+    <rect x="200" y="220" width="120" height="10" rx="5" fill="#ffb86c"/>
+    <rect x="200" y="244" width="220" height="10" rx="5" fill="#8ab4f8"/>
+    <rect x="216" y="268" width="170" height="10" rx="5" fill="#a5d6a7"/>
+    <rect x="200" y="292" width="90" height="10" rx="5" fill="#8a93a6"/>
+    <rect x="200" y="316" width="150" height="10" rx="5" fill="#f3d27a"/>
+    <!-- 결과 -->
+    <rect x="20" y="300" width="170" height="120" rx="18" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <rect x="50" y="345" width="38" height="58" rx="5" class="f-acc2"><animate attributeName="height" values="0;58;58" keyTimes="0;.4;1" dur="4s" repeatCount="indefinite"/><animate attributeName="y" values="403;345;345" keyTimes="0;.4;1" dur="4s" repeatCount="indefinite"/></rect>
+    <rect x="110" y="383" width="38" height="20" rx="5" class="f-acc"><animate attributeName="height" values="0;20;20" keyTimes="0;.4;1" dur="4s" repeatCount="indefinite"/><animate attributeName="y" values="403;383;383" keyTimes="0;.4;1" dur="4s" repeatCount="indefinite"/></rect>
+    <text x="40" y="330" class="t-sub" style="font-size:14px;font-weight:700">실행 결과</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">코딩 도우미</div><div class="d">생성형AI가 코딩에서 해 줄 수 있는 일과 한계를 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">좋은 프롬프트</div><div class="d">목표·데이터 설명·조건·출력 형식을 넣어 요청한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div class="h">Colab에서 실행</div><div class="d">받은 코드를 붙여 넣고 실행해 결과를 확인한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">대화로 다듬기</div><div class="d">이어지는 요청으로 코드를 한 걸음씩 고쳐 나간다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:3;background:var(--accent-soft)"><b>① 코딩 도우미</b></div>
+      <div style="flex:9;background:var(--accent-soft)"><b>② 좋은 코딩 프롬프트</b><small>직접 해 보기 2</small></div>
+      <div style="flex:7;background:var(--accent-2-soft)"><b>③ 실행하고 다듬기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘 내내 쓰는 질문 하나: <strong>“주간과 야간, 어느 근무조의 불량률이 더 높을까?”</strong> — 1주차부터 본 사출 성형 공정 데이터(process.csv)로 답을 찾습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>알고 싶은 것은 있는데, 코드는 아직 모른다</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px;margin-bottom:24px">
+      <div class="tile frag show"><div style="display:flex;align-items:center;gap:14px"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">3주차까지 배운 것</div></div><div class="d" style="font-size:19px">변수·자료형·리스트 · 조건문·반복문 · <code>import</code>로 라이브러리 불러오기</div></div>
+      <div class="tile frag show"><div style="display:flex;align-items:center;gap:14px"><span class="ic-badge o"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">지금 필요한 것</div></div><div class="d" style="font-size:19px">CSV 파일 읽기 · 근무조별로 묶어 평균 내기 · 그래프 — <b>5~7주에 차근차근</b> 배울 내용</div></div>
+    </div>
+    <div class="flow">
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">말로 요청</div><div class="d">하고 싶은 분석을<br>구체적으로</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h">생성형AI</div><div class="d">코드 초안과<br>설명을 만든다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div class="h">Colab 실행</div><div class="d">붙여 넣고<br>직접 돌린다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">확인은 내가</div><div class="d">결과가<br>말이 되는가?</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>생성형AI 코딩 도우미</h2><p>무엇을 맡기고, 무엇을 내가 해야 할까요?</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-sparkles"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 도우미가 하는 일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 코딩 도우미</span></div>
+  <h2>코딩 도우미에게 맡길 수 있는 일</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-code"/></svg></span><div class="h">코드 초안</div><div class="d">“근무조별 불량률을 구하는 코드”처럼 말로 설명하면 코드를 써 준다</div></div>
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">코드 설명</div><div class="d">모르는 줄을 한 줄씩 풀어 설명해 준다</div></div>
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">오류 해결</div><div class="d">오류 메시지의 뜻과 고칠 방법을 알려 준다 → 다음 차시</div></div>
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-bulb"/></svg></span><div class="h">다른 방법 제안</div><div class="d">그래프 종류, 더 짧은 코드 등 다른 선택지를 보여 준다</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:20px">
+      <div class="box think" style="margin:0"><p style="font-size:18px;margin:0"><b>도구는 무엇이든 좋습니다.</b> ChatGPT·Gemini·Claude 같은 채팅형 AI든, Colab 안의 AI 기능이든 쓰는 방법은 같습니다: <strong>요청 → 코드 받기 → 실행 → 확인</strong>.</p></div>
+      <div class="box warn" style="margin:0"><p style="font-size:18px;margin:0"><b>기억할 두 가지.</b> AI는 <strong>대화에 적어 준 만큼만</strong> 내 데이터를 안다고 생각하세요. 같은 질문에도 답이 <strong>매번 조금씩 다를 수</strong> 있습니다.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시 · 도구마다 화면과 기능은 다르고 자주 바뀝니다</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>좋은 코딩 프롬프트</h2><p>AI가 추측할 틈을 줄이는 요청 쓰기.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chat"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 막연 vs 구체 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 좋은 코딩 프롬프트</span></div>
+  <h2>막연한 요청 vs 구체적인 요청</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:24px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="bubble"><div class="who"><svg class="ic"><use href="#i-user"/></svg> 나</div>불량 분석 코드 짜 줘.</div>
+        <div class="ai-who"><svg class="ic"><use href="#i-sparkles"/></svg> AI의 답 (예시)</div>
+<pre class="code sm">import pandas as pd
+df = pd.read_csv('data.csv')
+print(df['불량'].value_counts())</pre>
+        <div class="chip bad"><svg class="ic"><use href="#i-x"/></svg> 실행하면 오류 <span>— 'data.csv' 파일도, '불량' 열도 없다. AI가 <b>추측</b>했다</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px" class="frag">
+        <div class="bubble"><div class="who"><svg class="ic"><use href="#i-user"/></svg> 나</div>근무조별 불량률을 비교하고 싶어. <b>process.csv</b>의 <b>shift</b>(주간/야간), <b>defect</b>(0/1) 열을 써. pandas만, 주석 달아서. 결과는 %로 소수 첫째 자리까지.</div>
+        <div class="ai-who"><svg class="ic"><use href="#i-sparkles"/></svg> AI의 답 (예시)</div>
+<pre class="code sm">import pandas as pd
+df = pd.read_csv(DATA + 'process.csv')
+# 근무조별 불량률(%) = defect(0/1)의 평균 × 100
+rate = df.groupby('shift')['defect'].mean() * 100
+print(rate.round(1))</pre>
+        <div class="chip ok"><svg class="ic"><use href="#i-check"/></svg> 바로 실행됨 <span>— 야간 20.3 · 주간 7.0</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시 · AI의 답은 설명용 예시 · 결과는 process.csv(가상 데이터)로 직접 실행한 값</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 네 요소 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 좋은 코딩 프롬프트</span></div>
+  <h2>좋은 코딩 프롬프트 = <span class="mark">네 가지 요소</span></h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show" style="border-top:6px solid var(--accent)"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">① 목표</div><div class="d">무엇을 알고 싶은가<br><b>“근무조별 불량률 비교”</b></div></div>
+      <div class="arrow">+</div>
+      <div class="stepbox frag" style="border-top:6px solid var(--accent-2)"><span class="ic-badge o"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">② 데이터 설명</div><div class="d">파일·열 이름·자료형<br><b>“shift: 글자, defect: 0/1 정수”</b></div></div>
+      <div class="arrow">+</div>
+      <div class="stepbox frag" style="border-top:6px solid var(--ok)"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">③ 조건</div><div class="d">도구·수준·제약<br><b>“pandas만, 초보자용 주석”</b></div></div>
+      <div class="arrow">+</div>
+      <div class="stepbox frag" style="border-top:6px solid var(--muted)"><span class="ic-badge g"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">④ 출력 형식</div><div class="d">결과를 어떤 모양으로<br><b>“%로, 소수 첫째 자리 표”</b></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:26px;font-size:21px">네 요소가 빠질 때마다 AI는 그 빈칸을 <strong style="color:var(--text)">그럴듯하게 추측</strong>합니다. 추측이 틀리면 오류가 나거나, 더 나쁘면 <strong style="color:var(--text)">조용히 엉뚱한 답</strong>이 나옵니다(4-3).</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 직접 해 보기 1: 프롬프트 조립 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 좋은 코딩 프롬프트 · 직접 해 보기 1</span></div>
+  <h2>프롬프트를 조립해 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;padding:14px 16px">
+      <div class="bubble" id="pb-prompt"></div>
+      <div class="ai-who"><svg class="ic"><use href="#i-sparkles"/></svg> AI의 답 (예시)</div>
+      <pre class="code sm" id="pb-code" data-hl="off" style="flex:1;min-height:0;overflow:hidden"></pre>
+      <div class="chip" id="pb-run"></div>
+    </div>
+    <div class="side">
+      <div class="toggles">
+        <button class="tgl" type="button" data-k="goal" aria-pressed="false"><span class="chk"></span>① 목표<span class="tg c-goal">목표</span></button>
+        <button class="tgl" type="button" data-k="data" aria-pressed="false"><span class="chk"></span>② 데이터 설명<span class="tg c-data">데이터</span></button>
+        <button class="tgl" type="button" data-k="cond" aria-pressed="false"><span class="chk"></span>③ 조건<span class="tg c-cond">조건</span></button>
+        <button class="tgl" type="button" data-k="out" aria-pressed="false"><span class="chk"></span>④ 출력 형식<span class="tg c-out">출력</span></button>
+      </div>
+      <div class="meter"><div class="lbl" style="display:flex;justify-content:space-between;align-items:baseline">프롬프트 완성도 <span class="val" id="pb-n" style="font-size:28px">0 / 4</span></div><div class="segs" id="pb-segs"><i></i><i></i><i></i><i></i></div></div>
+      <div class="status bad" id="pb-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시 · AI의 답은 미리 써 둔 설명용 예시 · 결과는 process.csv로 직접 실행한 값</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 데이터 설명 쓰는 법 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 좋은 코딩 프롬프트</span></div>
+  <h2>데이터 설명은 Colab에서 복사해 온다</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:26px">
+    <div class="cell-ui" style="flex:1">
+      <div class="cbar"><span class="run"><svg class="ic"><use href="#i-play"/></svg></span>열 이름과 자료형 확인</div>
+<pre class="code sm">df = pd.read_csv(DATA + 'process.csv')
+df.dtypes</pre>
+<pre class="out sm">shift        object    ← 글자
+line         object
+temp        float64    ← 실수
+strength    float64
+defect        int64    ← 정수
+…</pre>
+    </div>
+    <div style="font-size:48px;color:var(--muted);flex:none">›</div>
+    <div style="flex:1.1;display:flex;flex-direction:column;gap:14px">
+      <div class="bubble frag show"><div class="who"><svg class="ic"><use href="#i-user"/></svg> 프롬프트의 ‘데이터 설명’</div><span class="pp c-data">파일: process.csv (DATA + 'process.csv'로 읽음)<br>열: shift(글자, 주간/야간), line(글자, 1라인~3라인), strength(실수, 인장강도 MPa), defect(정수 0/1, 1=불량)</span></div>
+      <div class="box warn frag" style="margin:0;padding:14px 18px"><p style="font-size:17px;margin:0"><svg class="ic"><use href="#i-shield"/></svg> 데이터 <b>전체를 붙여 넣지 않습니다.</b> 열 이름·자료형·값의 예 몇 개면 충분합니다. 개인정보·기밀은 넣지 않는다 — 1주 3차시의 약속 그대로.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시 · 글자 열은 pandas 버전에 따라 object 또는 str로 표시됩니다</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 설명도 요청 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 좋은 코딩 프롬프트</span></div>
+  <h2>코드만 받지 말고 <span class="mark">설명</span>도 받자</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1;display:grid;gap:10px">
+      <div class="tile row frag show" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div style="font-size:19px">“<b>줄마다 한국어 주석</b>을 달아 줘.”</div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div style="font-size:19px">“파이썬 초보자에게 설명하듯 <b>단계별로</b> 설명해 줘.”</div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-bulb"/></svg></span><div style="font-size:19px">“<b>groupby</b>가 무엇인지 작은 예로 보여 줘.”</div></div>
+      <div class="tile row frag" style="padding:12px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-hand"/></svg></span><div style="font-size:19px">“이 코드에서 내가 <b>바꿔 볼 수 있는 부분</b>은?”</div></div>
+    </div>
+    <div style="flex:1.05;display:flex;flex-direction:column;gap:8px">
+      <div class="ai-who"><svg class="ic"><use href="#i-sparkles"/></svg> 주석을 요청했을 때 (예시)</div>
+<pre class="code sm"># ① 데이터 불러오기: 표 전체가 df에 담긴다
+df = pd.read_csv(DATA + 'process.csv')
+
+# ② shift(주간/야간) 값이 같은 행끼리 묶고,
+#    각 묶음에서 defect의 평균을 구한다
+#    defect는 0/1이므로 평균 = 불량 비율
+rate = df.groupby('shift')['defect'].mean()
+
+# ③ 비율 × 100 → %, 소수 첫째 자리로 반올림
+print((rate * 100).round(1))</pre>
+      <p class="codecap">주석을 읽으면 <b>무엇을 바꾸면 무엇이 바뀌는지</b> 보입니다. 이해 못 한 줄은 다시 물어봅니다.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 2: 무엇이 빠졌을까 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 좋은 코딩 프롬프트 · 직접 해 보기 2</span></div>
+  <h2>이 프롬프트엔 무엇이 빠졌을까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 생각하고 카드를 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="pcards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px" id="pc-score">0 / 6 확인</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>Colab에서 실행하고 다듬기</h2><p>받은 코드는 돌려 봐야 내 것이 됩니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-play"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 붙여 넣고 실행 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실행하고 다듬기</span></div>
+  <h2>AI의 코드를 Colab에서 실행하는 순서</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div class="h">1. 복사</div><div class="d">AI 답의<br>코드 블록만 복사</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">2. 새 셀</div><div class="d">Colab에서<br><b>+ 코드</b> 셀 추가</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">3. 붙여 넣기</div><div class="d">준비 셀(DATA 주소)이<br>먼저 실행됐는지 확인</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div class="h">4. 실행</div><div class="d">▶ 버튼 또는<br><b>Shift + Enter</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">5. 확인</div><div class="d">숫자가 말이 되나?<br>모르는 줄은 질문</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:24px;gap:20px">
+      <div class="box think" style="margin:0"><p style="font-size:18px;margin:0"><b>빨간 오류가 나도 괜찮습니다.</b> 오류 메시지를 그대로 AI에게 보여 주는 방법은 <strong>다음 차시</strong>에 배웁니다.</p></div>
+      <div class="box warn" style="margin:0"><p style="font-size:18px;margin:0"><b>오류 없이 돌았다고 정답은 아닙니다.</b> 결과가 상식과 맞는지 따져 보는 법은 <strong>4-3</strong>에서.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시 · Colab 기본 사용법은 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 3: 대화로 다듬기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실행하고 다듬기 · 직접 해 보기 3</span></div>
+  <h2>실행 → 이어서 요청 → 다시 실행 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 350px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:12px 14px">
+      <div class="cell-ui" id="it-cell" style="flex:1;min-height:0;grid-template-rows:auto auto 1fr;border:0;padding:0">
+        <div class="cbar"><span class="run"><svg class="ic"><use href="#i-play"/></svg></span><span id="it-cap">AI가 준 코드 · 아직 실행 전</span></div>
+        <pre class="code sm" id="it-code" data-hl="off"></pre>
+        <div id="it-out" style="min-height:0"></div>
+      </div>
+    </div>
+    <div class="side">
+      <div style="display:flex;gap:10px"><button class="btn" id="it-run" type="button" style="flex:1"><svg class="ic"><use href="#i-play"/></svg> 셀 실행 (Shift + Enter)</button><button class="btn ghost" id="it-reset" type="button" aria-label="처음으로"><svg class="ic"><use href="#i-reset"/></svg></button></div>
+      <div class="muted" style="font-size:15px;font-weight:700">AI에게 이어서 요청하기</div>
+      <button class="btn ghost reqbtn" type="button" data-r="line" aria-pressed="false" style="justify-content:flex-start"><svg class="ic"><use href="#i-chat"/></svg> “라인별로도 나눠 줘”</button>
+      <button class="btn ghost reqbtn" type="button" data-r="plot" aria-pressed="false" style="justify-content:flex-start"><svg class="ic"><use href="#i-chart"/></svg> “막대그래프로 그려 줘”</button>
+      <button class="btn ghost reqbtn" type="button" data-r="explain" aria-pressed="false" style="justify-content:flex-start"><svg class="ic"><use href="#i-book"/></svg> “결과를 해석해 줘”</button>
+      <div class="callout b" id="it-msg">먼저 <strong>셀 실행</strong>을 눌러 결과를 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시 · 결과 숫자는 process.csv(가상 데이터)로 직접 실행한 값</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 다듬기 요령 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실행하고 다듬기</span></div>
+  <h2>한 번에 완벽한 코드는 없다: 다듬기 요령</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:36px">
+    <svg viewBox="0 0 420 380" style="width:420px;flex:none" role="img" aria-label="요청, 실행, 확인, 다시 요청이 반복되는 순환">
+      <circle cx="210" cy="190" r="128" fill="none" stroke="var(--line)" stroke-width="4" stroke-dasharray="2 10" stroke-linecap="round"/>
+      <circle r="7" class="f-acc flowdot"><animateMotion dur="6s" repeatCount="indefinite" path="M210,62 a128,128 0 1,1 -0.1,0"/></circle>
+      <circle r="7" class="f-acc2 flowdot"><animateMotion dur="6s" begin="3s" repeatCount="indefinite" path="M210,62 a128,128 0 1,1 -0.1,0"/></circle>
+      <g transform="translate(150 22)"><rect width="120" height="64" rx="16" class="f-surface" stroke="var(--accent)" stroke-width="2.5"/><text x="60" y="40" text-anchor="middle" class="t-main" style="font-size:19px">요청</text></g>
+      <g transform="translate(290 158)"><rect width="120" height="64" rx="16" class="f-surface" stroke="var(--accent)" stroke-width="2.5"/><text x="60" y="40" text-anchor="middle" class="t-main" style="font-size:19px">실행</text></g>
+      <g transform="translate(150 294)"><rect width="120" height="64" rx="16" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2.5"/><text x="60" y="40" text-anchor="middle" class="t-main" style="font-size:19px">확인</text></g>
+      <g transform="translate(10 158)"><rect width="120" height="64" rx="16" class="f-surface" stroke="var(--accent)" stroke-width="2.5"/><text x="60" y="31" text-anchor="middle" class="t-main" style="font-size:17px">다시</text><text x="60" y="52" text-anchor="middle" class="t-main" style="font-size:17px">요청</text></g>
+      <g transform="translate(180 160) scale(2.5)" style="color:var(--accent)"><use href="#i-sparkles" width="24" height="24"/></g>
+    </svg>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:21px">한 번에 하나씩 바꾸기</div><div class="d">“그래프도, 라인별로도, 색도…”를 한꺼번에 요청하지 않는다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div><div class="h" style="font-size:21px">무엇이 달라야 하는지 구체적으로</div><div class="d">“이상해” 대신 “야간이 왼쪽에 오게”, “% 단위로”</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h" style="font-size:21px">바뀐 부분 설명 받기</div><div class="d">“방금 코드에서 바뀐 줄만 설명해 줘”</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h" style="font-size:21px">실행 결과는 내가 확인</div><div class="d">AI의 해석 속 숫자가 실제 실행 결과와 같은지 본다</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 실행하고 다듬기 · 실습</span></div>
+  <h2>실습: AI가 만든 코드를 돌리고 바꿔 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div style="flex:1">
+      <ol style="font-size:21px;line-height:1.55;margin:0">
+        <li>process.csv를 읽고 <b>열 이름·자료형</b>을 확인한다</li>
+        <li>네 요소를 갖춘 <b>프롬프트 예시</b>를 읽는다</li>
+        <li>그 프롬프트로 받은 <b>“AI가 만든 코드”</b>를 실행한다</li>
+        <li>이어서 요청한 코드로 <b>라인별 표·막대그래프</b>를 만든다</li>
+        <li><b>직접 바꿔 보기</b>: 묶는 열·계산할 열을 바꿔 다시 실행</li>
+        <li>내 데이터 설명을 자동으로 만들어 <b>나만의 프롬프트</b> 쓰기</li>
+      </ol>
+    </div>
+    <div style="flex:none;width:380px;display:flex;flex-direction:column;gap:16px;align-items:stretch">
+      <div class="tile" style="align-items:center;text-align:center"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">lesson01.ipynb</div><div class="d">코드 셀 12개</div>
+        <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week04/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a></div>
+      <div class="callout b">실습 파일 속 프롬프트를 내가 쓰는 생성형AI에 <strong>그대로 넣어 보고</strong>, 받은 코드와 비교해 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시 · 실습 데이터 process.csv (가상 데이터, 494행)</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">네 요소로 요청</div><div style="font-size:21px"><strong>목표 + 데이터 설명 + 조건 + 출력 형식</strong>. 빠진 칸은 AI가 추측한다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">설명도 함께</div><div style="font-size:21px">주석·단계별 설명을 요청해 <strong>이해한 코드</strong>만 쓴다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">실행하고 다듬기</div><div style="font-size:21px">Colab에서 돌리고, <strong>한 번에 하나씩</strong> 이어서 요청한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="좋은 코딩 프롬프트의 네 요소는 목표·데이터 설명·조건·출력 형식입니다. 정중한 표현은 나쁘지 않지만 코드의 정확도를 높여 주는 요소는 아닙니다.">
+      <p class="q-title"><b>Q1.</b> 좋은 코딩 프롬프트의 네 요소가 <u>아닌</u> 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">무엇을 알고 싶은지(목표)</button>
+        <button type="button" data-v="b">파일·열 이름·자료형(데이터 설명)</button>
+        <button type="button" data-v="c">AI를 칭찬하는 인사말</button>
+        <button type="button" data-v="d">결과를 보여 줄 모양(출력 형식)</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="AI는 대화에 적힌 내용만으로 판단합니다. 열 이름을 알려 주지 않으면 '불량'처럼 그럴듯한 이름을 추측해 쓰고, 실제 데이터와 맞지 않아 오류가 납니다.">
+      <p class="q-title"><b>Q2.</b> AI가 준 코드에 데이터에 없는 열 <code>df['불량']</code>이 들어 있었다. 가장 큰 원인은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">Colab이 오래된 버전이라서</button>
+        <button type="button" data-v="b">프롬프트에 열 이름(데이터 설명)을 알려 주지 않아서</button>
+        <button type="button" data-v="c">pandas가 한글을 지원하지 않아서</button>
+        <button type="button" data-v="d">셀을 두 번 실행해서</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="AI의 코드는 초안입니다. 직접 실행해 결과가 말이 되는지 확인하고, 이해하지 못한 줄은 설명을 요청해야 내 분석이 됩니다.">
+      <p class="q-title"><b>Q3.</b> AI에게 코드를 받은 뒤 할 일로 가장 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 만들었으니 실행하지 않고 보고서에 붙인다</button>
+        <button type="button" data-v="b">모르는 줄은 지우고 실행한다</button>
+        <button type="button" data-v="c">같은 질문을 여러 번 해서 가장 긴 답을 고른다</button>
+        <button type="button" data-v="d">Colab에서 실행해 결과를 확인하고, 모르는 줄은 설명을 요청한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="열 이름·자료형·값의 예만 있으면 AI가 맞는 코드를 쓸 수 있습니다. 데이터 전체나 개인정보·기밀은 넣지 않습니다(1주 3차시).">
+      <p class="q-title"><b>Q4.</b> 프롬프트의 ‘데이터 설명’으로 가장 적절한 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">열 이름과 자료형, 값의 예 몇 개</button>
+        <button type="button" data-v="b">사번이 들어간 원본 데이터 전체</button>
+        <button type="button" data-v="c">“그냥 알아서 해 줘”</button>
+        <button type="button" data-v="d">Colab 계정 비밀번호</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">4-2</div>
+    <h2>AI로 오류 메시지 읽고 해결하기</h2>
+    <p>빨간 오류 메시지는 실패가 아니라 힌트입니다. 읽는 순서와 AI에게 묻는 방법을 배웁니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week03/lesson03.html">← 3-3 파이썬 최소 문법 ②</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 4주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">4주 1차시 · 생성형AI로 코드 만들고 실행하기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

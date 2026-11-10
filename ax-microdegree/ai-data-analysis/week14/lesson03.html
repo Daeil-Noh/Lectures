@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>14주 3차시 · 결과 해석과 AI 활용 검증 점검 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 14주 3차시 교안: 제출 전 최종 점검 — 질문과 답, 상관과 인과, 과적합과 시험 점수, 데이터 품질·편향·개인정보, AI 결과 검증과 공개, 재현성, 15주 안내">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  .tick { opacity: 0; animation: tick 6s infinite; }
+  @keyframes tick { 0%, 8% { opacity: 0; } 14%, 88% { opacity: 1; } 96%, 100% { opacity: 0; } }
+  .lens { animation: lens 6s ease-in-out infinite; }
+  @keyframes lens { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-30px, 150px); } }
+  @media (prefers-reduced-motion: reduce) { .tick { animation: none; opacity: 1; } .lens { animation: none; } }
+
+  /* 상태 상자 (1주 3차시와 같은 모양) */
+  .status { border-radius: 14px; padding: 9px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 과장 찾기 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 14px; padding: 9px 12px; display: flex; flex-direction: column; gap: 3px; transition: background .2s, border-color .2s; min-height: 186px; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .nm { font-size: 16px; font-weight: 700; line-height: 1.4; }
+  .pcard.open .nm { font-size: 14.5px; }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 14px; }
+  .pcard .ans { display: none; font-size: 12.5px; line-height: 1.38; color: var(--muted); }
+  .pcard .fix { display: none; font-size: 12.5px; line-height: 1.38; background: var(--surface); border-radius: 8px; padding: 3px 7px; }
+  .pcard.open .ans, .pcard.open .verdict, .pcard.open .fix { display: block; }
+  .pcard.open.over { background: var(--bad-soft); border-color: var(--bad); } .pcard.open.over .verdict { color: var(--bad); }
+  .pcard.open.fine { background: var(--ok-soft); border-color: var(--ok); } .pcard.open.fine .verdict { color: var(--ok); }
+
+  /* 막대 */
+  .grp { display: grid; grid-template-columns: 110px 1fr; gap: 6px 14px; align-items: center; width: 100%; }
+  .grp .gl { font-size: 15.5px; font-weight: 700; text-align: right; line-height: 1.3; }
+  .grp .gl small { display: block; font-weight: 500; color: var(--muted); font-size: 12.5px; }
+  .pair { display: grid; gap: 3px; }
+  .bar1 { display: flex; align-items: center; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .bar1 i { display: block; height: 18px; border-radius: 5px; transition: width .4s; }
+  .grp.big .bar1 { font-size: 18px; } .grp.big .bar1 i { height: 34px; } .grp.big .gl { font-size: 19px; } .grp.big .pair { gap: 8px; }
+  .bar1 span { white-space: nowrap; }
+  .switch { margin-bottom: 0; align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; }
+
+  /* 최종 점검표 */
+  .cgroups { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; width: 100%; }
+  .cg h4 { margin: 0 0 4px; font-size: 15.5px; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+  .cg .items { display: grid; gap: 4px; }
+  .tgl { font: inherit; font-size: 14px; font-weight: 600; text-align: left; display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.3; }
+  .tgl .chk { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--ok); background: var(--ok-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--ok); border-color: var(--ok); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 9px; height: 5px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .tgl .star { color: var(--accent-2); font-weight: 800; margin-left: auto; }
+  .fixes { display: grid; gap: 5px; font-size: 14.5px; line-height: 1.4; }
+  .fixes div { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent-2); border-radius: 8px; padding: 5px 10px; }
+  .fixes b { color: var(--accent-2); }
+
+  /* 사다리 */
+  .ladder { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-items: end; }
+  .rung { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 6px; font-size: 16px; line-height: 1.4; }
+  .rung .st { font-size: 14px; font-weight: 800; color: var(--accent); }
+  .rung .h { font-size: 20px; font-weight: 800; }
+  .rung .ex { font-size: 14.5px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 6px; }
+  .rp .tile { padding: 14px 16px; gap: 6px; font-size: 16px; }
+  .rp pre.out { font-size: 13.5px; padding: 6px 10px; }
+  .rp pre.out::before { font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 14주차 3차시</p>
+    <h1>결과 해석과<br>AI 활용 검증 점검</h1>
+    <p class="lead" style="font-size:25px">제출하기 전, 마지막으로 확인할 것들</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>점검 차시</span><span>직접 해 보기 4개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:500px;flex:none" aria-hidden="true">
+    <rect x="90" y="40" width="300" height="380" rx="24" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <rect x="180" y="22" width="120" height="40" rx="12" class="f-acc"/>
+    <g>
+      <rect x="124" y="100" width="34" height="34" rx="9" class="f-s2" stroke="var(--muted)" stroke-width="2.5"/><rect x="176" y="108" width="170" height="16" rx="8" class="f-line"/>
+      <rect x="124" y="162" width="34" height="34" rx="9" class="f-s2" stroke="var(--muted)" stroke-width="2.5"/><rect x="176" y="170" width="140" height="16" rx="8" class="f-line"/>
+      <rect x="124" y="224" width="34" height="34" rx="9" class="f-s2" stroke="var(--muted)" stroke-width="2.5"/><rect x="176" y="232" width="180" height="16" rx="8" class="f-line"/>
+      <rect x="124" y="286" width="34" height="34" rx="9" class="f-s2" stroke="var(--muted)" stroke-width="2.5"/><rect x="176" y="294" width="120" height="16" rx="8" class="f-line"/>
+      <rect x="124" y="348" width="34" height="34" rx="9" class="f-s2" stroke="var(--muted)" stroke-width="2.5"/><rect x="176" y="356" width="160" height="16" rx="8" class="f-line"/>
+    </g>
+    <g stroke="var(--ok)" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path class="tick" d="M130 117 l8 8 l16 -18"/>
+      <path class="tick" style="animation-delay:.5s" d="M130 179 l8 8 l16 -18"/>
+      <path class="tick" style="animation-delay:1s" d="M130 241 l8 8 l16 -18"/>
+      <path class="tick" style="animation-delay:1.5s" d="M130 303 l8 8 l16 -18"/>
+      <path class="tick" style="animation-delay:2s" d="M130 365 l8 8 l16 -18"/>
+    </g>
+    <g class="lens">
+      <circle cx="400" cy="140" r="62" class="f-accs" fill-opacity=".55" stroke="var(--accent-2)" stroke-width="10"/>
+      <path d="M444 184 L500 240" stroke="var(--accent-2)" stroke-width="18" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">질문과 답</div><div class="d">내 결과가 분석 질문에 직접 답하는지 확인한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">과장 찾기</div><div class="d">상관 ≠ 인과, 훈련 점수, 범위 밖 예측 같은 과장을 고친다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">데이터·윤리</div><div class="d">데이터 품질·편향·개인정보·출처를 점검한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">AI·재현성</div><div class="d">AI 결과를 검증·공개하고, 처음부터 다시 실행해 본다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>① 결과 해석 점검</b><small>직접 해 보기 3</small></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>② 데이터·윤리</b></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>③ AI·재현성</b></div>
+      <div style="flex:4;background:var(--accent-2-soft)"><b>최종 점검표</b><small>직접 해 보기 1</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>정리·15주</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 내 보고서를 옆에 열어 두고 들으세요. 오늘 나오는 질문마다 <strong>내 보고서는 통과하는가?</strong></p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>제출 전 일곱 가지 질문 — 모두 배운 것</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr);gap:14px">
+      <div class="tile frag show" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h" style="font-size:20px">질문에 답하나?</div><div class="d">9주 3차시</div></div>
+      <div class="tile frag show" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div class="h" style="font-size:20px">상관을 인과로?</div><div class="d">7주 3차시</div></div>
+      <div class="tile frag show" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h" style="font-size:20px">과적합·시험 점수</div><div class="d">9~11주</div></div>
+      <div class="tile frag" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h" style="font-size:20px">데이터 품질·편향</div><div class="d">1주 3차시, 5주</div></div>
+      <div class="tile frag" style="padding:16px"><span class="ic-badge o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h" style="font-size:20px">개인정보·출처</div><div class="d">1주 3차시, 2주 3차시</div></div>
+      <div class="tile frag" style="padding:16px"><span class="ic-badge o"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="h" style="font-size:20px">AI 결과 검증·공개</div><div class="d">4주 3차시, 1주 3차시</div></div>
+      <div class="tile frag" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h" style="font-size:20px">처음부터 다시 돌아가나?</div><div class="d">3주 Colab</div></div>
+      <div class="tile frag" style="padding:16px;background:var(--accent);color:var(--surface);border-color:var(--accent);justify-content:center"><div class="h" style="font-size:20px">→ 마지막에<br>최종 점검표로</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>결과 해석 점검</h2><p>숫자는 맞는데, 말이 숫자보다 앞서가지 않았나?</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 질문에 답하나 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 결과 해석 점검</span></div>
+  <h2>결과가 질문에 <span class="mark">직접</span> 답하는가?</h2>
+  <div class="body">
+    <div class="box" style="padding:14px 24px;margin-bottom:16px"><p style="font-size:20px;margin:0"><b style="color:var(--accent)">분석 질문</b> 어떤 공정 조건이 인장강도를 좌우하고, 조건만으로 강도를 예측할 수 있는가?</p></div>
+    <div class="grid g2" style="gap:22px">
+      <div class="tile frag show" style="border:2px solid var(--bad)">
+        <div class="h" style="color:var(--bad)">✗ 답하지 않는 결론</div>
+        <div style="font-size:18px">“상관계수, 산점도, 회귀 등 <b>다양한 분석을 수행</b>하였으며 여러 변수 사이에 <b>의미 있는 관계</b>를 확인하였다.”</div>
+        <div class="d">무엇을 했는지만 있고, 질문의 두 물음(무엇이 좌우? 예측 가능?)에 대한 답이 없다</div>
+      </div>
+      <div class="tile frag" style="border:2px solid var(--ok)">
+        <div class="h" style="color:var(--ok)">✓ 답하는 결론</div>
+        <div style="font-size:18px">“① <b>예측할 수 있었다</b> — 시험 MAE 1.05 MPa, 기준 2.58 MPa(표 1). ② 관찰 범위 안에서 <b>압력</b>이 가장 크게 관련되었다(그림 4).”</div>
+        <div class="d">질문 하나에 답 하나, 답마다 숫자와 근거(그림·표 번호)</div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:18px;font-size:20px">점검법: 결론 문단을 가리고 질문만 읽은 뒤, <strong style="color:var(--text)">“그래서 답이 뭐야?”</strong>에 한 문장으로 말할 수 있는지 본다. 답이 “아니다”여도 괜찮다 — 그것도 답이다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시 · 14-1 예시 프로젝트</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 과장 찾기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 결과 해석 점검 · 직접 해 보기 1</span></div>
+  <h2>과장을 찾아라 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 과장일까, 적절할까? 먼저 판단하고 누르기</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="oc-cards"></div>
+    <p class="muted" style="margin-top:8px;font-size:16px;margin-bottom:0" id="oc-score">0 / 8 확인</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시 · 숫자는 14-1 예시 프로젝트(process_raw.csv 정리 후 494행, 가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 상관 ≠ 인과 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 결과 해석 점검 · 직접 해 보기 2</span></div>
+  <h2>“야간 근무조 때문”이라고 써도 될까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot" style="padding:16px 22px;flex-direction:column;justify-content:center;gap:10px">
+      <div class="legend" style="align-self:flex-start"><span><i class="dot" style="background:var(--accent)"></i>주간</span><span><i class="dot" style="background:var(--accent-2)"></i>야간</span><span>막대 = 불량률, ( ) = 제품 수</span></div>
+      <div class="grp" id="cf-bars"></div>
+    </div>
+    <div class="side">
+      <div class="switch" role="group" aria-label="비교 방법">
+        <button type="button" id="cf-all" aria-pressed="true">전체 비교</button>
+        <button type="button" id="cf-hum" aria-pressed="false">습도 구간별</button>
+      </div>
+      <div class="meter"><div class="lbl">습도 60% 넘는 날 생산 비율</div><div style="display:flex;gap:16px;font-weight:800;font-size:20px;font-variant-numeric:tabular-nums"><span style="color:var(--accent)">주간 24.7%</span><span style="color:var(--accent-2)">야간 55.0%</span></div></div>
+      <div class="status mid" id="cf-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시 · 14-1 정리 후 494행 (가상 데이터) · 교란 변수는 7주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 과적합 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 결과 해석 점검 · 직접 해 보기 3</span></div>
+  <h2>훈련 점수 0.999, 보고서에 써도 될까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot"><svg id="of-plot" viewBox="0 0 640 410" aria-label="의사결정나무 깊이에 따른 학습 R²와 시험 R²"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>의사결정나무 최대 깊이 <output id="of-d-o">3</output></label><input id="of-d" type="range" min="1" max="15" step="1" value="3" aria-label="나무 깊이"></div>
+      <div class="grid g2" style="gap:8px">
+        <div class="meter"><div class="lbl">학습 R²</div><div class="val" id="of-tr" style="font-size:32px">0.606</div></div>
+        <div class="meter"><div class="lbl">시험 R²</div><div class="val o" id="of-te" style="font-size:32px">0.590</div></div>
+      </div>
+      <div class="status ok" id="of-st"></div>
+      <div class="callout b" style="font-size:15px">점검: 보고서의 성능 숫자가 <strong>검증</strong> 데이터 점수인가? 훈련과 시험의 차이도 적었나?</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시 · 강도 예측, 조건 5개, 8:2 분할 random_state=42 · 과적합은 11주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>데이터·윤리 점검</h2><p>분석이 아무리 좋아도, 데이터가 흔들리면 같이 흔들립니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-shield"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 데이터 품질·편향 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터·윤리 점검</span></div>
+  <h2>데이터 품질과 편향: 네 가지 확인</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:1fr 1fr;gap:16px">
+      <div class="tile row frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h">정리한 흔적을 숫자로</div><div class="d">결측·오류값을 <b>몇 개, 어떻게</b> 처리했나 — 예: 오류값 8개 → 결측, 결측 36개 → 중앙값</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h">그룹마다 개수는 충분한가</div><div class="d">평균·비율 옆에 n을 — 예: 습도 70% 넘는 주간 생산품은 <b>12개</b>뿐. 그 불량률(16.7%)은 크게 흔들릴 수 있다</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h">한쪽으로 치우치지 않았나</div><div class="d">수집 기간·조건이 한쪽뿐이면 그 밖은 모른다 — 예: 평일 30일, 봄철 기록만 (1주 3차시 데이터 편향)</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-gauge"/></svg></span><div><div class="h">값이 말이 되는가</div><div class="d">단위·범위를 전공 지식으로 — 예: 사출 온도 999.9℃, -1.0℃는 측정값이 아니라 센서 오류 표시</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시 · 숫자는 14-1 예시 프로젝트 · 결측·자료형 정리는 5주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 개인정보·출처 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터·윤리 점검</span></div>
+  <h2>개인정보와 출처: 제출 전에 지울 것, 적을 것</h2>
+  <div class="body">
+    <table style="font-size:18px">
+      <thead><tr><th style="width:34%">내 보고서·Colab에 이런 게 있다면</th><th>이렇게</th><th style="width:16%">근거</th></tr></thead>
+      <tbody>
+        <tr class="frag show"><td><svg class="ic" style="color:var(--accent-2)"><use href="#i-user"/></svg> 이름·학번·사번 열</td><td>분석에 필요 없으면 <b>삭제</b>, 필요하면 <b>임의 번호로 가명처리</b> (출력 결과에도 남지 않게)</td><td>1주 3차시</td></tr>
+        <tr class="frag"><td><svg class="ic" style="color:var(--accent-2)"><use href="#i-eye"/></svg> 사람이 찍힌 사진·영상</td><td>얼굴·명찰을 <b>흐리거나 잘라 내고</b>, 검사 대상만 남기기</td><td>1주 3차시</td></tr>
+        <tr class="frag"><td><svg class="ic" style="color:var(--accent-2)"><use href="#i-flask"/></svg> 연구실·현장실습 회사 데이터</td><td>담당자 <b>허락</b>과 공개 범위 확인 — 공개 저장소·생성형AI에 원본 올리지 않기</td><td>1주 3차시</td></tr>
+        <tr class="frag"><td><svg class="ic" style="color:var(--accent)"><use href="#i-database"/></svg> 공공데이터·AI허브 데이터</td><td>참고문헌에 <b>출처</b>, 이용 조건(출처 표시 등)대로 사용</td><td>2주 3차시</td></tr>
+        <tr class="frag"><td><svg class="ic" style="color:var(--accent)"><use href="#i-chat"/></svg> AI에게 데이터 질문할 때</td><td>원본 대신 <b>열 이름·자료형·가짜 예시 몇 줄</b>만 붙여 넣기</td><td>4주</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시 · 보고서에 사람을 알아볼 수 있는 데이터가 필요하면 먼저 교수와 상의</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>AI 활용·재현성 점검</h2><p>AI가 만든 것도 내 이름으로 나갑니다. 그리고 다시 돌아가야 합니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-sparkles"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 검증 사다리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI 활용·재현성</span></div>
+  <h2>AI가 만든 코드·문장을 믿기까지 다섯 계단</h2>
+  <div class="body">
+    <div class="ladder">
+      <div class="rung frag show" style="min-height:190px"><span class="st">1계단</span><div class="h">실행된다</div><div>오류 없이 끝까지 돈다</div><div class="ex">예: ValueError → 순서 고침</div></div>
+      <div class="rung frag" style="min-height:230px"><span class="st">2계단</span><div class="h">말이 된다</div><div>행 수·범위·단위가 상식에 맞다</div><div class="ex">예: 정리 후 494행, 온도 192~235℃</div></div>
+      <div class="rung frag" style="min-height:270px"><span class="st">3계단</span><div class="h">일부를 손으로</div><div>몇 개를 직접 세거나 계산해 대조</div><div class="ex">예: 구간 평균 하나를 직접 계산</div></div>
+      <div class="rung frag" style="min-height:310px"><span class="st">4계단</span><div class="h">다른 길로 확인</div><div>그림·다른 방법·공식본과 비교</div><div class="ex">예: 상관 -0.11 → 산점도로 곡선 확인, process.csv와 평균 대조</div></div>
+      <div class="rung frag" style="min-height:350px;background:var(--accent);color:var(--surface);border-color:var(--accent)"><span class="st" style="color:var(--surface)">5계단</span><div class="h">밝힌다</div><div>AI 활용 내역에 도구·단계·요청·확인</div><div class="ex" style="color:var(--surface);opacity:.85;border-color:rgba(255,255,255,.4)">숨기지 않으면 실수도 함께 고칠 수 있다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시 · 환각·검증 기초는 4주 3차시 · 예시는 14-1</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 재현성 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ AI 활용·재현성</span></div>
+  <h2>런타임 → 다시 시작 → <span class="mark">모두 실행</span>, 끝까지 도는가?</h2>
+  <div class="body rp">
+    <div class="grid g2" style="gap:14px">
+      <div class="tile frag show"><div class="h" style="font-size:19px">① 셀을 오가며 실행했다</div><pre class="out err">NameError: name 'model2' is not defined</pre><div class="d" style="font-size:15px">아래 셀에서 만든 변수를 위 셀이 쓰고 있다 → 실행 순서대로 셀 배치</div></div>
+      <div class="tile frag"><div class="h" style="font-size:19px">② 내 컴퓨터에만 있는 파일</div><pre class="out err">FileNotFoundError: [Errno 2] No such file or directory: 'my_data.csv'</pre><div class="d" style="font-size:15px">Colab에 올린 파일은 세션이 끝나면 사라진다 → 공개 주소나 드라이브 연결로 읽기</div></div>
+      <div class="tile frag"><div class="h" style="font-size:19px">③ 돌릴 때마다 숫자가 다르다</div><pre class="out">시험 R² 0.867 … 다시 돌리면 0.794</pre><div class="d" style="font-size:15px">분할에 <code>random_state</code>를 고정하고 보고서에 적기 (14-1: 0.79~0.87)</div></div>
+      <div class="tile frag"><div class="h" style="font-size:19px">④ 설치·불러오기 셀이 빠졌다</div><pre class="out err">ModuleNotFoundError: No module named 'koreanize_matplotlib'</pre><div class="d" style="font-size:15px">맨 위 준비 셀에 <code>!pip install</code>과 <code>import</code>를 모두</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시 · 제출 전 마지막에 꼭 한 번 · Colab 사용법은 3주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 최종 점검표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">최종 점검표 · 직접 해 보기 4</span></div>
+  <h2>제출 전 최종 점검표 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 내 보고서로 체크해 보기</span></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="padding:12px 14px;align-items:flex-start"><div class="cgroups" id="ck-groups"></div></div>
+    <div class="side">
+      <div class="meter"><div class="lbl">제출 준비도 (★ 필수 항목은 2배)</div><div class="val" id="ck-pct" style="font-size:36px">0%</div><div class="track"><i id="ck-bar"></i></div></div>
+      <div class="status bad" id="ck-st"></div>
+      <div class="muted" style="font-size:14px;font-weight:700">먼저 고칠 것</div>
+      <div class="fixes" id="ck-fix"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시 · 체크 상태는 저장되지 않음 — 보고서 템플릿 마지막 자기 점검 셀과 함께 쓰기</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">답하고, 근거만큼만</div><div style="font-size:21px">질문에 <strong>직접</strong> 답한다. 관계를 인과로, 훈련 점수를 성능으로, 범위 밖을 예측으로 쓰지 않는다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">데이터를 지킨다</div><div style="font-size:21px">처리한 흔적·개수·치우침을 적고, <strong>개인정보는 지우고</strong>, 출처를 밝힌다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">확인하고, 밝히고, 다시 돌린다</div><div style="font-size:21px">AI 결과는 다섯 계단으로 검증해 <strong>AI 활용 내역</strong>에. 마지막은 <strong>모두 실행</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="야간에는 습도도 높았습니다. 관찰 데이터에서 두 그룹의 차이는 다른 변수(교란 변수) 때문일 수 있으므로, 관계가 있었다는 사실과 함께 다른 차이도 적습니다.">
+      <p class="q-title"><b>Q1.</b> 야간 불량률 20.3%, 주간 7.0%. 가장 알맞은 표현은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">야간 근무자 때문에 불량이 늘었다.</button>
+        <button type="button" data-v="b">야간 근무를 없애면 불량률이 7.0%가 된다.</button>
+        <button type="button" data-v="c">야간 불량률이 높았으나, 야간은 습도도 높아 원인을 구분할 수 없다.</button>
+        <button type="button" data-v="d">근무조는 불량과 관계가 없다.</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="학습 R²가 0.999인데 시험 R²가 0.48이면 훈련 데이터를 외운 과적합입니다. 보고서에는 시험 점수를 쓰고, 나무 깊이를 줄이는 등 모델을 단순하게 합니다.">
+      <p class="q-title"><b>Q2.</b> 나무 모델이 학습 R² 0.999, 시험 R² 0.48이다. 옳은 판단은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">거의 완벽한 모델이므로 학습 R²를 보고한다.</button>
+        <button type="button" data-v="b">과적합이다. 시험 점수를 보고하고 모델을 단순하게 한다.</button>
+        <button type="button" data-v="c">시험 데이터가 잘못되었으니 지운다.</button>
+        <button type="button" data-v="d">두 점수의 평균 0.74를 보고한다.</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="실행되는 것은 첫 계단일 뿐입니다. 행 수·범위가 말이 되는지, 일부를 직접 계산하거나 그림으로 교차 확인하고, AI 활용 내역에 밝힙니다.">
+      <p class="q-title"><b>Q3.</b> AI가 써 준 코드가 오류 없이 실행됐다. 다음에 할 일은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">실행됐으니 바로 결과를 보고서에 옮긴다.</button>
+        <button type="button" data-v="b">AI에게 “맞지?”라고 한 번 더 묻고 끝낸다.</button>
+        <button type="button" data-v="c">코드가 길면 지우고 짧은 코드를 다시 받는다.</button>
+        <button type="button" data-v="d">출력의 행 수·범위를 확인하고, 일부를 직접 계산·그림으로 대조한다.</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="a" data-explain="셀을 오가며 실행하면 화면에서는 돌아가도, 처음부터 실행하면 오류가 날 수 있습니다. 런타임을 다시 시작하고 모두 실행해 끝까지 도는지 확인합니다.">
+      <p class="q-title"><b>Q4.</b> 제출 직전 재현성을 확인하는 가장 확실한 방법은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">런타임 다시 시작 → 모두 실행 → 끝까지 오류 없는지 확인</button>
+        <button type="button" data-v="b">마지막 셀만 한 번 더 실행</button>
+        <button type="button" data-v="c">출력 결과를 지우고 저장</button>
+        <button type="button" data-v="d">화면에 결과가 보이니 그대로 제출</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 15주 로드맵 돌아보기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">강의를 마치며</span></div>
+  <h2>1-1의 약속, 15주 로드맵을 돌아보며</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge g lg"><svg class="ic"><use href="#i-code"/></svg></span><div class="muted" style="font-size:16px;font-weight:700">1~4주</div><div class="h">준비</div><div class="d">개념 · Colab · 파이썬<br>생성형AI 코딩 도우미</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="muted" style="font-size:16px;font-weight:700">5~7주</div><div class="h">데이터 다루기</div><div class="d">정리 · 통계 · 시각화<br>8주 중간고사</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="muted" style="font-size:16px;font-weight:700">9~13주</div><div class="h">AI 모델</div><div class="d">회귀 · 분류 · 군집<br>딥러닝 · 생성형AI</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-cap"/></svg></span><div style="font-size:16px;font-weight:700;opacity:.85">14~15주 · 지금 여기</div><div class="h">전공 적용</div><div class="d">전공 분석 보고서<br>15주 기말고사</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:22px;padding:16px 26px;display:flex;align-items:center;gap:20px"><p style="font-size:21px;margin:0;flex:1">첫 시간의 질문 — <strong>“감으로 하던 판단을 데이터로 바꿀 수 있는가?”</strong> 이제 여러분의 전공 데이터로 그 답을 직접 써 볼 차례입니다.</p><a class="btn ghost" href="../week01/lesson01.html" style="flex:none">1-1 다시 보기</a></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시 · 1주 1차시 로드맵</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 15주 안내 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 안내 · 15주차</span></div>
+    <div class="big">15주</div>
+    <h2>기말고사 · 전공 분석 보고서 제출</h2>
+    <ul style="font-size:23px;color:var(--muted);margin:0 0 6px">
+      <li><b style="color:var(--text)">기말고사</b> — 9~14주 내용, 오프라인 평가</li>
+      <li><b style="color:var(--text)">전공 분석 보고서</b> — 15주 제출. 일정·제출 방법은 <b style="color:var(--text)">LMS 공지</b> 기준</li>
+    </ul>
+    <p style="font-size:21px">한 학기 동안 수고 많았습니다.</p>
+    <p style="margin-top:14px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 14-2</a><a class="btn" href="../">☰ 강의 목록</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-cap"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">14주 3차시 · 결과 해석과 AI 활용 검증 점검</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

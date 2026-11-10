@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5주 1차시 · 표 데이터 불러오기와 살펴보기(pandas) | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 5주 1차시 교안: DataFrame의 행·열·인덱스, pd.read_csv로 불러오기, shape·head·info·describe·value_counts로 첫 점검">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .slide.section .big { margin-bottom: 24px; }
+  .scanrow { animation: scanrow 4.8s steps(1) infinite; }
+  @keyframes scanrow { 0% { transform: translateY(0); } 20% { transform: translateY(44px); } 40% { transform: translateY(88px); } 60% { transform: translateY(132px); } 80% { transform: translateY(176px); } }
+  .flowdot { }
+  @media (prefers-reduced-motion: reduce) { .scanrow { animation: none; } .flowdot { display: none; } }
+
+  /* 미니 표 */
+  .mt { font-size: 15px; font-variant-numeric: tabular-nums; width: 100%; }
+  .mt th, .mt td { padding: 4px 10px; transition: background .2s, color .2s, opacity .2s; white-space: nowrap; }
+  .mt th { font-size: 14px; }
+  .mt .idx { color: var(--muted); background: var(--surface-2); font-weight: 700; text-align: right; }
+  .mt td.num { text-align: right; }
+  .mt .hl { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+  .mt .hl2 { background: var(--accent-2-soft); color: var(--accent-2); font-weight: 800; }
+  .mt .dim { opacity: .28; }
+  .mt tr.gap td { text-align: center; color: var(--muted); font-size: 13px; padding: 1px; background: var(--surface); }
+  .mt .dt { display: block; font-size: 11.5px; font-weight: 800; color: var(--accent-2); font-family: ui-monospace, Menlo, Consolas, monospace; height: 0; overflow: hidden; transition: height .2s; }
+  .mt.show-dt .dt { height: 16px; }
+  .edge { position: absolute; z-index: 2; font-size: 13px; font-weight: 800; color: var(--accent-2); background: var(--accent-2-soft); border-radius: 8px; padding: 1px 8px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .edge.on { opacity: 1; }
+  .mt.edgeon { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+  .mbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .mbtn { font: inherit; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14.5px; font-weight: 700; text-align: left; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .mbtn:hover { border-color: var(--accent); }
+  .mbtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .mbtn.wide { grid-column: 1 / -1; }
+  #mx td, #mx th { padding: 2px 8px; }
+  pre.out.mini { font-size: 13.5px; line-height: 1.42; padding: 8px 14px; min-height: 150px; }
+
+  /* 해부도 */
+  .parts-btns { display: grid; gap: 7px; }
+  .pbtn { font: inherit; font-size: 16.5px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .pbtn b { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; color: var(--muted); margin-left: auto; font-weight: 700; }
+  .pbtn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .pbtn[aria-pressed="true"] b { color: var(--accent); }
+
+  /* 자료형 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; min-height: 132px; display: flex; flex-direction: column; gap: 6px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .nm { font-size: 18px; font-weight: 800; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .pcard .ex { font-size: 15px; color: var(--muted); font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 17px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .pcard .ans { display: none; font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.num { background: var(--accent-soft); border-color: var(--accent); } .pcard.open.num .verdict { color: var(--accent); }
+  .pcard.open.str { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.str .verdict { color: var(--accent-2); }
+
+  /* 막대 */
+  .vbars { display: grid; gap: 12px; }
+  .vrow { display: grid; grid-template-columns: 96px 1fr 120px; align-items: center; gap: 12px; font-size: 19px; }
+  .vrow .track { height: 30px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+  .vrow .track i { display: block; height: 100%; border-radius: 8px; background: var(--accent); }
+  .vrow .n { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+  .note { display: flex; gap: 12px; align-items: flex-start; font-size: 17px; line-height: 1.45; }
+  .note .no { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--surface); font-weight: 800; display: grid; place-items: center; font-size: 15px; margin-top: 1px; }
+  .note .no.o { background: var(--accent-2); }
+  .csv { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; line-height: 1.6; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; white-space: pre; overflow: hidden; }
+  .csv i { color: var(--accent-2); font-style: normal; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 5주차 1차시</p>
+    <h1>표 데이터<br>불러오기와 살펴보기</h1>
+    <p class="lead" style="font-size:25px">pandas로 494줄의 공정 기록을<br>3분 만에 파악하기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <!-- CSV 문서 -->
+    <path d="M30 70 h120 l34 34 v220 h-154 z" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <path d="M150 70 v34 h34" fill="none" stroke="var(--line)" stroke-width="3"/>
+    <text x="48" y="100" class="t-acc">.csv</text>
+    <g class="t-mono" style="font-size:12px;fill:var(--muted)">
+      <text x="46" y="140">P01,211.7,…</text><text x="46" y="168">P02,208.4,…</text><text x="46" y="196">P03,210.2,…</text><text x="46" y="224">P04,214.5,…</text><text x="46" y="252">P05,219.5,…</text><text x="46" y="280">P06,216.1,…</text>
+    </g>
+    <path id="cv-flow" d="M196 200 C 230 200, 230 200, 262 200" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="4 7"/>
+    <circle r="6" class="f-acc2 flowdot"><animateMotion dur="1.6s" repeatCount="indefinite"><mpath href="#cv-flow"/></animateMotion></circle>
+    <!-- 표 -->
+    <rect x="270" y="60" width="230" height="290" rx="18" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <rect x="270" y="60" width="230" height="44" rx="18" class="f-acc"/>
+    <rect x="270" y="86" width="230" height="18" class="f-acc"/>
+    <rect x="270" y="104" width="40" height="246" class="f-s2"/>
+    <g style="font-size:14px;font-weight:800;fill:var(--surface)"><text x="330" y="88">temp</text><text x="410" y="88">defect</text></g>
+    <rect class="scanrow f-accs" x="310" y="110" width="186" height="36" rx="6"/>
+    <g style="font-size:14px;fill:var(--text)" class="t-mono">
+      <text x="282" y="133" class="f-muted">0</text><text x="330" y="133">211.7</text><text x="420" y="133">0</text>
+      <text x="282" y="177" class="f-muted">1</text><text x="330" y="177">208.4</text><text x="420" y="177">0</text>
+      <text x="282" y="221" class="f-muted">2</text><text x="330" y="221">210.2</text><text x="420" y="221">0</text>
+      <text x="282" y="265" class="f-muted">3</text><text x="330" y="265">214.5</text><text x="420" y="265">0</text>
+      <text x="282" y="309" class="f-muted">4</text><text x="330" y="309">219.5</text><text x="420" y="309">0</text>
+    </g>
+    <g stroke="var(--line)" stroke-width="1.5"><path d="M310 148 H500 M310 192 H500 M310 236 H500 M310 280 H500 M310 324 H500"/></g>
+    <circle cx="430" cy="372" r="46" class="f-acc2"/>
+    <text x="430" y="383" text-anchor="middle" class="t-mono" style="font-size:30px;font-weight:800;fill:var(--surface)">pd</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">DataFrame</div><div class="d">표를 이루는 행·열·인덱스를 구분해 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">불러오기</div><div class="d"><code>pd.read_csv</code>로 인터넷 주소의 CSV를 불러온다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">첫 점검</div><div class="d"><code>shape</code>·<code>head</code>·<code>info</code>로 크기·모양·자료형을 확인한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">한눈에 요약</div><div class="d"><code>describe</code>·<code>value_counts</code>로 숫자와 범주를 요약한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:10;background:var(--accent-soft)"><b>① 표와 pandas</b><small>직접 해 보기 1</small></div>
+      <div style="flex:10;background:var(--accent-2-soft)"><b>② 데이터 살펴보기</b><small>직접 해 보기 2</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 새 데이터를 받으면 분석하기 전에 먼저 묻는다: <strong>“얼마나 크고, 어떻게 생겼고, 빈 곳은 없는가?”</strong></p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입: CSV → 표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>메모장으로 열면 쉼표투성이, pandas로 열면 표</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:22px">
+    <div style="flex:1;min-width:0">
+      <div class="muted" style="font-size:16px;font-weight:700;margin-bottom:6px">process.csv 를 메모장으로 열면</div>
+      <div class="csv">product_id<i>,</i>date<i>,</i>shift<i>,</i>line<i>,</i>machine<i>,</i>temp<i>,</i>…
+P00001<i>,</i>2026-03-02<i>,</i>주간<i>,</i>1라인<i>,</i>2호기<i>,</i>211.7<i>,</i>…
+P00002<i>,</i>2026-03-02<i>,</i>주간<i>,</i>3라인<i>,</i>6호기<i>,</i>208.4<i>,</i>…
+P00003<i>,</i>2026-03-02<i>,</i>주간<i>,</i>2라인<i>,</i>4호기<i>,</i>210.2<i>,</i>…
+P00004<i>,</i>2026-03-02<i>,</i>주간<i>,</i>3라인<i>,</i>5호기<i>,</i>214.5<i>,</i>…
+⋮  (모두 495줄 = 열 이름 1줄 + 기록 494줄)</div>
+      <p class="muted" style="font-size:17px;margin:10px 0 0">CSV = <b style="color:var(--text)">C</b>omma-<b style="color:var(--text)">S</b>eparated <b style="color:var(--text)">V</b>alues. 쉼표로 칸을 나눈 텍스트 파일 — 엑셀·장비·센서가 가장 흔하게 내보내는 형식</p>
+    </div>
+    <div class="arrow frag" style="font-size:44px;color:var(--muted)">›</div>
+    <div class="frag" style="flex:1;min-width:0">
+      <div class="muted" style="font-size:16px;font-weight:700;margin-bottom:6px">pandas 로 읽으면</div>
+      <table class="mt">
+        <thead><tr><th class="idx"></th><th>product_id</th><th>date</th><th>shift</th><th>line</th><th>temp</th></tr></thead>
+        <tbody>
+          <tr><td class="idx">0</td><td>P00001</td><td>2026-03-02</td><td>주간</td><td>1라인</td><td class="num">211.7</td></tr>
+          <tr><td class="idx">1</td><td>P00002</td><td>2026-03-02</td><td>주간</td><td>3라인</td><td class="num">208.4</td></tr>
+          <tr><td class="idx">2</td><td>P00003</td><td>2026-03-02</td><td>주간</td><td>2라인</td><td class="num">210.2</td></tr>
+          <tr><td class="idx">3</td><td>P00004</td><td>2026-03-02</td><td>주간</td><td>3라인</td><td class="num">214.5</td></tr>
+          <tr class="gap"><td colspan="6">⋮ 494행 × 13열</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="font-size:17px;margin:10px 0 0">칸이 맞춰지고, 열마다 이름이 붙고, 행마다 번호가 붙는다 → <strong style="color:var(--text)">계산·필터·그래프</strong>가 가능해진다</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · 실습 데이터 process.csv (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 데이터 소개 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>오늘의 데이터: 사출 성형 공정 기록</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge g"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">무엇을</div><div class="d"><code>product_id</code> 제품 번호<br><code>date</code> 생산일 (평일 30일)</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-factory"/></svg></span><div class="h">어디서·언제</div><div class="d"><code>shift</code> 주간/야간<br><code>line</code> 1~3라인<br><code>machine</code> 1~6호기</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h">공정 조건 (센서)</div><div class="d"><code>temp</code> 온도 ℃<br><code>pressure</code> 압력 bar<br><code>speed</code> 회전수 rpm<br><code>humidity</code> 습도 %</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">품질 결과</div><div class="d"><code>thickness</code> 두께 mm<br><code>strength</code> 인장강도 MPa<br><code>defect</code> 불량 0/1<br><code>defect_type</code> 불량 유형</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">한 행 = 제품 하나. 이 데이터 하나로 <strong style="color:var(--text)">정리(5주) → 통계(6주) → 그래프(7주) → 예측·판정(10~11주)</strong>까지 이어 갑니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · 실습 데이터 process.csv (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>표와 pandas</h2><p>표의 부분마다 이름이 있고, 이름을 알면 꺼내 쓸 수 있습니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. pandas = 파이썬의 엑셀 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 표와 pandas</span></div>
+  <h2>pandas: 파이썬에서 표를 다루는 라이브러리</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <div style="width:400px;flex:none">
+      <pre class="code"># 3-3에서 배운 라이브러리 불러오기
+import pandas as pd</pre>
+      <p class="codecap">관례상 <b>pd</b>라는 짧은 별명으로 부릅니다. 이후 모든 기능은 <code>pd.이름</code>으로 씁니다.</p>
+      <div class="callout b" style="margin-top:16px">Colab에는 pandas가 <strong>이미 설치</strong>되어 있어 <code>import</code>만 하면 됩니다.</div>
+    </div>
+    <table style="font-size:19px;flex:1">
+      <thead><tr><th>엑셀에서 하던 일</th><th>pandas에서는</th><th>언제 배우나</th></tr></thead>
+      <tbody>
+        <tr class="frag show"><td>파일 열기</td><td><code>pd.read_csv('파일')</code></td><td>오늘</td></tr>
+        <tr class="frag"><td>시트 하나(표)</td><td><b>DataFrame</b> (데이터프레임)</td><td>오늘</td></tr>
+        <tr class="frag"><td>열 하나</td><td><b>Series</b> (시리즈)</td><td>오늘</td></tr>
+        <tr class="frag"><td>필터·정렬</td><td><code>df[조건]</code>, <code>sort_values</code></td><td>5-2</td></tr>
+        <tr class="frag"><td>빈칸·오타 고치기</td><td><code>fillna</code>, <code>astype</code></td><td>5-3</td></tr>
+        <tr class="frag"><td>피벗·그래프</td><td><code>groupby</code>, <code>plot</code></td><td>6~7주</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · 행이 수십만 개여도 같은 코드 한 줄로 처리 — 엑셀보다 반복·재현이 쉽다</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 해부도 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 표와 pandas · 직접 해 보기 1</span></div>
+  <h2>DataFrame 해부도: 이름을 알면 꺼낼 수 있다 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:12px;padding:18px 20px">
+      <table class="mt" id="ana" style="font-size:19px"></table>
+      <pre class="out mini" id="ana-out" style="min-height:118px">왼쪽 버튼을 누르면 그 부분을 꺼내는 코드와 결과가 여기 나옵니다.</pre>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">표의 부분을 골라 보세요</div>
+      <div class="parts-btns" id="ana-btns"></div>
+      <div class="callout b" id="ana-msg"><strong>DataFrame</strong> = 이름 붙은 열 여러 개 + 행 번호(인덱스). 오늘의 <code>df</code>는 494행 × 13열입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · process.csv 앞 5행의 일부 열 (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 9. read_csv -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 표와 pandas</span></div>
+  <h2>인터넷 주소로 바로 불러오기: <code>pd.read_csv</code></h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1;min-width:0;display:grid;gap:12px">
+      <pre class="code">import pandas as pd
+
+# 실습 데이터가 있는 폴더 주소 (이 강의 공통)
+DATA = 'https://raw.githubusercontent.com/Daeil-Noh/Lectures/main/ax-microdegree/ai-data-analysis/data/'
+
+df = pd.read_csv(DATA + 'process.csv')
+df.shape</pre>
+      <pre class="out">(494, 13)</pre>
+    </div>
+    <div style="width:390px;flex:none;display:grid;gap:14px">
+      <div class="note frag show"><span class="no">1</span><div><b>주소 문자열</b>을 변수 <code>DATA</code>에 담아 두면 파일 이름만 바꿔 다른 데이터도 읽는다</div></div>
+      <div class="note frag"><span class="no">2</span><div><code>DATA + 'process.csv'</code> 문자열을 이어 붙여 <b>전체 주소</b>를 만든다</div></div>
+      <div class="note frag"><span class="no">3</span><div><code>read_csv</code>가 표(DataFrame)를 만들어 <b>변수 <code>df</code></b>에 담는다 (df = data frame)</div></div>
+      <div class="note frag"><span class="no o">4</span><div>셀의 <b>마지막 줄</b> 값은 <code>print</code> 없이도 화면에 나온다 → (행, 열) 개수</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · 내 컴퓨터 파일은 Colab 왼쪽 폴더 아이콘으로 올린 뒤 pd.read_csv('파일이름.csv')</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 불러오기 오류 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 표와 pandas</span></div>
+  <h2>불러오다 자주 만나는 오류 네 가지</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:16px">
+      <div class="tile" style="padding:16px 20px;gap:8px"><div class="h" style="font-size:20px">pd를 모른다고?</div><pre class="out err" style="font-size:14px;padding:8px 12px">NameError: name 'pd' is not defined</pre><div class="d" style="font-size:16px">→ <code>import pandas as pd</code> 셀을 <b>먼저 실행</b>. 런타임을 다시 시작했다면 위에서부터 다시</div></div>
+      <div class="tile" style="padding:16px 20px;gap:8px"><div class="h" style="font-size:20px">주소 오타</div><pre class="out err" style="font-size:14px;padding:8px 12px">HTTPError: HTTP Error 404: Not Found</pre><div class="d" style="font-size:16px">→ 404 = 그 주소에 파일이 없다. <b>철자·대소문자·슬래시(/)</b> 확인</div></div>
+      <div class="tile" style="padding:16px 20px;gap:8px"><div class="h" style="font-size:20px">파일 이름 오타 (내 파일)</div><pre class="out err" style="font-size:14px;padding:8px 12px">FileNotFoundError: [Errno 2] No such file or directory: 'proces.csv'</pre><div class="d" style="font-size:16px">→ 파일을 올렸는지, 이름이 정확한지 확인</div></div>
+      <div class="tile" style="padding:16px 20px;gap:8px"><div class="h" style="font-size:20px">한글이 깨진 CSV</div><pre class="out err" style="font-size:14px;padding:8px 12px">UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0</pre><div class="d" style="font-size:16px">→ 국내 엑셀·공공데이터에 흔함. <code>pd.read_csv(파일, encoding='cp949')</code></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:18px;font-size:19px">4-2에서 배운 대로 <strong style="color:var(--text)">오류 메시지의 마지막 줄</strong>부터 읽고, 모르겠으면 그 줄을 생성형AI에 붙여 넣어 물어봅니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · 오류 메시지는 길이를 줄여 마지막 줄만 표시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>데이터 살펴보기</h2><p>분석하기 전에 3분 건강검진 — 다섯 줄이면 충분합니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-eye"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 점검 루틴 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터 살펴보기</span></div>
+  <h2>새 데이터를 받으면 이 순서로</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h" style="font-family:ui-monospace,Menlo,monospace;font-size:21px">shape</div><div class="d">얼마나 큰가?<br>(행, 열) 개수</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h" style="font-family:ui-monospace,Menlo,monospace;font-size:21px">head()</div><div class="d">어떻게 생겼나?<br>앞쪽 5행</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h" style="font-family:ui-monospace,Menlo,monospace;font-size:21px">info()</div><div class="d">자료형은? 빈칸은?<br>열마다 정리</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h" style="font-family:ui-monospace,Menlo,monospace;font-size:21px">describe()</div><div class="d">숫자의 범위는?<br>평균·최소·최대</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h" style="font-family:ui-monospace,Menlo,monospace;font-size:19px">value_counts()</div><div class="d">범주별로<br>몇 개인가?</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">괄호 <code>()</code>가 없는 <code>shape</code>·<code>columns</code>는 표가 가진 <strong style="color:var(--text)">속성</strong>, 괄호가 있는 것은 표에 시키는 <strong style="color:var(--text)">동작(메서드)</strong>입니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 메서드 탐색 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터 살펴보기 · 직접 해 보기 2</span></div>
+  <h2>무엇을 돌려줄까? 눌러서 확인하기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;padding:12px 14px;position:relative">
+      <div style="position:relative"><table class="mt" id="mx" style="font-size:14px"></table><span class="edge" id="mx-r" style="right:6px;top:46%"></span><span class="edge" id="mx-c" style="left:46%;top:-11px"></span></div>
+      <pre class="out mini" id="mx-out" style="font-size:13px;line-height:1.38;padding:6px 12px;min-height:0;flex:1">오른쪽 버튼을 눌러 보세요.</pre>
+    </div>
+    <div class="side">
+      <div class="mbtns" id="mx-btns"></div>
+      <div class="callout b" id="mx-msg">표는 494행이지만 화면에는 앞 6행과 뒤 3행만 축소해 그렸습니다. 결과는 <strong>실제 494행</strong>으로 계산한 값입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · process.csv 13열 중 8열만 표시 · 결과는 Colab(pandas 2.x) 기준</span><span class="no"></span></div>
+</section>
+
+<!-- 14. info 읽기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터 살펴보기</span></div>
+  <h2><code>df.info()</code> 한 번으로 보는 것</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:28px">
+    <pre class="out" style="font-size:14.5px;line-height:1.42;width:560px;flex:none">&lt;class 'pandas.core.frame.DataFrame'&gt;
+RangeIndex: 494 entries, 0 to 493
+Data columns (total 13 columns):
+ #   Column       Non-Null Count  Dtype
+---  ------       --------------  -----
+ 0   product_id   494 non-null    object
+ 1   date         494 non-null    object
+ 2   shift        494 non-null    object
+ 3   line         494 non-null    object
+ 4   machine      494 non-null    object
+ 5   temp         494 non-null    float64
+ 6   pressure     494 non-null    float64
+ 7   speed        494 non-null    int64
+ 8   humidity     494 non-null    float64
+ 9   thickness    494 non-null    float64
+10   strength     494 non-null    float64
+11   defect       494 non-null    int64
+12   defect_type  494 non-null    object
+dtypes: float64(5), int64(2), object(6)</pre>
+    <div style="flex:1;display:grid;gap:14px">
+      <div class="note frag show"><span class="no">1</span><div><b>entries 494</b> — 행 개수. 인덱스는 0부터 493까지</div></div>
+      <div class="note frag"><span class="no">2</span><div><b>Non-Null Count</b> — 비어 있지 <u>않은</u> 값의 개수. 모두 494 → <b>빈칸 없음</b>. 숫자가 작은 열이 있으면 결측치! (5-3)</div></div>
+      <div class="note frag"><span class="no o">3</span><div><b>Dtype</b> — 자료형. <code>float64</code> 실수, <code>int64</code> 정수, <code>object</code> 문자열 등</div></div>
+      <div class="callout frag" style="font-size:16px">숫자여야 할 열이 <code>object</code>로 나오면 <strong>어딘가에 글자가 섞였다</strong>는 신호입니다. pandas 3.0부터는 문자열 열이 <code>object</code> 대신 <code>str</code>로 표시됩니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · 마지막 줄 memory usage 생략</span><span class="no"></span></div>
+</section>
+
+<!-- 15. describe 읽기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터 살펴보기</span></div>
+  <h2><code>df.describe()</code>: 숫자 열 요약표</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:26px">
+    <div style="width:700px;flex:none;display:grid;gap:8px">
+      <pre class="code">df.describe().round(2)   # 소수 둘째 자리까지</pre>
+      <pre class="out" style="font-size:14px;line-height:1.45;white-space:pre">         temp  pressure    speed  humidity  thickness  strength  defect
+count  494.00    494.00   494.00    494.00     494.00    494.00  494.00
+mean   211.44     80.34  1194.04     58.07       2.00     38.79    0.14
+std      7.40      6.11    78.86     10.03       0.06      3.15    0.34
+min    191.90     62.00   984.00     27.50       1.80     26.64    0.00
+25%    206.10     75.80  1139.00     51.30       1.95     36.80    0.00
+50%    211.60     80.60  1186.00     58.25       2.00     39.06    0.00
+75%    216.70     84.38  1251.00     64.90       2.04     41.05    0.00
+max    235.30     97.50  1405.00     87.70       2.20     46.68    1.00</pre>
+    </div>
+    <div style="flex:1;display:grid;gap:12px">
+      <div class="note frag show"><span class="no">1</span><div><b>count</b> 빈칸 뺀 개수 · <b>mean</b> 평균 · <b>std</b> 표준편차(퍼진 정도)</div></div>
+      <div class="note frag"><span class="no">2</span><div><b>min · max</b> — 말이 되는 범위인가? 온도 192~235℃는 정상 범위. 999℃가 보이면 <b>센서 오류</b>를 의심 (5-3)</div></div>
+      <div class="note frag"><span class="no">3</span><div><b>25% · 50% · 75%</b> — 작은 값부터 줄 세웠을 때의 위치. 50% = 중앙값 (6주차)</div></div>
+      <div class="callout frag" style="font-size:16px">0/1 열의 평균 = <strong>1의 비율</strong>. <code>defect</code> 평균 0.14 → 불량률 약 <strong>13.8%</strong>.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · 문자열 열(shift, line …)은 describe 기본 결과에서 빠짐</span><span class="no"></span></div>
+</section>
+
+<!-- 16. value_counts -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터 살펴보기</span></div>
+  <h2>범주 열은 <code>value_counts()</code>로 세기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:36px">
+    <div style="width:530px;flex:none;display:grid;gap:10px">
+      <pre class="code">df['defect_type'].value_counts()</pre>
+      <pre class="out">defect_type
+정상      426
+치수불량     30
+찍힘       23
+스크래치     15
+Name: count, dtype: int64</pre>
+      <pre class="code"># 개수 대신 비율로
+df['defect_type'].value_counts(normalize=True)</pre>
+    </div>
+    <div style="flex:1">
+      <div class="vbars">
+        <div class="vrow"><b>정상</b><div class="track"><i style="width:86.2%"></i></div><span class="n">426 · 86.2%</span></div>
+        <div class="vrow frag show"><b>치수불량</b><div class="track"><i style="width:6.1%;background:var(--accent-2)"></i></div><span class="n">30 · 6.1%</span></div>
+        <div class="vrow frag show"><b>찍힘</b><div class="track"><i style="width:4.7%;background:var(--accent-2)"></i></div><span class="n">23 · 4.7%</span></div>
+        <div class="vrow frag show"><b>스크래치</b><div class="track"><i style="width:3.0%;background:var(--accent-2)"></i></div><span class="n">15 · 3.0%</span></div>
+      </div>
+      <div class="box think frag" style="margin:22px 0 0;padding:16px 22px"><p style="font-size:19px;margin:0">합계 494 = 행 개수와 일치 ✔ · 불량 68개 중 <strong>치수불량이 가장 많다</strong>. 이렇게 <b>개수 합이 맞는지</b> 확인하는 습관이 검증의 시작입니다.</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · 실습 데이터 process.csv (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 자료형 맞히기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터 살펴보기 · 직접 해 보기 3</span></div>
+  <h2>이 열의 자료형은? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 맞혀 보고 카드를 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="dtcards"></div>
+    <p class="muted" style="margin-top:14px;font-size:17px" id="dt-score">0 / 8 확인</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · 자료형은 Colab(pandas 2.x) 표시 기준</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 데이터 살펴보기 · 실습 파일</span></div>
+  <h2>Colab 실습: 내 손으로 3분 건강검진</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div style="flex:1">
+      <div class="tiles" style="grid-template-columns:1fr 1fr;gap:14px">
+        <div class="tile row" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div><div class="h" style="font-size:20px">불러오기</div><div class="d">read_csv · shape</div></div></div>
+        <div class="tile row" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h" style="font-size:20px">모양 보기</div><div class="d">head · tail · columns</div></div></div>
+        <div class="tile row" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div><div class="h" style="font-size:20px">자료형·빈칸</div><div class="d">info · dtypes</div></div></div>
+        <div class="tile row" style="padding:16px"><span class="ic-badge o"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:20px">요약</div><div class="d">describe · value_counts</div></div></div>
+      </div>
+      <div class="box think" style="margin:18px 0 0;padding:14px 22px"><p style="font-size:19px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> <b>직접 바꿔 보기</b>: <code>head(10)</code>, 다른 열의 <code>value_counts()</code>, 다른 파일(<code>lab_yield.csv</code>) 불러오기</p></div>
+    </div>
+    <div style="width:330px;flex:none;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center">
+      <span class="ic-badge lg o" style="width:120px;height:120px;font-size:66px;border-radius:30px"><svg class="ic"><use href="#i-code"/></svg></span>
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week05/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <p class="muted" style="font-size:16px;margin:0">위에서부터 셀을 하나씩 실행 (Shift + Enter)</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시 · 실습 파일 lesson01.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">DataFrame = 표</div><div style="font-size:21px">이름 붙은 <strong>열(Series)</strong> 여러 개 + 행 번호 <strong>인덱스</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div class="h"><code>pd.read_csv</code></div><div style="font-size:21px">주소나 파일 이름만 주면 CSV가 <strong>표로</strong> 들어온다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">분석 전 건강검진</div><div style="font-size:21px"><code>shape</code> → <code>head</code> → <code>info</code> → <code>describe</code> → <code>value_counts</code></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="shape는 (행 개수, 열 개수) 순서입니다. 제품 494개가 한 행씩, 기록 항목 13개가 한 열씩입니다.">
+      <p class="q-title"><b>Q1.</b> <code>df.shape</code>의 결과가 <code>(494, 13)</code>이다. 뜻은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">열 494개, 행 13개</button>
+        <button type="button" data-v="b">전체 값이 494 × 13 = 6,422개이고 모두 숫자</button>
+        <button type="button" data-v="c">행 494개, 열 13개</button>
+        <button type="button" data-v="d">494번째 행의 13번째 값</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="info()는 열마다 비어 있지 않은 값의 개수(Non-Null Count)와 자료형(Dtype)을 한 번에 보여 줍니다.">
+      <p class="q-title"><b>Q2.</b> 열마다 자료형과 빈칸이 아닌 값의 개수를 한 번에 보려면?</p>
+      <div class="opts">
+        <button type="button" data-v="a"><code>df.head()</code></button>
+        <button type="button" data-v="b"><code>df.info()</code></button>
+        <button type="button" data-v="c"><code>df.shape</code></button>
+        <button type="button" data-v="d"><code>df.columns</code></button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="0과 1로만 된 열의 평균은 1의 비율입니다. 494개 중 68개가 불량(1)이므로 평균 0.138, 불량률 약 13.8%입니다.">
+      <p class="q-title"><b>Q3.</b> 불량 여부 <code>defect</code>(0 또는 1) 열을 <code>describe()</code>했더니 mean이 0.14였다. 뜻은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">전체 제품 중 약 14%가 불량이다</button>
+        <button type="button" data-v="b">불량품 한 개의 무게가 0.14이다</button>
+        <button type="button" data-v="c">불량이 14개 있다</button>
+        <button type="button" data-v="d">계산 오류라 의미가 없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="value_counts()는 범주(값)마다 몇 번 나오는지 세어 많은 순서로 보여 줍니다. describe()는 숫자 열 요약입니다.">
+      <p class="q-title"><b>Q4.</b> <code>defect_type</code>(정상·치수불량·찍힘·스크래치)이 각각 몇 개인지 보려면?</p>
+      <div class="opts">
+        <button type="button" data-v="a"><code>df['defect_type'].describe()</code></button>
+        <button type="button" data-v="b"><code>df.head('defect_type')</code></button>
+        <button type="button" data-v="c"><code>len(df['defect_type'])</code></button>
+        <button type="button" data-v="d"><code>df['defect_type'].value_counts()</code></button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">5-2</div>
+    <h2>조건으로 고르기와 정렬하기</h2>
+    <p>“220℃를 넘은 제품만”, “강도가 가장 낮은 5개” — 494행에서 원하는 행만 골라내는 법을 배웁니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week04/lesson03.html">← 4-3 AI 코드 검증 기초</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-filter"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 5주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">5주 1차시 · 표 데이터 불러오기와 살펴보기(pandas)</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

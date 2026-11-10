@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12주 3차시 · 번역·교육 콘텐츠 활용 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 12주 3차시 교안: 대상·용도·용어집을 준 번역, 역번역과 고유명사·숫자 확인, 직역과 현지화, 매뉴얼로 퀴즈·요약 카드 만들기, 원문의 정확성과 저작권">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .swap { animation: swap 4s ease-in-out infinite; }
+  @keyframes swap { 0%, 40% { opacity: 1; } 50%, 90% { opacity: .25; } 100% { opacity: 1; } }
+  .swap2 { animation: swap 4s ease-in-out infinite reverse; }
+  @media (prefers-reduced-motion: reduce) { .swap, .swap2, .flowdot { animation: none; } .flowdot { display: none; } }
+
+  .chat .msg { font-size: 16px; }
+  .prompt pre { font-size: 16px; line-height: 1.55; }
+  .inv { text-decoration: underline wavy var(--bad); text-underline-offset: 4px; font-weight: 700; }
+
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 15.5px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 21px; height: 21px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 9px; height: 5px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .tgl small { color: var(--muted); font-weight: 600; font-size: 12.5px; line-height: 1.3; display: block; }
+  .tgl > span:last-child { line-height: 1.3; }
+
+  /* 번역 비교 */
+  .tr-wrap { width: 100%; display: grid; gap: 12px; }
+  .tr-src { font-size: 14.5px; color: var(--muted); line-height: 1.5; background: var(--surface-2); border-radius: 12px; padding: 8px 14px; }
+  .encard { background: var(--surface); border: 2px solid var(--accent); border-radius: 16px; padding: 14px 20px; font-family: inherit; }
+  .encard .br { font-size: 14px; font-weight: 800; letter-spacing: .12em; color: var(--accent); }
+  .encard .nm { font-size: 25px; font-weight: 800; line-height: 1.25; margin: 2px 0 6px; }
+  .encard .ln { font-size: 17.5px; line-height: 1.5; }
+  .encard .pr { font-size: 20px; font-weight: 800; margin-top: 4px; }
+  .encard .al { font-size: 14.5px; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); font-weight: 700; }
+  .encard .x { background: var(--bad-soft); border-radius: 4px; padding: 0 3px; }
+  .encard .chg { background: var(--accent-soft); border-radius: 4px; padding: 0 3px; }
+  .back { font-size: 15px; line-height: 1.55; border-left: 4px solid var(--accent-2); padding: 4px 12px; background: var(--accent-2-soft); border-radius: 0 10px 10px 0; }
+  .back b.k { display: block; font-size: 13px; color: var(--accent-2); }
+  .back .x { text-decoration: underline wavy var(--bad); text-underline-offset: 3px; font-weight: 800; }
+  .issues { font-size: 14.5px; line-height: 1.45; margin: 0; padding-left: 1.1em; }
+  .issues li { margin: 2px 0; }
+
+  /* 현지화 표 */
+  .loc td, .loc th { font-size: 18px; padding: 9px 14px; }
+  .loc td:nth-child(2) { color: var(--bad); }
+  .loc td:nth-child(3) { color: var(--ok); font-weight: 700; }
+
+  /* 판단 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; min-height: 120px; display: flex; flex-direction: column; gap: 5px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .ko { font-size: 14.5px; color: var(--muted); font-weight: 700; }
+  .pcard .nm { font-size: 18px; font-weight: 800; line-height: 1.38; }
+  .pcard .ans { display: none; font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 15.5px; }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.yes { background: var(--ok-soft); border-color: var(--ok); } .pcard.open.yes .verdict { color: var(--ok); }
+  .pcard.open.no { background: var(--bad-soft); border-color: var(--bad); } .pcard.open.no .verdict { color: var(--bad); }
+  .pcard.open.mid { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.mid .verdict { color: var(--accent-2); }
+
+  /* 퀴즈 생성기 */
+  .seg { display: grid; grid-template-columns: 44px repeat(3, 1fr); gap: 6px; align-items: center; }
+  .seg.two { grid-template-columns: 44px 1fr 1fr; }
+  .seg > span { font-size: 14px; font-weight: 800; color: var(--muted); }
+  .seg button { font: inherit; font-size: 14.5px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 10px; padding: 6px 4px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .qout { width: 100%; display: grid; gap: 10px; align-content: start; }
+  .qout .hd { font-size: 14px; font-weight: 800; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .qi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; font-size: 17px; line-height: 1.45; position: relative; }
+  .qi .qq { font-weight: 800; padding-right: 96px; }
+  .qi .op { font-size: 15px; color: var(--muted); margin-top: 3px; }
+  .qi .op b { color: var(--text); }
+  .qi .ev { display: none; position: absolute; right: 10px; top: 8px; font-size: 13px; font-weight: 800; padding: 2px 8px; border-radius: 8px; }
+  .cmp .qi .ev { display: block; }
+  .cmp .qi.ok { border-color: var(--ok); } .cmp .qi.ok .ev { background: var(--ok-soft); color: var(--ok); }
+  .cmp .qi.bad { border-color: var(--bad); background: var(--bad-soft); } .cmp .qi.bad .ev { background: var(--bad); color: var(--surface); }
+  .qi .why { display: none; font-size: 14px; color: var(--bad); font-weight: 700; margin-top: 4px; }
+  .cmp .qi.bad .why { display: block; }
+  .cardi { font-size: 18px; }
+  .manual { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font-size: 13.5px; line-height: 1.5; }
+  .manual .t { font-weight: 800; font-size: 14px; color: var(--accent); }
+  .manual div { padding: 1px 4px; border-radius: 5px; }
+  .manual div.hit { background: var(--ok-soft); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 12주차 3차시</p>
+    <h1>번역·교육<br>콘텐츠 활용</h1>
+    <p class="lead" style="font-size:25px">맥락을 주고, 확인하고,<br>원문을 지킨다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="30" y="40" width="200" height="150" rx="24" class="f-accs" stroke="var(--accent)" stroke-width="2.5"/>
+    <text x="130" y="138" text-anchor="middle" style="font-size:78px;font-weight:800;fill:var(--accent)">가</text>
+    <rect x="290" y="40" width="200" height="150" rx="24" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2.5"/>
+    <text x="390" y="140" text-anchor="middle" style="font-size:84px;font-weight:800;fill:var(--accent-2)">A</text>
+    <path d="M240 95 H280" stroke="var(--muted)" stroke-width="4" stroke-linecap="round" class="swap"/>
+    <path d="M268 83 L281 95 L268 107" fill="none" stroke="var(--muted)" stroke-width="4" stroke-linecap="round" class="swap"/>
+    <path d="M280 135 H240" stroke="var(--muted)" stroke-width="4" stroke-linecap="round" class="swap2"/>
+    <path d="M252 123 L239 135 L252 147" fill="none" stroke="var(--muted)" stroke-width="4" stroke-linecap="round" class="swap2"/>
+    <text x="260" y="175" text-anchor="middle" class="t-sub" style="font-size:14px">역번역</text>
+    <!-- 퀴즈 카드 -->
+    <rect x="90" y="230" width="340" height="180" rx="20" class="f-surface" stroke="var(--line)" stroke-width="2.5"/>
+    <text x="116" y="266" class="t-acc" style="font-size:17px">신입 직원 퀴즈</text>
+    <g><rect x="116" y="286" width="22" height="22" rx="6" class="f-s2" stroke="var(--muted)" stroke-width="2"/><rect x="150" y="291" width="200" height="12" rx="6" class="f-line"/></g>
+    <g><rect x="116" y="322" width="22" height="22" rx="6" class="f-acc"/><path d="M121 333 l5 5 l9 -10" fill="none" stroke="var(--surface)" stroke-width="3" stroke-linecap="round"/><rect x="150" y="327" width="170" height="12" rx="6" class="f-accs"/></g>
+    <g><rect x="116" y="358" width="22" height="22" rx="6" class="f-s2" stroke="var(--muted)" stroke-width="2"/><rect x="150" y="363" width="220" height="12" rx="6" class="f-line"/></g>
+    <circle cx="404" cy="388" r="12" class="f-ok" style="fill:var(--ok)"/>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">맥락 있는 번역</div><div class="d">대상·용도·용어집을 주고 번역을 요청한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">번역 확인</div><div class="d">역번역, 고유명사·숫자 대조, 사람 확인을 한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-cap"/></svg></span><div class="h">교육 콘텐츠</div><div class="d">매뉴얼 하나로 퀴즈·요약 카드를 만들고 근거를 대조한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">원문의 정확성·저작권</div><div class="d">틀린 원문, 남의 자료를 쓸 때의 위험을 말한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 오늘의 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>① 맥락 있는 번역</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② 번역 확인하기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 교육 콘텐츠 만들기</b><small>직접 해 보기 1 · 실습</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>저작권·정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-factory"/></svg> 오늘의 상황: 바다결 부산 매장에 <strong>외국인 손님</strong>이 늘었습니다. 영문 안내 카드를 만들고, 새로 온 직원을 위한 <strong>교육 자료</strong>도 만듭니다.</p></div>
+    <p class="muted" style="margin-top:18px;font-size:20px"><svg class="ic"><use href="#i-hand"/></svg> 손 모양이 보이는 슬라이드는 <strong>직접 조작</strong>해 볼 수 있습니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>“영어로 번역해 줘”만 하면?</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:flex-start">
+    <div class="chat" style="flex:1.2">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user">영어로 번역해 줘.
+바다결 무가당 견과 믹스 / 설탕을 넣지 않고 견과만 담았습니다. / 부산 매장에서 맛보고, 자사몰에서 다시 만나세요. / 13,500원</div>
+      <div class="msg ai warn"><span class="who">AI · 예시 답변 — 문제가 있는 답의 예 (실제 답은 매번 다를 수 있음)</span><span class="inv">Sea Texture</span> <span class="inv">Sugar-free</span> Nut Mix / We did not put sugar, and we put only nuts. / Taste it at Busan store, and <span class="inv">meet again at own mall</span>. / 13,500 won</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-x"/></svg></span><div><div class="h" style="font-size:20px">브랜드명을 번역</div><div class="d">‘바다결’이 ‘Sea Texture’로 — 손님이 검색해도 못 찾는다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:20px">뜻이 바뀐 낱말</div><div class="d">‘무가당’(당을 넣지 않음) → ‘Sugar-free’(당이 없음)</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-chat"/></svg></span><div><div class="h" style="font-size:20px">뜻이 안 통하는 직역</div><div class="d">‘자사몰에서 다시 만나세요’ → ‘meet again at own mall’</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시 · 물결 밑줄 = 문제가 있는 부분 · 무가당과 무당(무설탕)은 식품 표시에서도 다른 말</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>맥락 있는 번역</h2><p>누가, 어디서 읽을지 알려 주면 번역이 달라집니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 맥락 세 가지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 맥락 있는 번역</span></div>
+  <h2>번역 프롬프트에 넣을 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">대상 — 누가 읽나?</div><div class="d">외국인 관광객, 해외 거래처 담당자, 외국인 동료…</div><div style="font-size:18px;background:var(--accent-soft);border-radius:10px;padding:8px 12px">말투와 쉬운 정도가 달라진다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">용도 — 어디에 쓰나?</div><div class="d">계산대 옆 작은 카드, 상품 상세 페이지, 공식 메일…</div><div style="font-size:18px;background:var(--accent-soft);border-radius:10px;padding:8px 12px">길이와 형식이 달라진다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">용어집 — 정해진 표기</div><div class="d">브랜드명·제품명·자주 쓰는 말의 회사 공식 표기</div><div style="font-size:18px;background:var(--accent-2-soft);border-radius:10px;padding:8px 12px">문서마다 표기가 흔들리지 않는다</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:20px">3주 1차시의 <strong style="color:var(--text)">역할·맥락·지시·형식</strong>이 번역에서는 이 세 가지로 구체화됩니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 용어집 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 맥락 있는 번역</span></div>
+  <h2>용어집: 회사가 정해 둔 표기</h2>
+  <div class="body" style="flex-direction:row;gap:24px;align-items:center">
+    <table style="flex:1.4;font-size:18px">
+      <tr><th>한국어</th><th>영어 표기</th><th>메모</th></tr>
+      <tr><td>바다결</td><td><b>BADAGYEOL</b></td><td>브랜드명 — 뜻으로 번역하지 않음</td></tr>
+      <tr><td>무가당 견과 믹스</td><td><b>No Added Sugar Nut Mix</b></td><td>‘Sugar-free’ 쓰지 않음</td></tr>
+      <tr><td>자사몰</td><td><b>official online store</b></td><td>‘own mall’ 쓰지 않음</td></tr>
+      <tr><td>견과류 함유</td><td><b>Contains tree nuts</b></td><td>알레르기 정보 — 빼지 않음</td></tr>
+      <tr><td>13,500원</td><td><b>KRW 13,500</b></td><td>숫자는 원문과 반드시 대조</td></tr>
+    </table>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <a class="btn" href="materials/glossary_ko_en.csv" download><svg class="ic"><use href="#i-book"/></svg> 용어집 받기 (glossary_ko_en.csv)</a>
+      <a class="btn ghost" href="materials/store_card_ko.txt" download><svg class="ic"><use href="#i-log"/></svg> 번역할 원문 (store_card_ko.txt)</a>
+      <div class="callout b" style="font-size:17px">용어집은 <strong>한 번 만들어 계속 씁니다.</strong> Gemini의 Gems, Claude의 프로젝트(9주 3차시)에 넣어 두면 매번 붙이지 않아도 됩니다.</div>
+      <div class="callout" style="font-size:16px">실습 자료는 가상 회사 자료라 AI에 올려도 됩니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시 · 용어집 전체 13개 항목은 실습 자료에</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 직접 해 보기 1: 번역 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 맥락 있는 번역 · 직접 해 보기 1</span></div>
+  <h2>맥락을 하나씩 더하면 번역이 바뀐다 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="padding:14px 18px;align-items:center">
+      <div class="tr-wrap">
+        <div class="tr-src"><b>원문</b> 바다결 무가당 견과 믹스 / 설탕을 넣지 않고 견과만 담았습니다. / 부산 매장에서 맛보고, 자사몰에서 다시 만나세요. / 13,500원 / 알레르기 정보: 견과류(아몬드, 호두) 함유</div>
+        <div class="encard" id="tr-card" aria-live="polite"></div>
+        <div class="back" id="tr-back" hidden></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="toggles" style="grid-template-columns:1fr 1fr">
+        <button class="tgl" type="button" data-c="A" aria-pressed="false"><span class="chk"></span><span>대상 알려 주기<br><small>부산 매장의 외국인 관광객</small></span></button>
+        <button class="tgl" type="button" data-c="P" aria-pressed="false"><span class="chk"></span><span>용도 알려 주기<br><small>계산대 옆 작은 카드, 짧게</small></span></button>
+        <button class="tgl" type="button" data-c="G" aria-pressed="false"><span class="chk"></span><span>용어집 붙이기<br><small>glossary_ko_en.csv</small></span></button>
+        <button class="tgl" type="button" data-c="B" aria-pressed="false"><span class="chk"></span><span>역번역 보기<br><small>번역문을 다시 한국어로</small></span></button>
+      </div>
+      <div class="meter" style="display:flex;align-items:center;justify-content:space-between"><div class="lbl">고칠 곳</div><div class="val o" id="tr-n" style="font-size:32px">6</div></div>
+      <ul class="issues" id="tr-iss"></ul>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시 · 번역문은 미리 써 둔 예시 — 실제 AI 답은 매번 다를 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 직역 vs 현지화 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 맥락 있는 번역</span></div>
+  <h2>직역 vs 현지화</h2>
+  <div class="body">
+    <table class="loc">
+      <tr><th>원문</th><th>직역 — 낱말을 그대로</th><th>현지화 — 읽는 사람의 표현으로</th></tr>
+      <tr class="frag show"><td>1+1 행사 중</td><td>1+1 event in progress</td><td>Buy 1, Get 1 Free</td></tr>
+      <tr class="frag"><td>자사몰에서 다시 만나세요</td><td>Meet again at own mall</td><td>Order again from our official online store</td></tr>
+      <tr class="frag"><td>13,500원</td><td>13,500 won</td><td>KRW 13,500</td></tr>
+      <tr class="frag"><td>부산 여행에서 맛본 그 맛</td><td>The taste you tasted in Busan travel</td><td>A taste of your Busan trip</td></tr>
+    </table>
+    <div class="box warn frag" style="margin-top:20px"><p style="font-size:20px;margin:0"><strong>현지화해도 사실은 바꾸지 않습니다.</strong> 가격·성분·알레르기·기한·교환 조건은 표현만 바꾸고 내용은 원문 그대로. ‘더 자연스럽게’ 하다가 뜻이 바뀌면 안 됩니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시 · 표의 직역문은 문제를 보여 주려고 만든 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>번역 확인하기</h2><p>내가 못 읽는 언어일수록 확인 절차가 필요합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-reset"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 확인 네 단계 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 번역 확인하기</span></div>
+  <h2>번역을 확인하는 네 단계</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">① 역번역</div><div class="d">번역문을 다시 한국어로<br>— 뜻이 바뀐 곳 찾기</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">② 숫자·고유명사</div><div class="d">가격·날짜·수량,<br>브랜드·인명을 한 줄씩</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">③ 용어집 대조</div><div class="d">정해진 표기와<br>같은가</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">④ 사람 확인</div><div class="d">원어민·전문가 검토<br>— 중요한 문서는 필수</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:18px">
+      <div class="callout b" style="font-size:18px">역번역은 <strong>뜻이 크게 바뀐 곳</strong>을 찾는 데 좋지만, 어색한 말투나 문화적 뉘앙스까지 잡아 주지는 못합니다.</div>
+      <div class="callout" style="font-size:18px"><svg class="ic"><use href="#i-alert"/></svg> 알레르기·성분 표시, 계약서, 법적 문구는 AI 번역만으로 끝내지 않고 <strong>전문가·담당자 확인</strong>을 받습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 2: 번역 점검 카드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 번역 확인하기 · 직접 해 보기 2</span></div>
+  <h2>이 번역, 그대로 써도 될까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 원문과 비교한 뒤 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="tcards"></div>
+    <p class="muted" style="margin-top:12px;font-size:17px" id="tc-score">0 / 6 확인</p>
+    <div class="box think frag" style="margin-top:12px;padding:16px 22px"><p style="font-size:19px;margin:0"><strong>내가 못 읽는 언어라도 할 수 있는 확인</strong> — ① 숫자를 원문과 한 자리씩 ② 브랜드·제품명을 용어집과 ③ 원문 문장 수와 번역 문장 수 비교(빠진 문장) ④ 역번역으로 뜻이 바뀐 낱말 찾기</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시 · 번역문은 흔한 실수를 보여 주려고 미리 써 둔 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 번역 + 자체 점검 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 번역 확인하기 · 실습</span></div>
+  <h2>번역과 점검표를 한 번에 요청하기</h2>
+  <div class="body" style="flex-direction:row;gap:22px;align-items:flex-start">
+    <div class="prompt" style="flex:1.1">
+      <div class="prompt-h">프롬프트 · 용어집과 원문 첨부<button class="copy" type="button">복사</button></div>
+<pre>너는 식품 매장의 영문 안내 카드를 쓰는 번역가야.
+[대상] <mark>부산 매장을 찾은 외국인 관광객</mark>
+[용도] <mark>계산대 옆 작은 카드 — 짧고 쉽게</mark>
+[용어집] 첨부한 용어집을 반드시 따라. 브랜드명·제품명은 용어집 표기 그대로.
+[원문] 첨부한 store_card_ko.txt
+번역한 뒤 다음도 함께 줘.
+① 번역문을 다시 한국어로 옮긴 역번역
+② 원문과 숫자·고유명사·알레르기 정보가 같은지 확인한 표
+③ 사람이 꼭 확인해야 할 부분</pre>
+    </div>
+    <div class="chat" style="flex:1">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg ai"><span class="who">AI · 예시 답변 — 실제 답은 매번 다를 수 있음</span><b>BADAGYEOL · No Added Sugar Nut Mix</b>
+Just nuts. No added sugar.
+Loved it here? Order again at our official online store.
+KRW 13,500 · Contains tree nuts (almond, walnut)
+<b>역번역</b> 견과만. 설탕 무첨가. 여기서 마음에 드셨나요? 공식 온라인 스토어에서 다시 주문하세요.
+<b>확인 필요</b> 알레르기 문구가 판매처의 표시 기준에 맞는지 담당자 확인</div>
+      <div class="callout" style="font-size:15.5px">AI의 <strong>자체 점검도 다시 확인</strong>합니다. 점검표가 ‘모두 일치’라고 해도 숫자는 내 눈으로 한 번 더.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시 · Gemini·Claude 어느 쪽에서도 같은 프롬프트로 · 한쪽이 한도에 걸리면 다른 쪽으로</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>교육 콘텐츠 만들기</h2><p>매뉴얼 하나로 요약 카드·퀴즈·체크리스트를.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-cap"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 매뉴얼 하나로 세 가지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 교육 콘텐츠 만들기</span></div>
+  <h2>신입 직원 매뉴얼 하나로 만드는 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">요약 카드</div><div class="d">첫날 꼭 알아야 할 것만 5줄로. 휴대전화 화면 한 장 분량</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">퀴즈</div><div class="d">읽었는지 확인하는 3지선다·OX. 해설에 근거 번호</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-clock"/></svg></span><div class="h">체크리스트</div><div class="d">출근·진열·마감 때 순서대로 확인할 항목</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:22px" class="frag">
+      <a class="btn" href="materials/new_staff_manual.txt" download style="white-space:nowrap;flex:none"><svg class="ic"><use href="#i-log"/></svg> 실습 자료 받기 · 신입 직원 매뉴얼</a>
+      <span class="muted" style="font-size:18px">가상 자료라 AI에 올려도 됩니다. 실제 회사 매뉴얼은 <strong style="color:var(--text)">사내 규정 확인</strong>이 먼저입니다 (1주 3차시).</span>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시 · 매뉴얼은 6개 장, 18개 항목(1-1 ~ 6-3)</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 3: 퀴즈 생성기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 교육 콘텐츠 만들기 · 직접 해 보기 3</span></div>
+  <h2>매뉴얼 → 퀴즈·요약 카드, 근거를 대조하자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot" style="padding:14px 16px;align-items:flex-start"><div class="qout" id="qz-out"></div></div>
+    <div class="side">
+      <div class="seg" data-k="sec"><span>범위</span><button type="button" data-v="A" aria-pressed="true">위생·보관</button><button type="button" data-v="B" aria-pressed="false">고객 응대</button><button type="button" data-v="C" aria-pressed="false">교환·정보</button></div>
+      <div class="seg two" data-k="fmt"><span>형식</span><button type="button" data-v="quiz" aria-pressed="true">퀴즈</button><button type="button" data-v="card" aria-pressed="false">요약 카드</button></div>
+      <button class="btn" id="qz-cmp" type="button"><svg class="ic"><use href="#i-eye"/></svg> 매뉴얼과 근거 대조하기</button>
+      <div class="manual" id="qz-man"></div>
+      <div class="callout b" id="qz-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시 · AI 생성 결과를 흉내 내 미리 써 둔 예시 · 매뉴얼 원문: materials/new_staff_manual.txt</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 퀴즈 프롬프트·실습 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 교육 콘텐츠 만들기 · 실습</span></div>
+  <h2>실습: 매뉴얼로 퀴즈와 요약 카드 만들기</h2>
+  <div class="body" style="flex-direction:row;gap:22px;align-items:flex-start">
+    <div class="prompt" style="flex:1.15">
+      <div class="prompt-h">프롬프트 · 매뉴얼 첨부<button class="copy" type="button">복사</button></div>
+<pre>첨부한 [신입 직원 매뉴얼]의 <mark>2. 제품 보관과 진열</mark> 부분만 근거로 신입 직원용 퀴즈 <mark>3문제</mark>를 만들어 줘.
+- 3지선다, 정답과 한 줄 해설 포함
+- 문제마다 근거가 된 매뉴얼 번호(예: 2-2)를 적어
+- 매뉴얼에 없는 내용은 문제로 만들지 마. 일반 상식도 덧붙이지 마.
+그다음 같은 부분을 휴대전화 한 화면에 들어가는 <mark>요약 카드 5줄</mark>로 정리해 줘.</pre>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+      <div class="tile row frag show" style="padding:12px 16px;gap:14px"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div><div class="h" style="font-size:19px">① 매뉴얼 첨부 + 프롬프트</div><div class="d" style="font-size:16px">Gemini 또는 Claude, 첨부가 안 되면 붙여 넣기</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px;gap:14px"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h" style="font-size:19px">② 근거 번호로 대조</div><div class="d" style="font-size:16px">문제마다 매뉴얼 해당 줄을 찾아 확인</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px;gap:14px"><span class="ic-badge o"><svg class="ic"><use href="#i-x"/></svg></span><div><div class="h" style="font-size:19px">③ 근거 없는 문제 빼기</div><div class="d" style="font-size:16px">AI가 덧붙인 ‘상식’은 매뉴얼과 다를 수 있다</div></div></div>
+      <div class="tile row frag" style="padding:12px 16px;gap:14px"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div><div class="h" style="font-size:19px">④ 담당자 검토 후 배포</div><div class="d" style="font-size:16px">교육 자료는 매뉴얼 작성 부서(경영지원팀)가 확인</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시 · 서비스 화면과 첨부 방법은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 정확성과 저작권 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">원문의 정확성과 저작권</span></div>
+  <h2>원문이 틀리면, 원문이 남의 것이면</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:24px">
+      <div class="tile frag show" style="padding:22px">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h" style="font-size:25px">원문의 정확성</div></div>
+        <ul style="font-size:18.5px;margin:0">
+          <li>AI는 원문을 <strong>고치지 않고</strong> 옮긴다 — 틀린 매뉴얼이면 틀린 퀴즈</li>
+          <li>최신판인가? 개정된 규정이 반영됐나?</li>
+          <li>번역·요약하면서 <strong>빠지거나 덧붙은 것</strong>은 없나?</li>
+        </ul>
+      </div>
+      <div class="tile frag" style="padding:22px;border:2px solid var(--accent-2)">
+        <div style="display:flex;align-items:center;gap:14px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h" style="font-size:25px">원문의 저작권</div></div>
+        <ul style="font-size:18.5px;margin:0">
+          <li>다른 회사의 교육 책자·책·기사·강의 자료를 번역·요약해 <strong>배포</strong>하려면 권리자 허락이 먼저</li>
+          <li>번역물은 <strong>2차적저작물</strong> — 만들 권리는 원저작자에게 (저작권법 제5조·제22조)</li>
+          <li>우리 회사 매뉴얼도 외부 공개는 회사 승인 후</li>
+        </ul>
+      </div>
+    </div>
+    <div class="box warn frag" style="margin-top:20px"><p style="font-size:20px;margin:0">AI가 번역·요약했다고 <strong>원문의 권리가 사라지지 않습니다.</strong> 만든 자료에 AI 도움을 받았다면 회사 규칙대로 표시합니다 (11주 3차시).</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시 · 법률 상담이 아닌 기본 개념 — 실제 업무에서는 회사 지침과 「저작권법」 확인</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">대상·용도·용어집</div><div style="font-size:21px">맥락을 주면 번역이 달라진다. 현지화해도 <strong>사실은 그대로</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">역번역 → 대조 → 사람</div><div style="font-size:21px">숫자·고유명사·알레르기 정보는 한 줄씩. 중요한 문서는 <strong>전문가 확인</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-cap"/></svg></span><div class="h">근거 있는 교육 자료</div><div style="font-size:21px">매뉴얼 번호로 대조하고 덧붙은 내용은 뺀다. 남의 원문은 <strong>허락 먼저</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="누가 읽는지(대상), 어디에 쓰는지(용도), 회사가 정한 표기(용어집)를 주면 말투·길이·표기가 맞춰집니다. ‘정확하게’라는 말만으로는 부족합니다.">
+      <p class="q-title"><b>Q1.</b> AI 번역 프롬프트에 함께 주면 좋은 정보를 바르게 묶은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">대상 · 용도 · 용어집</button>
+        <button type="button" data-v="b">글자 수 · 글꼴 · 색깔</button>
+        <button type="button" data-v="c">“최대한 정확하게” 한 문장</button>
+        <button type="button" data-v="d">번역 도구의 이름과 버전</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="역번역은 번역문을 다시 원래 언어로 옮겨, 원문과 뜻이 달라진 곳(예: 무가당 → Sugar-free → 무설탕)을 찾는 확인 방법입니다.">
+      <p class="q-title"><b>Q2.</b> ‘역번역’에 대한 설명으로 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">원문을 거꾸로 읽어 번역하는 것</button>
+        <button type="button" data-v="b">두 AI의 번역 중 긴 것을 고르는 것</button>
+        <button type="button" data-v="c">번역문을 다시 원래 언어로 옮겨 뜻이 바뀐 곳을 찾는 것</button>
+        <button type="button" data-v="d">원어민 검토를 대신하는 최종 확인</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="매뉴얼(4-2)에는 ‘개봉한 제품의 단순 변심 교환은 받지 않는다’만 있고 ‘7일’ 규정은 없습니다. 근거 없는 문제는 빼고, 필요하면 담당자에게 확인합니다.">
+      <p class="q-title"><b>Q3.</b> AI가 만든 퀴즈에 “개봉한 제품도 7일 안에 가져오면 교환할 수 있다”가 있다. 매뉴얼에는 이런 내용이 없다. 알맞은 대응은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">그럴듯하니 그대로 배포한다</button>
+        <button type="button" data-v="b">근거가 없으니 빼고, 필요하면 담당자에게 확인한다</button>
+        <button type="button" data-v="c">기간을 14일로 바꿔 넣는다</button>
+        <button type="button" data-v="d">AI에게 맞는지 물어보고 맞다고 하면 둔다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="번역물은 2차적저작물이고, 이를 만들어 이용할 권리는 원저작자에게 있습니다(저작권법 제5조·제22조). AI가 번역했어도 배포 전에 권리자의 허락이 필요합니다.">
+      <p class="q-title"><b>Q4.</b> 다른 회사가 만든 직원 교육 책자를 AI로 번역해 우리 회사 직원들에게 나눠 주려 한다. 먼저 해야 할 일은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 번역했으니 바로 배포한다</button>
+        <button type="button" data-v="b">회사 로고만 바꿔 배포한다</button>
+        <button type="button" data-v="c">문장 순서를 바꿔 새 자료로 만든다</button>
+        <button type="button" data-v="d">원저작권자의 허락을 받는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 13주차 AI 윤리와 포스트휴먼</span></div>
+    <div class="big">13-1</div>
+    <h2>딥페이크와 허위정보</h2>
+    <p>그럴듯한 가짜 영상·음성·기사가 어떻게 만들어지고 퍼지는지, 그리고 어떻게 알아보고 대응할지 살펴봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week13/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-eye"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">12주 3차시 · 번역·교육 콘텐츠 활용</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

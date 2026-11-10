@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7주 1차시 · 목적에 맞는 그래프 고르기 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 7주 1차시 교안: 비교·추이·분포·관계·구성 — 질문에 맞는 그래프 고르기, 잘린 y축·3D·색 남용 같은 흔한 실수, 제목·축 이름·단위">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .pulse { display: none; } }
+
+  /* 목적 타일 */
+  .ptile { align-items: center; text-align: center; padding: 18px 14px; gap: 8px; }
+  .ptile svg { width: 100%; max-width: 170px; }
+  .ptile .k { font-size: 26px; font-weight: 800; color: var(--accent); }
+  .ptile .pq { font-size: 17px; color: var(--text); font-weight: 700; line-height: 1.4; }
+  .ptile .c { font-size: 16px; color: var(--muted); }
+
+  /* 차트 설명 옆 칸 */
+  .qbox { background: var(--accent-soft); border-radius: 14px; padding: 12px 16px; font-size: 18px; line-height: 1.45; }
+  .qbox b.k { display: block; font-size: 14px; color: var(--accent); letter-spacing: .02em; }
+  .tips { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .tips li { margin: 0; display: flex; gap: 10px; align-items: flex-start; font-size: 17px; line-height: 1.45; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; }
+  .tips li .ic { color: var(--accent); margin-top: 3px; }
+
+  /* 질문 바꾸기 */
+  .qbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .qbtns .btn { font-size: 16px; padding: 9px 10px; }
+  .qbtns .btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .ans { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; display: grid; gap: 6px; font-size: 16px; line-height: 1.45; }
+  .ans .lb { font-size: 13px; font-weight: 800; color: var(--muted); }
+  .ans .qq { font-size: 19px; font-weight: 800; color: var(--accent); }
+
+  /* 그래프 고르기 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 14px 16px; min-height: 186px; display: flex; flex-direction: column; gap: 8px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .ic-badge { width: 46px; height: 46px; font-size: 24px; border-radius: 12px; flex: none; }
+  .pcard .nm { font-size: 18px; font-weight: 700; line-height: 1.4; }
+  .pcard .ans2 { display: none; font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 18px; color: var(--accent); }
+  .pcard.open .ans2, .pcard.open .verdict { display: block; }
+  .pcard.open { background: var(--accent-soft); border-color: var(--accent); }
+  .pcard.open .nm { font-size: 14.5px; color: var(--muted); line-height: 1.35; }
+  .pcard.open .ic-badge { display: none; }
+  .pcard.open .ans2 { font-size: 14px; }
+
+  /* 고치기 토글 */
+  .toggles { display: grid; gap: 6px; }
+  .tgl { font: inherit; font-size: 16px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 표 */
+  .mini { font-size: 15px; font-variant-numeric: tabular-nums; }
+  .mini td, .mini th { padding: 5px 9px; }
+  .cbar { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+  .mini tr.more td { color: var(--muted); text-align: center; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 7주차 1차시</p>
+    <h1>목적에 맞는<br>그래프 고르기</h1>
+    <p class="lead" style="font-size:25px">그래프는 질문에 대한 답이다 —<br>질문이 먼저, 그래프는 그다음</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>개념 + 실습 차시</span><span>직접 해 보기 4개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <g transform="translate(20 20)"><rect width="220" height="180" rx="22" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <rect x="36" y="100" width="34" height="50" rx="5" class="f-accs"/><rect x="92" y="50" width="34" height="100" rx="5" class="f-acc"/><rect x="148" y="80" width="34" height="70" rx="5" class="f-accs"/>
+      <rect width="220" height="180" rx="22" fill="none" stroke="var(--accent)" stroke-width="4" opacity="0" class="pulse"><animate attributeName="opacity" values="0;1;0;0;0" dur="8s" repeatCount="indefinite"/></rect></g>
+    <g transform="translate(280 20)"><rect width="220" height="180" rx="22" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <path d="M30 140 L70 120 L110 128 L150 90 L190 46" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+      <rect width="220" height="180" rx="22" fill="none" stroke="var(--accent)" stroke-width="4" opacity="0" class="pulse"><animate attributeName="opacity" values="0;0;1;0;0" dur="8s" repeatCount="indefinite"/></rect></g>
+    <g transform="translate(20 240)"><rect width="220" height="180" rx="22" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <g class="f-accs"><rect x="30" y="122" width="26" height="28"/><rect x="58" y="96" width="26" height="54"/><rect x="86" y="58" width="26" height="92" class="f-acc"/><rect x="114" y="72" width="26" height="78"/><rect x="142" y="104" width="26" height="46"/><rect x="170" y="130" width="22" height="20"/></g>
+      <rect width="220" height="180" rx="22" fill="none" stroke="var(--accent)" stroke-width="4" opacity="0" class="pulse"><animate attributeName="opacity" values="0;0;0;1;0" dur="8s" repeatCount="indefinite"/></rect></g>
+    <g transform="translate(280 240)"><rect width="220" height="180" rx="22" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <g class="f-acc" fill-opacity=".75"><circle cx="40" cy="140" r="7"/><circle cx="62" cy="122" r="7"/><circle cx="80" cy="130" r="7"/><circle cx="98" cy="102" r="7"/><circle cx="118" cy="96" r="7"/><circle cx="136" cy="80" r="7"/><circle cx="152" cy="86" r="7"/><circle cx="172" cy="56" r="7"/><circle cx="188" cy="44" r="7"/></g>
+      <rect width="220" height="180" rx="22" fill="none" stroke="var(--accent)" stroke-width="4" opacity="0" class="pulse"><animate attributeName="opacity" values="0;0;0;0;1" dur="8s" repeatCount="indefinite"/></rect></g>
+    <circle cx="260" cy="220" r="54" class="f-acc2"/>
+    <text x="260" y="240" text-anchor="middle" style="font-size:56px;font-weight:800;fill:var(--surface)">?</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">질문 먼저</div><div class="d">그래프를 그리기 전에 “무엇을 알고 싶은가”를 한 문장으로 쓴다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">다섯 가지 목적</div><div class="d">비교·추이·분포·관계·구성에 맞는 그래프를 고른다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">흔한 실수</div><div class="d">잘린 y축·3D·색 남용이 왜 오해를 부르는지 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">제목·축·단위</div><div class="d">결론이 보이는 제목과 축 이름·단위를 붙인다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:3;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:12;background:var(--accent-soft)"><b>① 목적에 맞는 그래프</b><small>직접 해 보기 2</small></div>
+      <div style="flex:7;background:var(--accent-2-soft)"><b>② 오해를 부르는 그래프</b><small>직접 해 보기 2</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>실습·정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘 본 그래프는 모두 6주차까지 쓴 <strong>process.csv(494개 제품)</strong>와 <strong>vibration.csv</strong>에서 직접 계산한 값입니다. 다음 차시에 같은 그래프를 코드로 그립니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입: 표 vs 그래프 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>494행짜리 표, 한눈에 보이나요?</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1.15">
+      <table class="mini">
+        <thead><tr><th>product_id</th><th>date</th><th>shift</th><th>temp</th><th>pressure</th><th>strength</th><th>defect</th></tr></thead>
+        <tbody>
+          <tr><td>P00001</td><td>03-02</td><td>주간</td><td>211.7</td><td>68.6</td><td>34.57</td><td>0</td></tr>
+          <tr><td>P00002</td><td>03-02</td><td>주간</td><td>208.4</td><td>84.3</td><td>41.44</td><td>0</td></tr>
+          <tr><td>P00003</td><td>03-02</td><td>주간</td><td>210.2</td><td>83.3</td><td>42.13</td><td>0</td></tr>
+          <tr><td>P00004</td><td>03-02</td><td>주간</td><td>214.5</td><td>90.9</td><td>42.05</td><td>0</td></tr>
+          <tr><td>P00005</td><td>03-02</td><td>주간</td><td>219.5</td><td>85.0</td><td>40.04</td><td>0</td></tr>
+          <tr><td>P00006</td><td>03-02</td><td>주간</td><td>216.1</td><td>81.2</td><td>42.38</td><td>0</td></tr>
+          <tr class="more"><td colspan="7">⋮ 488행 더 ⋮</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="font-size:18px;margin:12px 0 0">숫자는 정확하지만, <strong style="color:var(--text)">패턴</strong>은 보이지 않습니다.</p>
+    </div>
+    <div style="font-size:40px;color:var(--muted)">›</div>
+    <div class="frag" style="flex:1;display:flex;flex-direction:column;gap:10px">
+      <div class="tile" style="padding:14px"><svg id="c-intro" viewBox="0 0 440 300" role="img" aria-label="교대별 불량률 막대그래프"></svg></div>
+      <div class="qbox"><b class="k">그래프 한 장이 말하는 것</b>야간 불량률(20.3%)이 주간(7.0%)의 <strong>약 3배</strong></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시 · process.csv 494개 제품 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>목적에 맞는 그래프</h2><p>“무엇을 알고 싶은가?”에 따라 그래프가 달라집니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 다섯 가지 목적 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 목적에 맞는 그래프</span></div>
+  <h2>질문의 모양 → 목적 → 그래프</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(5,1fr);gap:14px">
+      <div class="tile ptile frag show">
+        <svg viewBox="0 0 170 100" aria-hidden="true"><rect x="22" y="50" width="30" height="42" rx="4" class="f-accs"/><rect x="70" y="18" width="30" height="74" rx="4" class="f-acc"/><rect x="118" y="38" width="30" height="54" rx="4" class="f-accs"/><line x1="10" y1="92" x2="160" y2="92" stroke="var(--muted)" stroke-width="2"/></svg>
+        <div class="k">비교</div><div class="pq">“A와 B 중 어느 쪽이 더 큰가?”</div><div class="c">막대그래프</div>
+      </div>
+      <div class="tile ptile frag">
+        <svg viewBox="0 0 170 100" aria-hidden="true"><path d="M14 80 L44 70 L74 74 L104 52 L134 40 L158 16" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linejoin="round"/><line x1="10" y1="92" x2="160" y2="92" stroke="var(--muted)" stroke-width="2"/></svg>
+        <div class="k">추이</div><div class="pq">“시간에 따라 어떻게 변하나?”</div><div class="c">선 그래프</div>
+      </div>
+      <div class="tile ptile frag">
+        <svg viewBox="0 0 170 100" aria-hidden="true"><g class="f-accs"><rect x="20" y="76" width="20" height="16"/><rect x="42" y="56" width="20" height="36"/><rect x="64" y="22" width="20" height="70" class="f-acc"/><rect x="86" y="34" width="20" height="58"/><rect x="108" y="62" width="20" height="30"/><rect x="130" y="80" width="20" height="12"/></g><line x1="10" y1="92" x2="160" y2="92" stroke="var(--muted)" stroke-width="2"/></svg>
+        <div class="k">분포</div><div class="pq">“값이 어떻게 퍼져 있나?”</div><div class="c">히스토그램 · 상자그림</div>
+      </div>
+      <div class="tile ptile frag">
+        <svg viewBox="0 0 170 100" aria-hidden="true"><g class="f-acc" fill-opacity=".75"><circle cx="24" cy="80" r="5"/><circle cx="40" cy="70" r="5"/><circle cx="56" cy="74" r="5"/><circle cx="72" cy="58" r="5"/><circle cx="88" cy="52" r="5"/><circle cx="104" cy="44" r="5"/><circle cx="120" cy="46" r="5"/><circle cx="136" cy="28" r="5"/><circle cx="152" cy="20" r="5"/></g><line x1="10" y1="92" x2="160" y2="92" stroke="var(--muted)" stroke-width="2"/></svg>
+        <div class="k">관계</div><div class="pq">“두 값이 함께 움직이나?”</div><div class="c">산점도</div>
+      </div>
+      <div class="tile ptile frag">
+        <svg viewBox="0 0 170 100" aria-hidden="true"><rect x="40" y="20" width="36" height="30" class="f-acc"/><rect x="40" y="50" width="36" height="24" class="f-acc2"/><rect x="40" y="74" width="36" height="18" class="f-accs"/><rect x="100" y="44" width="36" height="16" class="f-acc"/><rect x="100" y="60" width="36" height="20" class="f-acc2"/><rect x="100" y="80" width="36" height="12" class="f-accs"/><line x1="10" y1="92" x2="160" y2="92" stroke="var(--muted)" stroke-width="2"/></svg>
+        <div class="k">구성</div><div class="pq">“무엇으로 이루어져 있나?”</div><div class="c">누적 막대 (원그래프는 주의)</div>
+      </div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:21px">그래프 종류를 먼저 고르지 말고, <strong style="color:var(--text)">질문을 먼저 한 문장으로</strong> 써 보세요. 질문의 모양이 그래프를 알려 줍니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 목적에 맞는 그래프 · 비교</span></div>
+  <h2>비교 → 막대그래프</h2>
+  <div class="demo">
+    <div class="plot"><svg id="c-cmp" viewBox="0 0 700 430" role="img" aria-label="교대별 불량률과 라인별 불량률 막대그래프"></svg></div>
+    <div class="side">
+      <div class="qbox"><b class="k">질문</b>주간과 야간 중 어디서 불량이 더 많이 나올까?</div>
+      <ul class="tips">
+        <li><svg class="ic"><use href="#i-check"/></svg><span>막대는 <strong>길이</strong>로 비교 → y축은 <strong>0부터</strong></span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>값은 <strong>평균·비율 같은 집계값</strong> (6주차 groupby)</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>항목이 많으면 <strong>크기순 정렬</strong>, 이름이 길면 가로 막대</span></li>
+      </ul>
+      <div class="callout b">라인별로 나눠 보면 13.3~14.0%로 <strong>거의 같습니다</strong>. 차이를 만드는 건 라인이 아니라 <strong>교대</strong>인 듯 — 7-3에서 이어서.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시 · process.csv 494개 제품 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 추이 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 목적에 맞는 그래프 · 추이</span></div>
+  <h2>추이 → 선 그래프</h2>
+  <div class="demo">
+    <div class="plot"><svg id="c-trend" viewBox="0 0 700 430" role="img" aria-label="1호기와 3호기의 120일 진동 선 그래프"></svg></div>
+    <div class="side">
+      <div class="qbox"><b class="k">질문</b>3호기 진동은 시간이 지나며 어떻게 변했을까?</div>
+      <ul class="tips">
+        <li><svg class="ic"><use href="#i-check"/></svg><span>x축은 <strong>시간 순서</strong> (날짜·시각·회차)</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>점을 <strong>이어서</strong> 변화의 흐름을 본다</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>비교 대상(정상 설비) 선을 함께 — 단, 선은 <strong>3~4개 이하</strong></span></li>
+      </ul>
+      <div class="callout b">3호기는 70일이 지나며 진동이 점점 커지다 <strong>96일째 고장</strong>. 1주차 예지보전 장면을 실제 데이터로 본 것입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시 · vibration.csv 일일 진동(RMS) · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 분포 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 목적에 맞는 그래프 · 분포</span></div>
+  <h2>분포 → 히스토그램 · 상자그림</h2>
+  <div class="demo">
+    <div class="plot" style="gap:6px">
+      <svg id="c-hist" viewBox="0 0 440 430" style="flex:1.45" role="img" aria-label="인장강도 히스토그램"></svg>
+      <svg id="c-box" viewBox="0 0 280 430" style="flex:1" role="img" aria-label="교대별 인장강도 상자그림"></svg>
+    </div>
+    <div class="side">
+      <div class="qbox"><b class="k">질문</b>강도는 어느 범위에 몰려 있고, 튀는 값은 없을까?</div>
+      <ul class="tips">
+        <li><svg class="ic"><use href="#i-check"/></svg><span><strong>히스토그램</strong>: 구간별 개수 → 모양(봉우리·치우침)</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span><strong>상자그림</strong>: 중앙값·사분위·이상치 → 집단끼리 비교</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>6주차 「분포와 이상치」를 그림으로 보는 방법</span></li>
+      </ul>
+      <div class="callout b">38~40 MPa 구간이 가장 많고(121개), 왼쪽으로 꼬리가 깁니다. 야간 상자가 <strong>조금 아래</strong>에 있습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시 · process.csv 인장강도(MPa) · 구간 폭 2 MPa · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 관계 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 목적에 맞는 그래프 · 관계</span></div>
+  <h2>관계 → 산점도</h2>
+  <div class="demo">
+    <div class="plot"><svg id="c-rel" viewBox="0 0 700 430" role="img" aria-label="사출 압력과 인장강도 산점도"></svg></div>
+    <div class="side">
+      <div class="qbox"><b class="k">질문</b>사출 압력이 높으면 강도도 높을까?</div>
+      <ul class="tips">
+        <li><svg class="ic"><use href="#i-check"/></svg><span><strong>점 하나 = 제품 하나</strong> (494개)</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>영향을 준다고 생각하는 변수를 <strong>x축</strong>, 결과를 <strong>y축</strong></span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>점이 겹치면 <strong>반투명</strong>하게</span></li>
+      </ul>
+      <div class="callout b">오른쪽 위로 올라가는 띠 모양 — <strong>압력이 높을수록 강도도 높은 경향</strong>. 얼마나 강한 관계인지는 7-3에서 숫자로 잽니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시 · process.csv 494개 제품 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 구성 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 목적에 맞는 그래프 · 구성</span></div>
+  <h2>구성 → 누적 막대 (원그래프는 조심)</h2>
+  <div class="demo">
+    <div class="plot" style="gap:4px">
+      <svg id="c-stack" viewBox="0 0 440 430" style="flex:1.5" role="img" aria-label="교대별 불량 유형 누적 막대그래프"></svg>
+      <svg id="c-pie" viewBox="0 0 260 430" style="flex:1" role="img" aria-label="전체 불량 유형 원그래프"></svg>
+    </div>
+    <div class="side">
+      <div class="qbox"><b class="k">질문</b>불량은 어떤 유형으로 이루어져 있고, 교대마다 다를까?</div>
+      <ul class="tips">
+        <li><svg class="ic"><use href="#i-check"/></svg><span><strong>누적 막대</strong>: 전체 크기와 구성을 함께, 여러 집단을 나란히</span></li>
+        <li><svg class="ic"><use href="#i-alert"/></svg><span><strong>원그래프</strong>: 조각 각도는 비교가 어렵다 → 항목 <strong>2~3개</strong>, 합이 100%일 때만</span></li>
+      </ul>
+      <div class="callout b">야간에는 <strong>찍힘</strong>이 21건(주간 2건). 원그래프 하나로는 이 차이를 볼 수 없습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시 · process.csv 불량 68건의 유형 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 직접 해 보기 1: 같은 데이터, 다른 질문 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 목적에 맞는 그래프 · 직접 해 보기 1</span></div>
+  <h2>같은 강도 데이터, 여섯 가지 질문 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot"><svg id="sw" viewBox="0 0 700 430" role="img" aria-label="선택한 그래프 종류로 그린 인장강도 그래프"></svg></div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">그래프를 바꿔 보세요 — 무엇에 답하나요?</div>
+      <div class="qbtns" id="sw-btns">
+        <button class="btn ghost" type="button" data-k="bar" aria-pressed="true">막대</button>
+        <button class="btn ghost" type="button" data-k="line" aria-pressed="false">선</button>
+        <button class="btn ghost" type="button" data-k="hist" aria-pressed="false">히스토그램</button>
+        <button class="btn ghost" type="button" data-k="box" aria-pressed="false">상자그림</button>
+        <button class="btn ghost" type="button" data-k="scatter" aria-pressed="false">산점도</button>
+        <button class="btn ghost" type="button" data-k="stack" aria-pressed="false">누적 막대</button>
+      </div>
+      <div class="ans">
+        <div><div class="lb">이 그래프가 답하는 질문</div><div class="qq" id="sw-q"></div></div>
+        <div><div class="lb">데이터에서 읽은 답</div><div id="sw-a"></div></div>
+        <div><div class="lb">이 그래프로는 알 수 없는 것</div><div id="sw-n" class="muted"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시 · process.csv 인장강도(MPa) 494개 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 직접 해 보기 2: 그래프 고르기 카드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 목적에 맞는 그래프 · 직접 해 보기 2</span></div>
+  <h2>이 질문엔 어떤 그래프? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 말해 보고 카드를 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="pick"></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:16px"><p class="muted" style="font-size:17px;margin:0;flex:none" id="pick-score">0 / 8 확인</p>
+    <div class="callout b" style="flex:1;font-size:17px">힌트: 질문 속 낱말을 보세요 — <strong>견주다</strong>→막대 · <strong>변화</strong>→선 · <strong>퍼짐</strong>→히스토그램/상자 · <strong>함께</strong>→산점도 · <strong>이루어진</strong>→누적 막대</div></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>오해를 부르는 그래프</h2><p>같은 숫자도 그리는 방법에 따라 다르게 읽힙니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 직접 해 보기 3: 잘린 y축 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 오해를 부르는 그래프 · 직접 해 보기 3</span></div>
+  <h2>y축을 자르면 차이가 몇 배로 보일까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="trunc" viewBox="0 0 700 430" role="img" aria-label="호기별 불량률 막대그래프. y축 시작값을 바꿀 수 있다"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>y축 시작값 <output id="tr-o">0%</output></label><input id="tr-s" type="range" min="0" max="10" step="0.5" value="0" aria-label="y축 시작값"></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">눈에 보이는 배율</div><div class="val o" id="tr-vis" style="font-size:34px">1.4배</div></div>
+        <div class="meter"><div class="lbl">실제 배율</div><div class="val" id="tr-real" style="font-size:34px">1.4배</div></div>
+      </div>
+      <div class="muted" style="font-size:15px">6호기 막대 길이 ÷ 5호기 막대 길이</div>
+      <div class="status ok" id="tr-st"><b class="k">정직한 그래프</b>막대 길이 비율이 실제 값의 비율과 같습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시 · process.csv 호기별 불량률(제품 75~90개씩) · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 직접 해 보기 4: 나쁜 그래프 고치기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 오해를 부르는 그래프 · 직접 해 보기 4</span></div>
+  <h2>나쁜 그래프 고치기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="fix" viewBox="0 0 700 430" role="img" aria-label="강도 구간별 불량률 그래프. 고칠 항목을 켤 수 있다"></svg></div>
+    <div class="side">
+      <div class="toggles">
+        <button class="tgl" type="button" data-f="flat" aria-pressed="false"><span class="chk"></span>① 3D 효과 빼기</button>
+        <button class="tgl" type="button" data-f="color" aria-pressed="false"><span class="chk"></span>② 색은 강조할 곳에만</button>
+        <button class="tgl" type="button" data-f="title" aria-pressed="false"><span class="chk"></span>③ 결론이 보이는 제목</button>
+        <button class="tgl" type="button" data-f="axis" aria-pressed="false"><span class="chk"></span>④ 축 이름과 단위</button>
+      </div>
+      <div class="status bad" id="fx-st"><b class="k">무엇을 말하는 그래프?</b>막대가 기울어 값을 읽기 어렵고, 색이 너무 많고, 축이 무엇인지 모릅니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시 · process.csv 인장강도 구간별 불량률 · 가상 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 체크리스트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 오해를 부르는 그래프</span></div>
+  <h2>그래프를 내기 전 체크리스트</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(5,1fr);gap:14px">
+      <div class="tile frag show" style="align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h" style="font-size:20px">결론이 보이는 제목</div><div class="d" style="font-size:16px">“무엇을 그렸나”보다 “무엇을 알았나”</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h" style="font-size:20px">축 이름 + 단위</div><div class="d" style="font-size:16px">강도(MPa), 온도(℃), 불량률(%)</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge o"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h" style="font-size:20px">막대는 0부터</div><div class="d" style="font-size:16px">자를 땐 반드시 표시하고 이유를 쓴다</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h" style="font-size:20px">색·효과는 최소로</div><div class="d" style="font-size:16px">3D 금지, 색은 강조할 곳에만</div></div>
+      <div class="tile frag" style="align-items:center;text-align:center"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div class="h" style="font-size:20px">출처와 개수</div><div class="d" style="font-size:16px">어떤 데이터, 몇 개(n=494)인지</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:24px;gap:18px">
+      <div class="box" style="margin:0;padding:16px 22px"><p style="font-size:20px;margin:0"><span class="tag" style="background:var(--muted)">보통 제목</span> &nbsp;교대별 불량률</p></div>
+      <div class="box key" style="margin:0;padding:16px 22px"><p style="font-size:20px;margin:0"><span class="tag">좋은 제목</span> &nbsp;야간 불량률이 주간의 약 3배 (n=494)</p></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">실습</span></div>
+  <h2>실습 파일: 다섯 가지 목적, 다섯 장의 그래프</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:36px">
+    <div class="cell-ui" style="flex:1.2">
+      <div class="cbar"><span class="run"><svg class="ic"><use href="#i-play"/></svg></span> lesson01.ipynb — 셀을 위에서부터 차례로 실행</div>
+      <pre class="code"># 비교: 교대별 불량률 막대
+rate = df.groupby('shift')['defect'].mean() * 100
+rate.plot(kind='bar', title='교대별 불량률 (%)')</pre>
+      <pre class="out">야간 20.3 / 주간 7.0  → 막대그래프 1장</pre>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:16px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week07/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <div class="tile" style="padding:16px 20px;gap:6px"><div class="h" style="font-size:20px">직접 바꿔 보기</div>
+        <div class="d" style="font-size:17px">① 비교 기준을 <code>shift</code> → <code>line</code>, <code>machine</code>으로<br>② 히스토그램 <code>bins</code> 개수 바꾸기<br>③ y축 시작값을 바꿔 잘린 축 만들어 보기</div></div>
+      <p class="muted" style="font-size:17px;margin:0">코드 한 줄 한 줄의 뜻은 <strong style="color:var(--text)">다음 차시</strong>에 자세히 배웁니다. 오늘은 실행하고 그래프를 읽는 데 집중!</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">질문이 먼저</div><div style="font-size:21px">그래프는 질문에 대한 답. <strong>질문을 한 문장으로</strong> 쓰면 그래프가 정해진다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">다섯 가지 목적</div><div style="font-size:21px">비교=막대 · 추이=선 · 분포=히스토그램/상자 · 관계=산점도 · 구성=<strong>누적 막대</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">정직하게 그리기</div><div style="font-size:21px">막대는 0부터, 3D·색 남용 금지, <strong>제목·축 이름·단위</strong>는 필수</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="시간에 따른 변화(추이)는 x축에 시간을 두고 점을 이은 선 그래프가 가장 잘 보여 줍니다.">
+      <p class="q-title"><b>Q1.</b> 설비 진동을 120일 동안 매일 기록했다. 고장 전 변화를 보려면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">원그래프</button>
+        <button type="button" data-v="b">히스토그램</button>
+        <button type="button" data-v="c">선 그래프</button>
+        <button type="button" data-v="d">누적 막대그래프</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="두 숫자 변수가 함께 움직이는지(관계)는 점 하나에 제품 하나를 찍는 산점도로 봅니다.">
+      <p class="q-title"><b>Q2.</b> “사출 압력이 높으면 강도도 높을까?”에 맞는 그래프는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">막대그래프</button>
+        <button type="button" data-v="b">산점도</button>
+        <button type="button" data-v="c">원그래프</button>
+        <button type="button" data-v="d">선 그래프</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="막대는 길이로 비교하므로 y축을 0이 아닌 곳에서 자르면 작은 차이가 몇 배로 커 보입니다. 직접 해 보기 3에서 1.4배 차이가 약 5배로 보였습니다.">
+      <p class="q-title"><b>Q3.</b> 불량률 11%와 15%를 막대로 그리면서 y축을 10%부터 시작했다. 생기는 문제는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">차이가 실제보다 훨씬 커 보인다</button>
+        <button type="button" data-v="b">차이가 실제보다 작아 보인다</button>
+        <button type="button" data-v="c">값이 바뀌어 계산이 틀린다</button>
+        <button type="button" data-v="d">아무 문제 없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="원그래프는 조각 각도를 비교하기 어려워, 항목이 많거나 여러 집단을 나란히 비교할 때는 누적 막대가 낫습니다. 항목 2~3개로 전체 100%를 보여 줄 때만 씁니다.">
+      <p class="q-title"><b>Q4.</b> 원그래프에 대한 설명으로 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">시간에 따른 변화를 보기 좋다</button>
+        <button type="button" data-v="b">항목이 10개 이상일 때 가장 좋다</button>
+        <button type="button" data-v="c">두 변수의 관계를 보여 준다</button>
+        <button type="button" data-v="d">조각 비교가 어려워 항목이 적을 때만 쓴다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">7-2</div>
+    <h2>그래프 그리기 실습</h2>
+    <p>오늘 본 다섯 그래프를 matplotlib 코드로 직접 그리고, 제목·축 이름·한글을 붙여 파일로 저장합니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week06/lesson03.html">← 6-3 그룹별 집계로 비교하기</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-code"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 7주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">7주 1차시 · 목적에 맞는 그래프 고르기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="w07data.js"></script>
+<script src="w07plot.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

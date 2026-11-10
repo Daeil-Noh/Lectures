@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>14주 3차시 · 예시 개선안 살펴보기 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 14주 3차시 교안: 가상 회사 바다결의 예시 업무 개선안 두 편(고객 후기 답글·오픈마켓 광고 성과 보고)을 읽고, 약한 버전과 비교하며, 제출 전 점검표로 내 개선안을 점검한다. 15주 기말고사·개선안 제출 안내">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 예시 카드 */
+  .excard { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .excard .lab { font-size: 16px; font-weight: 800; color: var(--accent); }
+  .excard.b .lab { color: var(--accent-2); }
+  .excard .tt { font-size: 23px; font-weight: 800; line-height: 1.35; }
+  .excard .meta2 { display: flex; gap: 8px; flex-wrap: wrap; }
+  .excard .meta2 span { font-size: 14px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+
+  /* 근거 막대 */
+  .hbars { display: grid; gap: 9px; width: 100%; }
+  .hb { display: grid; grid-template-columns: 210px 1fr 40px; align-items: center; gap: 12px; font-size: 17px; }
+  .hb .tr { height: 24px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+  .hb .tr i { display: block; height: 100%; background: var(--accent-2); border-radius: 8px; }
+  .hb b { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* 주석 달린 문서 */
+  .doc { background: var(--surface); width: 100%; height: 100%; padding: 18px 26px; display: flex; flex-direction: column; gap: 12px; }
+  .doc .dh { font-size: 15px; font-weight: 800; color: var(--muted); display: flex; justify-content: space-between; }
+  .doc .ds { font-size: 28px; font-weight: 800; }
+  .doc .dt { font-size: 23px; line-height: 1.8; white-space: pre-line; }
+  .doc .dt mark { background: var(--accent-soft); color: var(--text); border-bottom: 3px solid var(--accent); padding: 0 2px; }
+  .pins { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .pin { font: inherit; font-size: 16px; font-weight: 800; padding: 8px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.25; }
+  .pin:hover { border-color: var(--accent); }
+  .pin[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .pin.seen:not([aria-pressed="true"]) { background: var(--accent-soft); }
+
+  /* 숫자 검증 */
+  .claims { display: grid; gap: 7px; }
+  .claim { font: inherit; text-align: left; cursor: pointer; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 15.5px; line-height: 1.4; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; }
+  .claim:hover { border-color: var(--accent); }
+  .claim .v { font-weight: 800; font-size: 14px; color: var(--muted); }
+  .claim .c { grid-column: 1 / -1; display: none; font-size: 14px; color: var(--muted); }
+  .claim.ok { background: var(--ok-soft); border-color: var(--ok); }
+  .claim.ok .v { color: var(--ok); }
+  .claim.no { background: var(--bad-soft); border-color: var(--bad); }
+  .claim.no .v { color: var(--bad); }
+  .claim.ok .c, .claim.no .c { display: block; }
+  .claim[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--accent); }
+
+  /* 약한 개선안 */
+  .weakdoc { background: var(--surface); width: 100%; height: 100%; padding: 18px 26px; display: flex; flex-direction: column; justify-content: center; gap: 12px; font-size: 20px; line-height: 1.5; }
+  .weakdoc .wl { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: baseline; }
+  .weakdoc .wl > span:first-child { font-size: 15px; font-weight: 800; color: var(--muted); }
+  .ws { cursor: pointer; border-radius: 4px; padding: 0 2px; }
+  .ws:hover { background: var(--accent-soft); }
+  .ws.hit { background: var(--bad-soft); text-decoration: underline wavy var(--bad); text-underline-offset: 4px; }
+  .wtag { display: inline-block; font-size: 13px; font-weight: 800; color: var(--bad); margin-left: 6px; }
+  .cmp td, .cmp th { font-size: 19px; padding: 12px 16px; }
+  .cmp td:nth-child(2) { color: var(--muted); }
+
+  /* 점검표 */
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .ck { font: inherit; font-size: 15.5px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.35; }
+  .ck .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .ck[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .ck[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .ck[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid var(--surface); border-bottom: 3px solid var(--surface); transform: rotate(-45deg) translate(1px, -1px); }
+  .ck .gn { font-size: 12px; font-weight: 800; color: var(--muted); margin-left: auto; flex: none; }
+  .ring-v { font-size: 40px; font-weight: 800; fill: var(--accent); font-variant-numeric: tabular-nums; }
+  .semester .stepbox .d { font-size: 15px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 14주차 3차시</p>
+    <h1>예시 개선안<br>살펴보기</h1>
+    <p class="lead" style="font-size:25px">좋은 개선안과 약한 개선안,<br>무엇이 다를까?</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>사례 차시</span><span>직접 해 보기 4개</span><span>예시 개선안 2편</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:500px;flex:none" aria-hidden="true">
+    <g transform="rotate(-6 160 230)">
+      <rect x="40" y="60" width="230" height="310" rx="22" class="f-surface" stroke="var(--accent)" stroke-width="3"/>
+      <text x="70" y="108" style="font-size:30px;font-weight:800;fill:var(--accent)">A</text>
+      <text x="104" y="106" class="t-sub" style="font-size:16px">고객 후기 답글</text>
+      <g fill="var(--line)"><rect x="70" y="134" width="170" height="12" rx="6"/><rect x="70" y="162" width="130" height="12" rx="6"/><rect x="70" y="190" width="160" height="12" rx="6"/><rect x="70" y="218" width="110" height="12" rx="6"/><rect x="70" y="246" width="150" height="12" rx="6"/></g>
+      <rect x="70" y="190" width="160" height="12" rx="6" class="f-acc" opacity=".7"/>
+    </g>
+    <g transform="rotate(5 360 230)">
+      <rect x="250" y="70" width="230" height="310" rx="22" class="f-surface" stroke="var(--accent-2)" stroke-width="3"/>
+      <text x="280" y="118" style="font-size:30px;font-weight:800;fill:var(--accent-2)">B</text>
+      <text x="314" y="116" class="t-sub" style="font-size:16px">광고 성과 보고</text>
+      <g id="cv-bars"></g>
+    </g>
+    <circle cx="400" cy="360" r="50" class="f-acc"/>
+    <g transform="translate(372 332) scale(2.35)" style="color:var(--surface)"><use href="#i-check" width="24" height="24"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">좋은 예시 읽기</div><div class="d">완성된 개선안에서 근거·흐름·검토 단계를 찾는다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">숫자 검증</div><div class="d">AI가 쓴 보고 문장을 원자료 숫자로 확인한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">약한 곳 찾기</div><div class="d">약한 개선안의 문제를 짚고 고칠 방향을 말한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">제출 전 점검</div><div class="d">점검표로 내 개선안을 스스로 점검한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>예시 받기</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 예시 A · 후기 답글</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② 예시 B · 광고 보고</b><small>직접 해 보기 2</small></div>
+      <div style="flex:4;background:var(--accent-2-soft)"><b>③ 약한 개선안</b><small>직접 해 보기 3</small></div>
+      <div style="flex:4;background:var(--accent-2-soft)"><b>④ 제출 전 점검</b><small>직접 해 보기 4</small></div>
+      <div style="flex:3;background:var(--surface-2)"><b>학기 마무리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 예시를 읽으며 <strong>내 개선안 서식</strong>을 옆에 펴 두세요. 좋은 점을 보면 바로 내 칸에 옮겨 적습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 예시 받기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">예시 받기</span></div>
+  <h2>오늘 읽을 예시 개선안 두 편</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:24px">
+      <div class="excard">
+        <div class="lab">예시 A · 경영학 전공 · 온라인 마케팅 담당</div>
+        <div class="tt">고객 후기 답글과 월간 요약, 생성형AI 초안 + 담당자 검토로 월 약 2시간 줄이기(추정)</div>
+        <div class="meta2"><span>쓰임: 분류·요약 · 초안</span><span>자료: reviews_2026.csv</span></div>
+        <a class="btn" href="materials/example_A_reviews.md" download style="text-decoration:none;margin-top:4px"><svg class="ic"><use href="#i-log"/></svg> 예시 A 받기 (.md)</a>
+      </div>
+      <div class="excard b">
+        <div class="lab">예시 B · 회계학 전공 · 경영지원 담당</div>
+        <div class="tt">오픈마켓 광고 성과 월간 보고, 생성형AI 표·초안 + 숫자 검증으로 4시간에서 1시간 30분으로(추정)</div>
+        <div class="meta2"><span>쓰임: 분류·정리 · 요약</span><span>자료: sales_2026.csv</span></div>
+        <a class="btn" href="materials/example_B_ad_report.md" download style="text-decoration:none;margin-top:4px;background:var(--accent-2)"><svg class="ic"><use href="#i-log"/></svg> 예시 B 받기 (.md)</a>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:20px;font-size:18px">원자료: <a href="../materials/reviews_2026.csv" download>reviews_2026.csv</a> · <a href="../materials/sales_2026.csv" download>sales_2026.csv</a> · 빈 서식: <a href="materials/improvement_template.md" download>improvement_template.md</a> — 모두 <strong style="color:var(--text)">가상 회사의 가상 자료</strong>라 생성형AI에 올려 실습해도 됩니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시 · 예시의 작성자·회사·담당자는 모두 가상 · 시간은 가정값</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>예시 A: 고객 후기 답글</h2><p>회사의 고민 ② “고객 문의·후기 응대에 시간이 많이 든다”에서 출발합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chat"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 예시 A 근거 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 예시 A</span></div>
+  <h2>근거부터: 후기 120건이 말해 주는 것</h2>
+  <div class="grid" style="grid-template-columns:330px 1fr;gap:24px;flex:1;min-height:0;align-items:center">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="meter"><div class="lbl">1~9월 후기</div><div class="val" style="font-size:38px">120건</div></div>
+      <div class="meter"><div class="lbl">평균 별점</div><div class="val" style="font-size:38px">3.7점</div></div>
+      <div class="meter"><div class="lbl">1~2점 후기</div><div class="val o" style="font-size:38px">27건</div><div class="lbl">전체의 22.5%</div></div>
+      <div class="meter"><div class="lbl">9월 후기 (시연)</div><div class="val" style="font-size:38px">19건</div><div class="lbl">1~2점 4건</div></div>
+    </div>
+    <div class="tile" style="padding:20px 24px;gap:12px">
+      <div class="h" style="font-size:21px">1~2점 후기 27건의 주제</div>
+      <div class="hbars" id="neg-bars"></div>
+      <div class="d" style="font-size:16px">“문의 답변이 늦었어요”가 6건 — <strong style="color:var(--text)">응대 속도</strong>가 고객 경험의 문제라는 근거가 됩니다.</div>
+      <div class="callout b" style="font-size:16px;padding:10px 14px">9주차 주제 제출 때의 짐작(“월 20회 × 30분”)을 원자료로 세어 보고 <strong>9월 19건(실제 수) × 건당 6분(가정)</strong>으로 고쳤습니다. 주제 → 개선안으로 가며 <strong>근거가 단단해지는 과정</strong>입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시 · reviews_2026.csv(가상)로 직접 계산한 값</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 주석 달린 예시 A -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 예시 A · 직접 해 보기 1</span></div>
+  <h2>예시 A의 좋은 점 여덟 곳 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 370px">
+    <div class="plot" style="padding:0;overflow:hidden"><div class="doc" id="doc"></div></div>
+    <div class="side">
+      <div class="pins" id="pins"></div>
+      <div class="tile" style="flex:1;padding:16px 18px;gap:8px">
+        <div class="h" style="font-size:19px;color:var(--accent)" id="why-h">왜 좋은가</div>
+        <div style="font-size:18px;line-height:1.55" id="why"></div>
+      </div>
+      <div class="muted" style="font-size:15px" id="pin-n">1 / 8 살펴봄</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시 · example_A_reviews.md에서 발췌 · 밑줄 = 좋은 점</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 예시 A 따라 해 보기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 예시 A · 따라 해 보기</span></div>
+  <h2>예시 A의 시연, 직접 따라 해 보기</h2>
+  <div class="grid" style="grid-template-columns:360px 1fr;gap:22px;flex:1;min-height:0;align-items:start">
+    <div class="flow" style="flex-direction:column;gap:8px">
+      <div class="stepbox" style="flex-direction:row;text-align:left;padding:12px 14px;gap:12px"><span class="ic-badge" style="width:46px;height:46px;font-size:24px">1</span><div><div class="h" style="font-size:18px">reviews_2026.csv 열기</div><div class="d">스프레드시트로 열고 9월(2026-09) 행만 고른다</div></div></div>
+      <div class="stepbox" style="flex-direction:row;text-align:left;padding:12px 14px;gap:12px"><span class="ic-badge" style="width:46px;height:46px;font-size:24px">2</span><div><div class="h" style="font-size:18px">필요한 열만 복사</div><div class="d">제품·채널·별점·후기 (review_id·날짜는 빼도 됨)</div></div></div>
+      <div class="stepbox" style="flex-direction:row;text-align:left;padding:12px 14px;gap:12px"><span class="ic-badge" style="width:46px;height:46px;font-size:24px">3</span><div><div class="h" style="font-size:18px">Gemini 또는 Claude에</div><div class="d">오른쪽 프롬프트 + 붙여 넣기. 한도에 걸리면 다른 쪽으로</div></div></div>
+      <div class="stepbox goal" style="flex-direction:row;text-align:left;padding:12px 14px;gap:12px"><span class="ic-badge" style="width:46px;height:46px;font-size:24px">4</span><div><div class="h" style="font-size:18px">예시와 비교·검토</div><div class="d">지어낸 숫자·약속을 찾아 고친다</div></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="prompt"><div class="prompt-h">프롬프트 · 예시 A 원문<button class="copy" type="button">복사</button></div><pre>너는 건강 간식 회사 '바다결'의 고객 응대 담당자야.
+아래는 <mark>9월</mark> 고객 후기 표야(제품, 판매 채널, 별점, 후기).
+1) 각 후기를 [맛·식감 / 양·가격 / 배송·포장 / 유통기한 / 응대 / 칭찬 / 중립] 중 하나로 분류해 표로 만들어 줘.
+2) 별점 3점 이하 후기에는 3문장 이내의 답글 초안을 써 줘. 공감 → 확인할 내용 → 다음 행동 순서로.
+3) 보상·환불·배송 날짜처럼 회사가 정해야 하는 내용은 약속하지 말고 [담당자 확인]이라고 비워 둬.
+4) 분류가 애매한 후기는 ‘애매함’으로 표시하고 이유를 한 줄로 적어 줘.
+
+<mark>[후기 표 붙여 넣기]</mark></pre></div>
+      <div class="callout b">시연에서 고친 대로 <strong>‘중립’ 분류를 추가한 개정판</strong>입니다. 실제 답은 매번 다를 수 있으니, <strong>내가 받은 결과</strong>로 시연 칸을 채웁니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시 · 개인정보가 없는 가상 후기라서 올려도 되는 자료(1주 3차시 규칙)</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>예시 B: 오픈마켓 광고 성과 보고</h2><p>회사의 고민 ① “광고비는 느는데 수익이 그만큼 늘지 않는다”를 숫자로 확인합니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 직접 해 보기 2: 숫자 검증 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 예시 B · 직접 해 보기 2</span></div>
+  <h2>AI가 쓴 보고 문장, 숫자로 검증하기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 400px">
+    <div class="plot"><svg id="adchart" viewBox="0 0 640 420" aria-label="2026년 1~9월 오픈마켓 월별 매출과 광고비 막대그래프"></svg></div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">AI 보고 초안의 문장 — 눌러서 검증 (예시 답변)</div>
+      <div class="claims" id="claims"></div>
+      <div class="status mid" id="cl-st"><b class="k">0 / 4 검증</b>네 문장 중 <strong>하나는 틀렸습니다.</strong> 어느 것일까요?</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시 · sales_2026.csv(가상) 오픈마켓 행으로 직접 계산 · 단위 만 원</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 예시 B 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 예시 B</span></div>
+  <h2>예시 B의 AI 활용 방안: 파일 + 프롬프트 + 검증</h2>
+  <div class="grid" style="grid-template-columns:1fr 360px;gap:22px;flex:1;min-height:0;align-items:start">
+    <div class="prompt"><div class="prompt-h">프롬프트 · Gemini 또는 Claude (sales_2026.csv 첨부, 안 되면 오픈마켓 행 붙여 넣기)<button class="copy" type="button">복사</button></div><pre>너는 작은 식품 회사의 경영지원 담당자야. 첨부한 파일은 2026년 1~9월 제품·채널별 판매 자료야
+(열: month, product, channel, price, units, revenue, ad_spend, returns).
+1) channel이 '<mark>오픈마켓</mark>'인 행만 써서 월별 매출, 광고비, 매출÷광고비를 표로 만들어 줘.
+2) 같은 방식으로 제품별 1~9월 합계 표도 만들어 줘.
+3) 눈에 띄는 변화 3가지를 한 문장씩 쓰고, 근거 숫자를 괄호로 붙여 줘.
+4) 이 자료만으로 알 수 없는 것(예: 이익)은 추측하지 말고 ‘자료로 알 수 없음’이라고 적어 줘.
+5) 계산에 쓴 방법을 마지막에 한 줄로 적어 줘.</pre></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:19px">검증 규칙</div><div class="d" style="font-size:16px">핵심 숫자 <strong>3개 이상</strong>을 스프레드시트 합계로 다시 계산 (7주 1차시)</div></div></div>
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div><div class="h" style="font-size:19px">올려도 되는 자료인가</div><div class="d" style="font-size:16px">이번엔 가상 자료. 실제 회사 판매 자료는 <strong>회사 지침 먼저</strong></div></div></div>
+      <div class="tile row" style="padding:14px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div><div class="h" style="font-size:19px">사람의 몫</div><div class="d" style="font-size:16px">원인 해석과 다음 달 예산 제안은 담당자, 결정은 대표</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시 · 4번 지시가 환각을 줄이는 장치 — 그래도 검증은 필수</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 예시 B 효과와 한계 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 예시 B</span></div>
+  <h2>예시 B의 기대 효과, 그리고 솔직한 한계</h2>
+  <div class="grid g2" style="gap:24px;flex:1;min-height:0;align-items:start">
+    <div class="tile" style="padding:20px 22px;gap:12px">
+      <div class="h">월 240분 → 90분 (추정)</div>
+      <table style="font-size:17px">
+        <thead><tr><th>항목</th><th>지금</th><th>바꾼 뒤</th></tr></thead>
+        <tbody>
+          <tr><td>자료 정리·표 만들기</td><td>150분</td><td>10분</td></tr>
+          <tr><td>숫자 검증</td><td>(함께)</td><td>30분</td></tr>
+          <tr><td>보고 문장 작성</td><td>90분</td><td>50분</td></tr>
+          <tr><td><strong>합계</strong></td><td><strong>240분</strong></td><td><strong>90분</strong></td></tr>
+        </tbody>
+      </table>
+      <div class="d" style="font-size:16px">모든 시간은 <strong style="color:var(--text)">가정값</strong>. 시범 2개월 동안 실제 시간과 AI 오류 수를 기록해 확인</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:19px">이익은 알 수 없다</div><div class="d" style="font-size:16px">원가 자료가 없어 “수익이 났는가”는 판단 불가 — 보고서에 그대로 적는다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:19px">매출÷광고비는 단순 비율</div><div class="d" style="font-size:16px">광고가 만든 매출만 센 값이 아니다. 비교용 지표로만 쓴다</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-user"/></svg></span><div><div class="h" style="font-size:19px">결정은 사람이</div><div class="d" style="font-size:16px">“광고비를 줄이자”처럼 한쪽으로 몰지 않게, 제안은 여러 안으로</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시 · 한계를 밝힌 개선안이 더 믿을 만하다</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>약한 개선안은 무엇이 다를까</h2><p>같은 주제(후기 답글)를 약하게 쓴 버전을 고쳐 봅니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 직접 해 보기 3: 약한 개선안 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 약한 개선안 · 직접 해 보기 3</span></div>
+  <h2>약한 개선안에서 문제 여덟 곳 찾기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot" style="padding:0;overflow:hidden"><div class="weakdoc" id="weak"></div></div>
+    <div class="side">
+      <div class="meter"><div class="lbl">찾은 문제</div><div class="val o" id="wk-n">0 / 8</div></div>
+      <div class="tile" style="flex:1;padding:14px 18px;gap:8px">
+        <div class="h" style="font-size:19px;color:var(--bad)" id="wk-h">문장을 눌러 보세요</div>
+        <div style="font-size:17px;line-height:1.55" id="wk-d">읽는 사람이 “그래서?”, “정말?”, “괜찮아?”라고 물을 문장을 찾습니다.</div>
+        <div style="font-size:16px;line-height:1.5;color:var(--ok);font-weight:700" id="wk-f"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시 · 강의용으로 일부러 약하게 쓴 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 약한 vs 좋은 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 약한 개선안</span></div>
+  <h2>같은 주제, 다른 개선안</h2>
+  <div class="body">
+    <table class="cmp">
+      <thead><tr><th style="width:150px">칸</th><th>약한 버전</th><th>예시 A</th></tr></thead>
+      <tbody>
+        <tr class="frag show"><td><strong>제목</strong></td><td>AI를 활용한 고객 관리 혁신 방안</td><td>후기 답글·월간 요약, AI 초안 + 담당자 검토로 월 약 2시간 줄이기(추정)</td></tr>
+        <tr class="frag"><td><strong>근거</strong></td><td>후기가 너무 많아 힘들다</td><td>120건 · 1~2점 27건(22.5%) · 건당 6분(가정)</td></tr>
+        <tr class="frag"><td><strong>사람의 역할</strong></td><td>AI가 모든 후기에 자동 답글</td><td>약속·숫자·말투를 사람이 확인 후 게시</td></tr>
+        <tr class="frag"><td><strong>효과</strong></td><td>업무 시간 90% 감소</td><td>204분 → 68분, 월 약 136분(추정) + 확인 방법</td></tr>
+        <tr class="frag"><td><strong>위험</strong></td><td>특별히 없음</td><td>개인정보·저작권·환각·편향 네 가지와 대응</td></tr>
+        <tr class="frag"><td><strong>투명성</strong></td><td>참고 자료: AI 답변</td><td>원자료 출처 + AI 활용 내역(내가 고친 점)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 섹션 ④ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">④</div><h2>제출 전 점검</h2><p>내기 전에 열 가지를 스스로 확인합니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 직접 해 보기 4: 점검표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 제출 전 점검 · 직접 해 보기 4</span></div>
+  <h2>제출 전 점검표로 점수 매겨 보기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:10px;padding:14px 16px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ghost" type="button" id="ck-a" style="font-size:16px;padding:7px 14px">예시 A 불러오기</button>
+        <button class="btn ghost" type="button" id="ck-w" style="font-size:16px;padding:7px 14px">약한 버전 불러오기</button>
+        <button class="btn ghost" type="button" id="ck-0" style="font-size:16px;padding:7px 14px"><svg class="ic"><use href="#i-reset"/></svg> 내 개선안으로 (비우기)</button>
+      </div>
+      <div class="checks" id="checks"></div>
+    </div>
+    <div class="side">
+      <div class="plot" style="flex:none;height:190px;border-radius:18px;background:var(--surface);border:1px solid var(--line)"><svg id="ck-ring" viewBox="0 0 300 180" aria-label="점검 점수"></svg></div>
+      <div class="status bad" id="ck-st"><b class="k">점검 전</b>항목을 눌러 내 개선안에 있는 것을 표시해 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시 · 스스로 점검하는 용도의 예시 점수 — 실제 평가 기준·배점은 LMS 공지</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 한 학기 돌아보기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학기 마무리</span></div>
+  <h2>한 학기 돌아보기: 개선안 한 편에 다 들어 있다</h2>
+  <div class="body">
+    <div class="flow semester">
+      <div class="stepbox frag show"><span class="ic-badge g"><svg class="ic"><use href="#i-sparkles"/></svg></span><div class="muted" style="font-size:15px;font-weight:700">1~2주</div><div class="h" style="font-size:20px">이해하기</div><div class="d">직무 변화 · 안전 규칙<br>LLM 원리 · 환각과 편향</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="muted" style="font-size:15px;font-weight:700">3~4주</div><div class="h" style="font-size:20px">프롬프트</div><div class="d">역할·맥락·지시·형식<br>나만의 템플릿</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="muted" style="font-size:15px;font-weight:700">5~7주</div><div class="h" style="font-size:20px">문서·조사·데이터</div><div class="d">보고서·메일 · 팩트체크<br>스프레드시트·차트</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge"><svg class="ic"><use href="#i-play"/></svg></span><div class="muted" style="font-size:15px;font-weight:700">9~12주</div><div class="h" style="font-size:20px">자동화·콘텐츠</div><div class="d">반복 업무 · AI 비서<br>카피·이미지·발표</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div style="font-size:15px;font-weight:700;opacity:.85">13~14주</div><div class="h" style="font-size:20px">윤리·개선안</div><div class="d">책임과 사람의 몫<br>내 업무 개선안</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:22px;display:flex;align-items:center;gap:20px"><p style="font-size:21px;margin:0;flex:1">1주 1차시의 질문 — <strong>“생성형AI가 직무를 어떻게 바꾸는가?”</strong> 이제 여러분의 답은 <strong>내 업무 개선안</strong>입니다.</p><a class="btn ghost" href="../week01/lesson01.html" style="text-decoration:none;font-size:17px;flex:none"><svg class="ic"><use href="#i-reset"/></svg> 1-1 다시 보기</a></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">근거는 원자료로</div><div style="font-size:21px">숫자는 <strong>직접 계산</strong>하고, 모르는 값은 <strong>가정</strong>이라고 밝힌다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">AI 결과는 검증한다</div><div style="font-size:21px">예시 B처럼 그럴듯한 문장도 틀릴 수 있다 — <strong>핵심 숫자 3개 이상 재계산</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">점검표로 마무리</div><div style="font-size:21px">약한 개선안의 여덟 가지 문제를 피하고, <strong>열 가지 점검</strong>을 통과시킨다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="원자료에서 오픈마켓 매출이 가장 높은 달은 1월(1,992만 원)입니다. AI가 광고비가 가장 많은 8월과 혼동했습니다. 그럴듯한 문장도 숫자로 확인해야 합니다.">
+      <p class="q-title"><b>Q1.</b> 예시 B의 AI 보고 초안에서 틀린 문장은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">7~8월 광고비는 1~6월 월평균보다 약 30% 많았다</button>
+        <button type="button" data-v="b">같은 기간 매출은 약 2%만 늘었다</button>
+        <button type="button" data-v="c">오픈마켓 매출이 가장 높은 달은 8월이다</button>
+        <button type="button" data-v="d">매출÷광고비가 가장 낮은 달은 8월이다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="판매 자료에 원가가 없으므로 이익은 계산할 수 없습니다. 알 수 없는 것을 ‘자료로 알 수 없음’이라고 밝히는 것이 정직한 개선안입니다.">
+      <p class="q-title"><b>Q2.</b> 예시 B가 “수익이 났는가”를 판단하지 않은 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 수익 계산을 거부해서</button>
+        <button type="button" data-v="b">자료에 원가가 없어 이익을 알 수 없어서</button>
+        <button type="button" data-v="c">수익은 개선안에 쓰면 안 되는 내용이라서</button>
+        <button type="button" data-v="d">광고비가 너무 적어서</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="고객 이름·주문번호는 개인정보입니다. 답글 품질을 위해서라도 넣지 않고, 필요한 곳은 [고객명] 같은 자리표시로 두었다가 사람이 채웁니다.">
+      <p class="q-title"><b>Q3.</b> 약한 개선안의 “고객 이름과 주문번호도 함께 넣으면 더 정확하다”의 문제는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">개인정보를 생성형AI에 넣게 된다</button>
+        <button type="button" data-v="b">문장이 너무 길다</button>
+        <button type="button" data-v="c">주문번호 형식이 틀렸다</button>
+        <button type="button" data-v="d">아무 문제 없다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="15주에는 9~14주 내용의 기말고사가 오프라인으로 있고, 업무 개선안을 제출합니다. 마감·형식·제출 방법은 LMS 공지를 따릅니다.">
+      <p class="q-title"><b>Q4.</b> 15주에 대한 설명으로 옳은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">1~14주 전체 내용으로 온라인 시험을 본다</button>
+        <button type="button" data-v="b">개선안은 다음 학기에 낸다</button>
+        <button type="button" data-v="c">개선안 마감은 각자 정한다</button>
+        <button type="button" data-v="d">9~14주 내용 기말고사(오프라인)와 업무 개선안 제출 — 세부는 LMS 공지</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 15주 안내 · 마지막 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 · 15주</span></div>
+    <div class="big">15주</div>
+    <h2>기말고사 + 업무 개선안 제출</h2>
+    <div class="grid g2" style="gap:14px;margin:6px 0 18px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div><div class="h" style="font-size:20px">기말고사</div><div class="d" style="font-size:16px">9~14주 내용 · 오프라인 시험<br>일시·장소는 LMS 공지</div></div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-log"/></svg></span><div><div class="h" style="font-size:20px">AI 활용 업무 개선안</div><div class="d" style="font-size:16px">마감·형식·분량·제출 방법은<br>LMS 공지 기준</div></div></div>
+    </div>
+    <p style="font-size:21px">한 학기 동안 수고 많았습니다. AI와 함께 일하되, <strong style="color:var(--text)">판단과 책임은 내가</strong>.</p>
+    <p style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap"><a class="btn ghost" href="lesson02.html">← 14-2</a><a class="btn" href="../">☰ 강의 목록</a><a class="btn ghost" href="../week01/lesson01.html">1-1부터 다시 보기</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:200px;height:200px;font-size:120px;border-radius:46px;background:var(--surface)"><svg class="ic"><use href="#i-cap"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 14주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">14주 3차시 · 예시 개선안 살펴보기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

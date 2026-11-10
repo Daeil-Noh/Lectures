@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>13주 2차시 · 디지털 시대의 윤리: 책임과 공정성 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 13주 2차시 교안: AI 결과물의 책임, 채용·대출·광고의 공정성, AI 사용 고지와 투명성, 일터와 학교에서 지킬 AI 사용 원칙">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .slide.section .big { margin-bottom: 24px; }
+  .beam { transform-origin: 260px 150px; animation: tilt 5s ease-in-out infinite; }
+  @keyframes tilt { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+  @media (prefers-reduced-motion: reduce) { .beam { animation: none; } }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+  .tgl { font: inherit; font-size: 15.5px; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.35; }
+  .tgl .chk { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; }
+  .tgl[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tgl[aria-pressed="true"] .chk { background: var(--accent); border-color: var(--accent); }
+  .tgl[aria-pressed="true"] .chk::after { content: ""; width: 10px; height: 6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .casebtn { font: inherit; font-size: 15.5px; font-weight: 700; text-align: left; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); cursor: pointer; display: flex; gap: 8px; align-items: center; }
+  .casebtn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+
+  /* 1) 책임 지도 */
+  .rmap { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+  .rcase { background: var(--surface-2); border-radius: 14px; padding: 10px 16px; font-size: 17px; line-height: 1.45; }
+  .rcase b { display: block; font-size: 19px; }
+  .actors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; position: relative; }
+  .actor { border: 2px solid var(--line); border-radius: 16px; padding: 12px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; transition: border-color .25s, background .25s; }
+  .actor .who { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; }
+  .actor .ic-badge { width: 44px; height: 44px; font-size: 24px; border-radius: 12px; }
+  .lv { align-self: flex-start; font-size: 14px; font-weight: 800; border-radius: 999px; padding: 2px 12px; }
+  .actor .why { font-size: 15px; line-height: 1.45; color: var(--muted); }
+  .actor.main { border-color: var(--accent-2); background: var(--accent-2-soft); } .actor.main .lv { background: var(--accent-2); color: var(--surface); }
+  .actor.share { border-color: var(--accent); } .actor.share .lv { background: var(--accent-soft); color: var(--accent); }
+  .actor.low .lv { background: var(--surface-2); color: var(--muted); }
+  .actor.debate { border-style: dashed; border-color: var(--muted); } .actor.debate .lv { background: var(--surface-2); color: var(--text); border: 1px dashed var(--muted); }
+  .rnote { font-size: 16px; line-height: 1.45; border-left: 4px solid var(--accent); padding: 4px 12px; }
+
+  /* 2) 채용 공정성 */
+  .pool { display: grid; grid-template-columns: repeat(25, 1fr); gap: 4px; width: 100%; }
+  .pool span { aspect-ratio: 1; border-radius: 50%; border: 2px solid; opacity: .35; transition: opacity .25s, background .25s; }
+  .pool span.ga { border-color: var(--accent); } .pool span.na { border-color: var(--accent-2); }
+  .pool span.pass { opacity: 1; } .pool span.ga.pass { background: var(--accent); } .pool span.na.pass { background: var(--accent-2); }
+  .bars { display: grid; gap: 12px; width: 100%; }
+  .brow .lbl { display: flex; justify-content: space-between; font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .brow .track { height: 24px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+  .brow .track i { display: block; height: 100%; border-radius: 8px; transition: width .3s; }
+
+  /* 3) 딜레마 카드 */
+  .dgrid { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; align-content: start; }
+  .dcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 14px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; transition: border-color .2s, background .2s; }
+  .dcard:hover { border-color: var(--accent); }
+  .dcard .ic-badge { width: 42px; height: 42px; font-size: 22px; border-radius: 12px; }
+  .dcard .nm { display: block; font-size: 17px; font-weight: 800; line-height: 1.3; }
+  .dcard .tg { display: block; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+  .dcard.on { border-color: var(--accent); background: var(--accent-soft); }
+  .dcard.seen .tg::after { content: " · 생각해 봄"; color: var(--ok); }
+  .dpanel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; overflow: hidden; }
+  .dpanel .sit { font-size: 16.5px; line-height: 1.5; }
+  .dopts { display: grid; gap: 6px; }
+  .dopt { font: inherit; font-size: 15px; font-weight: 700; text-align: left; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); cursor: pointer; }
+  .dopt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .views { display: none; gap: 6px; }
+  .views.on { display: grid; }
+  .view { font-size: 14.5px; line-height: 1.45; border-radius: 10px; padding: 6px 10px; background: var(--surface-2); }
+  .view b { color: var(--accent); }
+  .view.g { background: var(--ok-soft); } .view.g b { color: var(--ok); }
+  .dq { font-size: 14.5px; font-weight: 700; color: var(--accent-2); }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 13주차 2차시</p>
+    <h1 style="font-size:60px">디지털 시대의 윤리:<br>책임과 공정성</h1>
+    <p class="lead" style="font-size:25px">AI가 틀리면 누구의 책임일까?<br>AI의 판단은 모두에게 공정할까?</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>개념·윤리 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="248" y="150" width="24" height="220" rx="8" class="f-line"/>
+    <rect x="170" y="364" width="180" height="22" rx="11" class="f-muted"/>
+    <circle cx="260" cy="150" r="20" class="f-acc"/>
+    <g class="beam">
+      <rect x="70" y="142" width="380" height="16" rx="8" class="f-muted"/>
+      <path d="M100 158 L60 260 M100 158 L140 260" stroke="var(--muted)" stroke-width="3"/>
+      <path d="M420 158 L380 260 M420 158 L460 260" stroke="var(--muted)" stroke-width="3"/>
+      <path d="M40 260 H160 Q100 310 40 260z" class="f-accs" stroke="var(--accent)" stroke-width="3"/>
+      <path d="M360 260 H480 Q420 310 360 260z" class="f-acc2s" stroke="var(--accent-2)" stroke-width="3"/>
+      <g transform="translate(78 196) scale(1.9)" style="color:var(--accent)"><use href="#i-user" width="24" height="24"/></g>
+      <g transform="translate(398 196) scale(1.9)" style="color:var(--accent-2)"><use href="#i-bot" width="24" height="24"/></g>
+    </g>
+    <text x="100" y="330" text-anchor="middle" class="t-main" style="fill:var(--accent)">사람의 판단</text>
+    <text x="420" y="330" text-anchor="middle" class="t-main" style="fill:var(--accent-2)">AI의 결과</text>
+    <g transform="translate(232 40) scale(2.3)" style="color:var(--accent)"><use href="#i-shield" width="24" height="24"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">책임</div><div class="d">AI 결과물로 피해가 생겼을 때 사용자·회사·개발사의 책임을 나눠 본다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">공정성</div><div class="d">채용·대출·광고에서 AI 편향이 어떻게 생기는지 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">투명성</div><div class="d">언제, 왜 AI 사용 사실을 알려야 하는지 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">나의 원칙</div><div class="d">출처·표시·검증을 지키는 나만의 AI 사용 원칙을 세운다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 오늘의 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>① 책임: 누가 지나</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② 공정성</b><small>직접 해 보기 2</small></div>
+      <div style="flex:7;background:var(--accent-2-soft)"><b>③ 투명성과 나의 윤리</b><small>직접 해 보기 3</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:21px;margin:0"><svg class="ic"><use href="#i-chat"/></svg> 오늘은 <strong>정답이 하나가 아닌 질문</strong>도 다룹니다. 여러 관점을 들어 보고, 내 생각과 그 <strong>이유</strong>를 말할 수 있으면 충분합니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>“AI가 그렇게 써 줬는데요?”</h2>
+  <div class="body" style="flex-direction:row;gap:26px;align-items:center">
+    <div class="chat" style="flex:1.2">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg user"><span class="who">이준호 주임 · 바다결 온라인 마케팅</span>다크초코 그래놀라 이번 주 할인 행사 홍보글 써 줘. 짧고 신나게.</div>
+      <div class="msg ai warn"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span>🍫 이번 주만! 다크초코 그래놀라 <b>30% 할인</b>! 지금 바로 담으세요!</div>
+      <div class="muted" style="font-size:15px">실제 행사는 <b>10% 할인</b>. 주임은 확인 없이 그대로 게시했다.</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="tile frag show"><div class="h"><svg class="ic" style="color:var(--accent-2)"><use href="#i-alert"/></svg> 고객 문의 폭주</div><div class="d">“30%라고 해서 샀는데요?” 고객 수십 명이 차액 환불을 요구한다.</div></div>
+      <div class="tile frag" style="border:2px solid var(--accent)"><div class="h">누구의 책임일까?</div><div class="d" style="font-size:19px">글을 쓴 AI? 게시한 주임? 검토 절차가 없던 회사? AI를 만든 개발사?</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 가상 회사 바다결의 가상 상황</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>책임: 누가 지나</h2><p>AI는 도구입니다. 도구는 사과하지도, 보상하지도 못합니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-user"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 책임의 세 주체 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 책임: 누가 지나</span></div>
+  <h2>AI 결과물 뒤에 있는 세 주체</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">사용자 (직원·학생)</div><div class="d">무엇을 시켰고, 결과를 <b>확인했는지</b>, 어디에 <b>썼는지</b>에 대한 책임</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-factory"/></svg></span><div class="h">회사 (도입·운영)</div><div class="d">어떤 일에 AI를 쓰게 할지, <b>지침·검토 절차·교육</b>을 마련할 책임. 고객에게는 회사가 답한다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-cpu"/></svg></span><div class="h">AI 개발사 (만든 곳)</div><div class="d">안전하게 만들고, 한계와 위험을 <b>알리고</b>, 문제를 고칠 책임</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:22px"><p style="font-size:20px;margin:0">해외에서는 상담 챗봇이 엉터리 환불 규정을 안내하자 회사가 “챗봇은 별개의 존재”라고 주장했지만, 분쟁 심판기관은 <strong>회사가 자기 누리집의 모든 정보에 책임진다</strong>며 보상을 명령했습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 사례: 캐나다 BC주 민사분쟁심판소, Moffatt v. Air Canada (2024.2, CBC 보도)</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1: 책임 지도 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 책임: 누가 지나 · 직접 해 보기 1</span></div>
+  <h2>책임 지도 그려 보기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="padding:14px 16px;align-items:stretch">
+      <div class="rmap">
+        <div class="rcase" id="rm-case"></div>
+        <div class="actors" id="rm-actors"></div>
+        <div class="rnote" id="rm-note"></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="muted" style="font-size:15px;font-weight:700">사례를 골라 보세요</div>
+      <div style="display:grid;gap:6px" id="rm-cases"></div>
+      <button class="tgl" type="button" id="rm-tg" aria-pressed="false"><span class="chk"></span>회사에 AI 사용 지침과 사람 검토 절차가 있었다</button>
+      <div class="callout" style="font-size:15px">이 지도는 <strong>법적 판단이 아니라</strong> 토론을 위한 흔한 관점입니다. 실제 책임은 계약·법·사실관계에 따라 달라집니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 모든 사례는 가상 회사 바다결의 가상 상황</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 최종 결정은 사람 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 책임: 누가 지나</span></div>
+  <h2>일터의 원칙: <span class="mark">최종 결정은 사람이</span></h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">AI가 초안</div><div class="d">글·요약·분류·점수를<br>빠르게 만든다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">사람이 검토</div><div class="d">사실·숫자·표현,<br>빠진 사람은 없는지</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">사람이 결정</div><div class="d">게시·발송·합격·승인<br>버튼은 사람이 누른다</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">사람이 설명</div><div class="d">“왜 이렇게 정했나?”에<br>답할 수 있어야 한다</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:22px"><p style="font-size:20px;margin:0">법도 이 방향입니다. 「개인정보 보호법」은 AI 등 <strong>완전히 자동화된 시스템</strong>이 권리·의무에 중대한 영향을 주는 결정을 하면, 당사자가 <strong>설명을 요구하거나 거부</strong>할 수 있게 합니다(제37조의2).</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 조문 요지 · 적용 범위와 예외는 법령 원문(law.go.kr) 확인</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>공정성</h2><p>AI는 과거 데이터를 배웁니다. 과거가 공정하지 않았다면?</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 편향은 어디서 오나 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공정성</span></div>
+  <h2>편향은 세 곳에서 들어온다</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">데이터</div><div class="d">과거 기록에 이미 있던 치우침<br>한쪽 집단 자료가 적거나 많음</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">설계</div><div class="d">무엇을 “좋은 결과”로 정했나<br>어떤 정보를 넣었나</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">사용</div><div class="d">어디에, 누구에게 썼나<br>결과를 그대로 믿었나</div></div>
+    </div>
+    <div class="tile frag" style="margin-top:22px;flex-direction:row;align-items:center;gap:18px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-log"/></svg></span><div><div class="h">실제로 있었던 일</div><div class="d" style="font-size:18px">한 글로벌 IT 기업이 실험하던 채용 AI가 남성 위주였던 <b>지난 10년 지원서</b>로 학습해, “여성” 관련 단어가 든 이력서에 불리한 점수를 주는 것이 드러나 개발을 접었다.</div></div></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 사례: Amazon 실험용 채용 도구 (Reuters, 2018.10 보도)</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 직접 해 보기 2: 채용 AI -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공정성 · 직접 해 보기 2</span></div>
+  <h2>과거 기록으로 배운 서류 선별 AI <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:12px;padding:14px 22px">
+      <div><div class="muted" style="font-size:15px;font-weight:700;margin-bottom:8px">지원자 200명 — 두 집단은 <b>실제 역량 분포가 같다</b> · 채운 원 = AI가 고른 합격 30명</div><div class="pool" id="f-pool"></div></div>
+      <div class="legend"><span><i class="dot" style="background:var(--accent)"></i>가 집단 100명</span><span><i class="dot" style="background:var(--accent-2)"></i>나 집단 100명</span><span>집단 = 성별·나이·출신 지역 등 무엇이든</span></div>
+      <div class="bars">
+        <div class="brow"><div class="lbl"><span>가 집단 합격률</span><span id="f-ga">14%</span></div><div class="track"><i id="f-gab" style="background:var(--accent)"></i></div></div>
+        <div class="brow"><div class="lbl"><span>나 집단 합격률</span><span id="f-na">16%</span></div><div class="track"><i id="f-nab" style="background:var(--accent-2)"></i></div></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>과거 합격 기록의 치우침 <output id="f-o">없음</output></label><input id="f-s" type="range" min="0" max="3" step="1" value="0" aria-label="과거 합격 기록의 치우침"></div>
+      <button class="tgl" type="button" id="f-del" aria-pressed="false"><span class="chk"></span>지원서에서 ‘집단’ 항목 지우기</button>
+      <button class="tgl" type="button" id="f-rev" aria-pressed="false"><span class="chk"></span>경계 점수 지원자는 사람이 다시 검토</button>
+      <div class="status ok" id="f-st"><b class="k">고르게 선별</b>두 집단 합격자가 비슷합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 원리를 보여 주는 가상 시뮬레이션 (고정 난수) · 사람의 검토도 편향될 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 세 장면 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 공정성</span></div>
+  <h2>공정성이 특히 중요한 세 장면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">채용</div><div class="d">서류 선별·면접 평가. 과거 합격자를 닮은 사람만 고르면 <b>새로운 인재</b>를 놓친다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">대출·신용</div><div class="d">금융 기록이 적은 사회초년생·이주민이 <b>실제보다 위험하게</b> 평가될 수 있다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">광고 타깃</div><div class="d">일자리·주거·금융 광고가 특정 집단에게만 보이면 <b>기회 자체</b>가 가려진다</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:20px;gap:16px">
+      <div class="callout b" style="font-size:18px"><b>관점 ①</b> 결과가 같아야 공정 — 집단별 합격률이 비슷해야 한다</div>
+      <div class="callout b" style="font-size:18px"><b>관점 ②</b> 기준이 같아야 공정 — 같은 점수면 같은 결과여야 한다</div>
+    </div>
+    <p class="muted frag" style="margin-top:12px;font-size:18px">두 관점은 동시에 다 만족시키기 어려울 때가 있습니다. 그래서 “어떤 공정성인가”를 <strong style="color:var(--text)">미리 정하고 설명</strong>하는 일이 중요합니다. 한국 「인공지능기본법」도 채용·대출 심사 같은 분야의 AI를 <strong style="color:var(--text)">고영향 AI</strong>로 따로 관리합니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 고영향 AI 예시 분야: 정책브리핑(korea.kr) 2026.1 안내 기준</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>투명성과 나의 윤리</h2><p>밝히고, 확인하고, 책임지기.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-eye"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 투명성 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 투명성과 나의 윤리</span></div>
+  <h2>투명성 = “AI를 썼다”고 알리기</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">언제 알리나</div><div class="d">· 고객 상담을 <b>AI 챗봇</b>이 할 때<br>· 광고에 <b>AI로 만든 사람·장면</b>을 쓸 때<br>· 과제·보고서에 AI 도움을 받았을 때</div></div>
+      <div class="tile frag"><span class="ic-badge"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">법이 정한 것</div><div class="d">「인공지능기본법」: 생성형AI를 쓴 제품·서비스를 <b>제공하는 사업자</b>는 AI 기반임을 미리 알리고 결과물에 표시해야 한다. 정부 안내에 따르면 콘텐츠를 만들어 쓰는 <b>개인 이용자</b>에게는 이 표시 의무가 없다</div></div>
+      <div class="tile frag"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">그래도 밝히는 이유</div><div class="d">· 읽는 사람이 <b>판단</b>할 수 있게<br>· 나중에 알려졌을 때 <b>신뢰</b>를 잃지 않게<br>· 학교·회사·플랫폼의 <b>자체 규칙</b>은 따로 있다</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:20px;font-size:19px">11주차 「AI 생성 콘텐츠의 저작권과 표시」에서 배운 표시 방법을 떠올려 보세요. 법적 의무가 없다는 것이 <strong style="color:var(--text)">숨겨도 된다는 뜻은 아닙니다.</strong></p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 「인공지능기본법」 제31조 요지, 이용자 표시 의무 안내: 정책브리핑(korea.kr) 2026.1 · 법률 상담 아님</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 직접 해 보기 3: 딜레마 카드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 투명성과 나의 윤리 · 직접 해 보기 3</span></div>
+  <h2>딜레마 카드: 나라면? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:400px 1fr">
+    <div class="plot" style="padding:12px;align-items:flex-start">
+      <div class="dgrid" id="d-grid"></div>
+    </div>
+    <div class="side">
+      <div class="dpanel" id="d-panel">
+        <div class="h" style="font-size:20px;font-weight:800" id="d-h">카드를 하나 골라 보세요</div>
+        <div class="sit" id="d-sit">정답이 분명한 카드도, 의견이 갈리는 카드도 있습니다. 먼저 <strong>내 선택</strong>을 정한 뒤 여러 관점을 확인합니다.</div>
+        <div class="dopts" id="d-opts"></div>
+        <div class="views" id="d-views"></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center"><span class="muted" style="font-size:15px" id="d-n">0 / 6 생각해 봄</span><a class="btn ghost" href="materials/dilemma_cards.md" download style="font-size:15px;padding:8px 12px;margin-left:auto;text-decoration:none"><svg class="ic"><use href="#i-book"/></svg> 토론지 받기</a></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 상황은 모두 가상 · 관점 정리는 토론을 위한 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 나의 AI 사용 원칙 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 투명성과 나의 윤리</span></div>
+  <h2>일터와 학교에서 지킬 나의 AI 사용 원칙</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile frag show"><span class="ic-badge"><svg class="ic"><use href="#i-link"/></svg></span><div class="h">출처</div><div class="d">AI가 알려 준 사실은 <b>원래 출처</b>를 찾아 그 출처를 인용한다</div></div>
+      <div class="tile frag"><span class="ic-badge"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">표시</div><div class="d">어느 부분에, 어떻게 AI를 썼는지 <b>밝힌다</b></div></div>
+      <div class="tile frag"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">검증</div><div class="d">숫자·인용·사람 이름은 <b>직접 확인</b>한 뒤 낸다</div></div>
+      <div class="tile frag"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="h">표절 주의</div><div class="d">AI 문장을 내 생각처럼 내면 <b>규칙 위반</b>이 될 수 있다. AI가 남의 글을 닮게 썼을 수도 있다</div></div>
+    </div>
+    <div class="box frag" style="margin-top:20px;border:2px dashed var(--accent)"><p class="box-title"><svg class="ic"><use href="#i-log"/></svg> AI 활용 표시 문구 예시 (과제·보고서 끝에)</p><p style="font-size:20px;margin:0">“이 보고서는 <b>자료 조사 질문 만들기</b>와 <b>문장 다듬기</b>에 생성형AI를 사용했습니다. 모든 수치와 인용은 원문에서 직접 확인했고, 결론은 제 판단입니다.”</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 과제의 AI 사용 허용 범위는 각 수업·학교 지침을 따릅니다</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 실습: 공고 문구 점검 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 투명성과 나의 윤리 · 따라 해 보기</span></div>
+  <h2>AI로 <span class="mark">차별로 보일 수 있는 표현</span> 점검하기</h2>
+  <div class="body" style="flex-direction:row;gap:24px;align-items:center">
+    <div style="flex:1.15;display:flex;flex-direction:column;gap:12px;justify-content:center">
+      <div class="prompt"><div class="prompt-h">프롬프트 · 어떤 생성형AI에서도<button class="copy" type="button">복사</button></div><pre>너는 채용 공정성을 검토하는 <mark>인사 담당자</mark>야.
+아래 채용 공고 초안에서 나이·성별·출신 지역·결혼 여부 등을 이유로 지원자를 배제하거나 불리하게 할 수 있는 표현을 찾아 줘.
+표로 정리해 줘: ① 문제 표현 ② 왜 문제가 될 수 있는지 ③ 고친 표현
+법 위반 여부는 단정하지 말고 "담당 부서 확인 필요"로 표시해.
+
+[채용 공고: <mark>여기에 붙여 넣기</mark>]</pre></div>
+      <p style="margin:0"><a class="btn ghost" href="materials/job_post_draft.txt" download style="font-size:16px;text-decoration:none"><svg class="ic"><use href="#i-log"/></svg> 실습 자료 받기 · 바다결 매장 직원 채용 공고 초안</a></p>
+    </div>
+    <div class="chat" style="flex:1">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg ai" style="max-width:100%;font-size:15px;white-space:normal"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span><table style="font-size:14px;margin-top:4px"><tr><th style="padding:4px 8px">문제 표현</th><th style="padding:4px 8px">이유</th><th style="padding:4px 8px">고친 표현</th></tr><tr><td style="padding:4px 8px">“20대 여성 우대”</td><td style="padding:4px 8px">나이·성별로 기회를 제한할 수 있음 (담당 부서 확인 필요)</td><td style="padding:4px 8px">“고객 응대에 관심 있는 분”</td></tr><tr><td style="padding:4px 8px">“결혼 계획이 없는 분”</td><td style="padding:4px 8px">업무와 무관한 사생활 기준</td><td style="padding:4px 8px">삭제</td></tr><tr><td style="padding:4px 8px" colspan="3">… (이하 생략)</td></tr></table></div>
+      <div class="callout" style="font-size:15px">AI가 찾은 목록도 <strong>빠지거나 지나칠 수 있습니다.</strong> 최종 문구는 사람이 읽고, 회사 담당 부서와 확인합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시 · 실습 자료는 가상 회사의 가상 공고라 AI에 넣어도 됩니다</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">책임은 사람과 조직에</div><div style="font-size:21px">AI는 책임질 수 없다. 사용자·회사·개발사가 나눠 지고, <strong>최종 결정은 사람이</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">공정성은 점검하는 것</div><div style="font-size:21px">과거 데이터의 치우침은 항목을 지워도 남는다. <strong>결과를 집단별로 확인</strong>하고 사람이 검토</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">밝히고, 확인하기</div><div style="font-size:21px">AI 사용을 <strong>알리고</strong>, 출처를 찾고, 숫자를 검증한다. 의견이 갈리는 문제는 <strong>이유</strong>를 말한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="c" data-explain="AI는 책임을 질 수 없는 도구입니다. 확인 없이 게시한 사용자, 그리고 고객에게 답해야 하고 검토 절차를 마련해야 하는 회사가 책임을 집니다.">
+      <p class="q-title"><b>Q1.</b> AI가 쓴 홍보글의 틀린 할인율이 그대로 게시됐다. 가장 알맞은 설명은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 쓴 글이므로 아무도 책임지지 않는다</button>
+        <button type="button" data-v="b">AI 개발사만 책임진다</button>
+        <button type="button" data-v="c">확인 없이 게시한 사용자와 회사가 책임을 진다</button>
+        <button type="button" data-v="d">고객이 확인하지 않은 것이 문제다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="직접 해 보기 2처럼, 집단 항목을 지워도 그 집단과 관련 깊은 다른 정보(활동 경력·주소 등)가 대신 단서가 되어 편향이 일부 남습니다. 그래서 결과를 집단별로 확인해야 합니다.">
+      <p class="q-title"><b>Q2.</b> 지원서에서 성별 항목을 지웠는데도 채용 AI의 편향이 남는 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 일부러 차별하려 하기 때문</button>
+        <button type="button" data-v="b">성별과 관련 깊은 다른 정보가 대신 단서가 되기 때문</button>
+        <button type="button" data-v="c">항목을 지우면 AI가 작동하지 않기 때문</button>
+        <button type="button" data-v="d">편향은 항목을 지우면 언제나 완전히 사라진다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="상대가 사람인지 AI인지 알 수 있게 하는 것이 투명성입니다. 「인공지능기본법」도 생성형AI 제품·서비스를 제공하는 사업자에게 AI 기반임을 미리 알리도록 합니다.">
+      <p class="q-title"><b>Q3.</b> 투명성을 지킨 예로 가장 알맞은 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">상담 화면에 “AI 챗봇이 답변합니다”라고 알린다</button>
+        <button type="button" data-v="b">AI가 쓴 답변을 직원 이름으로 보낸다</button>
+        <button type="button" data-v="c">AI 사용 사실은 회사 기밀이므로 숨긴다</button>
+        <button type="button" data-v="d">고객이 물어볼 때만 알려 준다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="수업마다 AI 사용 허용 범위가 다를 수 있으므로 규칙을 먼저 확인하고, 사용했다면 밝히고, 내용은 직접 검증합니다. AI 문장을 내 것처럼 내면 규칙 위반이 될 수 있습니다.">
+      <p class="q-title"><b>Q4.</b> 과제에 생성형AI를 쓸 때 바람직한 태도는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">AI가 쓴 글을 내 글처럼 그대로 낸다</button>
+        <button type="button" data-v="b">들키지 않게 문장만 조금 바꾼다</button>
+        <button type="button" data-v="c">AI가 알려 준 출처는 확인 없이 그대로 쓴다</button>
+        <button type="button" data-v="d">수업 규칙을 확인하고, 사용 내역을 밝히고, 내용을 직접 검증한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">13-3</div>
+    <h2>포스트휴먼 시대의 인간과 일</h2>
+    <p>기술과 인간의 경계가 흐려지는 시대, 일은 어떻게 바뀌고 사람은 무엇을 맡을까요? 내 전공·희망 직무로 <strong>AI와의 역할 분담</strong>을 그려 봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-cap"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 13주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">13주 2차시 · 디지털 시대의 윤리: 책임과 공정성</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>

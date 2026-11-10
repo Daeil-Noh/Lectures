@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10주 3차시 · 예측 오차로 성능 평가하기 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 10주 3차시 교안: 회귀 모델 평가 — MAE, RMSE, R², 예측-실제 그래프와 잔차 그래프, 훈련·시험 오차 비교, 입력 1개 모델과 여러 개 모델 비교">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .blink { animation: blink 3s ease-in-out infinite; }
+  @keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .blink { animation: none; opacity: 1; } }
+  .sq { fill: var(--accent-2); fill-opacity: .12; stroke: var(--accent-2); stroke-opacity: .45; stroke-width: 1; }
+  .pt { cursor: pointer; } .pt:focus { outline: none; } .pt:focus-visible { stroke: var(--text); stroke-width: 2; }
+
+  .ttab { font-size: 18px; }
+  .ttab td, .ttab th { padding: 7px 14px; text-align: right; font-variant-numeric: tabular-nums; }
+  .ttab td:first-child, .ttab th:first-child { text-align: left; }
+  .ttab .pos { color: var(--accent); font-weight: 800; } .ttab .neg { color: var(--accent-2); font-weight: 800; }
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; background: var(--surface-2); border-radius: 12px; padding: 4px; }
+  .seg button { font: inherit; font-size: 14.5px; font-weight: 700; border: 0; border-radius: 9px; padding: 6px 4px; background: transparent; color: var(--muted); cursor: pointer; line-height: 1.25; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+  .seglbl { font-size: 13.5px; font-weight: 700; color: var(--muted); margin-bottom: -6px; }
+  .mrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .mrow .meter { padding: 6px 10px; }
+  .mrow .meter .val { font-size: 26px; }
+  .mrow .meter .lbl { font-size: 13px; }
+
+  /* MAE vs RMSE 막대 */
+  .eb { width: 100%; display: grid; gap: 14px; padding: 6px 16px; }
+  .erow { display: grid; grid-template-columns: 92px 1fr 1fr; gap: 14px; align-items: center; font-size: 15px; }
+  .erow .nm { font-weight: 800; }
+  .erow .trk { height: 36px; background: var(--surface-2); border-radius: 7px; position: relative; overflow: hidden; }
+  .erow .trk i { position: absolute; left: 0; top: 3px; bottom: 3px; border-radius: 5px; transition: width .15s; }
+  .erow .trk b { position: absolute; left: 8px; top: 7px; font-size: 13.5px; font-variant-numeric: tabular-nums; color: var(--text); }
+  .ehead { display: grid; grid-template-columns: 92px 1fr 1fr; gap: 14px; font-size: 14px; font-weight: 800; color: var(--muted); padding: 0 16px; }
+  .erow.big .nm { color: var(--accent-2); }
+
+  /* R² 눈금 */
+  .scale { position: relative; height: 54px; border-radius: 12px; background: linear-gradient(90deg, var(--bad-soft), var(--surface-2) 30%, var(--accent-soft)); border: 1px solid var(--line); }
+  .scale span { position: absolute; top: 58px; transform: translateX(-50%); font-size: 16px; font-weight: 800; white-space: nowrap; }
+  .scale i { position: absolute; top: -6px; bottom: -6px; width: 4px; border-radius: 2px; transform: translateX(-50%); }
+
+  /* 모델 비교 막대 */
+  .cmp { display: grid; gap: 14px; }
+  .cmp .row { display: grid; grid-template-columns: 200px 1fr 90px; gap: 14px; align-items: center; }
+  .cmp .nm { font-size: 18px; font-weight: 800; line-height: 1.3; }
+  .cmp .nm small { display: block; font-size: 14px; color: var(--muted); font-weight: 600; }
+  .cmp .bars { display: grid; gap: 4px; }
+  .cmp .bars div { height: 22px; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 13.5px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+  .cmp .r2 { font-size: 24px; font-weight: 800; color: var(--accent); text-align: right; font-variant-numeric: tabular-nums; }
+  .promptbox { font-size: 17px; line-height: 1.55; background: var(--surface); border: 2px dashed var(--accent); border-radius: 16px; padding: 14px 18px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 10주차 3차시</p>
+    <h1>예측 오차로<br>성능 평가하기</h1>
+    <p class="lead" style="font-size:25px">“이 모델, 평균 몇 MPa 틀리나?”<br>숫자와 그래프로 채점하기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>코드 실습 차시</span><span>직접 해 보기 3개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="20" y="20" width="480" height="400" rx="26" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <line x1="70" y1="370" x2="470" y2="370" stroke="var(--line)" stroke-width="2"/><line x1="70" y1="370" x2="70" y2="50" stroke="var(--line)" stroke-width="2"/>
+    <text x="270" y="402" text-anchor="middle" class="t-sub" style="font-size:15px">예측값 →</text>
+    <text x="46" y="210" text-anchor="middle" class="t-sub" style="font-size:15px" transform="rotate(-90 46 210)">실제값 →</text>
+    <line x1="80" y1="360" x2="460" y2="60" stroke="var(--muted)" stroke-width="3" stroke-dasharray="8 7"/>
+    <g stroke="var(--accent-2)" stroke-width="2.5">
+      <path d="M130 300 V322 M180 300 V282 M230 230 V243 M280 230 V203 M330 180 V164 M380 108 V125 M420 110 V93"/>
+    </g>
+    <g class="f-acc"><circle cx="130" cy="300" r="9"/><circle cx="180" cy="300" r="9"/><circle cx="230" cy="230" r="9"/><circle cx="280" cy="230" r="9"/><circle cx="330" cy="180" r="9"/><circle cx="380" cy="108" r="9"/><circle cx="420" cy="110" r="9"/></g>
+    <g class="blink"><circle cx="300" cy="300" r="11" class="f-acc2"/><path d="M300 300 V187" stroke="var(--accent-2)" stroke-width="3" stroke-dasharray="4 4"/></g>
+    <rect x="320" y="290" width="160" height="62" rx="14" class="f-acc2s"/>
+    <text x="400" y="317" text-anchor="middle" class="t-acc2" style="font-size:18px">RMSE 1.89</text>
+    <text x="400" y="340" text-anchor="middle" class="t-sub" style="font-size:14px">MPa</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">MAE · RMSE</div><div class="d">오차를 MPa 단위의 숫자 하나로 요약하고 차이를 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h">R²</div><div class="d">“평균으로 찍는 것보다 얼마나 나은가”로 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">그래프로 진단</div><div class="d">예측-실제 그래프와 잔차 그래프에서 문제를 찾는다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">비교하기</div><div class="d">훈련 vs 시험 오차, 입력 1개 vs 여러 개 모델을 비교한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:8;background:var(--accent-soft)"><b>① 오차를 숫자 하나로</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② R²</b><small>직접 해 보기 1</small></div>
+      <div style="flex:8;background:var(--accent-2-soft)"><b>③ 그래프로 보고 비교하기</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-check"/></svg> 지난 차시에 떼어 둔 <strong>시험용 99개</strong>로 채점합니다. 모델은 이 제품들을 한 번도 본 적이 없습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>채점 시작: 시험용 제품 99개 중 처음 6개</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <table class="ttab" style="width:600px;flex:none">
+      <thead><tr><th>제품</th><th>실제 강도</th><th>예측 강도</th><th>오차 (실제 − 예측)</th></tr></thead>
+      <tbody>
+        <tr><td>P00456</td><td>36.86</td><td>36.86</td><td>0.00</td></tr>
+        <tr><td>P00074</td><td>42.93</td><td>41.02</td><td class="pos">+1.91</td></tr>
+        <tr><td>P00311</td><td>36.52</td><td>38.78</td><td class="neg">−2.26</td></tr>
+        <tr><td>P00176</td><td>41.87</td><td>38.59</td><td class="pos">+3.28</td></tr>
+        <tr><td>P00333</td><td>38.79</td><td>39.08</td><td class="neg">−0.29</td></tr>
+        <tr><td>P00205</td><td>41.43</td><td>40.45</td><td class="pos">+0.98</td></tr>
+        <tr><td class="muted">… 93개 더</td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show"><div class="h">거의 맞힌 제품도, 3 MPa 넘게 틀린 제품도</div><div class="d">오차는 제품마다 다르고 +/− 도 섞여 있다</div></div>
+      <div class="tile frag" style="border:2px solid var(--accent-2)"><div class="h">99개의 오차를 숫자 하나로?</div><div class="d">“이 모델은 대략 ○ MPa 틀린다”고 말할 수 있어야 쓸지 말지 정할 수 있다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · 10-2의 입력 5개 직선 모델, 단위 MPa · 오차 = 잔차</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>오차를 숫자 하나로</h2><p>MAE 와 RMSE — 둘 다 단위는 MPa 입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. MAE -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 오차를 숫자 하나로</span></div>
+  <h2>MAE = 오차 <span class="mark">크기</span>의 평균</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">① 오차 구하기</div><div class="d">0.00, +1.91, −2.26,<br>+3.28, −0.29, +0.98</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-filter"/></svg></span><div class="h">② 부호 떼기 (절댓값)</div><div class="d">0.00, 1.91, 2.26,<br>3.28, 0.29, 0.98</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">③ 평균</div><div class="d">8.73 ÷ 6</div><div style="font-size:30px;font-weight:800">MAE = 1.46 MPa</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">읽는 법: <strong style="color:var(--text)">“평균적으로 약 1.5 MPa 정도 틀린다.”</strong> Mean Absolute Error — 평균 절대 오차</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · 앞 장의 제품 6개로 계산 (소수 둘째 자리 반올림)</span><span class="no"></span></div>
+</section>
+
+<!-- 7. RMSE -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 오차를 숫자 하나로</span></div>
+  <h2>RMSE = 제곱 → 평균 → 제곱근</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">① 제곱</div><div class="d">0.00, 3.65, 5.10,<br><b style="color:var(--accent-2)">10.79</b>, 0.08, 0.97</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">② 평균</div><div class="d">20.59 ÷ 6 = 3.43<br>(단위가 MPa² 이 됨)</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">③ 제곱근 √</div><div class="d">단위를 다시 MPa 로</div><div style="font-size:30px;font-weight:800">RMSE = 1.85 MPa</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:18px">
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-alert"/></svg></span><div class="d" style="color:var(--text)">제곱하면 <strong>큰 오차가 훨씬 커진다</strong> (3.28 → 10.79). 그래서 RMSE ≥ MAE</div></div>
+      <div class="tile row" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-link"/></svg></span><div class="d" style="color:var(--text)">10-1 의 <strong>오차 제곱합</strong>을 개수로 나누고 √ 한 값 — 최소제곱법과 한 식구</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · Root Mean Squared Error — 평균 제곱 오차의 제곱근</span><span class="no"></span></div>
+</section>
+
+<!-- 8. MAE vs RMSE 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 오차를 숫자 하나로 · 직접 해 보기 1</span></div>
+  <h2>큰 오차 하나가 생기면? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 340px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;gap:8px">
+      <div class="ehead"><span>제품</span><span>오차 크기 |e| (MPa)</span><span>오차 제곱 e² (MPa²)</span></div>
+      <div class="eb" id="eb"></div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>P00176 의 오차 <output id="eb-o">+3.28 MPa</output></label><input id="eb-s" type="range" min="-10" max="10" step="0.0001" value="3.2841" aria-label="P00176 의 오차"></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">MAE</div><div class="val" id="eb-mae" style="font-size:34px">-</div></div>
+        <div class="meter"><div class="lbl">RMSE</div><div class="val o" id="eb-rmse" style="font-size:34px">-</div></div>
+      </div>
+      <div class="callout b" id="eb-msg"></div>
+      <div class="callout" style="font-size:15px">불량 한 건이 큰 손해라면 <strong>RMSE</strong>, 평균적인 정확도가 궁금하면 <strong>MAE</strong> — 보통은 둘 다 보고한다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · 시험용 제품 6개의 실제 오차에서 시작 · 막대 길이는 열마다 각자 기준</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 코드: 지표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 오차를 숫자 하나로</span></div>
+  <h2>코드 ① 시험용 99개로 채점하기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:28px">
+    <div style="flex:1.8;display:flex;flex-direction:column;gap:12px">
+<pre class="code" style="font-size:16px">from sklearn.metrics import (mean_absolute_error,
+                             mean_squared_error, r2_score)
+
+pred = model.predict(X_test)        # 시험용 99개 예측
+mae  = mean_absolute_error(y_test, pred)
+rmse = mean_squared_error(y_test, pred) ** 0.5   # √
+r2   = r2_score(y_test, pred)
+print(f'MAE  = {mae:.2f} MPa')
+print(f'RMSE = {rmse:.2f} MPa')
+print(f'R²   = {r2:.3f}')</pre>
+<pre class="out">MAE  = 1.48 MPa
+RMSE = 1.89 MPa
+R²   = 0.659</pre>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show row"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">MAE 1.48 MPa</div><div class="d">시험 제품을 평균 약 1.5 MPa 틀린다</div></div></div>
+      <div class="tile frag row"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:20px">RMSE 1.89 MPa</div><div class="d">MAE 보다 크다 → 어딘가에 큰 오차가 섞여 있다 (③에서 찾기)</div></div></div>
+      <div class="tile frag row"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div><div class="h" style="font-size:20px">R² 0.659</div><div class="d">이건 무슨 뜻? → 다음 구간</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · ** 0.5 = 제곱근 · f'…{mae:.2f}' = 소수 둘째 자리까지 출력</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>R² (결정계수)</h2><p>“평균으로 찍는 것보다 얼마나 나은가?”</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-gauge"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 11. R² 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② R² · 직접 해 보기 2</span></div>
+  <h2>평균으로 찍기 vs 모델로 예측하기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="r2-plot" viewBox="0 0 620 430" aria-label="시험용 99개의 압력과 강도. 평균선 또는 회귀 직선과 잔차 제곱"></svg></div>
+    <div class="side">
+      <div class="seg" id="r2-seg">
+        <button type="button" data-m="mean" aria-pressed="true">평균으로 찍기<br><small>모두 38.71 MPa</small></button>
+        <button type="button" data-m="line" aria-pressed="false">압력 직선 모델<br><small>10-1 의 규칙</small></button>
+      </div>
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">평균 예측의 오차 제곱합</div><div class="val" id="r2-sst" style="font-size:28px;color:var(--muted)">-</div></div>
+        <div class="meter"><div class="lbl">지금 오차 제곱합</div><div class="val o" id="r2-sse" style="font-size:28px">-</div></div>
+      </div>
+      <div class="meter"><div class="lbl">R² = 1 − 지금 ÷ 평균 예측</div><div class="val" id="r2-v">-</div><div class="track"><i id="r2-bar"></i></div></div>
+      <div class="callout b" id="r2-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · 시험용 99개 · 정사각형 넓이 = 잔차 제곱 · 평균 = 시험용 강도의 평균</span><span class="no"></span></div>
+</section>
+
+<!-- 12. R² 읽는 법 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② R²</span></div>
+  <h2>R² 읽는 법</h2>
+  <div class="body" style="gap:10px">
+    <div style="padding:0 30px 40px">
+      <div class="scale">
+        <i style="left:6%;background:var(--bad)"></i><span style="left:6%;color:var(--bad)">0 보다 작다</span>
+        <i style="left:22%;background:var(--muted)"></i><span style="left:22%;color:var(--muted)">0</span>
+        <i style="left:62.6%;background:var(--accent)"></i><span style="left:56%;color:var(--accent)">0.520 압력만</span>
+        <i style="left:73.4%;background:var(--accent)"></i><span style="left:74%;color:var(--accent)">0.659 입력 5개</span>
+        <i style="left:88.5%;background:var(--accent-2)"></i><span style="left:89%;color:var(--accent-2)">0.852</span>
+        <i style="left:100%;background:var(--ok)"></i><span style="left:99%;color:var(--ok)">1</span>
+      </div>
+    </div>
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><div class="h" style="color:var(--ok)">R² = 1</div><div class="d">오차 0. 모든 제품을 정확히 맞힘 — 현실 데이터에선 거의 없다</div></div>
+      <div class="tile frag"><div class="h">R² = 0.659</div><div class="d">평균으로 찍을 때보다 오차 제곱합이 <strong>약 66% 줄었다</strong></div></div>
+      <div class="tile frag"><div class="h" style="color:var(--bad)">R² ≤ 0</div><div class="d">평균으로 찍는 것만도 못하다 → 모델을 다시 봐야 한다</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:10px;font-size:19px">R² 는 단위가 없어 비교에 편하고, MAE·RMSE 는 MPa 라 <strong style="color:var(--text)">현장 기준과 바로 비교</strong>할 수 있다 → 함께 보고한다</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · 눈금의 0.852 = 온도 특성을 더한 모델 (③에서 비교) · 모두 시험용 99개 기준</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>그래프로 보고 비교하기</h2><p>숫자 하나에는 “어디서 틀리는지”가 담기지 않습니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 잔차 탐색 데모 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 그래프로 보고 비교하기 · 직접 해 보기 3</span></div>
+  <h2>예측-실제 그래프와 잔차 그래프 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 350px">
+    <div class="plot"><svg id="rx-plot" viewBox="0 0 620 430" aria-label="모델의 예측값과 실제값, 또는 온도에 따른 잔차. 점을 누르면 제품 정보가 나온다"></svg></div>
+    <div class="side">
+      <div class="seglbl">그래프</div>
+      <div class="seg" id="rx-view"><button type="button" data-m="pva" aria-pressed="true">예측 vs 실제</button><button type="button" data-m="res" aria-pressed="false">잔차 vs 온도</button></div>
+      <div class="seglbl">모델</div>
+      <div class="seg" id="rx-model"><button type="button" data-m="p" aria-pressed="false">압력만</button><button type="button" data-m="f5" aria-pressed="true">입력 5개</button><button type="button" data-m="f6" aria-pressed="false">+온도 특성</button></div>
+      <div class="seglbl">데이터</div>
+      <div class="seg" id="rx-data"><button type="button" data-m="te" aria-pressed="true">시험용 99개</button><button type="button" data-m="tr" aria-pressed="false">훈련용 395개</button></div>
+      <div class="mrow">
+        <div class="meter"><div class="lbl">MAE</div><div class="val" id="rx-mae">-</div></div>
+        <div class="meter"><div class="lbl">RMSE</div><div class="val o" id="rx-rmse">-</div></div>
+        <div class="meter"><div class="lbl">R²</div><div class="val" id="rx-r2">-</div></div>
+      </div>
+      <div class="callout b" id="rx-msg" style="font-size:15px"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · 대각선 위 = 정확히 맞힘 · 점을 눌러 제품을 확인 · MAE·RMSE 단위 MPa</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 훈련 vs 시험, 모델 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 그래프로 보고 비교하기</span></div>
+  <h2>세 모델 비교: 훈련용 vs 시험용 RMSE</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <div style="flex:1.4" class="cmp">
+      <div class="legend" style="font-size:16px;margin-left:214px"><span><i class="dot" style="background:var(--muted)"></i>훈련용 RMSE</span><span><i class="dot" style="background:var(--accent)"></i>시험용 RMSE</span><span style="margin-left:auto;font-weight:800">시험용 R²</span></div>
+      <div class="row"><div class="nm">압력만<small>입력 1개</small></div><div class="bars"><div style="width:90.7%;background:var(--muted)">2.27 MPa</div><div style="width:89.7%;background:var(--accent)">2.24 MPa</div></div><div class="r2">0.520</div></div>
+      <div class="row"><div class="nm">입력 5개<small>10-2 직선 모델</small></div><div class="bars"><div style="width:76.2%;background:var(--muted)">1.91 MPa</div><div style="width:75.6%;background:var(--accent)">1.89 MPa</div></div><div class="r2">0.659</div></div>
+      <div class="row"><div class="nm">+온도 특성<small>(온도 − 210)² 추가</small></div><div class="bars"><div style="width:47.6%;background:var(--muted)">1.19 MPa</div><div style="width:49.7%;background:var(--accent-2)">1.24 MPa</div></div><div class="r2" style="color:var(--accent-2)">0.852</div></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show"><div class="h" style="font-size:21px">입력을 잘 고를수록 ↓</div><div class="d">압력만 2.24 → 5개 1.89 → 온도 특성 1.24 MPa. <strong>전공 지식(온도의 곡선)</strong>이 가장 큰 개선</div></div>
+      <div class="tile frag"><div class="h" style="font-size:21px">훈련 ≈ 시험 → 안심</div><div class="d">처음 보는 제품에도 비슷하게 맞힌다. 시험만 크게 나쁘면 <strong>과적합</strong>(외우기) 신호 — 11주차</div></div>
+      <div class="tile frag" style="background:var(--accent-soft);border-color:transparent"><div class="h" style="font-size:21px">채점은 늘 시험용으로</div><div class="d">훈련용 점수는 “본 문제를 다시 푼 점수”</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · 모두 train_test_split(test_size=0.2, random_state=42) · 이번 분할에선 시험용 R² 가 훈련용보다 약간 높게 나온 모델도 있다 (우연한 차이)</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 코드: 모델 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 그래프로 보고 비교하기</span></div>
+  <h2>코드 ② 여러 모델을 같은 기준으로 비교하기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:26px">
+    <div style="flex:1.9;display:flex;flex-direction:column;gap:10px">
+<pre class="code" style="font-size:16px">cands = {'압력만': ['pressure'],
+         '입력 5개': features,
+         '+온도 특성': features2}
+for name, cols in cands.items():
+    m = LinearRegression().fit(X2_train[cols], y_train)
+    p_tr = m.predict(X2_train[cols])    # 훈련용 예측
+    p_te = m.predict(X2_test[cols])     # 시험용 예측
+    rmse_tr = mean_squared_error(y_train, p_tr) ** 0.5
+    rmse_te = mean_squared_error(y_test, p_te) ** 0.5
+    r2 = r2_score(y_test, p_te)
+    print(f'{name}: 훈련 {rmse_tr:.2f}  시험 {rmse_te:.2f}',
+          f' R² {r2:.3f}')</pre>
+<pre class="out">압력만: 훈련 2.27  시험 2.24  R² 0.520
+입력 5개: 훈련 1.91  시험 1.89  R² 0.659
++온도 특성: 훈련 1.19  시험 1.24  R² 0.852</pre>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="tile frag show row"><span class="ic-badge"><svg class="ic"><use href="#i-filter"/></svg></span><div><div class="h" style="font-size:20px">같은 나누기</div><div class="d">모든 모델을 <strong>같은 훈련용·시험용</strong>으로 — 공정한 비교</div></div></div>
+      <div class="tile frag row"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div><div class="h" style="font-size:20px">for 반복문</div><div class="d">입력 목록만 바꿔 가며 학습·채점을 되풀이 (3주 3차시)</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · features2, X2_train, X2_test: 10-2 에서 temp_gap2 를 넣어 나눈 표 (실습 파일 참고)</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 결과 보고 + 생성형AI -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 그래프로 보고 비교하기 · 생성형AI 활용</span></div>
+  <h2>“R² 0.85 면 좋은 모델인가요?”</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:28px">
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;justify-content:center">
+      <div class="tile row frag show" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">현장 기준과 비교</div><div class="d">예: 허용 오차가 ±2 MPa 라면? 온도 특성 모델은 시험용 99개 중 <strong>86%</strong> 가 ±2 MPa 안 (입력 5개 모델은 73%)</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:20px">그래프로 확인</div><div class="d">잔차에 모양이 남아 있지 않은가?</div></div></div>
+      <div class="tile row frag" style="padding:14px 18px"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:20px">시험용 점수로, 단위와 함께</div><div class="d">“시험용 RMSE 1.24 MPa, R² 0.85” 처럼 보고</div></div></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:10px;justify-content:center">
+      <div class="muted" style="font-size:17px;font-weight:700"><svg class="ic"><use href="#i-chat"/></svg> 생성형AI에게 이렇게 묻고, 검증하기</div>
+      <div class="promptbox">인장강도(MPa) 회귀 모델의 시험용 결과가 MAE 0.99, RMSE 1.24, R² 0.852 야. 우리 공정의 허용 오차는 ±2 MPa 야. 이 모델을 <strong>현장에 써도 될지 판단하려면 무엇을 더 확인</strong>해야 하는지 알려 줘.</div>
+      <div class="callout" style="font-size:15px">AI가 “R² 0.8 이상이면 좋은 모델” 처럼 <strong>근거 없는 기준</strong>을 말하면 그대로 믿지 말 것. 기준은 현장·전공이 정한다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · ±2 MPa 는 설명을 위한 가정</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">실습 파일</span></div>
+  <h2>Colab에서 직접 해 보기</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div style="flex:1">
+      <div class="tiles" style="grid-template-columns:1fr 1fr">
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div><div class="h" style="font-size:20px">MAE·RMSE·R²</div><div class="d">직접 계산 ↔ 함수 결과 비교</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div><div class="h" style="font-size:20px">그래프 두 가지</div><div class="d">예측-실제, 잔차 vs 온도</div></div></div>
+        <div class="tile row"><span class="ic-badge o"><svg class="ic"><use href="#i-hand"/></svg></span><div><div class="h" style="font-size:20px">큰 오차 실험</div><div class="d">오차 하나를 키워 MAE·RMSE 비교</div></div></div>
+        <div class="tile row"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:20px">모델 비교표</div><div class="d">입력을 바꿔 가며 채점</div></div></div>
+      </div>
+      <p style="margin-top:24px"><a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week10/lesson03.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a></p>
+    </div>
+    <span class="ic-badge lg" style="width:200px;height:200px;font-size:110px;border-radius:46px;background:var(--surface)"><svg class="ic"><use href="#i-code"/></svg></span>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시 · 실습 파일: week10/lesson03.ipynb</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">MAE · RMSE (MPa)</div><div style="font-size:21px">평균적으로 얼마나 틀리나. RMSE 는 <strong>큰 오차에 더 민감</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h">R² = 평균보다 얼마나 나은가</div><div style="font-size:21px">1 이면 완벽, 0 이면 평균 수준, <strong>음수면 평균만도 못함</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">그래프와 시험용으로</div><div style="font-size:21px">잔차의 <strong>모양</strong>을 보고, 점수는 <strong>시험용</strong>으로 비교한다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="부호를 뗀 크기는 1, 3, 2 입니다. 평균은 (1 + 3 + 2) ÷ 3 = 2 MPa. 부호를 그대로 더하면 서로 지워져 0 이 됩니다.">
+      <p class="q-title"><b>Q1.</b> 제품 3개의 오차가 +1, −3, +2 MPa 일 때 MAE 는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">0 MPa</button>
+        <button type="button" data-v="b">2 MPa</button>
+        <button type="button" data-v="c">6 MPa</button>
+        <button type="button" data-v="d">14 MPa</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="RMSE 는 오차를 제곱해서 평균하므로 큰 오차의 영향이 훨씬 커집니다. MAE 와 차이가 크면 큰 오차가 섞여 있다는 신호입니다.">
+      <p class="q-title"><b>Q2.</b> 큰 오차가 하나 생겼을 때 더 크게 늘어나는 지표는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">MAE</button>
+        <button type="button" data-v="b">둘 다 똑같이 늘어난다</button>
+        <button type="button" data-v="c">RMSE</button>
+        <button type="button" data-v="d">둘 다 변하지 않는다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="R² = 1 − (모델의 오차 제곱합 ÷ 평균으로 예측할 때의 오차 제곱합). R² 가 0 보다 작다면 모델이 평균으로 찍는 것보다도 오차가 큰 것입니다.">
+      <p class="q-title"><b>Q3.</b> 시험용 R² 가 −0.2 로 나왔다. 뜻은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">평균으로만 예측하는 것보다도 못하다</button>
+        <button type="button" data-v="b">오차가 20% 줄었다</button>
+        <button type="button" data-v="c">강도가 20% 낮게 예측되었다</button>
+        <button type="button" data-v="d">계산 오류이므로 무시한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="잔차가 무작위로 흩어지지 않고 모양(온도 양 끝에서 아래로 처짐)을 보이면, 모델이 그 관계를 놓친 것입니다. (온도 − 210)² 같은 특성을 더하면 그 모양이 사라집니다.">
+      <p class="q-title"><b>Q4.</b> 잔차 vs 온도 그래프에서 온도 양 끝의 잔차가 대부분 음수였다. 알 수 있는 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">모델이 완벽하다</button>
+        <button type="button" data-v="b">온도 센서가 고장 났다</button>
+        <button type="button" data-v="c">시험용 데이터가 너무 많다</button>
+        <button type="button" data-v="d">모델이 온도의 곡선 관계를 놓쳤다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 11주차 판정: 분류</span></div>
+    <div class="big">11-1</div>
+    <h2>분류의 개념: 의사결정나무와 과적합</h2>
+    <p>“몇 MPa?” 대신 <strong>“불량인가, 양품인가?”</strong> — 질문을 이어 가며 판정하는 의사결정나무와, 훈련용만 잘 맞히는 과적합을 배웁니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week11/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 10주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">10주 3차시 · 예측 오차로 성능 평가하기</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

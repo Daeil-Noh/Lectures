@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12주 3차시 · 제공 코드로 이상탐지 실습 | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 12주 3차시 교안: vibration.csv 설비 6대에 z-점수·이동평균·IsolationForest 경보를 적용하고, 고장 며칠 전에 알았는지와 정상 설비의 잘못 경보를 세어 정비 관리자 관점에서 방법을 고르는 실습">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); } .f-ok { fill: var(--ok); } .f-bad { fill: var(--bad); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  :root { --ifc: #7b4fb5; }
+  @media (prefers-color-scheme: dark) { :root { --ifc: #b99af0; } }
+  .blink { animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+  @media (prefers-reduced-motion: reduce) { .blink { animation: none; } }
+  /* 코드 슬라이드 */
+  .cbody { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.3fr 1fr; gap: 22px; align-items: center; }
+  .cbody > div { display: grid; gap: 10px; align-content: center; min-width: 0; }
+  .chd { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); font-weight: 700; }
+  .chd .run { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); font-size: 12px; }
+  .cbody pre.code { font-size: 15.5px; }
+  .cbody pre.out { font-size: 15px; line-height: 1.5; }
+  .note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; font-size: 17px; line-height: 1.5; }
+  .note b.k { color: var(--accent); }
+  /* z 계산 */
+  .mbtns { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .mbtns .btn { font-size: 15px; padding: 8px 4px; }
+  .mbtns .btn[aria-pressed="true"], .seg .btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .calc { font-family: "JetBrains Mono", "D2Coding", ui-monospace, Menlo, Consolas, monospace; font-size: 16px; line-height: 1.6; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; white-space: pre; font-variant-numeric: tabular-nums; }
+  .calc b { color: var(--accent); } .calc .al { color: var(--accent-2); font-weight: 800; } .calc .ok { color: var(--ok); font-weight: 800; }
+  /* 대시보드 */
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .seg .btn { font-size: 15px; padding: 8px 6px; }
+  .kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .kpi .meter { padding: 6px 10px; }
+  .kpi .meter .val { font-size: 26px; }
+  .kpi .meter .lbl { font-size: 13px; }
+  .verdict { border-radius: 14px; padding: 10px 14px; font-size: 16px; line-height: 1.45; }
+  .verdict.ok { background: var(--ok-soft); } .verdict.mid { background: var(--accent-2-soft); } .verdict.bad { background: var(--bad-soft); }
+  .verdict b.k { display: block; font-size: 16px; }
+  .verdict.ok b.k { color: var(--ok); } .verdict.mid b.k { color: var(--accent-2); } .verdict.bad b.k { color: var(--bad); }
+  .cmp td, .cmp th { padding: 8px 14px; font-size: 18px; }
+  .cmp td.n { font-variant-numeric: tabular-nums; font-weight: 800; }
+  .prompt { font-size: 18px; background: var(--surface); border: 2px dashed var(--accent); border-radius: 14px; padding: 12px 16px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 12주차 3차시</p>
+    <h1>제공 코드로<br>이상탐지 실습</h1>
+    <p class="lead" style="font-size:25px">정비 관리자의 눈으로<br>경보 방법 고르기</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 2개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="20" y="30" width="480" height="380" rx="26" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <rect x="20" y="30" width="480" height="48" rx="26" class="f-s2"/><rect x="20" y="56" width="480" height="22" class="f-s2"/>
+    <circle cx="50" cy="54" r="7" class="f-bad"/><circle cx="74" cy="54" r="7" class="f-acc2"/><circle cx="98" cy="54" r="7" class="f-ok"/>
+    <text x="130" y="60" class="t-sub" style="font-size:15px;font-weight:700">정비 관리 대시보드</text>
+    <g font-size="15" font-weight="800">
+      <text x="44" y="118" class="f-text">1호기</text><text x="44" y="164" class="f-text">2호기</text><text x="44" y="210" class="f-text">3호기</text>
+      <text x="44" y="256" class="f-text">4호기</text><text x="44" y="302" class="f-text">5호기</text><text x="44" y="348" class="f-text">6호기</text>
+    </g>
+    <g class="f-s2"><rect x="110" y="102" width="290" height="22" rx="6"/><rect x="110" y="148" width="290" height="22" rx="6"/><rect x="110" y="194" width="290" height="22" rx="6"/><rect x="110" y="240" width="290" height="22" rx="6"/><rect x="110" y="286" width="290" height="22" rx="6"/><rect x="110" y="332" width="290" height="22" rx="6"/></g>
+    <rect x="330" y="194" width="60" height="22" rx="6" class="f-acc2" opacity=".85"/>
+    <rect x="365" y="286" width="35" height="22" rx="6" class="f-acc2" opacity=".85"/>
+    <g class="f-ok"><circle cx="440" cy="113" r="11"/><circle cx="440" cy="159" r="11"/><circle cx="440" cy="251" r="11"/><circle cx="440" cy="343" r="11"/></g>
+    <circle cx="440" cy="205" r="11" class="f-acc2 blink"/><circle cx="440" cy="297" r="11" class="f-acc2 blink"/>
+    <text x="260" y="392" text-anchor="middle" class="t-sub" style="font-size:14px">초록 = 정상 · 주황 = 경보 (고장 징후)</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-chart"/></svg></span><div class="h">설비별로 보기</div><div class="d">vibration.csv를 불러와 설비 6대를 나란히 그린다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h">규칙 경보 코드</div><div class="d">groupby로 설비별 z-점수와 이동평균 경보를 만든다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">IsolationForest</div><div class="d">진동·온도·전류 세 특징으로 모델을 학습하고 경보를 낸다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">평가하고 고르기</div><div class="d">미리 안 날수와 잘못 경보로 방법을 비교하고 고른다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>임무</b></div>
+      <div style="flex:3;background:var(--accent-soft)"><b>① 데이터 보기</b><small>셀 1~2</small></div>
+      <div style="flex:6;background:var(--accent-soft)"><b>② 규칙 경보</b><small>셀 3~5 · 직접 해 보기 1</small></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>③ IsolationForest</b><small>셀 6~7</small></div>
+      <div style="flex:8;background:var(--accent-2-soft)"><b>④ 평가와 대시보드</b><small>셀 8~10 · 직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-code"/></svg> 실습 파일을 옆에 열어 두고, 슬라이드의 셀 번호를 따라 <strong>한 셀씩 ▶ 실행</strong>하며 결과를 비교하세요.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 임무 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 임무</span></div>
+  <h2>당신은 정비 관리자: 어느 경보 방법을 쓸까?</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:30px">
+    <div style="flex:1;display:grid;gap:14px">
+      <div class="tile row frag show" style="padding:16px 20px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-clock"/></svg></span><div><div class="h">조건 ① 미리 안 날수 ≥ 10일</div><div class="d">고장 난 <b>3호기(96일)·5호기(110일)</b>를 고장 며칠 전에 알았나? 부품 주문에 10일 걸린다고 가정</div></div></div>
+      <div class="tile row frag" style="padding:16px 20px"><span class="ic-badge lg"><svg class="ic"><use href="#i-shield"/></svg></span><div><div class="h">조건 ② 잘못 경보는 적게</div><div class="d">멀쩡한 <b>1·2·4·6호기</b>에 경보가 며칠 울렸나? 울릴 때마다 설비를 세우고 점검</div></div></div>
+      <div class="tile row frag" style="padding:16px 20px"><span class="ic-badge lg g"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h">후보 세 가지 (12-2에서 배운 것)</div><div class="d">z-점수 3σ · 7일 이동평균 + 3σ · IsolationForest</div></div></div>
+    </div>
+    <div style="width:360px;flex:none;display:grid;gap:14px">
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week12/lesson03.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <div class="callout b">코드 셀 <strong>10개</strong>. 처음부터 쓰지 않습니다 — <strong>실행하고, 읽고, 숫자를 바꿔 봅니다.</strong></div>
+      <div class="muted" style="font-size:16px">데이터: vibration.csv (설비 6대 × 120일, 가상 데이터)</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · “10일”은 이 실습을 위한 가정</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>데이터 보기</h2><p>셀 1~2 · 불러오고, 설비별로 그리기</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-chart"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 셀 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 데이터 보기</span></div>
+  <h2>셀 1: 불러오고 설비별 평균 보기</h2>
+  <div class="cbody">
+    <div>
+      <div class="chd"><span class="run">▶</span>셀 1 · 준비 (pip 설치 줄은 생략)</div>
+<pre class="code">import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.ensemble import IsolationForest
+
+DATA = 'https://raw.githubusercontent.com/…/data/'
+vib = pd.read_csv(DATA + 'vibration.csv')
+print(vib.shape)
+vib.groupby('machine')[['rms', 'temp', 'current']].mean().round(2)</pre>
+      <p class="codecap">groupby('machine'): 설비별로 묶어서 평균 — 6주차 그룹별 집계</p>
+    </div>
+    <div>
+<pre class="out">(720, 8)
+          rms   temp  current
+machine
+1호기      0.97  45.09    12.00
+2호기      0.97  45.10    11.99
+3호기      1.17  46.15    12.26
+4호기      1.01  44.94    12.02
+5호기      1.19  45.95    12.28
+6호기      1.05  44.98    11.98</pre>
+      <div class="note">720행 = 6대 × 120일. 120일 <b class="k">평균</b>으로는 3·5호기가 조금 높을 뿐 — <b>언제</b> 달라졌는지는 그래프로 봐야 합니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · 실습 파일의 실제 실행 결과</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 셀 2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 데이터 보기</span></div>
+  <h2>셀 2: 설비별로 나란히 그리기</h2>
+  <div class="cbody" style="grid-template-columns:1.25fr 1fr">
+    <div>
+      <div class="chd"><span class="run">▶</span>셀 2 · 설비 6대 그래프 (축 이름 줄 생략)</div>
+<pre class="code" style="font-size:14.5px">FAIL = {'3호기': 96, '5호기': 110}   # 고장일
+
+fig, axes = plt.subplots(2, 3, figsize=(12, 5), sharey=True)
+for ax, (m, d) in zip(axes.flat, vib.groupby('machine')):
+    ax.plot(d['day'], d['rms'])
+    if m in FAIL:
+        ax.axvline(FAIL[m], color='red', linestyle='--')
+    ax.set_title(m)
+plt.show()</pre>
+      <p class="codecap">for 반복으로 설비 하나씩(m: 이름, d: 그 설비의 120행) 칸 하나에 그린다</p>
+    </div>
+    <div>
+      <div class="chd">실행 결과 (그림)</div>
+      <svg id="fig6" viewBox="0 0 600 330" role="img" aria-label="설비 6대의 rms 그래프 2행 3열"></svg>
+      <div class="note">3·5호기는 고장 전 약 25일부터 <b class="k">서서히</b> 오르고, 다른 설비에도 <b>하루짜리 튐</b>이 보입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · vibration.csv 실제 값으로 다시 그린 그림 (실습 파일 그래프와 같은 내용)</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>규칙 경보</h2><p>셀 3~5 · 설비별 평소 기준, z-점수, 이동평균</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-gauge"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 셀 3 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 규칙 경보</span></div>
+  <h2>셀 3: 설비마다 “평소 기준” 붙이기</h2>
+  <div class="cbody">
+    <div>
+      <div class="chd"><span class="run">▶</span>셀 3 · 정상 기준 구간 1~60일</div>
+<pre class="code">BASE = 60                       # 정상 기준 구간: 1~60일
+normal = vib[vib['day'] &lt;= BASE]
+base = normal.groupby('machine')['rms'].agg(['mean', 'std'])
+# 각 행에 그 설비의 평균·표준편차 붙이기
+vib = vib.merge(base, on='machine')
+
+vib['z'] = (vib['rms'] - vib['mean']) / vib['std']   # z-점수
+base.round(3)</pre>
+      <div class="note"><b class="k">① 고르기</b> 1~60일만 → <b class="k">② 묶기</b> 설비별 → <b class="k">③ 요약</b> 평균·표준편차 → <b class="k">④ 붙이기</b> merge로 720행 모두에</div>
+    </div>
+    <div>
+<pre class="out">          mean    std
+machine
+1호기      0.972  0.090
+2호기      0.975  0.073
+3호기      1.016  0.115
+4호기      0.996  0.087
+5호기      1.025  0.088
+6호기      1.045  0.081</pre>
+      <div class="note">평소 진동이 설비마다 다릅니다 (0.97 ~ 1.05). 그래서 <b>설비별 기준</b>이 필요합니다. 3호기 표준편차가 큰 것은 27·47일 튐 때문.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · 실습 파일의 실제 실행 결과</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 직접 해 보기 1: z 계산 따라가기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 규칙 경보 · 직접 해 보기 1</span></div>
+  <h2>코드 한 줄을 숫자로 따라가 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 420px">
+    <div class="plot"><svg id="zc" viewBox="0 0 620 400" aria-label="고른 설비의 rms 그래프와 고른 날짜"></svg></div>
+    <div class="side">
+      <div class="mbtns" id="zc-m" role="group" aria-label="설비 고르기"></div>
+      <div class="ctrl"><label>날짜 <output id="zc-d-o">83일째</output></label><input id="zc-d" type="range" min="1" max="120" step="1" value="83" aria-label="날짜"></div>
+      <div class="calc" id="zc-calc"></div>
+      <div class="callout b" id="zc-msg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · vibration.csv 실제 값 · 셀 3~5와 같은 계산 (기준 z &gt; 3, 7일 이동평균)</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 셀 4·5 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 규칙 경보</span></div>
+  <h2>셀 4·5: 설비별 7일 이동평균, 그리고 z &gt; 3 경보</h2>
+  <div class="cbody">
+    <div>
+      <div class="chd"><span class="run">▶</span>셀 4 · 이동평균 (설비별로!)</div>
+<pre class="code">W = 7
+vib['rms_ma'] = vib.groupby('machine')['rms'].transform(
+    lambda s: s.rolling(W).mean())
+vib['z_ma'] = (vib['rms_ma'] - vib['mean']) / vib['std']</pre>
+      <div class="chd"><span class="run">▶</span>셀 5 · 경보</div>
+<pre class="code">K = 3
+vib['alarm_z'] = vib['z'] &gt; K        # 원래 값으로 3σ
+vib['alarm_ma'] = vib['z_ma'] &gt; K    # 이동평균으로 3σ
+vib.groupby('machine')[['alarm_z', 'alarm_ma']].sum()</pre>
+    </div>
+    <div>
+<pre class="out">         alarm_z  alarm_ma
+machine
+1호기            1         0
+2호기            1         0
+3호기           17        18
+4호기            1         0
+5호기           17        19
+6호기            1         0</pre>
+      <div class="note">True/False 열을 <b class="k">sum()</b> 하면 True(경보)인 날의 수. 이동평균은 정상 설비의 경보 <b>1 → 0</b>. 셀 4의 출력: 3호기 27일 z <b>3.42</b> → 이동평균 z <b>0.28</b>.</div>
+      <div class="note" style="font-size:15.5px"><svg class="ic" style="color:var(--accent-2)"><use href="#i-alert"/></svg> groupby 없이 <code>vib['rms'].rolling(7)</code> 을 하면 1호기 마지막 날과 2호기 첫날이 한 평균에 섞입니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · 실습 파일의 실제 실행 결과 · 3·5호기 경보 일수에는 고장 직후 날도 포함</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>IsolationForest</h2><p>셀 6~7 · 진동·온도·전류를 함께 보는 모델</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 셀 6 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ IsolationForest</span></div>
+  <h2>셀 6: 정상 구간으로 학습하고, 전체를 판정</h2>
+  <div class="cbody">
+    <div>
+      <div class="chd"><span class="run">▶</span>셀 6 · IsolationForest</div>
+<pre class="code">feats = ['rms', 'temp', 'current']
+model = IsolationForest(contamination=0.01,
+                        random_state=0)
+model.fit(vib.loc[vib['day'] &lt;= BASE, feats])   # 6대 × 60일
+
+vib['alarm_if'] = model.predict(vib[feats]) == -1
+# 이상 점수: 클수록 이상
+vib['score_if'] = -model.score_samples(vib[feats])
+vib.groupby('machine')['alarm_if'].sum()</pre>
+      <div class="note"><b class="k">fit</b> = 정상 360일로 “평소 모습” 배우기 · <b class="k">predict</b> = 720일 전부 판정 (−1 = 이상) · <b class="k">contamination=0.01</b> = 정상 중 가장 수상한 1%쯤을 경계로</div>
+    </div>
+    <div>
+<pre class="out">machine
+1호기     2
+2호기     0
+3호기    18
+4호기     2
+5호기    19
+6호기     1
+Name: alarm_if, dtype: int64</pre>
+      <div class="note">정답(failure) 열은 <b>한 번도 쓰지 않았습니다.</b> 그래도 3·5호기에 경보가 몰립니다. 대신 1·4·6호기에도 몇 번 — 이게 잘못 경보인지는 ④에서 셉니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · 실습 파일의 실제 실행 결과 (scikit-learn 버전에 따라 조금 다를 수 있음)</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 셀 7 그림 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ IsolationForest</span></div>
+  <h2>셀 7: 이상 점수를 설비별로 그려 보면</h2>
+  <div class="body" style="gap:12px">
+    <svg id="figif" viewBox="0 0 1120 380" role="img" aria-label="설비 6대의 IsolationForest 이상 점수 그래프"></svg>
+    <p class="muted" style="font-size:19px;margin:0">점선(<strong style="color:var(--accent-2)">0.592</strong> = −offset_)을 넘으면 경보. 평소엔 0.4 근처에 머물다가 3·5호기는 고장 전 <strong style="color:var(--text)">점점 올라가고</strong>, 다른 설비는 <strong style="color:var(--text)">하루짜리 뾰족</strong>만 보입니다.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · 셀 6 모델의 실제 이상 점수 (−score_samples) · 3·5호기는 고장 뒤 정비로 다시 내려감</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 평가 약속 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 평가와 대시보드</span></div>
+  <h2>셀 8: 평가 약속을 코드로 — evaluate()</h2>
+  <div class="body" style="gap:16px">
+    <svg id="rule" viewBox="0 0 1120 220" role="img" aria-label="고장 설비와 정상 설비의 평가 구간 그림"></svg>
+    <div class="grid g3" style="gap:16px">
+      <div class="tile frag show" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:19px;color:var(--ok)">맞은 경보</div><div class="d">고장 전 30일 안. 그중 <b>첫 경보일</b>로 “고장 며칠 전” 계산</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:19px;color:var(--accent-2)">잘못 경보</div><div class="d">고장 설비의 그보다 앞선 경보 + 정상 설비(1·2·4·6호기)의 <b>모든</b> 경보</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:19px;color:var(--muted)">평가에서 뺌</div><div class="d">고장 설비의 고장 이후 (정비 기간)</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · evaluate(열 이름) → 설비별 [첫 경보일, 고장 며칠 전, 잘못 경보] 표 (함수 전체는 실습 파일 셀 8)</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 셀 9 비교 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 평가와 대시보드</span></div>
+  <h2>셀 9: 세 방법을 한 표로</h2>
+  <div class="body" style="gap:14px;justify-content:flex-start">
+    <div class="chd"><span class="run">▶</span>셀 9 · 방법별 요약</div>
+<pre class="code" style="font-size:16px">for col in ['alarm_z', 'alarm_ma', 'alarm_if']:
+    r = evaluate(col).set_index('설비')
+    rows.append([col, r.loc['3호기', '고장 며칠 전'], r.loc['5호기', '고장 며칠 전'],
+                 r.loc[healthy, '잘못 경보'].sum(), r.loc[['3호기', '5호기'], '잘못 경보'].sum()])
+pd.DataFrame(rows, columns=['방법', '3호기_며칠전', '5호기_며칠전', '정상설비_잘못', '고장설비_이른잘못'])</pre>
+<pre class="out">         방법  3호기_며칠전  5호기_며칠전  정상설비_잘못  고장설비_이른잘못
+0   alarm_z       13       16        4          2
+1  alarm_ma       11       11        0          0
+2  alarm_if       15       16        5          2</pre>
+    <div class="grid g3" style="gap:14px">
+      <div class="note frag show"><b class="k">z-점수 3σ</b> — 둘 다 10일 넘게 일찍, 그러나 잘못 경보 <b>6일</b> (정상 설비 4 + 3호기 2)</div>
+      <div class="note frag" style="border:2px solid var(--ok)"><b style="color:var(--ok)">7일 이동평균 + 3σ</b> — <b>11일 전</b>, 잘못 경보 <b>0</b>. 조건 ①② 모두 충족</div>
+      <div class="note frag"><b class="k">IsolationForest</b> — 가장 이른 <b>15·16일 전</b>, 잘못 경보 <b>7일</b></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · 실습 파일의 실제 실행 결과 (rows = [], healthy = 정상 설비 4대 줄은 생략)</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 대시보드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 평가와 대시보드 · 직접 해 보기 2</span></div>
+  <h2>정비 관리자 대시보드: 방법과 기준을 골라 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot"><svg id="dash" viewBox="0 0 660 430" aria-label="설비 6대의 경보 날짜 막대와 결과"></svg></div>
+    <div class="side">
+      <div class="seg" id="ds-m" role="group" aria-label="경보 방법"></div>
+      <div class="ctrl"><label><span id="ds-p-l">기준</span> <output id="ds-p-o"></output></label><input id="ds-p" type="range" min="0" max="5" step="1" value="2" aria-label="경보 기준"></div>
+      <div class="kpi">
+        <div class="meter"><div class="lbl">3호기</div><div class="val" id="ds-k3">-</div></div>
+        <div class="meter"><div class="lbl">5호기</div><div class="val" id="ds-k5">-</div></div>
+        <div class="meter"><div class="lbl">잘못 경보</div><div class="val o" id="ds-kf">-</div></div>
+      </div>
+      <div class="verdict" id="ds-v"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시 · vibration.csv로 미리 계산한 실제 결과 · 조건: 고장 10일 전 이상 + 잘못 경보 0 (실습용 가정)</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 해석·주의·AI -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 평가와 대시보드</span></div>
+  <h2>결론을 내리기 전에: 검증과 보고</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:22px;align-items:start">
+      <div style="display:grid;gap:14px">
+        <div class="tile frag show row" style="padding:16px 20px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:20px">같은 데이터로 고른 기준</div><div class="d">고장 날짜를 알고 기준을 맞췄다 → <b>이 120일에만 잘 맞는</b> 기준일 수 있다. 다음 기간·다른 설비로 다시 확인 (9주 시험 데이터)</div></div></div>
+        <div class="tile frag row" style="padding:16px 20px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:20px">고장 2건으로 내린 결론</div><div class="d">3·5호기 두 번의 고장뿐. 다른 고장 유형(갑작스러운 파손)은 이동평균이 늦을 수 있다</div></div></div>
+      </div>
+      <div style="display:grid;gap:12px">
+        <div class="muted" style="font-size:16px;font-weight:700"><svg class="ic"><use href="#i-sparkles"/></svg> 생성형AI에게 보고서 초안 맡기기</div>
+        <div class="prompt">“다음은 설비 6대의 이상탐지 평가표야. 정비 관리자에게 보고할 <b>세 문장 요약</b>과 <b>추천 방법</b>, 그리고 <b>이 결론의 한계</b>를 써 줘. (셀 9 표 붙여넣기)”</div>
+        <div class="callout"><strong>검증 습관:</strong> AI가 쓴 “11일 전”, “잘못 경보 0” 같은 숫자를 <strong>표와 하나씩 대조</strong>. 표에 없는 숫자가 나오면 지운다.</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 핵심 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-factory"/></svg></span><div class="h">설비별로 계산</div><div style="font-size:21px">평소 값이 다르니 <strong>groupby('machine')</strong>로 기준·이동평균을 설비마다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">두 숫자로 평가</div><div style="font-size:21px">고장 설비의 <strong>미리 안 날수</strong>, 정상 설비의 <strong>잘못 경보</strong></div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">고른 기준도 검증</div><div style="font-size:21px">이 데이터에선 7일 이동평균 + 3σ. 새 기간·새 설비로 <strong>다시 확인</strong></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="설비마다 평소 진동 수준이 다릅니다(평균 0.97~1.05). 전체를 한꺼번에 평균 내면 평소가 높은 설비는 자주 울리고, 낮은 설비는 늦게 울립니다.">
+      <p class="q-title"><b>Q1.</b> z-점수의 평균·표준편차를 설비별(groupby)로 구한 이유는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">코드가 더 짧아지므로</button>
+        <button type="button" data-v="b">설비마다 평소 진동 수준이 달라서</button>
+        <button type="button" data-v="c">설비가 6대보다 많으면 오류가 나므로</button>
+        <button type="button" data-v="d">IsolationForest가 그렇게 요구하므로</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="고장 전 30일 안의 첫 경보가 85일째이면, 96 − 85 = 11일 전에 알아챈 것입니다.">
+      <p class="q-title"><b>Q2.</b> 3호기(96일째 고장)의 첫 맞은 경보가 85일째라면 “고장 며칠 전”은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">85일</button>
+        <button type="button" data-v="b">30일</button>
+        <button type="button" data-v="c">11일</button>
+        <button type="button" data-v="d">96일</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="contamination은 정상 훈련 데이터 중 몇 %를 이상 쪽으로 볼지 정하는 기준입니다. 키우면 경계가 낮아져 더 많은 날이 경보 — 대시보드에서 0.05일 때 정상 설비 잘못 경보가 20일까지 늘었습니다.">
+      <p class="q-title"><b>Q3.</b> IsolationForest의 contamination을 0.01 → 0.05로 키우면?</p>
+      <div class="opts">
+        <button type="button" data-v="a">더 많은 날을 이상으로 봐서 잘못 경보가 늘어난다</button>
+        <button type="button" data-v="b">모델이 정답 열을 쓰기 시작한다</button>
+        <button type="button" data-v="c">경보가 하나도 울리지 않는다</button>
+        <button type="button" data-v="d">훈련 데이터가 5배로 늘어난다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="고장 날짜를 알고 있는 같은 데이터로 기준을 골랐기 때문에, 이 기간에만 잘 맞는 기준일 수 있습니다. 새 기간이나 다른 설비 데이터로 다시 확인해야 합니다.">
+      <p class="q-title"><b>Q4.</b> “7일 이동평균 + 3σ가 최고”라는 결론에서 가장 조심할 점은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">이동평균은 파이썬으로 계산할 수 없다</button>
+        <button type="button" data-v="b">3σ는 항상 틀린 기준이다</button>
+        <button type="button" data-v="c">잘못 경보는 많을수록 좋다</button>
+        <button type="button" data-v="d">같은 데이터로 고른 기준이라 새 데이터로 다시 확인해야 한다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 주 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 주 예고 · 13주차 딥러닝과 생성형AI</span></div>
+    <div class="big">13-1</div>
+    <h2>신경망 원리 직관적으로 이해하기</h2>
+    <p>지금까지는 사람이 고른 특징(rms·온도·전류)으로 판단했습니다. 신경망은 특징까지 데이터에서 배웁니다. 그 원리를 그림으로 따라갑니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson02.html">← 2차시</a><a class="btn" href="../week13/lesson01.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-cpu"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 12주 3차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">12주 3차시 · 제공 코드로 이상탐지 실습</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson03.js"></script>
+</body>
+</html>

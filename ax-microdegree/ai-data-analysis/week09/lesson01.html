@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9주 1차시 · 머신러닝이란? (지도·비지도 학습) | AI와 데이터 분석</title>
+<meta name="description" content="「AI와 데이터 분석」 9주 1차시 교안: 입력(특성)과 정답(목표), 지도학습(회귀·분류)과 비지도학습(군집·이상탐지), 머신러닝 작업 흐름과 scikit-learn의 fit·predict">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .t-main { fill: var(--text); font-size: 17px; font-weight: 800; }
+  .t-sub { fill: var(--muted); font-size: 13.5px; }
+  .t-acc { fill: var(--accent); font-size: 15px; font-weight: 800; }
+  .t-acc2 { fill: var(--accent-2); font-size: 15px; font-weight: 800; }
+  .slide.section .big { margin-bottom: 24px; }
+  .pulse { animation: pulse 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+  @media (prefers-reduced-motion: reduce) { .pulse, .flowdot { animation: none; display: none; } }
+
+  /* X·y 표 */
+  .xy { font-size: 18px; }
+  .xy th, .xy td { padding: 8px 12px; text-align: center; font-variant-numeric: tabular-nums; }
+  .xy th.x { background: var(--accent-soft); color: var(--accent); }
+  .xy th.y { background: var(--accent-2-soft); color: var(--accent-2); }
+  .xy td.y { background: var(--accent-2-soft); font-weight: 800; }
+  .xy th.id, .xy td.id { color: var(--muted); }
+  .brace { display: grid; grid-template-columns: 110px 5fr 1fr; gap: 0 8px; font-size: 17px; font-weight: 800; margin-top: 8px; }
+  .brace div { border-top: 4px solid; padding-top: 4px; text-align: center; }
+
+  /* 목표 열 고르기 (열 목록) */
+  .pick { font-size: 15px; }
+  .pick th, .pick td { padding: 1px 10px; text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap; transition: background .2s, color .2s, opacity .2s; line-height: 1.5; }
+  .pick th { font-size: 13.5px; }
+  .pick td.nm { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 14.5px; }
+  .pick td.nm button { font: inherit; border: 2px dashed var(--accent-2); background: var(--surface); color: var(--text); border-radius: 8px; padding: 0 8px; cursor: pointer; }
+  .pick td.nm button:hover { background: var(--accent-2-soft); }
+  .pick td.mean { color: var(--muted); font-size: 14px; }
+  .pick td.v { text-align: right; }
+  .pick td.role { font-size: 13.5px; font-weight: 800; }
+  .pick tr.r-y td { background: var(--accent-2-soft); }
+  .pick tr.r-y td.role { color: var(--accent-2); }
+  .pick tr.r-y td.nm button { background: var(--accent-2); color: var(--surface); border-style: solid; }
+  .pick tr.r-x td.role { color: var(--accent); }
+  .pick tr.r-x td.nm { color: var(--accent); }
+  .pick tr.r-no td { color: var(--muted); }
+  .pick tr.r-no td.v, .pick tr.r-no td.mean { opacity: .45; }
+  .btn.ghost[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 14.5px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  .chip.y { background: var(--accent-2); color: var(--surface); }
+  .chip.no { background: var(--surface-2); color: var(--muted); }
+  .rolebox { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; display: grid; gap: 6px; }
+  .rolebox .k { font-size: 14px; font-weight: 800; color: var(--muted); }
+  .exl { font-size: 14px; color: var(--muted); line-height: 1.45; margin: 0; padding-left: 1.1em; }
+  .exl li { margin: 2px 0; }
+
+  /* 카드 분류 */
+  .tcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .tcard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-height: 0; transition: background .2s, border-color .2s; }
+  .tcard .src { font-size: 12.5px; font-weight: 800; color: var(--muted); }
+  .tcard .nm { font-size: 16px; font-weight: 800; line-height: 1.35; flex: 1; }
+  .tcard .bt { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .tcard .bt button { font: inherit; font-size: 13px; font-weight: 700; padding: 3px 0; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); cursor: pointer; }
+  .tcard .bt button:hover:not(:disabled) { border-color: var(--accent); }
+  .tcard .bt button:disabled { cursor: default; opacity: .55; }
+  .tcard .bt button.right { background: var(--ok-soft); border-color: var(--ok); opacity: 1; }
+  .tcard .bt button.wrong { background: var(--bad-soft); border-color: var(--bad); opacity: 1; }
+  .tcard .why { display: none; font-size: 13px; line-height: 1.4; color: var(--muted); }
+  .tcard.done .why { display: flex; align-items: center; min-height: 26px; }
+  .tcard.done .bt { display: none; }
+  .tcard.done.ok { border-color: var(--ok); }
+  .tcard.done.no { border-color: var(--bad); }
+  .sortbar { display: flex; align-items: center; gap: 18px; margin-top: 12px; font-size: 17px; }
+  .sortbar .cnt { font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+  /* 흐름 */
+  .wf .stepbox code { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 16px; background: var(--surface-2); border-radius: 6px; padding: 1px 8px; color: var(--accent); font-weight: 700; }
+  .wf .stepbox.goal code { background: rgba(255,255,255,.18); color: var(--surface); }
+  .ann { display: grid; gap: 10px; }
+  .ann .a { display: flex; gap: 12px; align-items: flex-start; font-size: 18px; line-height: 1.45; }
+  .ann .n { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--surface); font-weight: 800; display: grid; place-items: center; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">AI와 데이터 분석 · 9주차 1차시</p>
+    <h1>머신러닝이란?</h1>
+    <p class="lead" style="font-size:25px">지도학습과 비지도학습 —<br>데이터에 <strong>정답</strong>이 있느냐 없느냐</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>개념 + 첫 실습</span><span>직접 해 보기 4개</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <!-- 입력 표 -->
+    <rect x="10" y="90" width="190" height="260" rx="20" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <g class="f-accs"><rect x="30" y="112" width="44" height="22" rx="6"/><rect x="82" y="112" width="44" height="22" rx="6"/><rect x="134" y="112" width="44" height="22" rx="6"/></g>
+    <g class="f-s2"><rect x="30" y="148" width="44" height="18" rx="5"/><rect x="82" y="148" width="44" height="18" rx="5"/><rect x="134" y="148" width="44" height="18" rx="5"/>
+      <rect x="30" y="178" width="44" height="18" rx="5"/><rect x="82" y="178" width="44" height="18" rx="5"/><rect x="134" y="178" width="44" height="18" rx="5"/>
+      <rect x="30" y="208" width="44" height="18" rx="5"/><rect x="82" y="208" width="44" height="18" rx="5"/><rect x="134" y="208" width="44" height="18" rx="5"/>
+      <rect x="30" y="238" width="44" height="18" rx="5"/><rect x="82" y="238" width="44" height="18" rx="5"/><rect x="134" y="238" width="44" height="18" rx="5"/>
+      <rect x="30" y="268" width="44" height="18" rx="5"/><rect x="82" y="268" width="44" height="18" rx="5"/><rect x="134" y="268" width="44" height="18" rx="5"/></g>
+    <text x="105" y="322" text-anchor="middle" class="t-acc" style="font-size:22px">입력 X</text>
+    <!-- 흐름 -->
+    <path id="cv-flow" d="M205 220 H300" fill="none" stroke="var(--line)" stroke-width="4" stroke-dasharray="4 8"/>
+    <circle r="7" class="f-acc flowdot"><animateMotion dur="1.8s" repeatCount="indefinite" path="M205,220 H300"/></circle>
+    <circle r="7" class="f-acc flowdot"><animateMotion dur="1.8s" begin=".9s" repeatCount="indefinite" path="M205,220 H300"/></circle>
+    <!-- 모델 -->
+    <circle cx="360" cy="220" r="62" class="f-acc pulse"/>
+    <g transform="translate(326 186) scale(2.85)" style="color:var(--surface)"><use href="#i-bot" width="24" height="24"/></g>
+    <path d="M422 220 H460" stroke="var(--line)" stroke-width="4" stroke-dasharray="4 8"/>
+    <!-- 정답 -->
+    <rect x="440" y="120" width="72" height="200" rx="18" class="f-acc2s" stroke="var(--accent-2)" stroke-width="3"/>
+    <g class="f-acc2"><rect x="456" y="146" width="40" height="18" rx="5"/><rect x="456" y="176" width="40" height="18" rx="5" opacity=".5"/><rect x="456" y="206" width="40" height="18" rx="5"/><rect x="456" y="236" width="40" height="18" rx="5" opacity=".5"/><rect x="456" y="266" width="40" height="18" rx="5"/></g>
+    <text x="476" y="352" text-anchor="middle" class="t-acc2" style="font-size:22px">정답 y</text>
+    <text x="360" y="330" text-anchor="middle" class="t-sub" style="font-size:17px">X → y 규칙 찾기</text>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">입력과 정답</div><div class="d">표에서 입력(특성)과 정답(목표 변수)을 골라낸다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">지도학습</div><div class="d">정답이 숫자면 회귀, 범주면 분류임을 구분한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-activity"/></svg></span><div class="h">비지도학습</div><div class="d">정답 없이 묶는 군집, 평소와 다른 것을 찾는 이상탐지를 안다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-code"/></svg></span><div class="h">fit · predict</div><div class="d">데이터 → 학습 → 예측 → 평가 흐름을 코드로 한 번 실행해 본다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 입력과 정답</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>② 지도학습</b><small>직접 해 보기 1</small></div>
+      <div style="flex:6;background:var(--accent-2-soft)"><b>③ 비지도학습</b><small>직접 해 보기 2</small></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>④ 학습의 흐름·코드</b></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box think" style="margin-top:28px"><p style="font-size:22px;margin:0"><svg class="ic"><use href="#i-hand"/></svg> 오늘 내내 던질 질문 하나: <strong>“이 데이터에서 맞히려는 정답은 무엇이고, 그것은 숫자인가 범주인가 — 아니면 정답이 아예 없는가?”</strong></p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입: 중간고사 이후</span></div>
+  <h2>데이터를 “읽던” 단계에서 “맡기는” 단계로</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge g lg"><svg class="ic"><use href="#i-chart"/></svg></span><div class="muted" style="font-size:16px;font-weight:700">1~7주</div><div class="h">사람이 데이터를 읽는다</div><div class="d">정리 · 통계 · 그래프 · 상관관계<br>“무슨 일이 있었나, 왜?”</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag" style="border:2px solid var(--line)"><span class="ic-badge g lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="muted" style="font-size:16px;font-weight:700">8주</div><div class="h">중간고사</div><div class="d">수고하셨습니다!</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div style="font-size:16px;font-weight:700;opacity:.85">9~13주</div><div class="h">모델이 판단을 돕는다</div><div class="d">회귀 · 분류 · 군집 · 이상탐지<br>“새 데이터가 오면 어떻게 될까?”</div></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:22px;gap:18px">
+      <div class="callout b" style="font-size:18px"><b>1-1에서 본 것</b> — 머신러닝은 규칙을 사람이 쓰지 않고 <strong>데이터에서 찾는다</strong>. 오늘은 그 “데이터”를 어떻게 준비하는지부터.</div>
+      <div class="callout" style="font-size:18px"><b>7-3에서 본 것</b> — 상관은 인과가 아니다. 모델도 <strong>관계를 배울 뿐</strong>, 원인을 증명해 주지는 않는다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>입력과 정답</h2><p>머신러닝의 재료는 표 하나, 그 안의 두 종류 열입니다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-layers"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. X와 y -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 입력과 정답</span></div>
+  <h2>입력 <span style="color:var(--accent)">X</span>를 보고 정답 <span style="color:var(--accent-2)">y</span>를 맞히는 규칙 = 모델</h2>
+  <div class="body" style="justify-content:flex-start">
+    <table class="xy">
+      <thead><tr><th class="id">product_id</th><th class="x">temp ℃</th><th class="x">pressure bar</th><th class="x">speed rpm</th><th class="x">humidity %</th><th class="x">thickness mm</th><th class="y">strength MPa</th></tr></thead>
+      <tbody>
+        <tr><td class="id">P00001</td><td>211.7</td><td>68.6</td><td>1312</td><td>60.7</td><td>1.980</td><td class="y">34.57</td></tr>
+        <tr><td class="id">P00002</td><td>208.4</td><td>84.3</td><td>1241</td><td>54.4</td><td>1.994</td><td class="y">41.44</td></tr>
+        <tr><td class="id">P00003</td><td>…</td><td>…</td><td>…</td><td>…</td><td>…</td><td class="y">…</td></tr>
+      </tbody>
+    </table>
+    <div class="brace"><div style="border-color:var(--line);color:var(--muted)">식별 번호</div><div style="border-color:var(--accent);color:var(--accent)">입력 X — 특성(feature), 입력 변수</div><div style="border-color:var(--accent-2);color:var(--accent-2)">정답 y — 목표(target)</div></div>
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);margin-top:20px;gap:14px">
+      <div class="tile frag show" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:20px">행 하나 = 사례 하나</div><div class="d">제품 1개, 실험 1회, 설비의 하루. 행이 많을수록 배울 거리가 많다</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:20px;color:var(--accent)">특성 = 미리 아는 값</div><div class="d">예측하는 순간 이미 알고 있는 공정 조건·측정값</div></div>
+      <div class="tile frag" style="padding:14px 18px;gap:4px"><div class="h" style="font-size:20px;color:var(--accent-2)">목표 = 나중에 알게 되는 값</div><div class="d">검사·시험을 해야 알 수 있는 값. <b>레이블</b>이라고도 부른다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시 · 실습 데이터 process.csv (가상 데이터) 앞부분</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 데모: 목표 열 고르기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 입력과 정답 · 직접 해 보기 1</span></div>
+  <h2>무엇을 맞힐까? 정답 열을 골라 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 점선 열 이름을 눌러 보세요</span></h2>
+  <div class="demo" style="grid-template-columns:1fr 330px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:center;padding:8px 12px">
+      <table class="pick" id="pick"></table>
+    </div>
+    <div class="side">
+      <div class="meter"><div class="lbl">이 문제의 종류</div><div class="val o" id="pk-type">?</div><div id="pk-msg" style="font-size:15px;line-height:1.45"></div></div>
+      <div class="rolebox"><span class="k">입력 X <span id="pk-nx"></span></span><div class="chips" id="pk-x"></div></div>
+      <div class="rolebox"><span class="k">쓰지 않는 열과 이유</span><ul class="exl" id="pk-no"></ul></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시 · process.csv 의 열 13개와 실제 제품 3개 (가상 데이터)</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>지도학습</h2><p>정답이 붙은 데이터로 배운다 — 선생님(정답)이 있는 학습.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-book"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 회귀 vs 분류 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 지도학습</span></div>
+  <h2>정답이 숫자면 <span style="color:var(--accent)">회귀</span>, 범주면 <span style="color:var(--accent-2)">분류</span></h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile frag show" style="padding:22px 26px;border:2px solid var(--accent)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg"><svg class="ic"><use href="#i-trend"/></svg></span><div><div class="h" style="font-size:28px">회귀 (regression)</div><div class="muted" style="font-size:17px">“얼마나?” — 숫자를 맞힌다</div></div></div>
+        <svg viewBox="0 0 440 120" aria-hidden="true"><line x1="20" y1="104" x2="420" y2="104" stroke="var(--line)" stroke-width="2"/><g class="f-acc" fill-opacity=".75"><circle cx="50" cy="88" r="6"/><circle cx="85" cy="80" r="6"/><circle cx="110" cy="84" r="6"/><circle cx="150" cy="70" r="6"/><circle cx="185" cy="66" r="6"/><circle cx="220" cy="58" r="6"/><circle cx="250" cy="62" r="6"/><circle cx="290" cy="44" r="6"/><circle cx="330" cy="40" r="6"/><circle cx="370" cy="28" r="6"/></g><line x1="30" y1="94" x2="400" y2="24" stroke="var(--accent-2)" stroke-width="3"/><circle cx="300" cy="43" r="9" fill="none" stroke="var(--accent-2)" stroke-width="3"/><text x="310" y="78" class="t-acc2" style="font-size:16px">→ 38.7 MPa</text></svg>
+        <div class="d">예: 인장강도, 수율(%), 전력 사용량, 남은 수명 · <b>10주</b></div>
+      </div>
+      <div class="tile frag" style="padding:22px 26px;border:2px solid var(--accent-2)">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:28px">분류 (classification)</div><div class="muted" style="font-size:17px">“어느 쪽?” — 범주를 고른다</div></div></div>
+        <svg viewBox="0 0 440 120" aria-hidden="true"><path d="M250 0 L210 120 L440 120 L440 0 Z" class="f-acc2s"/><line x1="250" y1="0" x2="210" y2="120" stroke="var(--accent-2)" stroke-width="3"/><g class="f-acc" fill-opacity=".75"><circle cx="50" cy="30" r="6"/><circle cx="90" cy="70" r="6"/><circle cx="130" cy="40" r="6"/><circle cx="160" cy="92" r="6"/><circle cx="190" cy="55" r="6"/><circle cx="70" cy="100" r="6"/></g><g class="f-acc2"><circle cx="280" cy="40" r="6"/><circle cx="320" cy="80" r="6"/><circle cx="360" cy="30" r="6"/><circle cx="300" cy="100" r="6"/><circle cx="395" cy="66" r="6"/></g><text x="40" y="18" class="t-acc" style="font-size:16px">양품</text><text x="380" y="110" class="t-acc2" style="font-size:16px">불량</text></svg>
+        <div class="d">예: 불량/양품, 불량 유형, 고장/정상, 합격/불합격 · <b>11주</b></div>
+      </div>
+    </div>
+    <div class="box warn frag" style="margin-top:20px"><p style="font-size:20px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> 함정: process.csv의 <code>defect</code> 열은 0·1 <b>숫자로 적혀</b> 있지만 뜻은 양품/불량 <strong>범주</strong> → <strong>분류</strong>입니다. 적힌 모양이 아니라 <strong>뜻</strong>으로 판단!</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 데모: 회귀/분류 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 지도학습 · 직접 해 보기 2</span></div>
+  <h2>같은 공정 데이터, 두 가지 질문 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="rc" viewBox="0 0 640 430" aria-label="회귀 모드에서는 압력과 인장강도 산점도, 분류 모드에서는 온도와 습도 산점도"></svg></div>
+    <div class="side">
+      <div class="switch" id="rc-mode" style="margin:0"><button type="button" data-m="reg" aria-pressed="true">회귀: 강도 예측</button><button type="button" data-m="cls" aria-pressed="false">분류: 불량 판정</button></div>
+      <div id="rc-reg">
+        <div class="ctrl"><label>새 제품의 압력 <output id="rc-p-o">80 bar</output></label><input id="rc-p" type="range" min="64" max="96" step="1" value="80" aria-label="새 제품의 압력"></div>
+      </div>
+      <div id="rc-cls" hidden>
+        <div class="ctrl" style="margin-bottom:10px"><label>새 제품의 온도 <output id="rc-t-o">211℃</output></label><input id="rc-t" type="range" min="195" max="232" step="1" value="211" aria-label="새 제품의 온도"></div>
+        <div class="ctrl"><label>새 제품의 습도 <output id="rc-h-o">58%</output></label><input id="rc-h" type="range" min="30" max="86" step="1" value="58" aria-label="새 제품의 습도"></div>
+      </div>
+      <div class="meter"><div class="lbl" id="rc-lbl">모델의 답 (예측 인장강도)</div><div class="val" id="rc-val">38.7 MPa</div></div>
+      <div class="callout b" id="rc-msg">답이 <strong>숫자</strong> 하나로 나옵니다 → 회귀.</div>
+      <div class="legend" id="rc-leg"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시 · process.csv 494개 제품 (가상 데이터) · 회귀: 직선 회귀, 분류: 로지스틱 회귀로 학습한 결과</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>비지도학습</h2><p>정답이 없어도 데이터 속 구조를 찾을 수 있습니다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-eye"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 군집 vs 이상탐지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 비지도학습</span></div>
+  <h2>정답(y) 없이 X만으로: 군집과 이상탐지</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:26px">
+      <div class="tile frag show" style="padding:22px 26px">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:28px">군집 <span class="muted" style="font-size:18px;font-weight:600">clustering</span></div><div class="muted" style="font-size:17px">비슷한 것끼리 묶는다</div></div></div>
+        <svg viewBox="0 0 440 120" aria-hidden="true"><ellipse cx="110" cy="62" rx="80" ry="46" class="f-accs"/><ellipse cx="320" cy="58" rx="86" ry="44" class="f-acc2s"/><g class="f-acc"><circle cx="80" cy="50" r="6"/><circle cx="110" cy="70" r="6"/><circle cx="130" cy="45" r="6"/><circle cx="95" cy="88" r="6"/><circle cx="145" cy="78" r="6"/><circle cx="62" cy="72" r="6"/></g><g class="f-acc2"><circle cx="290" cy="40" r="6"/><circle cx="320" cy="70" r="6"/><circle cx="350" cy="45" r="6"/><circle cx="300" cy="82" r="6"/><circle cx="370" cy="70" r="6"/><circle cx="270" cy="62" r="6"/></g><text x="110" y="118" text-anchor="middle" class="t-acc" style="font-size:14px">묶음 A</text><text x="320" y="118" text-anchor="middle" class="t-acc2" style="font-size:14px">묶음 B</text></svg>
+        <div class="d">예: 운전 패턴이 비슷한 설비끼리, 성질이 비슷한 시료끼리 · <b>12주</b></div>
+      </div>
+      <div class="tile frag" style="padding:22px 26px">
+        <div style="display:flex;align-items:center;gap:16px"><span class="ic-badge lg o"><svg class="ic"><use href="#i-alert"/></svg></span><div><div class="h" style="font-size:28px">이상탐지 <span class="muted" style="font-size:18px;font-weight:600">anomaly detection</span></div><div class="muted" style="font-size:17px">평소와 다른 것을 찾는다</div></div></div>
+        <svg viewBox="0 0 440 120" aria-hidden="true"><ellipse cx="170" cy="62" rx="120" ry="44" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="5 6"/><g class="f-acc" fill-opacity=".75"><circle cx="110" cy="50" r="6"/><circle cx="140" cy="72" r="6"/><circle cx="165" cy="48" r="6"/><circle cx="190" cy="80" r="6"/><circle cx="215" cy="58" r="6"/><circle cx="125" cy="88" r="6"/><circle cx="240" cy="72" r="6"/><circle cx="90" cy="70" r="6"/><circle cx="200" cy="38" r="6"/></g><circle cx="370" cy="30" r="7" class="f-acc2"/><circle cx="370" cy="30" r="15" fill="none" stroke="var(--accent-2)" stroke-width="3"/><text x="350" y="80" class="t-acc2" style="font-size:16px">이상!</text></svg>
+        <div class="d">예: 고장 징후 진동, 평소와 다른 전력 급증 · <b>12주</b></div>
+      </div>
+    </div>
+    <div class="box think frag" style="margin-top:20px"><p style="font-size:20px;margin:0">지도학습은 <strong>“정답을 맞혀라”</strong>, 비지도학습은 <strong>“이 데이터, 어떻게 생겼는지 알려 줘”</strong>. 정답을 붙이기 어렵거나 비쌀 때(고장은 드물다!) 특히 쓸모가 있습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 데모: 진동 군집·이상탐지 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 비지도학습 · 직접 해 보기 3</span></div>
+  <h2>정답 없이 설비 720일을 들여다보기 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo">
+    <div class="plot"><svg id="vb" viewBox="0 0 640 430" aria-label="설비 6대 120일의 진동 세기와 온도 산점도"></svg></div>
+    <div class="side">
+      <div class="switch" id="vb-mode" style="margin:0"><button type="button" data-m="clu" aria-pressed="true">군집</button><button type="button" data-m="ano" aria-pressed="false">이상탐지</button></div>
+      <div class="ctrl" id="vb-k-c"><label>몇 묶음으로 나눌까 (k) <output id="vb-k-o">2개</output></label><input id="vb-k" type="range" min="2" max="4" step="1" value="2" aria-label="묶음 개수"></div>
+      <div class="ctrl" id="vb-th-c" hidden><label>“평소와 다르다”의 기준 거리 <output id="vb-th-o">3.0</output></label><input id="vb-th" type="range" min="1.5" max="6" step="0.5" value="3" aria-label="이상 판정 거리"></div>
+      <div class="meter" id="vb-meter"><div class="lbl" id="vb-lbl">묶음별 날 수</div><div class="val" id="vb-val" style="font-size:30px">-</div></div>
+      <button class="btn ghost" type="button" id="vb-truth" aria-pressed="false"><svg class="ic"><use href="#i-eye"/></svg> 고장 기록 겹쳐 보기</button>
+      <div class="callout b" id="vb-msg">모델은 <strong>failure(고장) 열을 보지 않았습니다.</strong> rms·온도 두 값만으로 묶었습니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시 · vibration.csv 6대 × 120일 (가상 데이터) · 군집: k-평균, 이상탐지: 표준화한 중심에서의 거리</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 데모: 카드 분류 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 비지도학습 · 직접 해 보기 4</span></div>
+  <h2>이 문제는 어떤 유형? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 카드마다 하나를 골라 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="tcards" id="tcards"></div>
+    <div class="sortbar"><span>맞힌 카드 <span class="cnt" id="tc-score">0 / 0</span></span><span class="muted" style="font-size:15px">힌트: ① 정답 열이 있나? ② 있다면 숫자인가 범주인가? ③ 없다면 묶기인가, 튀는 것 찾기인가?</span><button class="btn ghost" id="tc-reset" type="button" style="margin-left:auto;padding:6px 14px;font-size:16px"><svg class="ic"><use href="#i-reset"/></svg> 다시</button></div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시 · process.csv · vibration.csv · lab_yield.csv 는 이 강의의 실습 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 작업 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 학습의 흐름</span></div>
+  <h2>머신러닝은 네 단계로 돌아간다</h2>
+  <div class="body">
+    <div class="flow wf">
+      <div class="stepbox frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">① 데이터 준비</div><div class="d">정답 y를 정하고<br>입력 X를 고른다</div><code>X, y</code></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-bot"/></svg></span><div class="h">② 학습</div><div class="d">모델이 X와 y 사이의<br>규칙을 찾는다</div><code>fit</code></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">③ 예측</div><div class="d">새 X를 넣으면<br>y를 내놓는다</div><code>predict</code></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-gauge"/></svg></span><div class="h">④ 평가</div><div class="d">예측이 실제와<br>얼마나 맞는지 잰다</div><code>score</code></div>
+    </div>
+    <div class="grid g2 frag" style="margin-top:24px;gap:18px">
+      <div class="callout b" style="font-size:19px"><svg class="ic"><use href="#i-reset"/></svg> 평가가 부족하면 ①로 돌아가 <strong>입력을 바꾸거나 데이터를 더 모은다</strong>.</div>
+      <div class="callout" style="font-size:19px"><svg class="ic"><use href="#i-alert"/></svg> 그런데 <strong>학습에 쓴 데이터로 평가</strong>해도 될까? → <strong>다음 차시</strong>의 주제</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시 · fit·predict·score 는 scikit-learn(파이썬 머신러닝 라이브러리)의 명령 이름</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 코드 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 학습의 흐름 · 코드</span></div>
+  <h2>첫 머신러닝 코드: 압력으로 강도 예측</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:28px">
+    <div style="flex:1.25;display:flex;flex-direction:column;gap:10px;justify-content:center">
+<pre class="code">from sklearn.linear_model import LinearRegression
+
+X = df[['pressure']]        # 입력 X (표 모양)
+y = df['strength']          # 정답 y (열 하나)
+
+model = LinearRegression()  # 모델: 직선 회귀
+model.fit(X, y)             # 학습
+
+new = pd.DataFrame({'pressure': [70, 80, 90]})
+print(model.predict(new).round(2))   # 예측</pre>
+<pre class="out">[35.08 38.66 42.25]</pre>
+    </div>
+    <div class="ann" style="flex:1;align-content:center">
+      <div class="a frag show"><span class="n">1</span><div><b>X는 표, y는 열 하나.</b> 입력은 여러 개일 수 있어 <code>[[ ]]</code> 두 겹으로 표 모양을 만든다</div></div>
+      <div class="a frag"><span class="n">2</span><div><b>모델을 고르고 <code>fit</code>.</b> 494개 제품을 보고 “압력 1 bar ↑ → 강도 약 0.36 MPa ↑” 규칙을 찾는다</div></div>
+      <div class="a frag"><span class="n">3</span><div><b>새 조건을 <code>predict</code>.</b> 압력 70·80·90 bar 제품의 강도를 숫자로 답한다 → 회귀</div></div>
+      <div class="a frag"><span class="n">4</span><div><b>분류도 같은 모양.</b> 모델을 <code>DecisionTreeClassifier()</code>로, y를 <code>df['defect']</code>로 바꾸면 끝</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시 · df = pd.read_csv(DATA + 'process.csv') 로 읽은 표 · 실행 결과는 실제 값</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 실습 파일 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 학습의 흐름 · 실습</span></div>
+  <h2>실습 파일: 처음 써 보는 scikit-learn</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:40px">
+    <div style="flex:1">
+      <div class="tiles" style="grid-template-columns:1fr 1fr;gap:14px">
+        <div class="tile row" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div><div class="h" style="font-size:20px">X와 y 나누기</div><div class="d">정답 열과 입력 열 고르기</div></div></div>
+        <div class="tile row" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div><div class="h" style="font-size:20px">회귀 fit · predict</div><div class="d">공정 조건 → 인장강도</div></div></div>
+        <div class="tile row" style="padding:16px"><span class="ic-badge o"><svg class="ic"><use href="#i-check"/></svg></span><div><div class="h" style="font-size:20px">분류 fit · predict</div><div class="d">공정 조건 → 불량 여부</div></div></div>
+        <div class="tile row" style="padding:16px"><span class="ic-badge"><svg class="ic"><use href="#i-activity"/></svg></span><div><div class="h" style="font-size:20px">군집 (정답 없이)</div><div class="d">진동 데이터를 두 묶음으로</div></div></div>
+      </div>
+      <p class="muted" style="margin-top:18px;font-size:19px"><svg class="ic"><use href="#i-hand"/></svg> “직접 바꿔 보기”: 입력 열 바꾸기 · 새 제품 조건 바꾸기 · 묶음 개수 바꾸기</p>
+    </div>
+    <div style="flex:none;width:360px;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center">
+      <span class="ic-badge lg" style="width:140px;height:140px;font-size:76px;border-radius:36px"><svg class="ic"><use href="#i-code"/></svg></span>
+      <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/ax-microdegree/ai-data-analysis/week09/lesson01.ipynb" target="_blank" rel="noopener">Colab에서 실습 파일 열기</a>
+      <div class="muted" style="font-size:16px">lesson01.ipynb · 위에서부터 차례로 실행</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">입력 X와 정답 y</div><div style="font-size:21px">입력은 <strong>미리 아는 값</strong>, 정답은 <strong>나중에 알게 되는 값</strong>. 정답을 흘리는 열은 뺀다</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-book"/></svg></span><div class="h">지도학습: 정답이 있다</div><div style="font-size:21px">정답이 숫자면 <strong>회귀</strong>, 범주면 <strong>분류</strong> — 적힌 모양 말고 뜻으로</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-eye"/></svg></span><div class="h">비지도학습: 정답이 없다</div><div style="font-size:21px">비슷한 것끼리 <strong>군집</strong>, 평소와 다른 것을 <strong>이상탐지</strong></div></div>
+    </div>
+    <p class="muted frag" style="margin-top:22px;font-size:21px">흐름은 언제나 <strong style="color:var(--text)">데이터 준비 → fit → predict → 평가</strong>.</p>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="인장강도(MPa)는 연속적인 숫자이고 정답 열이 있으므로 지도학습 중 회귀입니다.">
+      <p class="q-title"><b>Q1.</b> 공정 조건으로 제품의 인장강도(MPa)를 예측하는 문제는?</p>
+      <div class="opts">
+        <button type="button" data-v="a">회귀</button>
+        <button type="button" data-v="b">분류</button>
+        <button type="button" data-v="c">군집</button>
+        <button type="button" data-v="d">이상탐지</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="defect_type 이 '정상'이면 defect=0, 아니면 1입니다. 정답을 그대로 알려 주는 열이라 입력에 넣으면 커닝이 됩니다. 또 예측하는 순간에는 아직 알 수 없는 값입니다.">
+      <p class="q-title"><b>Q2.</b> 불량 여부(defect)를 예측할 때 입력 X에 넣으면 <u>안 되는</u> 열은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">temp (온도)</button>
+        <button type="button" data-v="b">humidity (습도)</button>
+        <button type="button" data-v="c">defect_type (불량 유형)</button>
+        <button type="button" data-v="d">shift (근무조)</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="b" data-explain="고장 기록(정답) 없이 진동·온도 값만 보고 평소와 다른 날을 찾는 것은 비지도학습의 이상탐지입니다.">
+      <p class="q-title"><b>Q3.</b> 고장 기록 없이 진동·온도만 보고 “평소와 다른 날”을 찾는 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">지도학습 · 회귀</button>
+        <button type="button" data-v="b">비지도학습 · 이상탐지</button>
+        <button type="button" data-v="c">지도학습 · 분류</button>
+        <button type="button" data-v="d">비지도학습 · 회귀</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="d" data-explain="fit(X, y)는 데이터에서 규칙을 배우는 학습 단계, predict(새 X)는 배운 규칙으로 답을 내는 예측 단계입니다.">
+      <p class="q-title"><b>Q4.</b> scikit-learn 코드에서 <code>model.fit(X, y)</code> 가 하는 일은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">새 제품의 강도를 예측한다</button>
+        <button type="button" data-v="b">CSV 파일을 읽는다</button>
+        <button type="button" data-v="c">그래프를 그린다</button>
+        <button type="button" data-v="d">X와 y 사이의 규칙을 데이터에서 배운다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">9-2</div>
+    <h2>훈련 데이터와 시험 데이터 나누기</h2>
+    <p>시험 문제를 미리 보고 치른 시험 점수, 믿을 수 있을까요? 모델을 <strong>공정하게 채점</strong>하는 방법을 배웁니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="../week07/lesson03.html">← 7-3 상관관계와 인과관계</a><a class="btn" href="lesson02.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div class="s-foot"><span>AI와 데이터 분석 · 9주 1차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">9주 1차시 · 머신러닝이란? (지도·비지도 학습)</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson01.js"></script>
+</body>
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="genai">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10주 2차시 · 카피와 SNS 게시물 작성 | 생성형AI 활용 실무</title>
+<meta name="description" content="「생성형AI 활용 실무」 10주 2차시 교안: 페르소나에서 핵심 메시지 뽑기, 헤드라인·본문·CTA, 채널별 형식, 톤, 식품 광고의 과장 표현과 광고 표시">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<style>
+  .f-surface { fill: var(--surface); } .f-s2 { fill: var(--surface-2); } .f-line { fill: var(--line); }
+  .f-acc { fill: var(--accent); } .f-accs { fill: var(--accent-soft); }
+  .f-acc2 { fill: var(--accent-2); } .f-acc2s { fill: var(--accent-2-soft); }
+  .f-muted { fill: var(--muted); } .f-text { fill: var(--text); }
+  .slide.section .big { margin-bottom: 24px; }
+  .knob { transform-box: fill-box; animation: slide 4s ease-in-out infinite alternate; }
+  .knob.b { animation-delay: -2s; }
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(120px); } }
+  @media (prefers-reduced-motion: reduce) { .knob { animation: none; } }
+  .status { border-radius: 14px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; }
+  .status.bad { background: var(--bad-soft); } .status.ok { background: var(--ok-soft); } .status.mid { background: var(--accent-2-soft); }
+  .status b.k { display: block; font-size: 15px; }
+  .status.bad b.k { color: var(--bad); } .status.ok b.k { color: var(--ok); } .status.mid b.k { color: var(--accent-2); }
+
+  /* 판정 카드 */
+  .pcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pcard { font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 16px; padding: 12px 16px; min-height: 132px; display: flex; flex-direction: column; gap: 8px; transition: background .2s, border-color .2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .ic-badge { width: 44px; height: 44px; font-size: 23px; border-radius: 12px; }
+  .pcard .nm { font-size: 19px; font-weight: 800; line-height: 1.4; }
+  .pcard .ans { display: none; font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+  .pcard .verdict { display: none; font-weight: 800; font-size: 16px; }
+  .pcard.open .ans, .pcard.open .verdict { display: block; }
+  .pcard.open.ok { background: var(--ok-soft); border-color: var(--ok); } .pcard.open.ok .verdict { color: var(--ok); }
+  .pcard.open.mid { background: var(--accent-2-soft); border-color: var(--accent-2); } .pcard.open.mid .verdict { color: var(--accent-2); }
+  .pcard.open.no { background: var(--bad-soft); border-color: var(--bad); } .pcard.open.no .verdict { color: var(--bad); }
+
+  /* 페르소나 요약 카드 */
+  .pmini { background: var(--surface); border: 2px solid var(--accent); border-radius: 18px; padding: 16px 20px; display: grid; gap: 6px; font-size: 17px; line-height: 1.45; }
+  .pmini .row { display: grid; grid-template-columns: 82px 1fr; gap: 8px; }
+  .pmini .row b { color: var(--muted); font-size: 15px; }
+  .chip { font-size: 12px; font-weight: 800; border-radius: 6px; padding: 1px 6px; white-space: nowrap; vertical-align: 2px; }
+  .chip.e { background: var(--ok-soft); color: var(--ok); } .chip.h { background: var(--accent-2-soft); color: var(--accent-2); }
+
+  /* 게시물 모형 (특정 서비스 화면 아님) */
+  .post { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; display: grid; gap: 8px; width: 100%; }
+  .post .who { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; color: var(--muted); }
+  .post .who i { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); display: inline-block; }
+  .post .img { border-radius: 12px; background: var(--surface-2); display: grid; place-items: center; color: var(--muted); font-size: 14px; }
+  .post .hl { font-size: 22px; font-weight: 800; line-height: 1.35; }
+  .post .bd { font-size: 16px; line-height: 1.55; white-space: pre-line; }
+  .post .cta { justify-self: start; font-size: 15px; font-weight: 800; color: var(--surface); background: var(--accent); padding: 5px 14px; border-radius: 10px; }
+  .post .tags { font-size: 14.5px; color: var(--accent); }
+  .lbl-a { display: inline-block; font-size: 12px; font-weight: 800; color: var(--accent-2); border: 1.5px solid var(--accent-2); border-radius: 6px; padding: 0 6px; margin-right: 6px; vertical-align: 2px; }
+  .anat { display: grid; gap: 12px; }
+
+  /* 채널 */
+  .chbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .chbtns .btn { font-size: 16px; padding: 10px 8px; }
+  .chbtns .btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .rules { display: grid; gap: 6px; font-size: 15.5px; line-height: 1.45; }
+  .rules div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; }
+  .rules b { color: var(--accent); }
+  .sms { max-width: 400px; background: var(--surface-2); border-radius: 18px 18px 18px 4px; padding: 14px 16px; font-size: 16.5px; line-height: 1.6; white-space: pre-line; }
+  .vframe { width: 230px; height: 330px; border-radius: 20px; background: linear-gradient(180deg, var(--accent-soft), var(--surface-2)); position: relative; display: grid; place-items: center; color: var(--muted); font-size: 14px; flex: none; }
+  .vframe .sub { position: absolute; left: 12px; right: 12px; bottom: 54px; text-align: center; font-weight: 800; font-size: 17px; color: var(--text); background: var(--surface); border-radius: 8px; padding: 4px 6px; }
+
+  /* 검사기 */
+  .chk-in { width: 100%; font: inherit; font-size: 18px; line-height: 1.6; border: 2px solid var(--line); border-radius: 14px; padding: 10px 14px; background: var(--surface); color: var(--text); resize: none; height: 120px; }
+  .chk-in:focus { outline: none; border-color: var(--accent); }
+  .chk-out { font-size: 18px; line-height: 1.7; background: var(--surface-2); border-radius: 14px; padding: 10px 14px; min-height: 60px; }
+  .chk-out mark { border-radius: 4px; padding: 0 3px; font-weight: 700; }
+  .chk-out mark.bad { background: var(--bad-soft); color: var(--bad); box-shadow: inset 0 -2px 0 var(--bad); }
+  .chk-out mark.mid { background: var(--accent-2-soft); color: var(--accent-2); box-shadow: inset 0 -2px 0 var(--accent-2); }
+  .finds { display: grid; gap: 6px; align-content: start; flex: 1; min-height: 0; overflow: auto; }
+  .find { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 14.5px; line-height: 1.4; }
+  .find b { font-size: 15px; } .find.bad b { color: var(--bad); } .find.mid b { color: var(--accent-2); }
+  .find .fix { color: var(--ok); font-weight: 700; }
+  .samples { display: flex; gap: 8px; flex-wrap: wrap; }
+  .samples .btn { font-size: 15px; padding: 7px 12px; }
+  .chat .msg { font-size: 15.5px; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">생성형AI 활용 실무 · 10주차 2차시</p>
+    <h1>카피와<br>SNS 게시물 작성</h1>
+    <p class="lead" style="font-size:25px">한 사람에게 말을 걸고,<br>지킬 수 있는 말만 쓴다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>실습 차시</span><span>직접 해 보기 4개</span><span>Gemini · Claude</span></div>
+  </div>
+  <svg viewBox="0 0 520 440" style="width:520px;flex:none" aria-hidden="true">
+    <rect x="60" y="20" width="270" height="400" rx="30" class="f-surface" stroke="var(--line)" stroke-width="3"/>
+    <rect x="84" y="50" width="222" height="160" rx="16" class="f-accs"/>
+    <g transform="translate(160 96) scale(3)" style="color:var(--accent)"><use href="#i-sparkles" width="24" height="24"/></g>
+    <rect x="84" y="232" width="200" height="20" rx="10" class="f-text" opacity=".85"/>
+    <g fill="var(--line)"><rect x="84" y="268" width="222" height="12" rx="6"/><rect x="84" y="292" width="190" height="12" rx="6"/><rect x="84" y="316" width="160" height="12" rx="6"/></g>
+    <rect x="84" y="350" width="120" height="36" rx="12" class="f-acc"/>
+    <!-- 톤·길이 슬라이더 -->
+    <g transform="translate(330 120)">
+      <rect x="0" y="0" width="180" height="200" rx="22" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+      <rect x="24" y="58" width="132" height="8" rx="4" class="f-line"/><circle class="knob" cx="30" cy="62" r="13" fill="var(--accent)"/>
+      <rect x="24" y="138" width="132" height="8" rx="4" class="f-line"/><circle class="knob b" cx="30" cy="142" r="13" fill="var(--accent-2)"/>
+      <text x="24" y="36" style="font-size:15px;font-weight:800;fill:var(--muted)">톤</text>
+      <text x="24" y="116" style="font-size:15px;font-weight:800;fill:var(--muted)">길이</text>
+    </g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 수업이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">핵심 메시지</div><div class="d">페르소나의 불편·목표에서 근거 있는 한 문장을 뽑는다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">카피 구성</div><div class="d">헤드라인·본문·CTA로 카피를 쓰고 AI로 여러 안을 만든다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">채널별 형식</div><div class="d">피드·짧은 영상·블로그·문자에 맞게 길이와 형식을 바꾼다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">광고 주의</div><div class="d">식품 광고의 과장 표현을 찾고, 광고임을 밝힌다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>오늘의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:2;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:5;background:var(--accent-soft)"><b>① 핵심 메시지</b><small>직접 해 보기 1</small></div>
+      <div style="flex:7;background:var(--accent-soft)"><b>② 카피 쓰기</b><small>직접 해 보기 1 · 실습</small></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>③ 채널별 형식</b><small>직접 해 보기 1</small></div>
+      <div style="flex:5;background:var(--accent-2-soft)"><b>④ 표시·광고 주의</b><small>직접 해 보기 1</small></div>
+      <div style="flex:2;background:var(--surface-2)"><b>정리</b></div>
+    </div>
+    <div class="box warn" style="margin-top:28px"><p style="font-size:20px;margin:0"><svg class="ic"><use href="#i-alert"/></svg> 바다결은 <strong>건강 간식</strong> 회사입니다. 식품 광고에는 쓰면 안 되는 표현이 법으로 정해져 있어서, 오늘은 “잘 쓰기”와 함께 <strong>“안 쓰기”</strong>도 연습합니다. 이 차시는 법률 상담이 아니라 기본을 익히는 시간입니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 4. 도입: 지난 시간의 페르소나 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">도입</span></div>
+  <h2>지난 시간에 만든 사람, 서윤에게 무엇을 말할까?</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <div class="pmini" style="flex:1.1">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px"><span class="ic-badge" style="border-radius:50%"><svg class="ic"><use href="#i-user"/></svg></span><div><div style="font-size:22px;font-weight:800">서윤 <span class="muted" style="font-size:15px;font-weight:600">(가상 · 20~30대 가설)</span></div><div class="muted" style="font-size:15px">10-1 페르소나 빌더 「근거로 채우기」 결과</div></div></div>
+      <div class="row"><b>상황</b><span>출근·등교 전 바쁜 아침 <span class="chip e">근거</span></span></div>
+      <div class="row"><b>목표</b><span>간단하고 너무 달지 않은 한 끼 <span class="chip e">근거</span></span></div>
+      <div class="row"><b>불편</b><span>양에 비해 가격이 부담 <span class="chip e">근거</span></span></div>
+      <div class="row"><b>채널</b><span>매장에서 맛보고 온라인 재주문 <span class="chip e">근거</span></span></div>
+      <div class="row"><b>구매 이유</b><span>바삭하고 덜 단 맛 <span class="chip e">근거</span></span></div>
+    </div>
+    <div style="flex:1;display:grid;gap:14px">
+      <div class="box think frag show" style="margin:0"><p style="font-size:21px;margin:0">카피는 <strong>“우리 제품 자랑”</strong>이 아니라 <strong>“서윤의 아침 고민에 대한 답”</strong>입니다.</p></div>
+      <div class="box frag" style="margin:0"><p style="font-size:20px;margin:0">오늘 순서: 페르소나 → <strong>핵심 메시지 한 문장</strong> → 카피 여러 안 → 채널에 맞게 → <strong>과장·광고 표시 점검</strong></p></div>
+      <p class="muted frag" style="font-size:17px;margin:0">10-1 양식에 내 페르소나를 적어 두었다면 그것으로 따라 해도 됩니다.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시 · 바다결은 수업용 가상 회사</span><span class="no"></span></div>
+</section>
+
+<!-- 5. 섹션 ① -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">①</div><h2>페르소나 → 핵심 메시지</h2><p>하고 싶은 말이 아니라, 들을 사람에게 필요한 말.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-target"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 6. 메시지 만드는 3단계 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 핵심 메시지</span></div>
+  <h2>핵심 메시지 = 고객의 고민 + 우리의 약속 + 근거</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox frag show"><span class="ic-badge lg o"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">고객의 고민</div><div class="d">“바쁜 아침, 간단하지만<br>너무 단 건 싫다”</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">우리의 약속</div><div class="d">한 줌으로 간단하게,<br>많이 달지 않게</div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">근거</div><div class="d">아침 후기 15건 중<br><b>7건이 무가당 견과 믹스</b></div></div>
+      <div class="arrow">›</div>
+      <div class="stepbox goal frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">핵심 메시지</div><div class="d" style="font-size:18px;font-weight:700">“덜 달아서 매일 아침,<br>바다결 무가당 견과 믹스”</div></div>
+    </div>
+    <p class="muted frag" style="margin-top:24px;font-size:21px">근거가 제품도 골라 줍니다. 아침 후기가 가장 많은 제품으로 시작 — 카피는 바뀌어도 <strong style="color:var(--text)">핵심 메시지는 한 문장으로 고정</strong>합니다.</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시 · 후기 건수: ../materials/reviews_2026.csv (가상)</span><span class="no"></span></div>
+</section>
+
+<!-- 7. 직접 해 보기 1 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">① 핵심 메시지 · 직접 해 보기 1</span></div>
+  <h2>AI가 낸 메시지 후보, 써도 될까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg> <span class="muted" style="font-size:20px;font-weight:500">— 먼저 판단하고 눌러 보세요</span></h2>
+  <div class="body" style="justify-content:flex-start">
+    <div class="pcards" id="msgcards"></div>
+    <p class="muted" style="margin-top:14px;font-size:17px" id="msg-score">0 / 6 확인</p>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시 · 후보 문장은 미리 써 둔 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 8. 섹션 ② -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">②</div><h2>카피 쓰기</h2><p>멈추게 하고, 이유를 주고, 다음 행동을 알려 준다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-log"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 9. 카피의 구성 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 카피 쓰기</span></div>
+  <h2>카피의 세 부분: 헤드라인 · 본문 · CTA</h2>
+  <div class="body" style="flex-direction:row;align-items:center;gap:34px">
+    <div class="post" style="width:430px;flex:none">
+      <div class="who"><i></i>바다결 (가상 계정)</div>
+      <div class="img" style="height:120px">제품 사진 자리</div>
+      <div class="hl"><span class="lbl-a">헤드라인</span>바쁜 아침엔 한 줌으로 가볍게</div>
+      <div class="bd"><span class="lbl-a">본문</span>요거트나 우유에 한 줌 올려 보세요. “많이 달지 않아서 아침에 먹기 좋아요” — 이 제품 후기에서 가장 많이 들은 말이에요.</div>
+      <div><span class="lbl-a">CTA</span><span class="cta">자사몰에서 주문하기</span></div>
+    </div>
+    <div class="anat" style="flex:1">
+      <div class="tile row frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-eye"/></svg></span><div><div class="h">헤드라인 — 멈추게 한다</div><div class="d">스크롤을 멈추게 하는 첫 줄. 고객의 상황(바쁜 아침)으로 시작하면 “내 이야기”가 된다.</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div><div class="h">본문 — 이유와 근거</div><div class="d">왜 이 제품인지 짧게. 후기·가격처럼 <strong>확인할 수 있는 사실</strong>을 넣는다.</div></div></div>
+      <div class="tile row frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-play"/></svg></span><div><div class="h">CTA — 다음 행동</div><div class="d">Call To Action. “주문하기”, “후기 보기”처럼 <strong>할 일 하나</strong>만 분명하게.</div></div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시 · 게시물 모양은 특정 서비스가 아닌 단순화한 예시</span><span class="no"></span></div>
+</section>
+
+<!-- 10. 직접 해 보기 2: 톤·길이 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 카피 쓰기 · 직접 해 보기 2</span></div>
+  <h2>같은 메시지, 톤과 길이를 바꾸면? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 360px">
+    <div class="plot" style="padding:16px 20px;align-items:center"><div class="post" id="tone-post" style="border:0;padding:0"></div></div>
+    <div class="side">
+      <div class="ctrl"><label>톤 <output id="tone-o">균형</output></label><input id="tone" type="range" min="0" max="2" step="1" value="1" aria-label="톤: 친근함에서 차분함까지"><div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted)"><span>친근함</span><span>차분함·정보</span></div></div>
+      <div class="ctrl"><label>길이 <output id="len-o">보통</output></label><input id="len" type="range" min="0" max="2" step="1" value="1" aria-label="길이: 짧게에서 길게까지"><div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted)"><span>짧게</span><span>길게</span></div></div>
+      <div class="meter"><div class="lbl">본문 글자 수 (공백 포함)</div><div class="val" id="tone-n" style="font-size:32px">0자</div></div>
+      <div class="callout b" id="tone-msg"></div>
+      <div class="muted" style="font-size:14px">핵심 메시지는 그대로: “덜 달아서 매일 아침”</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시 · 9가지 카피는 미리 써 둔 예시 · 숫자는 가상 후기 데이터</span><span class="no"></span></div>
+</section>
+
+<!-- 11. 실습 프롬프트 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 카피 쓰기 · 실습</span></div>
+  <h2>따라 해 보기: 카피 여러 안을 한 번에 받기</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:24px">
+    <div style="flex:1.3;display:flex;flex-direction:column;justify-content:center">
+      <div class="prompt"><div class="prompt-h">프롬프트<button class="copy" type="button">복사</button></div><pre>너는 <mark>부산의 건강 간식 회사 바다결</mark>의 카피라이터야.
+[페르소나] <mark>서윤: 출근 전 바쁜 아침을 간단히 해결하고 싶다. 너무 단 건 싫다. 양에 비해 가격이 부담된다.</mark>
+[핵심 메시지] <mark>덜 달아서 매일 아침, 바다결 무가당 견과 믹스(13,500원)</mark>
+[근거] 후기 “바삭하고 많이 달지 않아서 아침에 먹기 좋아요”가 이 제품에서 가장 많다.
+위 내용으로 <mark>인스타그램 피드</mark> 카피 3안을 표로 써 줘. 열: 헤드라인 / 본문(3줄 이내) / CTA / 톤.
+- 3안은 톤을 다르게: 친근함, 균형, 차분함
+- 질병 예방·치료, 체중 감량, “최고·100%” 같은 표현은 쓰지 마.
+- 근거에 없는 사실(수상 경력, 연혁, 성분 수치)은 지어내지 마.</pre></div>
+    </div>
+    <div style="flex:1;display:grid;gap:10px;align-content:center">
+      <div class="muted" style="font-size:16px;font-weight:700">이어서 다듬기 (3-3 대화로 결과 다듬기)</div>
+      <div class="prompt"><div class="prompt-h">더 고르기<button class="copy" type="button">복사</button></div><pre>2안의 헤드라인만 10개 더 써 줘. 15자 이내로.</pre></div>
+      <div class="prompt"><div class="prompt-h">줄이기<button class="copy" type="button">복사</button></div><pre>3안을 문자 메시지용으로 60자 이내로 줄여 줘.</pre></div>
+      <div class="prompt"><div class="prompt-h">점검 맡기기<button class="copy" type="button">복사</button></div><pre>방금 쓴 카피에서 근거가 없는 표현이 있으면 표시해 줘.</pre></div>
+      <p class="muted" style="font-size:15px;margin:0">Gemini · Claude 어느 쪽이든 같습니다. 한도에 걸리면 다른 쪽으로 이어 하세요.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시 · 주황색 부분은 내 페르소나·메시지로 바꿔 쓰기</span><span class="no"></span></div>
+</section>
+
+<!-- 12. 예시 답과 고르기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 카피 쓰기 · 실습</span></div>
+  <h2>AI는 여러 안을 내고, 고르는 건 사람</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:24px">
+    <div class="chat" style="flex:1.3">
+      <div class="chat-h"><svg class="ic"><use href="#i-chat"/></svg> AI 채팅 (화면은 단순화한 예시)</div>
+      <div class="msg ai" style="max-width:100%"><span class="who">예시 답변 — 실제 답은 매번 다를 수 있음</span><b>1안 (친근함)</b> 오늘 아침, 바삭하게 시작해요 / 요거트에 한 줌, 많이 달지 않아 매일 먹기 좋아요. / 자사몰에서 보기
+<b>2안 (균형)</b> 덜 달아서, 매일 아침 / 견과가 넉넉하고 많이 달지 않다는 후기가 많은 제품이에요. / 제품 자세히 보기
+<b>3안 (차분함)</b> 아침 한 줌, 담백하게 / 이 제품 후기에서 가장 많이 나온 말 — “많이 달지 않아서 아침에 먹기 좋아요.” / 후기 전체 보기</div>
+      <div class="msg ai warn" style="max-width:100%"><span class="who">예시 — 이런 문장이 섞여 나오면</span>“10년 전통 부산 대표 간식” ← 근거에 없는 연혁. 바다결 자료 어디에도 없습니다 (2-3 환각).</div>
+    </div>
+    <div style="flex:1;display:grid;gap:10px;align-content:center">
+      <div class="muted" style="font-size:16px;font-weight:700">고르는 기준 네 가지</div>
+      <div class="tile row frag show" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="d" style="font-size:17px"><strong style="color:var(--text)">페르소나</strong> — 서윤의 아침 고민에 답하는가?</div></div>
+      <div class="tile row frag" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-database"/></svg></span><div class="d" style="font-size:17px"><strong style="color:var(--text)">근거</strong> — 후기·가격 등 확인할 수 있는 사실인가?</div></div>
+      <div class="tile row frag" style="padding:12px 16px"><span class="ic-badge o"><svg class="ic"><use href="#i-alert"/></svg></span><div class="d" style="font-size:17px"><strong style="color:var(--text)">과장</strong> — 효능·최상급 표현이 없는가? (④에서 점검)</div></div>
+      <div class="tile row frag" style="padding:12px 16px"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div class="d" style="font-size:17px"><strong style="color:var(--text)">채널</strong> — 올릴 곳의 길이·형식에 맞는가? (③에서)</div></div>
+      <a class="btn frag" href="materials/copy_worksheet.md" download style="justify-self:start">카피 작성표 받기</a>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 13. 섹션 ③ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">③</div><h2>채널별 형식</h2><p>같은 메시지도 올리는 곳에 따라 모양이 달라진다.</p></div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-map"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 14. 직접 해 보기 3: 채널 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">③ 채널별 형식 · 직접 해 보기 3</span></div>
+  <h2>채널을 바꿔 보자: 무엇이 달라질까? <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot" style="padding:16px 20px" id="ch-view"></div>
+    <div class="side">
+      <div class="chbtns" id="ch-btns">
+        <button class="btn ghost" type="button" data-c="feed" aria-pressed="true">인스타그램 피드</button>
+        <button class="btn ghost" type="button" data-c="short" aria-pressed="false">짧은 영상 캡션</button>
+        <button class="btn ghost" type="button" data-c="blog" aria-pressed="false">블로그</button>
+        <button class="btn ghost" type="button" data-c="sms" aria-pressed="false">문자</button>
+      </div>
+      <div class="rules" id="ch-rules"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시 · 화면은 특정 서비스가 아닌 단순화한 예시 · 서비스 화면과 기능은 바뀔 수 있음</span><span class="no"></span></div>
+</section>
+
+<!-- 15. 섹션 ④ -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:50px">
+  <div style="flex:1"><div class="big">④</div><h2>표시·광고 주의</h2><p>식품 광고에는 하면 안 되는 말이 있다.</p></div>
+  <span class="ic-badge lg o" style="width:220px;height:220px;font-size:130px;border-radius:50px"><svg class="ic"><use href="#i-shield"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 16. 식품 광고 금지 유형 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 표시·광고 주의</span></div>
+  <h2>식품 광고에서 하면 안 되는 것 (대표 유형)</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);gap:14px">
+      <div class="tile frag show" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--bad)"><use href="#i-x"/></svg> 질병 예방·치료 효능</div><div class="d">“혈당을 낮춰 주는”, “변비에 좋은”</div></div>
+      <div class="tile frag" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--bad)"><use href="#i-x"/></svg> 의약품으로 오인</div><div class="d">“약처럼 먹는 간식”, “먹는 ○○약”</div></div>
+      <div class="tile frag" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--bad)"><use href="#i-x"/></svg> 건강기능식품으로 오인</div><div class="d">“살 빠지는”, “체지방 감소”, “면역력 강화”</div></div>
+      <div class="tile frag" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--bad)"><use href="#i-x"/></svg> 거짓·과장</div><div class="d">“100% 건강”, “부산 최고”, 근거 없는 수치</div></div>
+      <div class="tile frag" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--bad)"><use href="#i-x"/></svg> 소비자를 속이는 광고</div><div class="d">회사가 고객인 척 쓴 후기, 사실과 다른 “오늘만”</div></div>
+      <div class="tile frag" style="padding:16px 18px;gap:6px"><div class="h" style="font-size:20px"><svg class="ic" style="color:var(--bad)"><use href="#i-x"/></svg> 비방·근거 없는 비교</div><div class="d">“○○사 제품보다 몸에 좋은”</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:18px;padding:16px 24px"><p style="font-size:19px;margin:0">바다결 제품은 <strong>일반식품</strong>입니다. 맛·식감·먹는 상황·가격·후기처럼 <strong>확인할 수 있는 사실</strong>로 말하고, 몸에 대한 효과는 말하지 않습니다.</p></div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시 · 「식품 등의 표시·광고에 관한 법률」 제8조(부당한 표시 또는 광고행위의 금지) 일부 요약 · 예시 문장은 설명용</span><span class="no"></span></div>
+</section>
+
+<!-- 17. 직접 해 보기 4: 과장 표현 검사기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 표시·광고 주의 · 직접 해 보기 4</span></div>
+  <h2>과장 표현 검사기: 카피를 고쳐 보자 <svg class="ic" style="color:var(--accent);font-size:30px"><use href="#i-hand"/></svg></h2>
+  <div class="demo" style="grid-template-columns:1fr 380px">
+    <div class="plot" style="flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px;padding:14px 16px">
+      <div class="samples"><button class="btn ghost" type="button" data-s="0">과장 예시 1</button><button class="btn ghost" type="button" data-s="1">과장 예시 2</button><button class="btn ghost" type="button" data-s="2">고친 예시</button><span class="muted" style="font-size:14px;align-self:center">또는 직접 고쳐 쓰기</span></div>
+      <textarea class="chk-in" id="chk-in" aria-label="점검할 카피" spellcheck="false"></textarea>
+      <div class="muted" style="font-size:14px;font-weight:700">검사 결과 (표시된 부분)</div>
+      <div class="chk-out" id="chk-out"></div>
+    </div>
+    <div class="side">
+      <div class="grid g2" style="gap:10px">
+        <div class="meter"><div class="lbl">바꿔야 할 표현</div><div class="val o" id="chk-bad" style="font-size:32px">0</div></div>
+        <div class="meter"><div class="lbl">사실 확인 필요</div><div class="val" id="chk-mid" style="font-size:32px">0</div></div>
+      </div>
+      <div class="finds" id="chk-finds"></div>
+      <div class="status ok" id="chk-st"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시 · 수업용 간이 검사기 — 단어 목록에 없는 표현은 찾지 못함. 최종 판단은 담당자와 관련 규정으로</span><span class="no"></span></div>
+</section>
+
+<!-- 18. 광고라고 밝히기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">④ 표시·광고 주의</span></div>
+  <h2>광고는 광고라고 밝힌다</h2>
+  <div class="body" style="flex-direction:row;align-items:stretch;gap:22px">
+    <div class="tile frag show" style="flex:1;padding:20px 22px;gap:8px">
+      <div style="display:flex;align-items:center;gap:12px"><span class="ic-badge"><svg class="ic"><use href="#i-user"/></svg></span><div class="h">SNS·블로그 협찬 후기</div></div>
+      <ul style="font-size:17px;margin:0;line-height:1.5">
+        <li>제품 무료 제공·할인·광고비를 받고 쓴 글이면 <strong>“광고”, “협찬”</strong> 등 대가 관계를 밝힌다</li>
+        <li><strong>제목이나 첫 부분</strong>처럼 잘 보이는 곳에 — “더보기” 뒤, 댓글 속은 안 됨</li>
+        <li>영상은 시작과 끝에, 반복해서</li>
+      </ul>
+      <p class="muted" style="font-size:13.5px;margin:0">공정거래위원회 「추천·보증 등에 관한 표시·광고 심사지침」 요약</p>
+    </div>
+    <div class="tile frag" style="flex:1;padding:20px 22px;gap:8px">
+      <div style="display:flex;align-items:center;gap:12px"><span class="ic-badge"><svg class="ic"><use href="#i-chat"/></svg></span><div class="h">광고 문자</div></div>
+      <ul style="font-size:17px;margin:0;line-height:1.5">
+        <li><strong>미리 동의한 사람</strong>에게만 보낸다</li>
+        <li><strong>“(광고)”</strong>로 시작하고, 보내는 곳 이름·연락처와 <strong>무료 수신거부 방법</strong>을 적는다</li>
+        <li>밤 9시~아침 8시는 <strong>별도 동의</strong>가 있어야 한다</li>
+      </ul>
+      <p class="muted" style="font-size:13.5px;margin:0">「정보통신망법」 제50조(영리목적의 광고성 정보 전송 제한) 요약</p>
+    </div>
+    <div style="flex:1.05;display:grid;gap:10px;align-content:center" class="frag">
+      <div class="prompt"><div class="prompt-h">AI에게 1차 점검 맡기기<button class="copy" type="button">복사</button></div><pre>아래 <mark>바다결 간식 카피</mark>에서
+① 질병·건강 효능을 떠올리게 하는 표현
+② 근거 없는 최상급·과장 표현
+③ 확인이 필요한 숫자·사실
+을 찾아 표로 정리하고, 고친 문장을 제안해 줘. 법적 판단은 하지 말고 “확인 필요”로만 표시해 줘.
+[카피] <mark>여기에 붙여 넣기</mark></pre></div>
+      <p class="muted" style="font-size:15px;margin:0">AI의 점검도 빠뜨릴 수 있습니다. <strong style="color:var(--text)">마지막 확인과 책임은 사람</strong>에게 있습니다.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시 · 법률 상담이 아닌 기본 안내 — 실제 집행 전에는 최신 규정과 담당자 확인</span><span class="no"></span></div>
+</section>
+
+<!-- 19. 정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">정리</span></div>
+  <h2>오늘의 핵심 세 가지</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag show"><span class="ic-badge lg"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">메시지는 한 문장</div><div style="font-size:21px">고객의 고민 + 우리의 약속 + <strong>근거</strong>. 카피는 바뀌어도 메시지는 고정</div></div>
+      <div class="tile frag"><span class="ic-badge lg"><svg class="ic"><use href="#i-log"/></svg></span><div class="h">AI는 여러 안, 사람은 선택</div><div style="font-size:21px">헤드라인·본문·CTA를 톤·채널별로 받고, <strong>네 가지 기준</strong>으로 고른다</div></div>
+      <div class="tile frag"><span class="ic-badge lg o"><svg class="ic"><use href="#i-shield"/></svg></span><div class="h">효능 말고 사실</div><div style="font-size:21px">일반식품에 <strong>질병·체중 효과는 쓰지 않는다</strong>. 대가를 받은 글은 광고라고 밝힌다</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 20. 확인 문제 1·2 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제 <span class="muted" style="font-size:22px;font-weight:500">— 보기를 눌러 보세요</span></h2>
+  <div class="grid g2">
+    <div class="q" data-answer="d" data-explain="CTA(Call To Action)는 읽은 사람이 다음에 할 행동을 알려 주는 부분입니다. 하나만 분명하게 씁니다.">
+      <p class="q-title"><b>Q1.</b> 카피에서 <u>CTA</u>에 해당하는 것은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">바쁜 아침엔 한 줌으로 가볍게</button>
+        <button type="button" data-v="b">이 제품 후기에서 가장 많이 들은 말이에요</button>
+        <button type="button" data-v="c">#아침간식</button>
+        <button type="button" data-v="d">자사몰에서 주문하기</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="b" data-explain="일반식품에 체중 감량 효과를 표방하면 건강기능식품으로 오인하게 하거나 과장 광고가 될 수 있습니다. 맛·상황 같은 사실로 바꿉니다.">
+      <p class="q-title"><b>Q2.</b> 바다결 카피로 <u>바꿔야 할</u> 표현은?</p>
+      <div class="opts">
+        <button type="button" data-v="a">많이 달지 않아 아침에 먹기 좋아요</button>
+        <button type="button" data-v="b">먹기만 해도 살 빠지는 아침 간식</button>
+        <button type="button" data-v="c">부산에서 만든 견과 믹스 13,500원</button>
+        <button type="button" data-v="d">요거트에 한 줌 올려 보세요</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 21. 확인 문제 3·4 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 문제</span></div>
+  <h2>확인 문제</h2>
+  <div class="grid g2">
+    <div class="q" data-answer="a" data-explain="대가를 받은 추천·후기는 ‘광고’, ‘협찬’ 등 경제적 이해관계를 제목이나 첫 부분처럼 소비자가 쉽게 볼 수 있는 곳에 밝혀야 합니다.">
+      <p class="q-title"><b>Q3.</b> 제품을 무료로 받고 쓴 블로그 후기, 광고 표시는 어디에?</p>
+      <div class="opts">
+        <button type="button" data-v="a">제목이나 글의 첫 부분처럼 잘 보이는 곳</button>
+        <button type="button" data-v="b">글 맨 아래 작은 글씨로만</button>
+        <button type="button" data-v="c">댓글로 따로</button>
+        <button type="button" data-v="d">개인 블로그라 표시하지 않아도 된다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+    <div class="q" data-answer="c" data-explain="AI가 그럴듯한 연혁·수상 경력을 지어낼 수 있습니다(환각). 회사 자료로 사실을 확인하고, 없으면 빼야 합니다.">
+      <p class="q-title"><b>Q4.</b> AI 카피에 “10년 전통 부산 대표 간식”이 들어 있다. 어떻게 할까?</p>
+      <div class="opts">
+        <button type="button" data-v="a">그럴듯하니 그대로 쓴다</button>
+        <button type="button" data-v="b">AI가 썼으니 회사 책임이 아니다</button>
+        <button type="button" data-v="c">회사 자료로 사실인지 확인하고, 근거가 없으면 뺀다</button>
+        <button type="button" data-v="d">“20년 전통”으로 더 키운다</button>
+      </div>
+      <div class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+<!-- 22. 다음 차시 -->
+<section class="slide section" style="flex-direction:row;align-items:center;gap:40px">
+  <div style="flex:1">
+    <div class="s-head"><span class="sec">다음 차시 예고</span></div>
+    <div class="big">10-3</div>
+    <h2>홍보 콘텐츠 기획 실습</h2>
+    <p>페르소나와 카피를 모아 바다결의 작은 홍보 캠페인을 기획합니다. 목표·채널·콘텐츠 3개·일정·성과 지표를 한 장에 담고, 발행 전 점검까지 해 봅니다.</p>
+    <p style="margin-top:20px;display:flex;gap:12px"><a class="btn ghost" href="lesson01.html">← 1차시</a><a class="btn" href="lesson03.html">다음 차시로 →</a></p>
+  </div>
+  <span class="ic-badge lg" style="width:220px;height:220px;font-size:130px;border-radius:50px;background:var(--surface)"><svg class="ic"><use href="#i-map"/></svg></span>
+  <div class="s-foot"><span>생성형AI 활용 실무 · 10주 2차시</span><span class="no"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">10주 2차시 · 카피와 SNS 게시물 작성</span>
+  <span class="spacer"></span>
+  <span class="hint">← → 키 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="lesson02.js"></script>
+</body>
+</html>
