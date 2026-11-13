@@ -556,7 +556,8 @@ claude -p "$(cat .claude/review_prompt.md) $(cat /tmp/diff.txt)" \
 <section class="slide section lab">
   <div class="big">④</div>
   <h2>실습 6: 연구실 저장소 꾸리기</h2>
-  <p>6-1 서브에이전트로 조사·리뷰 → 6-2 worktree 병렬 → 6-3 훅과 헤드리스</p>
+  <p>6-1 서브에이전트로 조사·리뷰 → 6-2 Orca로 병렬 작업 → 6-3 훅과 헤드리스</p>
+  <p class="labgo"><a class="btn" href="https://github.com/Daeil-Noh/Lectures/tree/main/multi-agent/labs/lab-repo-template" target="_blank" rel="noopener"><svg class="ic"><use href="#i-git"/></svg> 실습 6 템플릿 열기 (GitHub)</a></p>
   <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
   <aside class="notes" data-min="1"></aside>
 </section>
@@ -573,7 +574,7 @@ claude -p "$(cat .claude/review_prompt.md) $(cat /tmp/diff.txt)" \
         <li><div><code class="i">/permissions</code> 로 권한 규칙 확인</div></li>
         <li><div><code class="i">/mcp</code> 로 lab-papers 서버 연결 확인<small>처음 쓸 때 프로젝트 MCP 서버를 승인하라는 질문이 나온다</small></div></li>
       </ol>
-      <div class="box think"><p class="box-title">확인 질문</p><p class="small" style="margin:0">CLAUDE.md의 규칙 중 권한 · 훅으로 <b>강제되는 것</b>과 <b>부탁에 그치는 것</b>을 하나씩 찾아보자.</p></div>
+      <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start"><a class="btn" href="https://github.com/Daeil-Noh/Lectures/tree/main/multi-agent/labs/lab-repo-template" target="_blank" rel="noopener"><svg class="ic"><use href="#i-git"/></svg> 실습 6 템플릿 열기 (GitHub)</a><div class="box think"><p class="box-title">확인 질문</p><p class="small" style="margin:0">CLAUDE.md의 규칙 중 권한 · 훅으로 <b>강제되는 것</b>과 <b>부탁에 그치는 것</b>을 하나씩 찾아보자.</p></div></div>
     </div>
   </div>
   <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · 슬래시 명령 이름은 Claude Code 버전에 따라 다를 수 있음</span><span class="no"></span></div>

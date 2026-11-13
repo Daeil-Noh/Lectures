@@ -74,3 +74,7 @@ code.i { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .86em
 select.sel { font: inherit; font-size: 16px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
 .slide.section .big { margin-bottom: 24px; }
 .chk > span { flex: 1; }
+/* 실습 시작 장의 실습 파일 버튼 */
+.labgo { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 14px; margin-top: 30px; }
+.labgo a, .slide a.btn { text-decoration: none; }
+.labgo .colab, .labgo .btn { font-size: 20px; padding: 12px 22px; }
