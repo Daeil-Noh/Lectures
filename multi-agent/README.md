@@ -7,9 +7,9 @@
 | 회 | 주제 | 단계 | 실습 |
 |---|---|---|---|
 | [1회](s01/) | 왜 여러 에이전트인가 — 개념 · 패턴 · 판단 | 초급 | [실습 1](labs/lab01_three_ways.ipynb) 한 번 · 체인 · 병렬 비교 |
-| [2회](s02/) | 처음부터 만들기 — 도구 루프와 리드 + 워커 | 중급 | [실습 2](labs/lab02_agent_loop.ipynb) 에이전트 루프 · [실습 3](labs/lab03_lead_workers.ipynb) 리드 + 워커 |
+| [2회](s02/) | 들여다보고 고쳐 보기 — 도구 루프와 리드 + 워커 | 중급 | [실습 2](labs/lab02_agent_loop.ipynb) 에이전트 루프 · [실습 3](labs/lab03_lead_workers.ipynb) 리드 + 워커 |
 | [3회](s03/) | 컨텍스트 · 상태 · 검토 루프, MCP와 프레임워크 | 중급 | [실습 4](labs/lab04_router_reviewer.ipynb) 라우터 + 작성–검토 · [실습 5](labs/lab05_agent_sdk.ipynb) Agent SDK(선택) |
-| [4회](s04/) | 코딩 에이전트 여럿 운용하기 — 개발 환경 구축 | 고급 | [실습 6](labs/lab-repo-template/) 연구실 저장소 템플릿 (로컬 Claude Code) |
+| [4회](s04/) | 코딩 에이전트 여럿 운용하기 — 개발 환경 구축 · Orca | 고급 | [실습 6](labs/lab-repo-template/) 연구실 저장소 템플릿 (로컬 Claude Code) |
 | [5회](s05/) | 평가 · 관측 · 안전 · 비용, 미니 프로젝트 발표 | 고급 | [실습 7](labs/lab07_eval_harness.ipynb) 추적 + 평가 하네스 |
 
 ## 구조
@@ -30,7 +30,7 @@ multi-agent/
 ## 실습 준비
 
 - Colab 실습: Claude API 키를 콘솔에서 발급하고 **사용 한도**를 정한 뒤, Colab 🔑 보안 비밀에 `ANTHROPIC_API_KEY`로 저장
-- 4회: 로컬 PC에 git · Node.js · Python 3.10+ · Claude Code
+- 4회: 로컬 PC에 git · Node.js · Python 3.10+ · Claude Code · Orca 데스크톱 앱(무료)
 - 모델 이름(`claude-sonnet-5-5`, `claude-haiku-5-5` 등) · 가격 · 도구 옵션은 2026년 11월 공식 문서 기준
 
 ## 고치고 점검하기

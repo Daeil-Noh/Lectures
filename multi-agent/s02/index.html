@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>2회 · 처음부터 만들기 | 멀티 에이전트 시스템 구축</title>
-<meta name="description" content="멀티 에이전트 시스템 구축 2회: Messages API 도구 사용 루프, 서브에이전트를 도구로 감싸기, 위임 브리프, 병렬 실행과 결과 합치기">
+<title>2회 · 들여다보고 고쳐 보기 | 멀티 에이전트 시스템 구축</title>
+<meta name="description" content="멀티 에이전트 시스템 구축 2회: 완성된 코드를 읽고 고치며 보는 Messages API 도구 사용 루프, 서브에이전트를 도구로 감싸기, 위임 브리프, 병렬 실행과 결과 합치기">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="../../assets/css/slides.css">
 <link rel="stylesheet" href="../../assets/css/ma.css">
@@ -38,7 +38,7 @@
 <section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
   <div style="flex:1">
     <p class="eyebrow">멀티 에이전트 시스템 구축 · 2회</p>
-    <h1>처음부터<br>만들기</h1>
+    <h1>들여다보고<br>고쳐 보기</h1>
     <p class="lead" style="font-size:25px">도구 사용 루프에서 리드 + 워커 시스템까지</p>
     <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
     <div class="meta"><span>중급</span><span>직접 해 보기 3개</span><span>실습 2</span></div>
@@ -58,7 +58,7 @@
     <rect x="68" y="232" width="8" height="18" fill="#5fcfbd" class="spin"><animate attributeName="opacity" values="1;0;1" dur="1.2s" repeatCount="indefinite"/></rect>
   </svg>
   <div class="s-foot"><span></span><span class="no"></span></div>
-  <aside class="notes" data-min="2">지난 시간 미니 프로젝트 스케치를 2~3명에게 1분씩 듣고 시작해도 좋다(시간이 남으면). 오늘은 프레임워크 없이 순수 API로 만든다 — 프레임워크가 뒤에서 해 주는 일을 알아야 3회에 프레임워크를 제대로 고를 수 있다.</aside>
+  <aside class="notes" data-min="2">지난 시간 미니 프로젝트 스케치를 2~3명에게 1분씩 듣고 시작해도 좋다(시간이 남으면). 오늘은 프레임워크 없이 순수 API로 짠 코드를 들여다본다. 학생이 처음부터 타이핑하지 않고, 완성된 코드를 읽고 한 곳씩 고쳐 결과가 어떻게 바뀌는지 본다. 프레임워크나 Orca 같은 도구가 뒤에서 해 주는 일을 알아야 3·4회에 도구를 제대로 고를 수 있다.</aside>
 </section>
 
 <!-- 2. 학습 목표 -->
@@ -67,8 +67,8 @@
   <h2>오늘 수업이 끝나면</h2>
   <div class="body">
     <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
-      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">도구 루프</div><div class="d">tool_use ↔ tool_result 왕복으로 에이전트 루프를 직접 짠다</div></div>
-      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-split"/></svg></span><div class="h">서브에이전트</div><div class="d">에이전트를 '도구'로 감싸 리드가 위임하게 만든다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">도구 루프</div><div class="d">tool_use ↔ tool_result 왕복으로 도는 루프 코드를 읽고 설명한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-split"/></svg></span><div class="h">서브에이전트</div><div class="d">에이전트를 '도구'로 감싼 구조를 읽고 고쳐 본다</div></div>
       <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-file"/></svg></span><div class="h">위임 브리프</div><div class="d">목표 · 출력 형식 · 도구 안내 · 경계를 갖춘 지시를 쓴다</div></div>
       <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-merge"/></svg></span><div class="h">병렬과 합치기</div><div class="d">워커를 동시에 돌리고 결과를 출처와 함께 합친다</div></div>
     </div>
@@ -615,12 +615,12 @@ aclient = anthropic.AsyncAnthropic(max_retries=4)
 <!-- 28. 실습 2 -->
 <section class="slide lab">
   <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-flask"/></svg> 실습 2</span></div>
-  <h2>에이전트 루프 직접 짜기</h2>
+  <h2>에이전트 루프 읽고 고쳐 보기</h2>
   <div class="body">
     <div class="cols">
       <ol class="steps">
         <li><div>가상 문헌 12편과 도구 2개(search · read) 불러오기</div></li>
-        <li><div><code class="i">run_agent</code> · <code class="i">call_tool</code> 완성하고 실행</div></li>
+        <li><div>완성된 <code class="i">run_agent</code> · <code class="i">call_tool</code> 을 읽고 실행<small>각 줄이 무엇을 하는지 옆 사람에게 설명해 보기</small></div></li>
         <li><div>대화 기록(messages)을 출력해 루프를 눈으로 따라가기</div></li>
         <li><div><b>도구 설명을 일부러 나쁘게</b> 바꿔 행동이 어떻게 변하는지 보기<small>예: read_paper 설명을 "논문 관련 도구"로</small></div></li>
       </ol>
@@ -641,11 +641,11 @@ aclient = anthropic.AsyncAnthropic(max_retries=4)
   <div class="body">
     <div class="cols">
       <ol class="steps">
-        <li><div>워커 = 실습 2의 루프 (비동기 판)</div></li>
-        <li><div>리드 = delegate 도구 하나만 가진 루프</div></li>
+        <li><div>완성된 코드 읽기: 워커 = 실습 2의 루프(비동기 판), 리드 = delegate 도구 하나만 가진 루프</div></li>
         <li><div>질문: <i>"예지보전 방법을 계열별로 비교하는 표, 모든 주장에 논문 id"</i></div></li>
         <li><div>호출 기록에서 <b>누가 · 언제 · 몇 토큰</b>을 썼는지 표로 보기</div></li>
         <li><div>보고서의 [P..] 인용이 실제 초록과 맞는지 <b>코드로 검사</b></div></li>
+        <li><div><b>고쳐 보기</b>: 브리프의 경계 빼기 · 동시 실행 1로 · 노력 규칙 지우기 → 무엇이 달라지나</div></li>
       </ol>
       <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">
         <a class="colab" href="https://colab.research.google.com/github/Daeil-Noh/Lectures/blob/main/multi-agent/labs/lab03_lead_workers.ipynb" target="_blank" rel="noopener">Colab에서 실습 3 열기</a>
@@ -751,7 +751,7 @@ aclient = anthropic.AsyncAnthropic(max_retries=4)
 <div class="bar"></div>
 <nav class="controls" aria-label="슬라이드 이동">
   <a href="../">☰ 목록</a>
-  <span class="title">2회 · 처음부터 만들기</span>
+  <span class="title">2회 · 들여다보고 고쳐 보기</span>
   <span class="spacer"></span>
   <span class="hint">← → · N 노트 · T 시계 · O 목록 · F 전체화면</span>
   <button type="button" data-prev aria-label="이전">◀</button>

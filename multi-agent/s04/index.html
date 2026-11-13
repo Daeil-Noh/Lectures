@@ -48,7 +48,7 @@
     <g style="color:var(--accent-2)"><use href="#i-bot" x="254" y="94" width="32" height="32"/><use href="#i-bot" x="284" y="294" width="32" height="32"/></g>
   </svg>
   <div class="s-foot"><span></span><span class="no"></span></div>
-  <aside class="notes" data-min="2">오늘은 로컬 터미널을 쓴다. 준비물(git, Node.js, Python, Claude Code 로그인) 확인부터. 준비가 안 된 학생은 옆 사람과 짝을 지어 진행하게 한다. 오늘 다루는 Claude Code 기능 이름·옵션은 2026년 11월 공식 문서 기준이며, 버전에 따라 바뀔 수 있음을 미리 말한다.</aside>
+  <aside class="notes" data-min="2">오늘은 로컬 터미널을 쓴다. 준비물(git, Node.js, Python, Claude Code 로그인, Orca 앱) 확인부터. 준비가 안 된 학생은 옆 사람과 짝을 지어 진행하게 한다. 오늘 다루는 Claude Code 기능 이름·옵션은 2026년 11월 공식 문서 기준이며, 버전에 따라 바뀔 수 있음을 미리 말한다.</aside>
 </section>
 
 <!-- 2. 목표 -->
@@ -74,7 +74,7 @@
   <div class="body">
     <div class="tl">
       <div style="flex:3;background:var(--accent-soft)"><b>① 환경의 층</b><small>규칙 · 서브에이전트 · 직접 해 보기 1</small></div>
-      <div style="flex:3;background:var(--accent-soft)"><b>② 쓰기 공간 나누기</b><small>worktree · 직접 해 보기 2</small></div>
+      <div style="flex:3;background:var(--accent-soft)"><b>② 쓰기 공간 나누기</b><small>worktree · Orca · 직접 해 보기 2</small></div>
       <div style="flex:1.2;background:var(--surface-2)"><b>휴식</b></div>
       <div style="flex:2.6;background:var(--accent-soft)"><b>③ 가드레일 · 자동화</b><small>권한 · 훅 · 헤드리스</small></div>
       <div style="flex:1.2;background:var(--surface-2)"><b>휴식</b></div>
@@ -284,7 +284,32 @@ isolation: worktree
     <div class="callout b frag" style="margin-top:16px">끝나면: 각 브랜치를 <b>사람이 리뷰</b> → main에 merge → <code class="i">git worktree remove</code>. 변경이 없는 서브에이전트 worktree는 자동으로 정리된다.</div>
   </div>
   <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · 옵션 이름은 Claude Code 문서(2026.11) 기준</span><span class="no"></span></div>
-  <aside class="notes" data-min="5">실습 6-2는 ①로 진행(가장 눈에 잘 보임). ②는 시간 남는 학생용 도전 과제. 'isolation: worktree'의 서브에이전트는 기본적으로 기본 브랜치에서 갈라진다는 점(메인 세션의 현재 HEAD가 아닐 수 있음)을 짚는다.</aside>
+  <aside class="notes" data-min="3">실습 6-2는 다음 장의 Orca로 진행하고, ①은 Orca를 못 쓸 때의 대안이다. ②는 시간 남는 학생용 도전 과제. 'isolation: worktree'의 서브에이전트는 기본적으로 기본 브랜치에서 갈라진다는 점(메인 세션의 현재 HEAD가 아닐 수 있음)을 짚는다.</aside>
+</section>
+
+<!-- 12-1. Orca -->
+<section class="slide">
+  <div class="s-head"><span class="sec">② 쓰기 공간 나누기 · 도구</span></div>
+  <h2>Orca: worktree 병렬 운용을 한 화면에</h2>
+  <div class="body">
+    <div class="cols">
+      <div>
+        <ul class="small">
+          <li>코딩 에이전트(Claude Code · Codex · OpenCode 등)를 <b>여러 개 나란히</b> 돌리는 데스크톱 앱 — '에이전트 개발 환경(ADE)'</li>
+          <li>작업마다 <b>worktree를 하나씩</b> 자동으로 만든다 (속은 <code class="i">git worktree add</code>)</li>
+          <li>터미널 · 파일 · <b>diff 검토</b> · 미리보기를 한 창에서, 휴대폰으로 진행 확인</li>
+          <li>같은 문제를 두 에이전트에게 맡겨 <b>결과를 비교</b>하고 고르기</li>
+        </ul>
+        <div class="callout b" style="margin-top:12px">앞 장의 터미널 · git 명령을 <b>대신 눌러 주는</b> 도구다. 원리(쓰기 공간 분리 · 사람의 리뷰)는 그대로다.</div>
+      </div>
+      <div>
+        <div class="box key" style="margin:0 0 12px"><p class="box-title">스스로 하지 않는 것</p><ul class="small" style="margin:0"><li>모델이 아니다 — 에이전트 CLI를 미리 설치 · 로그인</li><li>포트 · DB · GPU 같은 공유 자원은 못 나눈다</li><li>결과가 둘이라고 둘 중 하나가 맞다는 보장은 없다</li><li>병렬 결과가 늘수록 <b>사람의 리뷰</b>도 는다</li></ul></div>
+        <p class="small muted" style="margin:0">무료 · 오픈소스(MIT). 에이전트 사용료는 따로. 업데이트가 잦아 연구실 표준으로 쓸 때는 <b>버전을 고정</b>한다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · Orca(stablyai/orca) 2026.11 기준 정리</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">Orca는 2026년 3월 공개된 오픈소스 ADE. 별 수만 개로 빠르게 퍼졌다. 강조할 점: 이 도구가 해 주는 것(worktree 생성, 세션·diff를 한곳에서)과 여전히 사람이 해야 하는 것(작업 나누기, 범위 정하기, 리뷰, 병합)을 구분. 연구실에서 쓸 때는 민감하지 않은 저장소에서 최소 권한 계정으로 먼저 시험해 보라고 권한다(보안 관련 이슈 보고가 있었음). 비슷한 도구가 여럿 있으므로 특정 제품보다 '구조'를 기억하게 한다.</aside>
 </section>
 
 <!-- 13. 직접 해 보기 2 -->
@@ -311,18 +336,19 @@ isolation: worktree
 <!-- 14. 운용 방식 비교 -->
 <section class="slide">
   <div class="s-head"><span class="sec">② 쓰기 공간 나누기</span></div>
-  <h2>여럿을 부리는 네 가지 방식</h2>
+  <h2>여럿을 부리는 다섯 가지 방식</h2>
   <div class="body">
     <table>
       <tr><th style="width:200px">방식</th><th>구조</th><th style="width:250px">맞는 일</th><th style="width:230px">주의</th></tr>
       <tr><td><b>서브에이전트</b></td><td>메인 세션이 맡기고 보고를 받는다 (중앙형)</td><td>조사 · 리뷰 · 테스트 실행</td><td>보고만 돌아온다</td></tr>
       <tr><td><b>세션 여러 개 + worktree</b></td><td>사람이 오케스트레이터</td><td>독립된 기능 2~4개 동시 개발</td><td>사람의 리뷰가 병목</td></tr>
       <tr><td><b>agent teams</b> <span class="lv l3">실험</span></td><td>리더 + 팀원 세션, 공유 작업 목록 · 서로 메시지</td><td>큰 작업을 팀처럼 나눠 협업</td><td>토큰 비용 큼, 기본 꺼짐</td></tr>
+      <tr><td><b>ADE (Orca 등)</b></td><td>앱이 worktree · 세션 · diff를 한곳에서 관리, 사람이 지휘</td><td>여러 코딩 작업 동시 진행 · 결과 비교</td><td>리뷰 부담 · 도구 버전 관리</td></tr>
       <tr><td><b>헤드리스 일괄</b></td><td>스크립트가 <code class="i">claude -p</code>를 여러 번</td><td>파일 수십 개에 같은 작업</td><td>권한을 좁게, 결과 검증 필수</td></tr>
     </table>
   </div>
   <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · Claude Code 문서(2026.11) 기준 정리</span><span class="no"></span></div>
-  <aside class="notes" data-min="5">1회의 토폴로지와 대응: 서브에이전트=중앙형, 세션 여러 개=사람이 리드인 중앙형, agent teams=피어 · 공유 칠판형, 헤드리스 일괄=병렬화 워크플로. 이 밖에 여러 세션을 한 화면에서 보는 기능, 대규모 이전 작업용 일괄 명령 등도 있으나 오늘은 생략.</aside>
+  <aside class="notes" data-min="4">1회의 토폴로지와 대응: 서브에이전트=중앙형, 세션 여러 개와 ADE(Orca)=사람이 리드인 중앙형, agent teams=피어 · 공유 칠판형, 헤드리스 일괄=병렬화 워크플로. 이 밖에 여러 세션을 한 화면에서 보는 기능, 대규모 이전 작업용 일괄 명령 등도 있으나 오늘은 생략.</aside>
 </section>
 
 <!-- 15. agent teams -->
@@ -581,32 +607,24 @@ claude -p "$(cat .claude/review_prompt.md) $(cat /tmp/diff.txt)" \
 <!-- 27. 6-2 -->
 <section class="slide lab">
   <div class="s-head"><span class="labbar"><svg class="ic"><use href="#i-git"/></svg> 실습 6-2</span></div>
-  <h2>worktree 두 개로 동시에 고치기</h2>
+  <h2>Orca로 두 작업을 동시에</h2>
   <div class="body">
-    <div class="cols even">
+    <div class="cols">
+      <ol class="steps">
+        <li><div>Orca에서 <code class="i">~/vibelab</code> 저장소 열기<small>Claude Code가 이미 설치 · 로그인되어 있어야 한다</small></div></li>
+        <li><div>작업 두 개를 만들고, 각 worktree에서 Claude Code 실행<small>A: fix-threshold · B: feature-peak</small></div></li>
+        <li><div>오른쪽 지시를 각각 입력하고, 두 에이전트가 <b>동시에</b> 일하는 것을 보기</div></li>
+        <li><div>Orca에서 두 diff를 <b>사람이</b> 읽고 main에 병합 → <code class="i">python -m unittest</code></div></li>
+      </ol>
       <div>
-        <p class="fileh">터미널 A</p>
-        <pre class="term sm"><span class="p">$</span> claude -w fix-threshold
-<span class="c">› 임계값을 훈련 구간으로만 계산하도록 고치고,
-  누설을 잡는 테스트를 추가해. 커밋까지.</span></pre>
-        <p class="fileh" style="margin-top:10px">터미널 B</p>
-        <pre class="term sm"><span class="p">$</span> claude -w feature-peak
-<span class="c">› features.py 에 crest factor(피크/RMS) 특징을
-  추가하고 테스트를 붙여. detect.py 는 건드리지 마.</span></pre>
-      </div>
-      <div>
-        <p class="fileh">끝나면 메인 폴더에서</p>
-        <pre class="term sm"><span class="p">$</span> git log --oneline --all --graph | head
-<span class="p">$</span> git diff main...worktree-fix-threshold
-<span class="p">$</span> git merge worktree-fix-threshold
-<span class="p">$</span> git merge worktree-feature-peak
-<span class="p">$</span> python -m unittest</pre>
-        <div class="callout" style="margin-top:10px">B의 지시에 <b>파일 범위</b>를 준 이유? 지웠을 때 합칠 때 충돌이 나는지 시험해 보자.</div>
+        <div class="prompt"><div class="prompt-h">A · fix-threshold<button class="copy" type="button">복사</button></div><pre>임계값을 훈련 구간으로만 계산하도록 고치고, 누설을 잡는 테스트를 추가해. 커밋까지.</pre></div>
+        <div class="prompt" style="margin-top:10px"><div class="prompt-h">B · feature-peak<button class="copy" type="button">복사</button></div><pre>features.py 에 crest factor(피크/RMS) 특징을 추가하고 테스트를 붙여. detect.py 는 건드리지 마.</pre></div>
+        <p class="small muted" style="margin-top:10px">Orca 없이 하려면: 터미널 두 개에서 <code class="i">claude -w fix-threshold</code>, <code class="i">claude -w feature-peak</code> → 메인 폴더에서 <code class="i">git merge</code></p>
       </div>
     </div>
   </div>
-  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
-  <aside class="notes" data-min="20">merge는 반드시 사람이 diff를 읽고 한다. 충돌이 나면 Claude에게 충돌 해결을 맡겨도 되지만 결과를 테스트로 확인. 빨리 끝난 학생: refactorer 서브에이전트(isolation: worktree)를 만들어 메인 세션에서 맡겨 보기.</aside>
+  <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회 · Orca 화면의 메뉴 이름은 버전에 따라 다를 수 있음</span><span class="no"></span></div>
+  <aside class="notes" data-min="20">교수자가 먼저 화면을 띄워 시연(5분)하고 학생이 따라 한다. Orca 설치가 막힌 학생은 슬라이드 아래의 터미널 방법으로 같은 실습을 한다 — 원리는 같다. B의 지시에 '파일 범위'를 준 이유를 묻고, 범위를 지워서 다시 시켜 보면 합칠 때 충돌이 나는지 확인하게 한다. 병합은 반드시 사람이 diff를 읽고 한다. 빨리 끝난 학생: 같은 작업(A)을 Claude Code와 다른 에이전트에게 동시에 맡겨 결과를 비교해 보기(Orca의 비교 기능).</aside>
 </section>
 
 <!-- 28. 6-3 -->
@@ -629,7 +647,7 @@ claude -p "$(cat .claude/review_prompt.md) $(cat /tmp/diff.txt)" \
     </div>
   </div>
   <div class="s-foot"><span>멀티 에이전트 시스템 구축 · 4회</span><span class="no"></span></div>
-  <aside class="notes" data-min="10">rm은 권한 규칙(Bash(rm *) 거부)에서 먼저 막히는 경우가 많다. 훅 동작을 보려면 "data/raw 를 tar로 묶고 원본을 지워 줘"처럼 우회하는 표현을 써 보게 한다 — 정규식 훅이 잡는지, 못 잡는지가 5회 안전의 좋은 도입.</aside>
+  <aside class="notes" data-min="8">rm은 권한 규칙(Bash(rm *) 거부)에서 먼저 막히는 경우가 많다. 훅 동작을 보려면 "data/raw 를 tar로 묶고 원본을 지워 줘"처럼 우회하는 표현을 써 보게 한다 — 정규식 훅이 잡는지, 못 잡는지가 5회 안전의 좋은 도입.</aside>
 </section>
 
 <!-- 29. 과제 -->

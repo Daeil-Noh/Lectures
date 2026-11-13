@@ -2,7 +2,8 @@
 # # 실습 3 · 리드 + 워커 시스템
 # **멀티 에이전트 시스템 구축 · 2회** — 노대일 (동의대학교 인공지능학과)
 #
-# 실습 2의 에이전트 루프를 **비동기**로 바꾸고, 통째로 `delegate` 도구로 감싸 **오케스트레이터–워커** 시스템을 만듭니다.
+# 실습 2의 에이전트 루프를 **비동기**로 바꾸고, 통째로 `delegate` 도구로 감싼 **오케스트레이터–워커** 시스템을 들여다봅니다.
+# 코드는 완성되어 있습니다. 읽고 실행한 뒤, 맨 아래 **고쳐 보기** 칸에서 한 곳씩 바꿔 결과를 비교하세요.
 # - 리드: `delegate` 도구 하나만 가진다 (직접 검색하지 않는다)
 # - 워커: `search_papers`, `read_paper` 를 가진 루프 (새 컨텍스트에서 시작)
 # - 리드가 한 응답에서 delegate 를 여러 번 부르면 워커들이 **동시에** 돈다
@@ -107,6 +108,8 @@ async def arun_agent(system, task, tools, impl, model, tag, max_turns=8):
 # ## 3. 워커를 도구로 감싸기: `delegate`
 # - 입력 스키마가 **브리프의 네 요소 중 셋**(목표 · 출력 형식 · 경계)을 필수로 요구합니다. 도구 안내는 워커 시스템 프롬프트에 있습니다.
 # - 워커의 대화 기록은 돌려주지 않습니다 → **컨텍스트 격리**
+#
+# **읽기 질문**: `delegate` 는 무엇을 돌려주고 무엇을 버리나요? 리드의 컨텍스트에는 무엇이 쌓이나요?
 
 # %%
 WORKER_SYSTEM = ('너는 문헌 조사 워커다. 리드가 준 브리프의 목표와 경계 안에서만 조사한다. '
@@ -201,8 +204,25 @@ multi = {'방식': '리드 + 워커', 'calls': len(LOG_MULTI), 'tokens': sum(r['
 pd.DataFrame([multi, single])
 
 # %% [exercise]
-# 직접 바꿔 보기 2: LIMIT = asyncio.Semaphore(1) 로 바꾸고 4번 셀부터 다시 실행해 타임라인 그림이 어떻게 변하는지 보세요.
-# 직접 바꿔 보기 3: LEAD_SYSTEM 에서 '노력 조절 규칙' 줄을 지우고 실행하면 워커 수가 어떻게 되나요?
+# 직접 바꿔 보기 2: 브리프에서 '경계(boundaries)'를 빼면 워커들의 일이 겹칠까요?
+# delegate 스키마에서 boundaries 를 선택 항목으로 바꾸고, 리드에게도 경계를 쓰라는 말을 지운 뒤 다시 돌려 봅니다.
+# 워커별로 읽은 논문(READ_BY)이 얼마나 겹치는지 세어 보세요.
+import copy
+DELEGATE_NO_BOUND = copy.deepcopy(DELEGATE)
+DELEGATE_NO_BOUND['input_schema']['required'] = ['objective', 'output_format']
+LEAD_NO_BOUND = LEAD_SYSTEM.replace(' 워커끼리 범위가 겹치지 않게 경계를 쓴다.', '')
+LOG.clear(); READ_BY.clear(); N_WORKERS = 0
+async def delegate_loose(objective: str, output_format: str, boundaries: str = '(없음)'):
+    return await delegate(objective, output_format, boundaries)
+report_nb, _ = await arun_agent(LEAD_NO_BOUND, QUESTION, [DELEGATE_NO_BOUND], {'delegate': delegate_loose}, LEAD_MODEL, 'lead', max_turns=6)
+reads = {k: sorted(v) for k, v in READ_BY.items()}
+overlap = set.intersection(*map(set, reads.values())) if len(reads) > 1 else set()
+print('워커별로 읽은 논문:', reads)
+print('모든 워커가 함께 읽은 논문:', sorted(overlap))
+
+# %% [exercise]
+# 직접 바꿔 보기 3: LIMIT = asyncio.Semaphore(1) 로 바꾸고 4번 셀부터 다시 실행해 타임라인 그림이 어떻게 변하는지 보세요.
+# 직접 바꿔 보기 4: LEAD_SYSTEM 에서 '노력 조절 규칙' 줄을 지우고 실행하면 워커 수가 어떻게 되나요?
 print('현재 동시 실행 상한:', LIMIT._value)
 
 # %% [markdown]
