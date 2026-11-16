@@ -9,6 +9,7 @@
 | [AX 공통 AI 교과](ax-microdegree/)<br>AI와 데이터 분석 · 생성형AI 활용 실무 | https://daeil-noh.github.io/Lectures/ax-microdegree/ |
 | [멀티 에이전트 시스템 구축](multi-agent/) | https://daeil-noh.github.io/Lectures/multi-agent/ |
 | [하네스 엔지니어링](harness-engineering/) | https://daeil-noh.github.io/Lectures/harness-engineering/ |
+| [머신러닝 알고리즘, 그림으로 이해하기](ml-algorithms/)<br>선형회귀부터 앙상블까지 (특강) | https://daeil-noh.github.io/Lectures/ml-algorithms/ |
 
 ## 구조
 
