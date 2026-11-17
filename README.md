@@ -10,6 +10,7 @@
 | [멀티 에이전트 시스템 구축](multi-agent/) | https://daeil-noh.github.io/Lectures/multi-agent/ |
 | [하네스 엔지니어링](harness-engineering/) | https://daeil-noh.github.io/Lectures/harness-engineering/ |
 | [머신러닝 알고리즘, 그림으로 이해하기](ml-algorithms/)<br>선형회귀부터 앙상블까지 (특강) | https://daeil-noh.github.io/Lectures/ml-algorithms/ |
+| [프로젝트와 디자인씽킹 특강](design-thinking/)<br>3회 · 매주 60분 (강의식) | https://daeil-noh.github.io/Lectures/design-thinking/ |
 
 ## 구조
 

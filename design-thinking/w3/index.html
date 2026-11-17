@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="dt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3주차 아이디어에서 결과물까지 | 프로젝트와 디자인씽킹 특강</title>
+<meta name="description" content="프로젝트와 디자인씽킹 특강 3주차: 프로토타입의 충실도, 오즈의 마법사 프로토타입, MVP와 만들기-측정-배우기, 사용자 테스트에서 행동 보기, 프로젝트 이어가기">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../assets/css/slides.css">
+<link rel="stylesheet" href="../../assets/css/ma.css">
+<link rel="stylesheet" href="../dt.css">
+</head>
+<body>
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover">
+  <p class="eyebrow">프로젝트와 디자인씽킹 · 특강 3주차</p>
+  <h1>아이디어에서 결과물까지<br><span style="color:var(--accent)">작게 만들고 빨리 확인하기</span></h1>
+  <p class="lead">프로토타입, MVP, 사용자 테스트의 원리와 프로젝트를 학기 뒤에도 이어가는 길을 다룹니다.</p>
+  <div class="meta"><span>60분</span><span>노대일 교수 · 동의대학교 인공지능학과</span></div>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+  <aside class="notes" data-min="2">인사. 3주 중 마지막 시간.</aside>
+</section>
+
+<!-- 2. 지난 2주 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">돌아보기</span></div>
+  <h2>지난 2주, 그리고 오늘</h2>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card"><div class="k">1주차</div><div class="h">옳은 문제 찾기</div><div class="d">문제 문장의 다섯 칸, 근거는 사용자의 지난 행동에서</div></div>
+      <div class="card"><div class="k">2주차</div><div class="h">AI와 함께 생각하기</div><div class="d">AI에는 양과 속도, 사람에게는 현장과 판단</div></div>
+      <div class="card" style="border:3px solid var(--accent)"><div class="k">3주차 · 오늘</div><div class="h">문제를 옳게 풀기</div><div class="d">더블 다이아몬드의 두 번째 다이아몬드</div></div>
+    </div>
+    <div class="tl" style="margin-top:26px">
+      <div style="flex:1;background:var(--surface-2)"><b>도입</b></div>
+      <div style="flex:2;background:var(--accent-soft)"><b>① 프로토타입</b><small>충실도 · 오즈의 마법사</small></div>
+      <div style="flex:2.2;background:var(--accent-soft)"><b>② MVP와 검증</b><small>만들기-측정-배우기</small></div>
+      <div style="flex:2.2;background:var(--accent-soft)"><b>③ 사용자 테스트</b><small>말보다 행동</small></div>
+      <div style="flex:1.6;background:var(--accent-soft)"><b>④ 이어가기</b><small>총정리</small></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">1주차 더블 다이아몬드 그림을 떠올리게 한다. 지금까지는 왼쪽(옳은 문제), 오늘은 오른쪽(옳게 풀기).</aside>
+</section>
+
+<!-- 3. 구역 1 -->
+<section class="slide section">
+  <div class="big">01</div>
+  <h2>프로토타입</h2>
+  <p>완성품의 축소판이 아니라, 질문에 답하기 위한 도구</p>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="1">구역 전환.</aside>
+</section>
+
+<!-- 4. 충실도 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">01 프로토타입</span></div>
+  <h2>확인하고 싶은 질문에 맞춰 '얼마나 진짜처럼' 만들지 정한다</h2>
+  <div class="body">
+    <figure>
+      <div class="canvas">
+        <svg viewBox="0 0 1080 200" aria-label="프로토타입 충실도 스펙트럼">
+          <defs><linearGradient id="fid" x1="0" x2="1"><stop offset="0" stop-color="var(--accent-soft)"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs>
+          <rect x="30" y="20" width="1020" height="22" rx="11" fill="url(#fid)"/>
+          <text x="30" y="68" class="t-sub">싸고 빠름 · 버리기 쉬움</text>
+          <text x="1050" y="68" text-anchor="end" class="t-sub">비싸고 느림 · 진짜에 가까움</text>
+          <g transform="translate(130,90)"><rect x="-90" y="0" width="180" height="96" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/><text x="0" y="40" text-anchor="middle" class="t-main">종이 스케치</text><text x="0" y="66" text-anchor="middle" class="t-sub">10분</text></g>
+          <g transform="translate(400,90)"><rect x="-90" y="0" width="180" height="96" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/><text x="0" y="40" text-anchor="middle" class="t-main">화면 목업</text><text x="0" y="66" text-anchor="middle" class="t-sub">AI 이미지 · 슬라이드</text></g>
+          <g transform="translate(680,90)"><rect x="-90" y="0" width="180" height="96" rx="14" class="f-surface" stroke="var(--line)" stroke-width="2"/><text x="0" y="40" text-anchor="middle" class="t-main">클릭되는 화면</text><text x="0" y="66" text-anchor="middle" class="t-sub">간단한 웹 페이지</text></g>
+          <g transform="translate(950,90)"><rect x="-90" y="0" width="180" height="96" rx="14" class="f-accs" stroke="var(--accent)" stroke-width="2"/><text x="0" y="40" text-anchor="middle" class="t-main">작동하는 시제품</text><text x="0" y="66" text-anchor="middle" class="t-sub">실제 기능 일부</text></g>
+        </svg>
+      </div>
+    </figure>
+    <table class="sm frag" style="margin-top:16px">
+      <tr><th style="width:50%">확인하고 싶은 질문</th><th>충분한 프로토타입</th></tr>
+      <tr><td>"사용자가 이 흐름을 이해할까?"</td><td>종이 스케치나 화면 목업</td></tr>
+      <tr><td>"이 기능이 기술적으로 가능할까?"</td><td>화면은 없어도 되는 작동 시제품</td></tr>
+    </table>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">흔한 실수: 처음부터 오른쪽 끝(작동 시제품)으로 가서 시간을 다 쓰고, 정작 사용자에게는 한 번도 못 보여 주는 것. 생성형 AI 덕분에 가운데 두 칸이 아주 싸졌다는 점이 2주차와 연결된다.</aside>
+</section>
+
+<!-- 5. 오즈의 마법사 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">01 프로토타입</span></div>
+  <h2>오즈의 마법사 프로토타입: 커튼 뒤에서 사람이 대신한다</h2>
+  <div class="body">
+    <div class="cols" style="align-items:center">
+      <figure>
+        <div class="canvas">
+          <svg viewBox="0 0 560 230" aria-label="사용자는 자동 서비스라고 생각하지만 실제로는 사람이 답하는 그림">
+            <rect x="20" y="40" width="170" height="150" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+            <text x="105" y="105" text-anchor="middle" class="t-main">사용자</text><text x="105" y="130" text-anchor="middle" class="t-sub">"AI가 답해 주네?"</text>
+            <line x1="280" y1="20" x2="280" y2="210" stroke="var(--accent-2)" stroke-width="4" stroke-dasharray="10 8"/>
+            <text x="280" y="226" text-anchor="middle" class="t-acc2">커튼</text>
+            <rect x="370" y="40" width="170" height="150" rx="16" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+            <text x="455" y="105" text-anchor="middle" class="t-main">팀원</text><text x="455" y="130" text-anchor="middle" class="t-sub">직접 찾아서 답장</text>
+            <path d="M195 90 L365 90" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#ah)"/>
+            <path d="M365 145 L195 145" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#ah)"/>
+            <defs><marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+          </svg>
+        </div>
+      </figure>
+      <div>
+        <p style="font-size:22px">예: "AI 맛집 추천 챗봇" 아이디어 → 메신저 계정 하나 열고, 질문이 오면 <b>팀원이 직접 찾아 답장</b>합니다.</p>
+        <p class="frag" style="font-size:22px">개발 없이 <b>"사람들이 정말 이걸 물어볼까? 무엇을 물어볼까?"</b>를 먼저 확인할 수 있습니다.</p>
+        <div class="box warn frag" style="margin-top:10px"><p style="font-size:19px;margin:0">테스트가 끝나면 <b>사람이 답했다는 사실을 참여자에게 알려야</b> 합니다.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">이름은 동화 『오즈의 마법사』에서 커튼 뒤의 평범한 사람이 마법사 행세를 한 데서 왔다. AI 서비스 아이디어를 가진 팀에게 특히 유용: AI 개발 전에 수요와 질문 유형을 먼저 모은다. 윤리: 사후 고지.</aside>
+</section>
+
+<!-- 6. 구역 2 -->
+<section class="slide section">
+  <div class="big">02</div>
+  <h2>MVP와 검증</h2>
+  <p>가장 위험한 가정을, 가장 싸게 확인한다</p>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="1">구역 전환.</aside>
+</section>
+
+<!-- 7. MVP 루프 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">02 MVP와 검증</span></div>
+  <h2>최소 기능 제품(MVP)과 만들기-측정-배우기</h2>
+  <div class="body">
+    <div class="cols" style="align-items:center">
+      <figure>
+        <div class="canvas">
+          <svg viewBox="0 0 460 330" aria-label="만들기, 측정, 배우기를 도는 순환 그림">
+            <defs><marker id="ah2" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto"><path d="M0 0 L12 6 L0 12 Z" fill="var(--accent)"/></marker></defs>
+            <path d="M265 60 A 125 125 0 0 1 345 240" fill="none" stroke="var(--accent)" stroke-width="4" marker-end="url(#ah2)"/>
+            <path d="M300 285 A 125 125 0 0 1 120 270" fill="none" stroke="var(--accent)" stroke-width="4" marker-end="url(#ah2)"/>
+            <path d="M95 225 A 125 125 0 0 1 170 65" fill="none" stroke="var(--accent)" stroke-width="4" marker-end="url(#ah2)"/>
+            <g><circle cx="220" cy="48" r="44" class="f-accs" stroke="var(--accent)" stroke-width="2"/><text x="220" y="54" text-anchor="middle" class="t-main">만들기</text></g>
+            <g><circle cx="355" cy="270" r="44" class="f-accs" stroke="var(--accent)" stroke-width="2"/><text x="355" y="276" text-anchor="middle" class="t-main">측정</text></g>
+            <g><circle cx="85" cy="270" r="44" class="f-accs" stroke="var(--accent)" stroke-width="2"/><text x="85" y="276" text-anchor="middle" class="t-main">배우기</text></g>
+            <text x="225" y="180" text-anchor="middle" class="t-acc">이 바퀴를</text><text x="225" y="204" text-anchor="middle" class="t-acc">빨리 돌수록 좋다</text>
+          </svg>
+        </div>
+      </figure>
+      <div>
+        <p style="font-size:22px"><b>MVP</b> = 가장 중요한 질문에 답할 수 있는 <b>최소한의 결과물</b></p>
+        <p class="frag" style="font-size:22px">목표는 제품을 빨리 내놓는 것이 아니라 <b>배우는 속도를 높이는 것</b>입니다.</p>
+        <p class="ref">E. Ries, <i>The Lean Startup</i> (2011)</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">디자인씽킹의 프로토타입-테스트와 같은 생각을 창업 쪽에서 정리한 것. '최소'의 기준은 기능 개수가 아니라 '이것만 있으면 답을 얻을 수 있다'.</aside>
+</section>
+
+<!-- 8. Dropbox -->
+<section class="slide">
+  <div class="s-head"><span class="sec">02 MVP와 검증</span><span class="pill o">사례</span></div>
+  <h2>제품 대신 3분짜리 영상으로 확인한 드롭박스</h2>
+  <div class="body">
+    <div class="cols" style="align-items:center">
+      <div>
+        <ul style="font-size:22px">
+          <li>파일 동기화는 <b>직접 써 보기 전에는 설명하기 어려운</b> 서비스</li>
+          <li class="frag">완성 전, 작동 모습을 보여 주는 <b>짧은 시연 영상</b>을 만들어 온라인 커뮤니티에 공개 (2008년 3월)</li>
+          <li class="frag">확인한 질문: <b>"사람들이 이걸 원하는가?"</b></li>
+        </ul>
+        <p class="ref">출처: Dropbox 창업자 Drew Houston의 발표 자료(Startup Lessons Learned, 2010)</p>
+      </div>
+      <div class="box key frag" style="text-align:center">
+        <p class="box-title" style="justify-content:center">베타 대기자 명단</p>
+        <div class="bignum">5,000<small>명</small></div>
+        <div style="font-size:30px;color:var(--muted)">↓ 하룻밤 사이</div>
+        <div class="bignum">75,000<small>명</small></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">1주차 주스로 사례와 대비: 주스로는 비싼 기계를 먼저 만들고 늦게 확인, 드롭박스는 영상으로 먼저 확인. 영상도 훌륭한 MVP가 될 수 있다.</aside>
+</section>
+
+<!-- 9. 가정 목록 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">02 MVP와 검증</span></div>
+  <h2>무엇을 먼저 확인할까? 가장 위험한 가정부터</h2>
+  <div class="body">
+    <p class="small" style="margin-bottom:14px">예: "통학생에게 믿을 수 있는 출발 시각을 알려 주는 서비스"가 성공하려면 무엇이 참이어야 할까?</p>
+    <table class="sm">
+      <tr><th>가정</th><th class="c" style="width:16%">틀리면 치명적?</th><th class="c" style="width:16%">아직 모름?</th><th style="width:30%">싸게 확인하는 법</th></tr>
+      <tr><td>통학생은 지각을 줄이고 싶어 한다</td><td class="c">○</td><td class="c">✕ (인터뷰로 확인)</td><td>—</td></tr>
+      <tr class="frag" style="background:var(--accent-soft)"><td><b>기존 앱보다 우리 시각을 더 믿을 것이다</b></td><td class="c">○</td><td class="c">○</td><td>일주일간 직접 문자로 알려 주기</td></tr>
+      <tr class="frag"><td>버스 정보를 실시간으로 받을 수 있다</td><td class="c">○</td><td class="c">△</td><td>공개 데이터 찾아보기</td></tr>
+      <tr class="frag"><td>앱 디자인을 좋아할 것이다</td><td class="c">✕</td><td class="c">○</td><td>나중에</td></tr>
+    </table>
+    <p class="frag" style="margin-top:14px;font-size:22px"><b>치명적이면서 아직 모르는 것</b>이 MVP가 답해야 할 질문입니다.</p>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">강조된 행이 핵심. 이 팀의 MVP는 앱이 아니라 '팀원이 매일 아침 문자로 출발 시각을 보내 주는 일주일'일 수 있다. 오즈의 마법사 방식과 같은 원리.</aside>
+</section>
+
+<!-- 10. 구역 3 -->
+<section class="slide section">
+  <div class="big">03</div>
+  <h2>사용자 테스트</h2>
+  <p>칭찬보다 행동을 본다</p>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="1">구역 전환.</aside>
+</section>
+
+<!-- 11. 칭찬 vs 행동 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">03 사용자 테스트</span></div>
+  <h2>"좋네요"는 근거가 아니다</h2>
+  <div class="body">
+    <div class="vs">
+      <div class="card bad">
+        <div class="k" style="color:var(--bad)">약한 신호 · 말</div>
+        <div class="say x"><b>✕</b>"와, 좋은 아이디어네요"</div>
+        <div class="say x"><b>✕</b>"나오면 꼭 쓸게요"</div>
+        <div class="say x"><b>✕</b>"디자인 예쁘네요"</div>
+        <div class="ex">비용이 들지 않는 말. 예의상 하는 경우가 많다</div>
+      </div>
+      <div class="card good">
+        <div class="k" style="color:var(--ok)">강한 신호 · 행동과 약속</div>
+        <div class="say o"><b>○</b>설명 없이도 끝까지 써 봤다</div>
+        <div class="say o"><b>○</b>다음 주에도 써 보겠다고 <b>시간을 내줬다</b></div>
+        <div class="say o"><b>○</b>친구를 <b>소개</b>해 줬다, 미리 <b>신청</b>했다</div>
+        <div class="ex">시간 · 돈 · 평판을 건 행동. 드롭박스의 대기자 명단도 이것</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">1주차 '의견 말고 지난 행동을 물어라'의 테스트 버전. 사람들은 친절하다. 무언가를 내줄 때가 진짜 신호.</aside>
+</section>
+
+<!-- 12. 테스트 진행 원칙 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">03 사용자 테스트</span></div>
+  <h2>테스트 진행의 네 가지 원칙</h2>
+  <div class="body">
+    <div class="cols" style="align-items:start">
+      <ol class="steps">
+        <li><span><b>설명하지 않는다</b><small>"이건 이렇게 쓰는 거예요"라고 말하는 순간 테스트가 끝난다</small></span></li>
+        <li class="frag"><span><b>과제를 주고 지켜본다</b><small>"내일 9시 수업에 맞춰 나갈 시각을 찾아보세요"</small></span></li>
+        <li class="frag"><span><b>생각을 소리 내어 말하게 한다</b><small>어디서 멈칫하는지가 가장 큰 단서</small></span></li>
+        <li class="frag"><span><b>변명하지 않는다</b><small>막히면 기록만 하고, 고치는 건 나중에</small></span></li>
+      </ol>
+      <div class="box think frag" style="text-align:center">
+        <p class="box-title" style="justify-content:center">몇 명이면 될까?</p>
+        <div class="bignum">5<small>명</small></div>
+        <p style="font-size:19px;margin:6px 0 0">사용성 문제의 대부분은 5명 안팎에서 드러난다는 것이 널리 알려진 경험칙입니다. 많이보다 <b>여러 번</b>.</p>
+        <p class="ref">J. Nielsen, "Why You Only Need to Test with 5 Users" (2000)</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="5">5명 규칙은 화면 사용성 문제를 찾을 때의 경험칙이고, 수요가 있는지 확인할 때는 더 많은 사람이 필요하다는 단서를 덧붙인다. 15명을 한 번에 보는 것보다 5명씩 세 번(고치고 다시) 보는 편이 낫다.</aside>
+</section>
+
+<!-- 13. 결과 읽기 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">03 사용자 테스트</span></div>
+  <h2>테스트 결과를 보고 세 가지 중 하나를 고른다</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tile frag"><span class="ic-badge g"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">계속 간다</div><div class="d">핵심 가정이 확인됐다. 다음으로 위험한 가정으로 넘어간다.</div></div>
+      <div class="tile frag"><span class="ic-badge"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">고친다</div><div class="d">문제는 맞는데 해결책이 막힌다. 프로토타입 단계로 돌아간다.</div></div>
+      <div class="tile frag"><span class="ic-badge o"><svg class="ic"><use href="#i-split"/></svg></span><div class="h">방향을 튼다</div><div class="d">문제 자체가 생각과 달랐다. 문제 정의로 돌아간다. 창업에서는 이를 <b>피벗</b>이라고 부른다.</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:20px">방향을 트는 것은 실패가 아닙니다. 주스로는 방향을 틀 기회를 너무 늦게 만났을 뿐입니다.</div>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">1주차의 '되돌아가는 화살표'가 실제로 어떤 결정인지 보여 주는 장.</aside>
+</section>
+
+<!-- 14. 구역 4 -->
+<section class="slide section">
+  <div class="big">04</div>
+  <h2>프로젝트 이어가기</h2>
+  <p>학기가 끝나도 프로젝트는 끝나지 않을 수 있다</p>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="1">구역 전환.</aside>
+</section>
+
+<!-- 15. 다음 단계 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">04 이어가기</span></div>
+  <h2>이 프로젝트가 갈 수 있는 곳</h2>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card"><div class="k">수업</div><div class="h">캡스톤디자인</div><div class="d">고학년 캡스톤 주제로 발전시켜 작동하는 시제품까지</div></div>
+      <div class="card"><div class="k">대외 활동</div><div class="h">공모전 · 해커톤</div><div class="d">문제 정의와 검증 근거가 있는 팀이 심사에서 강하다</div></div>
+      <div class="card"><div class="k">창업</div><div class="h">교내 창업 지원</div><div class="d">창업 동아리, 아이디어 경진대회, 학교 창업 지원 프로그램</div></div>
+    </div>
+    <div class="box frag" style="margin-top:20px">
+      <p class="box-title">어디로 가든, 과정을 기록해 두세요</p>
+      <p style="font-size:21px;margin:0">인터뷰 메모 · 버린 아이디어와 이유 · 프로토타입 사진 · 테스트 결과. 완성품보다 <b>이 기록이 포트폴리오와 면접에서 더 강한 이야기</b>가 됩니다.</p>
+    </div>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">학교의 구체적인 프로그램명과 일정은 수업 시점에 맞춰 말로 안내(슬라이드에는 일반 명칭만). "왜 이 문제를 골랐고, 무엇을 확인했고, 무엇을 바꿨는가"를 말할 수 있으면 결과물이 작아도 좋은 프로젝트.</aside>
+</section>
+
+<!-- 16. 3주 총정리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">3주 총정리</span></div>
+  <h2>3주를 한 줄로</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">좋은 문제</div><div class="d">사용자의 지난 행동에서<br>근거를 찾는다 <b>(1주차)</b></div></div>
+      <div class="arrow">→</div>
+      <div class="stepbox"><span class="ic-badge"><svg class="ic"><use href="#i-layers"/></svg></span><div class="h">빠른 시도</div><div class="d">AI로 싸게 만들고<br>작게 보여 준다 <b>(2·3주차)</b></div></div>
+      <div class="arrow">→</div>
+      <div class="stepbox goal"><span class="ic-badge"><svg class="ic"><use href="#i-scale"/></svg></span><div class="h">근거로 판단</div><div class="d">말보다 행동을 보고<br>계속 · 고침 · 방향 전환</div></div>
+    </div>
+    <svg viewBox="0 0 1120 70" aria-hidden="true">
+      <path d="M940 6 C940 60, 200 60, 180 10" fill="none" stroke="var(--accent-2)" stroke-width="3" stroke-dasharray="8 7"/>
+      <path d="M170 22 L180 6 L192 20" fill="none" stroke="var(--accent-2)" stroke-width="3"/>
+      <text x="560" y="66" text-anchor="middle" class="t-acc2">그리고 다시 처음으로</text>
+    </svg>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">3주 내용을 이 그림 하나로 기억하게 한다.</aside>
+</section>
+
+<!-- 17. 퀴즈 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">확인 퀴즈</span></div>
+  <h2>오늘 내용 확인</h2>
+  <div class="body">
+    <div class="grid g2" style="align-items:start">
+      <div class="q" data-answer="b" data-explain="MVP는 작은 완제품이 아니라 가장 위험한 가정에 답하는 최소한의 결과물입니다. 영상이나 사람이 대신 처리하는 방식도 MVP가 될 수 있습니다.">
+        <p class="q-title">MVP에 대한 설명으로 가장 알맞은 것은?</p>
+        <div class="opts"><button data-v="a">기능을 줄여서 일단 출시한 작은 완제품</button><button data-v="b">가장 위험한 가정을 가장 싸게 확인하기 위한 결과물</button><button data-v="c">디자인 없이 기능만 모두 갖춘 시제품</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="c" data-explain="시간을 내주는 행동은 비용이 드는 약속이라 강한 신호입니다. 칭찬이나 '쓸게요'는 예의상 나오기 쉽습니다.">
+        <p class="q-title">사용자 테스트에서 가장 강한 신호는?</p>
+        <div class="opts"><button data-v="a">"정말 좋은 아이디어네요"라는 말</button><button data-v="b">"나오면 꼭 쓸게요"라는 말</button><button data-v="c">다음 주 테스트에도 시간을 내주겠다는 약속</button></div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">손을 들어 답하게 한 뒤 클릭해서 정답 공개.</aside>
+</section>
+
+<!-- 18. 마무리 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">마무리</span></div>
+  <h2>오늘의 세 줄</h2>
+  <div class="body">
+    <ul class="agenda">
+      <li><span class="n">1</span><span>프로토타입은 <b>질문에 답하는 도구</b>다. 질문에 맞춰 충실도를 고른다</span></li>
+      <li><span class="n">2</span><span>MVP는 <b>가장 위험한 가정</b>을 가장 싸게 확인한다</span></li>
+      <li><span class="n">3</span><span>테스트에서는 <b>말보다 행동</b>을 보고, 계속할지·고칠지·방향을 틀지 정한다</span></li>
+    </ul>
+    <p style="margin-top:22px;display:flex;gap:12px;align-items:center"><a class="btn ghost" href="../w2/">← 2주차</a><a class="btn ghost" href="../">☰ 3주 목록</a><span class="small muted">질문은 daeil.noh@deu.ac.kr</span></p>
+  </div>
+  <div class="s-foot"><span>프로젝트와 디자인씽킹 · 3주차</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">세 줄을 함께 읽고 질의응답. 3주 특강 마무리 인사.</aside>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">3주차 · 아이디어에서 결과물까지</span>
+  <span class="spacer"></span>
+  <span class="hint">← → · N 노트 · T 시계 · O 목록 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../../assets/js/icons.js"></script>
+<script src="../../assets/js/slides.js"></script>
+<script src="../../assets/js/notes.js"></script>
+</body>
+</html>
