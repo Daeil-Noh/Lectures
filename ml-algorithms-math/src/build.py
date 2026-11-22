@@ -60,13 +60,13 @@ math_total = other = brk = 0
 for p in parts:
     if not p.startswith('<section'): continue
     m = float(re.search(r'data-min="([\d.]+)"', p).group(1))
-    if 'mathslide' in p or 'id="g1"' in p: math_total += m
+    if 'mathslide' in p or 'class="slide lab' in p: math_total += m
     elif 'breakslide' in p: brk += m
     else: other += m
 f = (180 - brk - math_total) / other
 out = []
 for p in parts:
-    if p.startswith('<section') and not ('mathslide' in p or 'id="g1"' in p or 'breakslide' in p):
+    if p.startswith('<section') and not ('mathslide' in p or 'class="slide lab' in p or 'breakslide' in p):
         m = float(re.search(r'data-min="([\d.]+)"', p).group(1))
         nm = max(0.5, round(m * f * 2) / 2)
         p = re.sub(r'data-min="[\d.]+"', f'data-min="{nm:g}"', p, count=1)
@@ -96,7 +96,7 @@ w=W(); w.feed(s); w.close(); s=''.join(w.out)
 def total(s): return sum(float(x) for x in re.findall(r'data-min="([\d.]+)"', s))
 while total(s) > 180:
     cand = [(float(m.group(1)), m.start()) for m in re.finditer(r'data-min="([\d.]+)"', s)]
-    cand = [c for c in cand if c[0] < 9 and 'mathslide' not in s[s.rindex('<section',0,c[1]):c[1]] and 'id="g1"' not in s[s.rindex('<section',0,c[1]):c[1]]]
+    cand = [c for c in cand if c[0] < 9 and 'mathslide' not in s[s.rindex('<section',0,c[1]):c[1]] and 'slide lab' not in s[s.rindex('<section',0,c[1]):c[1]]]
     v,pos = max(cand)
     s = s[:pos] + f'data-min="{v-0.5:g}"' + s[s.index('"', pos+10)+1:]
 tot = sum(float(x) for x in re.findall(r'data-min="([\d.]+)"', s))
