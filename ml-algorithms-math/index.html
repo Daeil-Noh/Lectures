@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="ko" data-course="ml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>머신러닝 알고리즘, 그림과 수식으로 이해하기 | 선형회귀부터 앙상블까지 (수학 포함판)</title>
+<meta name="description" content="그림으로 직관을 잡고 수식 한 줄로 확인하는 머신러닝 알고리즘 특강(수학 포함판): 선형회귀, 다중회귀, 과적합과 규제, 로지스틱 회귀, KNN, 결정트리, SVM, 배깅, 랜덤 포레스트, 부스팅, 스태킹">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/css/slides.css">
+<link rel="stylesheet" href="../assets/css/ma.css">
+<style>
+  :root[data-course="ml"] { --accent: #3949ab; --accent-soft: #e8eaf8; }
+  @media (prefers-color-scheme: dark) { :root[data-course="ml"] { --accent: #9fa8f0; --accent-soft: #252a45; } }
+  .ca { color: var(--accent); font-weight: 800; } .cb { color: var(--accent-2); font-weight: 800; }
+  .eq { font-family: "Times New Roman", "Noto Serif KR", serif; font-style: italic; font-size: 34px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 18px; }
+  .eq small { display: block; font-family: inherit; font-style: normal; font-size: 17px; color: var(--muted); margin-top: 4px; }
+  .eq.sm { font-size: 26px; padding: 8px 14px; }
+  .mathtag { display: inline-block; font-size: 13px; font-weight: 800; padding: 1px 8px; border-radius: 6px; background: var(--accent-2-soft); color: var(--accent-2); vertical-align: 3px; margin-left: 6px; }
+  .ans { display: inline-block; font-size: 16px; font-weight: 800; padding: 2px 10px; border-radius: 999px; margin-left: 8px; }
+  .ans.r { background: var(--accent-soft); color: var(--accent); } .ans.c { background: var(--accent-2-soft); color: var(--accent-2); }
+  .exrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .exrow .card { font-size: 19px; text-align: center; }
+  .balls { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ball { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 16px; font-weight: 800; background: var(--accent-soft); color: var(--accent); border: 2px solid var(--accent); }
+  .ball.dup { background: var(--accent-2-soft); color: var(--accent-2); border-color: var(--accent-2); }
+  .ball.miss { opacity: .25; border-style: dashed; }
+  .bag { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; }
+  .bag .h { font-size: 16px; font-weight: 800; color: var(--muted); margin-bottom: 8px; }
+  .thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .thumbs svg { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  .thumbs small { display: block; text-align: center; font-size: 13px; color: var(--muted); }
+  .bots { display: flex; flex-wrap: wrap; gap: 6px; }
+  .side .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .side .row2 .meter .val { font-size: 32px; }
+  .chk { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .chk input { width: 20px; height: 20px; accent-color: var(--accent); }
+  .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btnrow .btn { font-size: 16px; padding: 9px 14px; }
+  .stat { font-size: 16px; color: var(--muted); line-height: 1.5; }
+  .stat b { color: var(--text); }
+  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .big3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .big3 .card .h { font-size: 23px; }
+  td.c, th.c { text-align: center; }
+  .star { fill: #ffc531; stroke: var(--text); stroke-width: 1.5; }
+  .pick { fill: none; stroke: var(--text); stroke-width: 2.5; }
+  .node rect { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+  .node.q rect { stroke: var(--accent); }
+  .node.la rect { fill: var(--accent-soft); stroke: var(--accent); }
+  .node.lb rect { fill: var(--accent-2-soft); stroke: var(--accent-2); }
+  .ed { stroke: var(--muted); stroke-width: 2; fill: none; }
+  .breakslide { background: var(--surface-2); justify-content: center; align-items: center; text-align: center; }
+  .breakslide .big { font-size: 96px; font-weight: 800; color: var(--accent); line-height: 1; }
+  /* 수학 포함판 */
+  .slide.mathslide { background: linear-gradient(90deg, var(--accent-2) 0 6px, transparent 6px), var(--bg); }
+  .mx { font-family: "Times New Roman", "Noto Serif KR", "Nanum Myeongjo", serif; font-style: italic; white-space: nowrap; }
+  .mx .up, .mx .lbl, .mx .vb { font-style: normal; }
+  .mx .vb { font-weight: 800; }
+  .mx sub, .mx sup { font-size: .62em; }
+  .mbox { background: var(--surface); border: 2px solid var(--accent); border-radius: 16px; padding: 14px 20px; text-align: center; font-size: 34px; line-height: 1.6; white-space: normal; }
+  .mbox.sm { font-size: 26px; padding: 8px 16px; }
+  .mbox .lbl { font-family: "Pretendard Variable", Pretendard, sans-serif; font-size: 15px; font-weight: 800; color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 2px 8px; margin-right: 10px; vertical-align: 5px; }
+  .mbox .cap { display: block; font-family: "Pretendard Variable", Pretendard, sans-serif; font-style: normal; font-size: 16px; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+  .fr { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 .12em; line-height: 1.15; }
+  .fr > span { padding: 0 .15em; }
+  .fr > span:first-child { border-bottom: .055em solid currentColor; padding-bottom: .04em; }
+  .op { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1; margin: 0 .12em; }
+  .op i { font-size: .42em; }
+  .op .s { font-style: normal; font-size: 1.2em; }
+  .sq { border-top: .055em solid currentColor; padding: .02em .1em 0; }
+  .terms { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; font-size: 17px; line-height: 1.45; }
+  .terms > div { background: var(--surface-2); border-radius: 10px; padding: 7px 12px; }
+  .terms .mx { font-size: 20px; color: var(--accent); font-weight: 700; margin-right: 8px; }
+  .calc { font-size: 19px; line-height: 1.7; }
+  .calc .mx { font-size: 22px; }
+  table.symtab { font-size: 19px; }
+  table.symtab th, table.symtab td { padding: 7px 14px; }
+  table.symtab td.mx { font-size: 23px; }
+  table.cheat { font-size: 17px; }
+  table.cheat td { padding: 9px 12px; vertical-align: middle; }
+  table.cheat td.mx { font-size: 20px; }
+  .bars { display: grid; gap: 8px; }
+  .bars > div { display: grid; grid-template-columns: 90px 1fr 54px; align-items: center; gap: 10px; font-size: 18px; }
+  .bars i { display: block; height: 22px; border-radius: 6px; background: var(--accent-2); min-width: 4px; }
+  .bars b { font-variant-numeric: tabular-nums; }
+  .mx .ko { font-family: "Pretendard Variable", Pretendard, sans-serif; font-style: normal; font-size: .82em; }
+  .mbox .cap .ko, .mbox .lbl .ko { font-size: 1em; }
+</style>
+</head>
+<body>
+<div class="viewport">
+<div class="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover" style="flex-direction:row;align-items:center;gap:30px">
+  <div style="flex:1">
+    <p class="eyebrow">특강 · 머신러닝 알고리즘 · 수학 포함판</p>
+    <h1>머신러닝 알고리즘,<br>그림과 수식으로</h1>
+    <p class="lead" style="font-size:25px">선형회귀부터 앙상블까지 — 그림으로 이해하고, 식 한 줄로 확인한다</p>
+    <div class="author"><b>노대일 교수</b><span>동의대학교 인공지능학과</span><span>daeil.noh@deu.ac.kr</span></div>
+    <div class="meta"><span>약 3시간</span><span>직접 해 보기 10개</span><span>수학 슬라이드 15장</span></div>
+  </div>
+  <svg viewBox="0 0 460 420" style="width:460px;flex:none" aria-hidden="true">
+    <rect x="10" y="10" width="440" height="400" rx="24" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+    <g opacity=".9">
+      <rect x="40" y="40" width="190" height="170" fill="var(--accent)" fill-opacity=".12"/>
+      <rect x="230" y="40" width="190" height="90" fill="var(--accent-2)" fill-opacity=".12"/>
+      <rect x="230" y="130" width="190" height="80" fill="var(--accent)" fill-opacity=".12"/>
+      <path d="M40 210 H420 M230 40 V210 M230 130 H420" stroke="var(--line)" stroke-width="2"/>
+    </g>
+    <g class="p-good"><circle cx="80" cy="90" r="8"/><circle cx="130" cy="150" r="8"/><circle cx="180" cy="80" r="8"/><circle cx="300" cy="180" r="8"/><circle cx="110" cy="190" r="8"/></g>
+    <g class="p-bad"><circle cx="280" cy="70" r="8"/><circle cx="360" cy="100" r="8"/><circle cx="390" cy="60" r="8"/></g>
+    <path d="M50 385 L410 245" stroke="var(--accent-2)" stroke-width="5" stroke-linecap="round"/>
+    <g class="p-good"><circle cx="80" cy="360" r="7"/><circle cx="130" cy="352" r="7"/><circle cx="170" cy="330" r="7"/><circle cx="220" cy="325" r="7"/><circle cx="270" cy="296" r="7"/><circle cx="320" cy="290" r="7"/><circle cx="370" cy="258" r="7"/></g>
+    <g style="color:var(--accent)"><use href="#i-split" x="360" y="320" width="52" height="52"/></g>
+  </svg>
+  <div class="s-foot"><span></span><span class="no"></span></div>
+  <aside class="notes" data-min="1.5">인사. "오늘은 머신러닝 교과서에 나오는 대표 알고리즘들을 수식 대신 그림과 비유로 훑습니다. 수식은 정말 필요한 곳 두세 군데만, 그것도 한 줄로만 보여 줍니다." N 키로 발표자 노트, T 키로 강의 시계.</aside>
+</section>
+
+<!-- 2. 학습 목표 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">학습 목표</span></div>
+  <h2>오늘 특강이 끝나면</h2>
+  <div class="body">
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-map"/></svg></span><div class="h">큰 그림</div><div class="d">회귀와 분류를 구별하고, '학습'이 무엇인지 한 문장으로 말한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-trend"/></svg></span><div class="h">회귀</div><div class="d">선형·다중회귀가 하는 일, 과적합과 규제를 그림으로 설명한다</div></div>
+      <div class="tile"><span class="ic-badge o"><svg class="ic"><use href="#i-split"/></svg></span><div class="h">분류</div><div class="d">로지스틱 회귀, KNN, 결정트리, SVM이 경계를 긋는 방식을 비교한다</div></div>
+      <div class="tile"><span class="ic-badge"><svg class="ic"><use href="#i-users"/></svg></span><div class="h">앙상블</div><div class="d">배깅·랜덤 포레스트·부스팅·스태킹이 왜 더 잘 맞히는지 설명한다</div></div>
+    </div>
+    <div class="box think" style="margin-top:22px"><b>오늘의 약속</b> — 그림으로 먼저 이해하고, 그 그림을 <span class="mark">식 한 줄로 다시 씁니다</span>. 식은 외우지 말고 "무엇을 줄이려는 식인지"만 읽습니다.</div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="1.5">목표 네 개. 마지막에 "이 문제엔 무엇부터 써 볼까"를 스스로 판단할 수 있게 하는 것이 진짜 목표.</aside>
+</section>
+
+<!-- 3. 흐름 -->
+<section class="slide">
+  <div class="s-head"><span class="sec">오늘의 흐름</span></div>
+  <h2>3시간의 흐름</h2>
+  <div class="body">
+    <div class="tl">
+      <div style="flex:1.6;background:var(--accent-soft)"><b>① 큰 그림</b><small>15분</small></div>
+      <div style="flex:3.6;background:var(--accent-soft)"><b>② 회귀</b><small>선형 · 다중 · 과적합 · 규제</small></div>
+      <div style="flex:1;background:var(--surface-2)"><b>휴식</b></div>
+      <div style="flex:4;background:var(--accent-soft)"><b>③ 분류</b><small>로지스틱 · KNN · 트리 · SVM</small></div>
+      <div style="flex:1;background:var(--surface-2)"><b>휴식</b></div>
+      <div style="flex:4.4;background:var(--accent-soft)"><b>④ 앙상블</b><small>보팅 · 배깅 · 부스팅 · 스태킹</small></div>
+      <div style="flex:1.6;background:var(--accent-soft)"><b>⑤ 정리</b><small>지도 · 퀴즈</small></div>
+    </div>
+    <div class="grid g3" style="margin-top:24px">
+      <div class="card"><div class="k">직접 해 보기</div><div class="h">10개의 데모</div><div class="d">슬라이더를 움직이고 점을 찍어 보며 알고리즘의 성격을 손으로 느낍니다.</div></div>
+      <div class="card"><div class="k">수학</div><div class="h">고등학교 수학이면 충분</div><div class="d">Σ, 지수·로그, 제곱근. 오른쪽 위에 <span class="lv l3">수학</span> 표시가 붙은 장에서 다룹니다.</div></div>
+      <div class="card"><div class="k">퀴즈</div><div class="h">중간중간 확인</div><div class="d">구역이 끝날 때마다 짧은 퀴즈로 확인합니다.</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="0.5">전체 흐름. 쉬는 시간은 두 번, 각 10분. 데모는 웹 주소만 있으면 수강생도 각자 열어 볼 수 있다.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">01 큰 그림</span><span class="lv l3">수학</span></div>
+  <h2>오늘 쓰는 기호는 이것뿐</h2>
+  <div class="body">
+    <div class="grid g2">
+      <table class="symtab">
+        <tr><th>기호</th><th>뜻</th><th>집값 예</th></tr>
+        <tr><td class="mx">x</td><td>입력 (특징)</td><td>평수</td></tr>
+        <tr><td class="mx">y</td><td>정답</td><td>실제 가격</td></tr>
+        <tr><td class="mx">ŷ</td><td>예측 (와이 햇)</td><td>모델이 낸 가격</td></tr>
+        <tr><td class="mx">w</td><td>가중치</td><td>1평당 오르는 값</td></tr>
+        <tr><td class="mx">b</td><td>절편 (시작 높이)</td><td>0평일 때 값</td></tr>
+      </table>
+      <table class="symtab">
+        <tr><th>기호</th><th>뜻</th><th>쓰이는 곳</th></tr>
+        <tr><td class="mx">n</td><td>데이터 개수</td><td>평균 낼 때</td></tr>
+        <tr><td class="mx"><span class="up">Σ</span></td><td>모두 더하기</td><td>오차의 합</td></tr>
+        <tr><td class="mx">η</td><td>학습률 (에타)</td><td>한 번에 고치는 양</td></tr>
+        <tr><td class="mx">λ</td><td>규제 세기 (람다)</td><td>벌점의 크기</td></tr>
+        <tr><td class="mx">p</td><td>확률</td><td>분류 모델의 출력</td></tr>
+      </table>
+    </div>
+    <p class="small muted" style="margin-top:18px">아래첨자는 "몇 번째"라는 뜻입니다. <span class="mx">x<sub>i</sub></span> = <i>i</i>번째 집의 평수, <span class="mx"><span class="up">Σ</span><sub>i=1..3</sub> x<sub>i</sub> = x<sub>1</sub>+x<sub>2</sub>+x<sub>3</sub></span>. 고등학교 수학(Σ, 지수·로그, 제곱근)이면 충분합니다.</p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">기호표는 외울 필요 없이 필요할 때 돌아오면 된다고 안내. 오른쪽 위 '수학' 표시가 붙은 장이 수식을 다루는 장.</aside>
+</section>
+
+
+<!-- ───────── 1. 큰 그림 ───────── -->
+<section class="slide section">
+  <div class="big">01</div>
+  <h2>머신러닝의 큰 그림</h2>
+  <p>규칙을 짜는 대신, 데이터에서 규칙을 배운다</p>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="0.5">첫 구역. 알고리즘에 들어가기 전에 공통 언어를 맞춘다.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">01 큰 그림</span></div>
+  <h2>프로그래밍 vs 머신러닝</h2>
+  <div class="body">
+    <div class="vs">
+      <div class="box">
+        <div class="box-title"><svg class="ic"><use href="#i-code"/></svg>전통적인 프로그래밍</div>
+        <div class="flow" style="margin:6px 0 14px">
+          <div class="stepbox"><div class="h">규칙</div><div class="d">사람이 작성</div></div><div class="arrow">+</div>
+          <div class="stepbox"><div class="h">데이터</div></div><div class="arrow">→</div>
+          <div class="stepbox goal"><div class="h">답</div></div>
+        </div>
+        <p class="small muted">"제목에 '무료'·'당첨'이 있으면 스팸" — 사람이 규칙을 하나하나 적는다. 새로운 수법이 나오면 규칙을 또 고쳐야 한다.</p>
+      </div>
+      <div class="box key">
+        <div class="box-title"><svg class="ic"><use href="#i-sparkles"/></svg>머신러닝</div>
+        <div class="flow" style="margin:6px 0 14px">
+          <div class="stepbox"><div class="h">데이터</div></div><div class="arrow">+</div>
+          <div class="stepbox"><div class="h">답</div><div class="d">정답 표시</div></div><div class="arrow">→</div>
+          <div class="stepbox goal"><div class="h">규칙</div><div class="d">= 모델</div></div>
+        </div>
+        <p class="small muted">스팸/정상 표시가 붙은 메일 수만 통을 보여 주면, <b>어떤 특징이 스팸을 가르는지</b> 기계가 스스로 찾는다.</p>
+      </div>
+    </div>
+    <p class="frag" style="margin-top:10px;font-size:24px">오늘 배울 알고리즘들은 모두 <span class="mark">"데이터 + 답 → 규칙"을 만드는 서로 다른 방법</span>입니다.</p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">머신러닝의 정의를 입력과 출력의 위치가 바뀐 것으로 설명. "모델"이라는 말은 이렇게 배운 규칙 덩어리를 가리킨다고 정리. 오늘 다루는 것은 정답이 있는 데이터로 배우는 '지도학습'.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">01 큰 그림</span></div>
+  <h2>지도학습이 묻는 두 가지 질문</h2>
+  <div class="body">
+    <div class="vs">
+      <div class="card"><div class="k">회귀 Regression</div><div class="h">"얼마나?" — 숫자를 맞힌다</div><div class="d">답이 연속된 숫자. 정답과 <b>얼마나 가까운지</b>로 평가.</div><div class="ex">집값 · 내일 기온 · 다음 달 매출 · 공정 온도</div></div>
+      <div class="card"><div class="k" style="color:var(--accent-2)">분류 Classification</div><div class="h">"어느 쪽?" — 범주를 고른다</div><div class="d">답이 정해진 보기 중 하나. <b>맞았는지 틀렸는지</b>로 평가.</div><div class="ex">스팸/정상 · 불량/양품 · 고양이/개 · 손글씨 숫자 0~9</div></div>
+    </div>
+    <p style="margin:22px 0 10px;font-size:21px;font-weight:700">이건 회귀일까, 분류일까? <span class="muted" style="font-weight:400">(다음을 누르면 정답)</span></p>
+    <div class="exrow">
+      <div class="card">중고차 시세<br><span class="frag ans r">회귀</span></div>
+      <div class="card">사진 속 제품 불량 여부<br><span class="frag ans c">분류</span></div>
+      <div class="card">고객이 다음 달 떠날까?<br><span class="frag ans c">분류</span></div>
+      <div class="card">배터리 남은 수명(일)<br><span class="frag ans r">회귀</span></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">네 문제를 학생들에게 물어 보고 하나씩 공개. "떠날 확률 73%"처럼 숫자로 답하는 분류도 있다는 점은 로지스틱 회귀에서 다시 나온다고 예고.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">01 큰 그림</span></div>
+  <h2>학습이란 '틀린 만큼 고치기'의 반복</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox"><span class="ic-badge"><svg class="ic"><use href="#i-target"/></svg></span><div class="h">① 예측</div><div class="d">지금의 규칙으로<br>답을 내 본다</div></div><div class="arrow">→</div>
+      <div class="stepbox"><span class="ic-badge"><svg class="ic"><use href="#i-scale"/></svg></span><div class="h">② 비교</div><div class="d">정답과 얼마나<br>다른지 잰다 = <b>오차</b></div></div><div class="arrow">→</div>
+      <div class="stepbox"><span class="ic-badge o"><svg class="ic"><use href="#i-reset"/></svg></span><div class="h">③ 수정</div><div class="d">오차가 줄어드는<br>쪽으로 조금 고친다</div></div><div class="arrow">→</div>
+      <div class="stepbox goal"><span class="ic-badge"><svg class="ic"><use href="#i-check"/></svg></span><div class="h">반복</div><div class="d">더 줄지 않을 때<br>멈춘다</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:24px">
+      <div class="box-title"><svg class="ic"><use href="#i-bulb"/></svg>비유: 샤워 물 온도 맞추기</div>
+      손잡이를 돌린다(예측) → 물이 너무 차갑다(오차) → 뜨거운 쪽으로 <b>조금</b> 돌린다(수정) → 또 확인한다. 너무 크게 돌리면 이번엔 너무 뜨겁다. 머신러닝도 <b>조금씩</b> 고칩니다.
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">모든 알고리즘의 공통 뼈대. 알고리즘마다 다른 것은 (1) 규칙의 모양(직선, 나무, 이웃…)과 (2) 오차를 재는 방법, (3) 고치는 방법. '조금씩'은 나중에 학습률로 다시 등장.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">01 큰 그림</span></div>
+  <h2>연습 문제와 실전 문제를 나눈다</h2>
+  <div class="body">
+    <div class="cols even" style="align-items:center">
+      <div>
+        <svg viewBox="0 0 520 170" aria-hidden="true">
+          <rect x="10" y="40" width="370" height="70" rx="12" class="f-accs" stroke="var(--accent)" stroke-width="2"/>
+          <rect x="390" y="40" width="120" height="70" rx="12" class="f-acc2s" stroke="var(--accent-2)" stroke-width="2"/>
+          <text x="195" y="82" text-anchor="middle" class="t-main">훈련 데이터 (예: 80%)</text>
+          <text x="450" y="82" text-anchor="middle" class="t-main">테스트 20%</text>
+          <text x="195" y="140" text-anchor="middle" class="t-sub">모델이 보고 배우는 '연습 문제'</text>
+          <text x="450" y="140" text-anchor="middle" class="t-sub">마지막에 한 번 푸는 '실전'</text>
+          <text x="260" y="24" text-anchor="middle" class="t-sub">전체 데이터를 섞은 뒤 나눈다</text>
+        </svg>
+      </div>
+      <div class="box warn" style="margin:0">
+        <div class="box-title"><svg class="ic"><use href="#i-alert"/></svg>족보만 외운 학생</div>
+        기출문제 답을 통째로 외우면 기출 점수는 100점. 그러나 처음 보는 문제에서는 무너진다. 모델도 <b>처음 보는 데이터</b>로 평가해야 진짜 실력을 알 수 있다.
+      </div>
+    </div>
+    <p class="frag" style="margin-top:18px">오늘 데모의 <b>"연습 오차"</b>와 <b>"실전 오차"</b>가 바로 이 두 점수입니다. 둘 사이의 차이를 계속 지켜보세요.</p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">훈련/테스트 분리. 실제로는 검증 데이터도 따로 두거나 교차 검증을 쓰지만 오늘은 두 덩어리로 충분. 이 구분이 과적합 설명의 기초.</aside>
+</section>
+
+<!-- ───────── 2. 회귀 ───────── -->
+<section class="slide section">
+  <div class="big">02</div>
+  <h2>회귀 — 숫자를 예측하는 법</h2>
+  <p>선형회귀 · 다중회귀 · 다항회귀 · 과적합 · 규제</p>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="0.5">회귀 구역 시작.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">02 회귀</span></div>
+  <h2>선형회귀: 점들을 가장 잘 지나는 직선</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1.1fr 1fr;align-items:center">
+      <figure class="canvas" style="padding:8px"><svg id="linIllu" aria-label="평수와 집값 산점도에 직선과 오차를 그린 그림"></svg></figure>
+      <div>
+        <p>평수가 넓을수록 비싸다 — 이 경향을 <b>직선 하나</b>로 요약합니다.</p>
+        <p class="small"><span class="cb">점선</span> = 실제 값과 직선의 차이(<b>오차</b>, 잔차)</p>
+        <p class="small">"가장 잘 지난다" = 이 점선들이 <b>전체적으로 가장 짧은</b> 직선. 보통 길이를 제곱해 더한 값이 가장 작은 선을 고릅니다(최소제곱법).</p>
+        <div class="eq sm frag">가격 = <b style="font-style:normal;color:var(--accent)">기울기</b> × 평수 + <b style="font-style:normal;color:var(--accent)">시작 높이</b><small><span class="mathtag" style="margin:0">핵심 식</span> 학습 = 이 두 숫자를 찾는 일</small></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">오차를 제곱하는 이유는 "멀리 떨어진 점을 더 크게 벌주기 위해, 그리고 음수·양수가 상쇄되지 않게"라고만 설명. 수식은 이 한 줄이면 충분: y = wx + b. 학습이란 w와 b 두 숫자를 정하는 것.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">02 회귀</span><span class="lv l3">수학</span></div>
+  <h2>오차를 숫자 하나로: 평균제곱오차 (MSE)</h2>
+  <div class="body">
+    <div class="cols even" style="align-items:center">
+      <div>
+        <div class="mbox mx"><span class="up">MSE</span> = <span class="fr"><span>1</span><span>n</span></span><span class="op"><i>n</i><span class="s">Σ</span><i>i=1</i></span>( y<sub>i</sub> − ŷ<sub>i</sub> )<sup>2</sup><span class="cap"><span class="ko">점마다 오차를 제곱해서 평균 낸 값</span> — <span class="ko">작을수록 좋은 직선</span></span></div>
+        <div class="terms" style="margin-top:14px">
+          <div><span class="mx">y<sub>i</sub> − ŷ<sub>i</sub></span>i번째 점의 오차 (그림의 점선)</div>
+          <div><span class="mx">(  )<sup>2</sup></span>음수도 양수로, 큰 오차는 더 크게</div>
+        </div>
+      </div>
+      <div class="box think calc" style="margin:0">
+        <div class="box-title"><svg class="ic"><use href="#i-coins"/></svg>계산해 보기</div>
+        집 3채의 오차가 <b>+1, −2, +1</b>억이라면<br>
+        <span class="mx"><span class="up">MSE</span> = (1<sup>2</sup> + (−2)<sup>2</sup> + 1<sup>2</sup>) ÷ 3 = 6 ÷ 3 = 2</span>
+        <p class="frag" style="margin:12px 0 0">그냥 더하면 1 − 2 + 1 = <b>0</b> → "오차가 없다"는 엉터리 결론. 그래서 제곱합니다.</p>
+        <p class="frag" style="margin:8px 0 0">오차 −2 하나가 전체 6 중 <b>4</b>를 차지 → 이상한 집 하나가 직선을 끌어당기는 이유.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">직접 해 보기에서 보던 '오차' 숫자가 바로 이 MSE. 절댓값 평균(MAE)을 쓰면 이상치에 덜 휘둘리지만 미분이 불편하다는 정도만 언급.</aside>
+</section>
+
+
+<section class="slide lab">
+  <div class="s-head"><span class="labbar">직접 해 보기 1</span><span class="sec">선형회귀</span></div>
+  <h2>내가 직접 직선을 맞춰 보기</h2>
+  <div class="demo">
+    <div class="plot"><svg id="d1" aria-label="직선 맞추기 데모: 빈 곳을 누르면 점 추가"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>기울기 <output id="d1mo"></output></label><input type="range" id="d1m" min="0" max="0.3" step="0.001" value="0.05"></div>
+      <div class="ctrl"><label>시작 높이 <output id="d1bo"></output></label><input type="range" id="d1b" min="-4" max="8" step="0.01" value="3"></div>
+      <div class="meter"><div class="lbl">내 직선의 오차 (작을수록 좋음)</div><div class="val o" id="d1err">-</div><div class="track"><i id="d1bar"></i></div><div class="stat">가능한 최소 오차 <b id="d1best">-</b> · 막대가 꽉 차면 최선</div></div>
+      <div class="btnrow"><button class="btn" id="d1fit" type="button">AI가 맞추기</button><button class="btn ghost" id="d1out" type="button">이상한 집 추가</button><button class="btn ghost" id="d1reset" type="button">처음으로</button></div>
+      <div class="callout b">그래프 빈 곳을 누르면 집(점)이 추가됩니다. <b>이상한 집</b> 하나가 직선을 얼마나 끌어당기는지 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">1) 학생에게 슬라이더로 직접 맞추게 한다(오차 숫자가 줄어드는 쪽으로). 2) "AI가 맞추기" — 컴퓨터는 이 작업을 계산으로 한 번에 한다. 3) 이상한 집 추가 → 직선이 끌려 올라감: 선형회귀는 이상치에 약하다. 이것이 오차를 제곱하기 때문.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">02 회귀</span><span class="lv l3">수학</span></div>
+  <h2>가장 낮은 곳 찾기: 경사하강법</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1fr 1.1fr;align-items:center">
+      <svg viewBox="0 0 600 300" aria-label="U자 오차 곡선을 공이 기울기를 따라 내려가는 그림">
+        <line x1="30" y1="270" x2="580" y2="270" class="p-axis"/><line x1="30" y1="20" x2="30" y2="270" class="p-axis"/>
+        <text x="575" y="292" text-anchor="end" class="t-sub">가중치 w</text><text x="40" y="24" class="t-sub">오차 MSE</text>
+        <path d="M40 40 Q300 480 560 40" fill="none" stroke="var(--accent)" stroke-width="4"/>
+        <line x1="25" y1="21" x2="135" y2="186" stroke="var(--accent-2)" stroke-width="2.5" stroke-dasharray="6 5"/>
+        <text x="96" y="70" class="t-acc" style="fill:var(--accent-2)">기울기 = 가파른 정도</text>
+        <g class="ed"><path d="M78 96 Q 120 170 166 202"/><path d="M182 212 Q 205 236 224 241"/><path d="M238 247 L 254 252"/></g>
+        <g><circle cx="70" cy="88" r="10" class="f-acc2"/><circle cx="174" cy="208" r="9" class="f-acc2" opacity=".8"/><circle cx="231" cy="244" r="8" class="f-acc2" opacity=".65"/><circle cx="262" cy="255" r="7" class="f-acc2" opacity=".5"/><circle cx="279" cy="259" r="6" class="f-acc2" opacity=".4"/></g>
+        <text x="300" y="232" text-anchor="middle" class="t-sub">바닥 = 최소 오차</text>
+      </svg>
+      <div>
+        <div class="mbox mx">w ← w − η · <span class="fr"><span>∂<span class="up">MSE</span></span><span>∂w</span></span><span class="cap"><span class="ko">기울기의 반대 방향으로</span>, <span class="ko">학습률</span> η<span class="ko">만큼 조금 움직인다</span></span></div>
+        <ul class="small" style="margin:14px 0 0">
+          <li><b>기울기(미분)</b> = 지금 자리에서 w를 늘리면 오차가 얼마나 오르는지</li>
+          <li>기울기가 <b>양수면 왼쪽</b>, <b>음수면 오른쪽</b>으로 → 언제나 내리막</li>
+          <li>바닥에 가까울수록 기울기가 작아져 <b>보폭도 저절로 줄어든다</b></li>
+        </ul>
+        <p class="frag small muted" style="margin-top:10px">선형회귀는 공식 한 번으로도 풀립니다 (<span class="mx">w = <span class="up">Σ</span>(x−x̄)(y−ȳ) ÷ <span class="up">Σ</span>(x−x̄)<sup>2</sup></span>). 그래도 경사하강법을 배우는 이유: 로지스틱 회귀, 부스팅, 신경망까지 <b>거의 모든 모델이 이 방법</b>으로 학습합니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">1장의 '샤워 온도 맞추기'가 바로 이 식. 눈을 가리고 산을 내려갈 때 발밑 경사만 느끼고 내리막으로 한 걸음씩 가는 비유도 좋다. '공식 한 번' 부분(최소제곱 해)은 frag로, 관심 있는 학생용.</aside>
+</section>
+<section class="slide lab">
+  <div class="s-head"><span class="labbar">직접 해 보기 2</span><span class="sec">경사하강법</span></div>
+  <h2>학습률을 바꿔 가며 바닥까지 내려가기</h2>
+  <div class="demo">
+    <div class="plot"><svg id="g1" aria-label="경사하강법 단계별 이동"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>학습률 η <output id="g1etao"></output></label><input type="range" id="g1eta" min="0.05" max="1.1" step="0.05" value="0.1"></div>
+      <div class="btnrow"><button class="btn" id="g1step" type="button">한 걸음</button><button class="btn ghost" id="g1run" type="button">끝까지</button><button class="btn ghost" id="g1reset" type="button">처음으로</button></div>
+      <div class="row2">
+        <div class="meter"><div class="lbl">걸음 수</div><div class="val" id="g1n">0</div></div>
+        <div class="meter"><div class="lbl">지금 오차</div><div class="val o" id="g1L">-</div></div>
+      </div>
+      <div class="stat" id="g1w">-</div>
+      <div class="callout" id="g1state">-</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="4">오차 곡선은 MSE(w) = (w − 3)² + 1 로 단순화한 것. η = 0.1: 천천히 수렴. 0.5: 한 걸음에 바닥. 0.8: 좌우로 지그재그하며 수렴. 1.0: 영원히 왔다 갔다. 1.1: 점점 멀어짐(발산). '조금씩 고친다'의 '조금'이 왜 중요한지.</aside>
+</section>
+
+
+<section class="slide">
+  <div class="s-head"><span class="sec">02 회귀</span></div>
+  <h2>직선이 알려 주는 것, 알려 주지 못하는 것</h2>
+  <div class="body">
+    <div class="vs">
+      <div class="box">
+        <div class="box-title"><svg class="ic"><use href="#i-check"/></svg>장점</div>
+        <ul class="small" style="margin:0">
+          <li><b>해석이 쉽다</b> — "1평 늘면 약 1,300만 원 오른다"</li>
+          <li><b>빠르고 가볍다</b> — 데이터가 적어도 동작</li>
+          <li><b>기준선</b> — 복잡한 모델을 쓰기 전 반드시 먼저 돌려 보는 비교 대상</li>
+        </ul>
+      </div>
+      <div class="box warn">
+        <div class="box-title"><svg class="ic"><use href="#i-alert"/></svg>한계</div>
+        <ul class="small" style="margin:0">
+          <li><b>곡선 관계</b>를 못 잡는다 (온도와 아이스크림 판매는 어느 선부터 꺾인다)</li>
+          <li><b>이상치</b>에 끌려간다 (방금 데모)</li>
+          <li>요인이 <b>하나뿐</b>이다 — 집값이 평수로만 정해질까?</li>
+        </ul>
+      </div>
+    </div>
+    <p class="frag" style="margin-top:20px;font-size:24px">세 번째 한계를 푸는 것이 <b>다중회귀</b>, 첫 번째 한계를 푸는 것이 <b>다항회귀</b>입니다.</p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">선형회귀는 "약하지만 정직한" 모델. 현업에서도 기준선으로 늘 먼저 돌린다. 한계 셋이 다음 슬라이드들의 동기.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">02 회귀</span></div>
+  <h2>다중회귀: 요인이 여러 개일 때</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1.25fr 1fr;align-items:center">
+      <svg viewBox="0 0 600 330" aria-label="여러 요인이 각자의 가중치를 곱해 합쳐지는 그림">
+        <g font-size="17">
+          <g class="node q"><rect x="10" y="20" width="170" height="54" rx="12"/><text x="95" y="53" text-anchor="middle" class="t-main">평수</text></g>
+          <g class="node q"><rect x="10" y="95" width="170" height="54" rx="12"/><text x="95" y="128" text-anchor="middle" class="t-main">역까지 걷는 시간</text></g>
+          <g class="node q"><rect x="10" y="170" width="170" height="54" rx="12"/><text x="95" y="203" text-anchor="middle" class="t-main">지은 지 몇 년</text></g>
+          <g class="node q"><rect x="10" y="245" width="170" height="54" rx="12"/><text x="95" y="278" text-anchor="middle" class="t-main">층</text></g>
+        </g>
+        <g class="ed"><path d="M180 47 L400 160"/><path d="M180 122 L400 163"/><path d="M180 197 L400 167"/><path d="M180 272 L400 170"/></g>
+        <g font-size="15" font-weight="800">
+          <text x="270" y="82" fill="var(--accent)">× 가중치 (+)</text><text x="270" y="134" fill="var(--accent-2)">× 가중치 (−)</text>
+          <text x="270" y="200" fill="var(--accent-2)">× 가중치 (−)</text><text x="270" y="250" fill="var(--accent)">× 가중치 (+)</text>
+        </g>
+        <circle cx="430" cy="165" r="32" class="f-acc"/><text x="430" y="176" text-anchor="middle" style="font-size:32px;font-weight:800;fill:var(--surface)">+</text>
+        <path d="M462 165 L500 165" class="ed"/>
+        <g class="node la"><rect x="500" y="138" width="92" height="54" rx="12"/><text x="546" y="171" text-anchor="middle" class="t-main">가격</text></g>
+      </svg>
+      <div>
+        <p>요인마다 <b>가중치</b>(얼마나, 어느 방향으로 영향을 주는지)를 하나씩 배우고, 모두 더합니다.</p>
+        <div class="eq sm">가격 = <i>w</i><sub>1</sub>×평수 + <i>w</i><sub>2</sub>×역거리 + … + <i>b</i><small><span class="mathtag" style="margin:0">핵심 식</span> 직선이 '여러 방향으로 기운 평면'이 된 것</small></div>
+        <p class="small muted" style="margin-top:12px">비유: 오디션 점수 — 심사위원(요인)마다 발언권(가중치)이 다르고, 최종 점수는 합계.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">요인이 2개면 평면, 그 이상이면 상상하기 어렵지만 원리는 같다. 가중치의 부호가 방향, 크기가 영향력(단, 요인의 단위가 다르면 크기 비교는 조심 — 다음 장).</aside>
+</section>
+
+<section class="slide lab">
+  <div class="s-head"><span class="labbar">직접 해 보기 3</span><span class="sec">다중회귀</span></div>
+  <h2>집값 계산기: 요인별 기여도 쌓기</h2>
+  <div class="demo">
+    <div class="plot"><svg id="d2" aria-label="요인별 기여도를 쌓아 올린 막대"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>평수 <output id="d2ao"></output></label><input type="range" id="d2a" min="10" max="60" step="1" value="32"></div>
+      <div class="ctrl"><label>역까지 걷는 시간 <output id="d2so"></output></label><input type="range" id="d2s" min="1" max="30" step="1" value="10"></div>
+      <div class="ctrl"><label>지은 지 <output id="d2yo"></output></label><input type="range" id="d2y" min="0" max="40" step="1" value="15"></div>
+      <div class="ctrl"><label>층 <output id="d2fo"></output></label><input type="range" id="d2f" min="1" max="30" step="1" value="8"></div>
+      <div class="meter"><div class="lbl">예상 가격</div><div class="val" id="d2price">-</div></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">가중치는 예시로 정한 값(실제 데이터로 배운 값 아님). 보여 줄 것: 한 요인만 바꾸면 그 막대만 변한다 = "다른 조건이 같다면" 해석. 역 거리를 늘리면 막대가 음수 방향으로.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">02 회귀</span><span class="lv l3">수학</span></div>
+  <h2>다중회귀를 식으로: 곱해서 모두 더하기</h2>
+  <div class="body">
+    <div class="mbox mx">ŷ = w<sub>1</sub>x<sub>1</sub> + w<sub>2</sub>x<sub>2</sub> + … + w<sub>d</sub>x<sub>d</sub> + b = <b class="vb">w</b>·<b class="vb">x</b> + b<span class="cap"><span class="ko">굵은 글씨</span> = <span class="ko">숫자 묶음</span>(<span class="ko">벡터</span>). <span class="ko">짝끼리 곱해 더하는 것을</span> '<span class="ko">내적</span>'<span class="ko">이라 부른다</span></span></div>
+    <div class="grid g2" style="margin-top:18px">
+      <div class="box think calc" style="margin:0">
+        <div class="box-title"><svg class="ic"><use href="#i-coins"/></svg>방금 계산기의 기본값을 손으로</div>
+        <span class="mx">1.5 + 0.12×32 − 0.06×10 − 0.05×15 + 0.03×8</span><br>
+        <span class="mx">= 1.5 + 3.84 − 0.60 − 0.75 + 0.24 = <b class="up" style="color:var(--accent)">4.23</b></span>억
+      </div>
+      <div class="box calc frag" style="margin:0">
+        <div class="box-title"><svg class="ic"><use href="#i-scale"/></svg>가중치 크기를 비교하려면: 표준화</div>
+        <span class="mx">z = <span class="fr"><span>x − μ</span><span>σ</span></span></span> &nbsp;<span class="small">(μ 평균, σ 표준편차)</span><br>
+        모든 요인을 "평균에서 몇 칸 떨어졌나"라는 <b>같은 단위</b>로 바꾼 뒤에야 가중치가 큰 요인 = 영향이 큰 요인.
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">데모의 막대 하나하나가 w_j × x_j 한 항. 학습은 MSE를 가장 작게 하는 w 묶음과 b를 찾는 것 — 경사하강법이 그대로 적용된다. 표준화는 KNN에서 다시 나온다.</aside>
+</section>
+
+
+<section class="slide">
+  <div class="s-head"><span class="sec">02 회귀</span></div>
+  <h2>다중회귀를 읽을 때 조심할 세 가지</h2>
+  <div class="body">
+    <div class="big3">
+      <div class="card"><div class="k">① 해석</div><div class="h">"다른 조건이 같다면"</div><div class="d">평수 가중치 = 역 거리·연식·층이 <b>같은 집끼리</b> 비교했을 때 1평 차이의 효과.</div></div>
+      <div class="card"><div class="k">② 닮은 요인</div><div class="h">공을 나눠 갖는다</div><div class="d">평수와 방 개수처럼 함께 움직이는 요인은 누구 공인지 헷갈려 가중치가 들쭉날쭉해진다(다중공선성).</div></div>
+      <div class="card"><div class="k">③ 단위</div><div class="h">크기 비교는 같은 잣대로</div><div class="d">'평'과 '분'은 단위가 달라 가중치 크기를 바로 비교할 수 없다. 단위를 맞추는 <b>표준화</b> 후에 비교.</div></div>
+    </div>
+    <div class="box warn frag" style="margin-top:22px">
+      <div class="box-title"><svg class="ic"><use href="#i-alert"/></svg>가장 흔한 실수: 관계 ≠ 원인</div>
+      아이스크림 판매량으로 물놀이 사고를 아주 잘 '예측'할 수 있다. 그렇다고 아이스크림을 금지하면 사고가 줄까? 둘 다 <b>더위</b> 때문이다. 회귀는 <b>함께 움직임</b>을 찾을 뿐, 원인은 따로 따져야 한다.
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">세 가지는 실무 보고서에서 자주 틀리는 부분. 특히 상관과 인과. 예측이 목적이면 상관만으로 충분하지만, "무엇을 바꾸면 결과가 바뀌나"는 다른 질문.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">02 회귀</span></div>
+  <h2>직선으로 안 될 때: 휘어지는 선, 그리고 너무 휜 선</h2>
+  <div class="body">
+    <div class="grid g3">
+      <figure><div class="canvas" style="padding:6px"><svg id="fit3a" aria-label="직선으로 맞춘 경우"></svg></div><figcaption><b class="cb">과소적합</b> — 너무 단순. 연습 문제도 못 맞힘<br>헐렁한 기성복</figcaption></figure>
+      <figure><div class="canvas" style="padding:6px"><svg id="fit3b" aria-label="적당히 휜 곡선"></svg></div><figcaption><b class="ca">적당함</b> — 경향을 잘 잡음<br>몸에 맞는 옷</figcaption></figure>
+      <figure><div class="canvas" style="padding:6px"><svg id="fit3c" aria-label="모든 점을 지나도록 심하게 구불거리는 곡선"></svg></div><figcaption><b class="cb">과적합</b> — 연습 문제의 잡음까지 외움<br>한 자세에서만 맞는 옷</figcaption></figure>
+    </div>
+    <p style="margin-top:20px">다항회귀는 직선 대신 <b>휘어질 수 있는 선</b>을 씁니다. 휘는 정도(차수)를 키울수록 연습 문제는 더 잘 맞히지만, 어느 순간부터 <span class="mark">실전에서 오히려 나빠집니다.</span></p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">세 그림 모두 같은 12개 점에 맞춘 것. 오른쪽은 점을 모두 지나지만 점 사이에서 미친 듯이 흔들림. 과적합은 오늘 모든 알고리즘에서 다시 등장하는 핵심 개념.</aside>
+</section>
+
+<section class="slide lab">
+  <div class="s-head"><span class="labbar">직접 해 보기 4</span><span class="sec">과적합과 규제</span></div>
+  <h2>복잡도를 올리면 무슨 일이?</h2>
+  <div class="demo">
+    <div class="plot"><svg id="d3" aria-label="다항회귀 차수에 따른 곡선"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>휘는 정도 (차수) <output id="d3do"></output></label><input type="range" id="d3d" min="1" max="11" step="1" value="1"></div>
+      <div class="row2">
+        <div class="meter"><div class="lbl">연습 오차</div><div class="val" id="d3tr">-</div></div>
+        <div class="meter"><div class="lbl">실전 오차</div><div class="val o" id="d3te">-</div></div>
+      </div>
+      <div class="callout" id="d3state">-</div>
+      <label class="chk"><input type="checkbox" id="d3test"> 실전 문제(테스트 점) 보이기</label>
+      <label class="chk"><input type="checkbox" id="d3reg"> 규제 켜기 (복잡함에 벌점)</label>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">차수를 1→3→11로 올리며 두 오차를 비교. 연습 오차는 계속 줄지만 실전 오차는 U자. 그다음 차수 11에서 '규제 켜기' → 같은 복잡한 모델인데 곡선이 얌전해지고 실전 오차가 내려간다. 다음 장으로 연결.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">02 회귀</span></div>
+  <h2>규제: 복잡함에 벌점을 매긴다</h2>
+  <div class="body">
+    <p>오차만 줄이라고 하면 모델은 가중치를 마음껏 키워 구불거립니다. 그래서 <b>"오차 + 가중치가 큰 만큼 벌점"</b>을 함께 줄이게 합니다.</p>
+    <div class="big3">
+      <div class="card"><div class="k">릿지 Ridge</div><div class="h">모든 볼륨을 조금씩 낮춤</div><div class="d">가중치를 0 쪽으로 고르게 당긴다. 닮은 요인들이 공을 나눠 갖게 해 안정적.</div></div>
+      <div class="card"><div class="k">라쏘 Lasso</div><div class="h">쓸모없는 스위치는 끔</div><div class="d">일부 가중치를 정확히 0으로 만든다 → <b>요인 선택</b> 효과. 결과가 간결해짐.</div></div>
+      <div class="card"><div class="k">엘라스틱넷</div><div class="h">둘을 섞음</div><div class="d">릿지의 안정성과 라쏘의 선택을 함께. 요인이 많고 서로 닮았을 때.</div></div>
+    </div>
+    <div class="box think frag" style="margin-top:20px"><div class="box-title"><svg class="ic"><use href="#i-bulb"/></svg>비유: 여행 가방 무게 제한</div>제한이 없으면 '혹시 몰라' 다 챙긴다(과적합). 무게 제한이 있으면 꼭 필요한 것만 남는다. 제한의 세기(벌점 크기)는 사람이 정하는 값 — <b>하이퍼파라미터</b>라고 부른다.</div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">규제는 회귀에만 있는 개념이 아니다. 트리의 깊이 제한, 부스팅의 학습률도 넓은 의미의 규제. 하이퍼파라미터 = 학습 전에 사람이 정하는 손잡이. 보통 검증 데이터로 고른다.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">02 회귀</span><span class="lv l3">수학</span></div>
+  <h2>규제를 식으로: 오차 + λ × 벌점</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1fr 1.05fr;align-items:center">
+      <div>
+        <div class="mbox sm mx" style="margin-bottom:10px"><span class="up lbl"><span class="ko">릿지</span></span> L = <span class="up">MSE</span> + λ <span class="up">Σ</span><sub>j</sub> w<sub>j</sub><sup>2</sup></div>
+        <div class="mbox sm mx"><span class="up lbl"><span class="ko">라쏘</span></span> L = <span class="up">MSE</span> + λ <span class="up">Σ</span><sub>j</sub> |w<sub>j</sub>|</div>
+        <ul class="small" style="margin:14px 0 0">
+          <li><span class="mx">λ = 0</span> → 규제 없음 (원래 회귀)</li>
+          <li><span class="mx">λ</span>가 클수록 → 가중치가 0 쪽으로 강하게 당겨짐</li>
+          <li>제곱(릿지)은 큰 가중치를 특히 싫어하고, 절댓값(라쏘)은 작은 가중치도 똑같이 벌한다</li>
+        </ul>
+      </div>
+      <figure>
+        <svg viewBox="0 0 580 300" aria-label="원형 제약과 마름모 제약에 오차 등고선이 닿는 위치 비교">
+          <defs><clipPath id="rgA"><rect x="10" y="30" width="250" height="260"/></clippath><clipPath id="rgB"><rect x="320" y="30" width="250" height="260"/></clippath></defs>
+          <text x="135" y="20" text-anchor="middle" class="t-main">릿지: 원</text><text x="445" y="20" text-anchor="middle" class="t-main">라쏘: 마름모</text>
+          <g clip-path="url(#rgA)">
+            <line x1="20" y1="160" x2="250" y2="160" class="p-axis"/><line x1="130" y1="35" x2="130" y2="285" class="p-axis"/>
+            <circle cx="130" cy="160" r="70" fill="var(--accent)" fill-opacity=".15" stroke="var(--accent)" stroke-width="2.5"/>
+            <g fill="none" stroke="var(--accent-2)" stroke-width="2"><circle cx="150" cy="40" r="51.7"/><circle cx="150" cy="40" r="74" stroke-dasharray="5 5"/><circle cx="150" cy="40" r="28" stroke-dasharray="5 5"/></g>
+            <circle cx="150" cy="40" r="5" class="f-acc2"/><circle cx="141.5" cy="91" r="7" class="f-text"/>
+          </g>
+          <g clip-path="url(#rgB)">
+            <line x1="330" y1="160" x2="560" y2="160" class="p-axis"/><line x1="440" y1="35" x2="440" y2="285" class="p-axis"/>
+            <polygon points="440,90 510,160 440,230 370,160" fill="var(--accent)" fill-opacity=".15" stroke="var(--accent)" stroke-width="2.5"/>
+            <g fill="none" stroke="var(--accent-2)" stroke-width="2"><circle cx="460" cy="40" r="53.85"/><circle cx="460" cy="40" r="76" stroke-dasharray="5 5"/><circle cx="460" cy="40" r="30" stroke-dasharray="5 5"/></g>
+            <circle cx="460" cy="40" r="5" class="f-acc2"/><circle cx="440" cy="90" r="7" class="f-text"/>
+          </g>
+          <text x="135" y="262" text-anchor="middle" class="t-sub">닿은 점: w₁, w₂ 둘 다 작아짐</text><text x="445" y="262" text-anchor="middle" class="t-sub">닿은 점: w₁ = 0 (정확히 0)</text>
+          <text x="245" y="292" text-anchor="end" class="t-sub">w₁ →</text><text x="555" y="292" text-anchor="end" class="t-sub">w₁ →</text>
+        </svg>
+        <figcaption>주황 = 오차 등고선(가운데 점이 오차만 볼 때의 최적), 파랑 = 벌점이 허락하는 범위. 라쏘는 <b>모서리가 축 위</b>에 있어 거기에 먼저 닿는다 → 가중치가 정확히 0</figcaption>
+      </figure>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">그림은 가중치 2개일 때. 벌점 항을 '예산'으로 바꿔 보면 파랑 영역 안에서만 가중치를 고를 수 있다. 오차 등고선이 처음 닿는 곳이 답. 원은 매끈해서 축 위에 닿는 일이 드물고, 마름모는 뾰족한 모서리가 축 위에 있어 자주 닿는다.</aside>
+</section>
+
+
+<section class="slide">
+  <div class="s-head"><span class="sec">02 회귀 · 확인</span></div>
+  <h2>회귀 구역 확인 퀴즈</h2>
+  <div class="body">
+    <div class="grid g2">
+      <div class="q" data-answer="c" data-explain="연습은 잘하는데 실전에서 무너지는 것이 과적합의 전형적인 신호입니다.">
+        <p class="q-title">과적합을 가장 잘 보여 주는 신호는?</p>
+        <div class="opts"><button data-v="a">연습 오차와 실전 오차가 모두 크다</button><button data-v="b">연습 오차와 실전 오차가 모두 작다</button><button data-v="c">연습 오차는 아주 작은데 실전 오차는 크다</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="b" data-explain="라쏘는 일부 가중치를 정확히 0으로 만들어 그 요인을 모델에서 빼 버립니다.">
+        <p class="q-title">요인 100개 중 쓸모 있는 것만 남기고 싶다. 알맞은 규제는?</p>
+        <div class="opts"><button data-v="a">릿지</button><button data-v="b">라쏘</button><button data-v="c">규제를 끄고 차수를 올린다</button></div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">손을 들어 답하게 한 뒤 클릭. 끝나면 휴식.</aside>
+</section>
+
+<section class="slide breakslide">
+  <div class="big">휴식 10분</div>
+  <p style="font-size:26px;color:var(--muted);margin-top:20px">다음: <b>분류</b> — 로지스틱 회귀, KNN, 결정트리, SVM</p>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="10">휴식. T 키로 강의 시계를 멈춰 두어도 된다.</aside>
+</section>
+
+<!-- ───────── 3. 분류 ───────── -->
+<section class="slide section">
+  <div class="big">03</div>
+  <h2>분류 — 어느 쪽인지 고르는 법</h2>
+  <p>로지스틱 회귀 · KNN · 결정트리 · SVM</p>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="0.5">분류 구역. 네 알고리즘이 '경계를 긋는 방식'이 어떻게 다른지에 집중.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">03 분류</span></div>
+  <h2>로지스틱 회귀: 이름은 회귀, 하는 일은 분류</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1.1fr 1fr;align-items:center">
+      <figure class="canvas" style="padding:8px"><svg id="sig" aria-label="공부 시간에 따른 합격 확률 S자 곡선"></svg></figure>
+      <div>
+        <p>합격(1)/불합격(0)에 직선을 그으면 0 아래, 1 위로 삐져나갑니다. 그래서 직선을 <b>S자로 눌러</b> 0~100% 사이에 가둡니다.</p>
+        <div class="eq sm">확률 = S( <i>w</i>×공부시간 + <i>b</i> )<small><span class="mathtag" style="margin:0">핵심 식</span> S = 시그모이드: 어떤 수든 0~1로 바꾸는 함수</small></div>
+        <p class="small" style="margin-top:12px">출력이 <b>확률</b>이라 "합격할 확률 72%"처럼 말할 수 있고, <b>기준</b>(보통 50%)을 넘으면 '합격'으로 판정합니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">속은 선형회귀(가중치 합)이고 겉에 S자 함수를 씌운 것. 그래서 이름에 '회귀'가 남았다. 가중치 해석도 비슷: 양수면 확률을 올리는 요인. 경계는 여전히 직선(평면)이라는 점이 KNN·트리와의 차이.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">03 분류</span><span class="lv l3">수학</span></div>
+  <h2>S자 곡선의 정체: 시그모이드</h2>
+  <div class="body">
+    <div class="cols even" style="align-items:center">
+      <div>
+        <div class="mbox mx">σ(z) = <span class="fr"><span>1</span><span>1 + e<sup>−z</sup></span></span>, &nbsp; z = <b class="vb">w</b>·<b class="vb">x</b> + b<span class="cap"><span class="ko">다중회귀의</span> '<span class="ko">가중치 합</span>' z<span class="ko">를</span> 0~1 <span class="ko">사이 확률로 바꾼다</span></span></div>
+        <table class="symtab" style="margin-top:14px;text-align:center">
+          <tr><th>z</th><td>−4</td><td>−2</td><td>0</td><td>2</td><td>4</td></tr>
+          <tr><th>σ(z)</th><td>0.02</td><td>0.12</td><td><b>0.50</b></td><td>0.88</td><td>0.98</td></tr>
+        </table>
+      </div>
+      <div>
+        <ul class="small" style="margin:0">
+          <li>z가 아무리 커도 1을 넘지 않고, 아무리 작아도 0 아래로 내려가지 않는다</li>
+          <li><b>z = 0 ⇔ 확률 50%</b> → 판정 경계는 <span class="mx"><b class="vb">w</b>·<b class="vb">x</b> + b = 0</span>, 즉 직선(평면)</li>
+        </ul>
+        <div class="box think frag" style="margin:14px 0 0;padding:16px 22px">
+          <div class="box-title">거꾸로 풀면: 로그 오즈</div>
+          <span class="mx" style="font-size:24px">ln <span class="fr"><span>p</span><span>1 − p</span></span> = <b class="vb">w</b>·<b class="vb">x</b> + b</span><br>
+          <span class="small">p/(1−p) = 오즈(성공:실패 비). x<sub>j</sub>가 1 늘면 로그 오즈가 w<sub>j</sub>만큼 오른다 → 가중치 해석이 가능.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">e는 약 2.718. e^(−z)는 z가 크면 0에 가까워지고(σ→1), z가 작으면 아주 커진다(σ→0). 로그 오즈는 선택 내용 — 의학·사회과학 논문에서 '오즈비'로 자주 보게 된다는 정도.</aside>
+</section>
+
+
+<section class="slide lab">
+  <div class="s-head"><span class="labbar">직접 해 보기 5</span><span class="sec">로지스틱 회귀</span></div>
+  <h2>합격 확률과 '기준' 정하기</h2>
+  <div class="demo">
+    <div class="plot"><svg id="d4" aria-label="합격 확률 곡선과 판정 기준"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>새 학생의 공부 시간 <output id="d4ho"></output></label><input type="range" id="d4h" min="0" max="10" step="0.1" value="6"></div>
+      <div class="meter"><div class="lbl">합격 확률</div><div class="val" id="d4p">-</div><div class="stat" id="d4verdict">-</div></div>
+      <div class="ctrl"><label>판정 기준 <output id="d4to"></output></label><input type="range" id="d4t" min="0.1" max="0.9" step="0.05" value="0.5"></div>
+      <div class="row2">
+        <div class="meter"><div class="lbl">놓침</div><div class="val o" id="d4miss">-</div><div class="stat">합격자를 불합격으로</div></div>
+        <div class="meter"><div class="lbl">헛경보</div><div class="val o" id="d4fa">-</div><div class="stat">불합격자를 합격으로</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">기준을 내리면 놓침↓ 헛경보↑, 올리면 반대. 기준은 모델이 아니라 상황이 정한다: 암 검진은 놓침이 치명적이라 기준을 낮추고, 스팸 필터는 중요한 메일을 버리면 안 되니 기준을 높인다. 동그라미 친 점이 틀린 판정.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">03 분류</span><span class="lv l3">수학</span></div>
+  <h2>확률 모델의 채점표: 로그 손실</h2>
+  <div class="body">
+    <div class="cols even" style="align-items:center">
+      <div>
+        <div class="mbox mx">L = −[ y ln p + (1 − y) ln(1 − p) ]<span class="cap"><span class="ko">정답</span> y<span class="ko">가</span> 1<span class="ko">이면</span> −ln p <span class="ko">만</span>, 0<span class="ko">이면</span> −ln(1 − p) <span class="ko">만 남는다</span></span></div>
+        <p class="small muted" style="margin-top:14px">학습 = 모든 데이터의 L 평균을 경사하강법으로 줄이기. MSE 대신 이것을 쓰는 이유: 확률 출력과 짝이 맞고, 이 조합에서는 오차 곡선이 하나의 바닥만 가진다.</p>
+      </div>
+      <div>
+        <p class="small" style="margin:0 0 8px"><b>정답이 '합격(1)'일 때</b> 모델의 확률 p에 따른 벌점</p>
+        <div class="bars">
+          <div><span>p = 0.9</span><i style="width:2.3%"></i><b>0.11</b></div>
+          <div><span>p = 0.5</span><i style="width:15%"></i><b>0.69</b></div>
+          <div><span>p = 0.1</span><i style="width:50%"></i><b>2.30</b></div>
+          <div><span>p = 0.01</span><i style="width:100%"></i><b>4.61</b></div>
+        </div>
+        <p class="frag" style="margin-top:14px;font-size:22px">맞혀도 자신 없으면 약간, <span class="mark">자신 있게 틀리면 아주 큰 벌점</span>.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">'교차 엔트로피'라는 이름으로도 부른다. 딥러닝 분류 모델도 같은 손실을 쓴다. p가 0에 가까우면 −ln p가 무한히 커지는 것을 막대로 확인.</aside>
+</section>
+
+
+<section class="slide">
+  <div class="s-head"><span class="sec">03 분류</span></div>
+  <h2>KNN: 가장 가까운 이웃에게 물어보기</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1fr 1.15fr;align-items:center">
+      <svg viewBox="0 0 420 330" aria-label="새 점 주변 가까운 이웃 다섯 개를 원으로 묶은 그림">
+        <rect x="5" y="5" width="410" height="320" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+        <circle cx="210" cy="165" r="78" fill="none" stroke="var(--text)" stroke-width="2" stroke-dasharray="6 6"/>
+        <g class="p-good"><circle cx="70" cy="80" r="9"/><circle cx="110" cy="130" r="9"/><circle cx="180" cy="110" r="9"/><circle cx="245" cy="205" r="9"/><circle cx="160" cy="200" r="9"/><circle cx="90" cy="230" r="9"/><circle cx="60" cy="170" r="9"/></g>
+        <g class="p-bad"><circle cx="260" cy="120" r="9"/><circle cx="330" cy="90" r="9"/><circle cx="350" cy="180" r="9"/><circle cx="300" cy="250" r="9"/><circle cx="380" cy="270" r="9"/><circle cx="370" cy="40" r="9"/><circle cx="255" cy="215" r="9"/></g>
+        <path class="star" d="M210 147 l5 12 13 1 -10 8 3 13 -11 -7 -11 7 3 -13 -10 -8 13 -1z"/>
+        <text x="210" y="300" text-anchor="middle" class="t-sub">K = 5 → 원 안 파랑 3 : 주황 2 → 파랑</text>
+      </svg>
+      <div>
+        <p>"끼리끼리 모인다." 새 데이터(★)가 오면 가장 가까운 <b>K개</b>의 이웃을 찾아 <b>다수결</b>로 정합니다.</p>
+        <ul class="small">
+          <li><b>학습 단계가 거의 없다</b> — 데이터를 외워 두기만 함. 대신 예측할 때마다 모두와 거리를 재서 느리다.</li>
+          <li><b>K가 작으면</b> 주변 한두 점에 휘둘림(과적합), <b>K가 크면</b> 너무 뭉뚱그림(과소적합).</li>
+          <li class="frag"><b>단위를 맞춰야 한다</b> — 키(cm)와 연봉(원)을 그대로 쓰면 거리는 연봉이 혼자 결정한다.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">가장 직관적인 알고리즘. 회귀에도 쓸 수 있다(이웃들의 평균). 단위 문제는 표준화로 해결. 차원이 많아지면 '가깝다'의 의미가 흐려지는 문제(차원의 저주)도 있다고 한마디.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">03 분류</span><span class="lv l3">수학</span></div>
+  <h2>'가깝다'를 재는 식: 거리와 표준화</h2>
+  <div class="body">
+    <div class="mbox mx">d(<b class="vb">a</b>, <b class="vb">b</b>) = <span class="up">√</span><span class="sq">(a<sub>1</sub> − b<sub>1</sub>)<sup>2</sup> + (a<sub>2</sub> − b<sub>2</sub>)<sup>2</sup> + … </span><span class="cap"><span class="ko">피타고라스 정리를 특징 수만큼 늘린 것</span> (<span class="ko">유클리드 거리</span>)</span></div>
+    <div class="grid g2" style="margin-top:18px">
+      <div class="box warn calc" style="margin:0">
+        <div class="box-title"><svg class="ic"><use href="#i-alert"/></svg>그대로 쓰면</div>
+        A (170cm, 3,000만 원) · B (180cm, 3,500만 원)<br>
+        <span class="mx">d = <span class="up">√</span><span class="sq">10<sup>2</sup> + 500<sup>2</sup></span> = <span class="up">√</span><span class="sq">250,100</span> ≈ 500.1</span><br>
+        키 차이 10cm는 거리에 <b>0.1</b>도 보태지 못한다.
+      </div>
+      <div class="box calc frag" style="margin:0">
+        <div class="box-title"><svg class="ic"><use href="#i-check"/></svg>표준화한 뒤 <span class="mx" style="font-size:20px">z = (x − μ) / σ</span></div>
+        σ<sub>키</sub> = 10cm, σ<sub>연봉</sub> = 1,000만 원이라면 차이는 1.0칸, 0.5칸<br>
+        <span class="mx">d = <span class="up">√</span><span class="sq">1.0<sup>2</sup> + 0.5<sup>2</sup></span> ≈ 1.12</span><br>
+        이제 <b>두 특징이 함께</b> 거리를 정한다.
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">다중회귀의 표준화와 같은 식. 거리 기반인 KNN·SVM(커널)·군집화에서는 표준화가 거의 필수, 결정트리 계열은 필요 없다. 다른 거리(맨해튼 = 차이의 절댓값 합)도 있다고 한마디.</aside>
+</section>
+
+
+<section class="slide lab">
+  <div class="s-head"><span class="labbar">직접 해 보기 6</span><span class="sec">KNN</span></div>
+  <h2>이웃 수 K를 바꿔 보기</h2>
+  <div class="demo">
+    <div class="plot"><svg id="d5" aria-label="KNN 데모: 누른 곳에 새 점"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>이웃 수 K <output id="d5ko"></output></label><input type="range" id="d5k" min="1" max="21" step="2" value="5"></div>
+      <div class="meter"><div class="lbl">이웃의 투표</div><div class="val" id="d5res" style="font-size:30px">-</div><div class="stat" id="d5votes">-</div></div>
+      <label class="chk"><input type="checkbox" id="d5reg" checked> 영역 칠하기 (모든 위치의 판정)</label>
+      <div class="legend"><span><i class="dot" style="background:var(--accent)"></i>A</span><span><i class="dot" style="background:var(--accent-2)"></i>B</span><span>★ 새 데이터</span></div>
+      <div class="callout b">그래프를 누르면 ★이 옮겨집니다. K = 1일 때와 K = 21일 때 <b>영역의 경계</b>가 어떻게 다른지 보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">K=1: 주황 섬들이 파랑 영역 안에 점점이 생김(잡음까지 외움). K를 키우면 경계가 매끈해짐. 너무 키우면 소수 그룹이 사라짐. K는 홀수로 두어 동점을 피한다.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">03 분류</span></div>
+  <h2>결정트리: 스무고개로 분류하기</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1.35fr 1fr;align-items:center">
+      <svg viewBox="0 0 640 330" aria-label="고객 이탈을 예측하는 결정트리 예시">
+        <g class="ed"><path d="M320 64 L170 140"/><path d="M320 64 L490 140"/><path d="M170 194 L90 260"/><path d="M170 194 L260 260"/></g>
+        <text x="225" y="98" class="t-acc">예</text><text x="400" y="98" class="t-acc">아니오</text>
+        <text x="110" y="232" class="t-acc">예</text><text x="222" y="232" class="t-acc">아니오</text>
+        <g class="node q"><rect x="180" y="10" width="280" height="54" rx="12"/><text x="320" y="44" text-anchor="middle" class="t-main">월 접속 10일 미만?</text></g>
+        <g class="node q"><rect x="40" y="140" width="260" height="54" rx="12"/><text x="170" y="174" text-anchor="middle" class="t-main">최근 문의 3회 이상?</text></g>
+        <g class="node la"><rect x="400" y="140" width="180" height="54" rx="12"/><text x="490" y="167" text-anchor="middle" class="t-main">남는다</text><text x="490" y="186" text-anchor="middle" class="t-sub">이 그룹의 88%</text></g>
+        <g class="node lb"><rect x="10" y="260" width="160" height="54" rx="12"/><text x="90" y="287" text-anchor="middle" class="t-main">떠난다</text><text x="90" y="306" text-anchor="middle" class="t-sub">이 그룹의 81%</text></g>
+        <g class="node la"><rect x="190" y="260" width="160" height="54" rx="12"/><text x="270" y="287" text-anchor="middle" class="t-main">남는다</text><text x="270" y="306" text-anchor="middle" class="t-sub">이 그룹의 64%</text></g>
+      </svg>
+      <div>
+        <p>예/아니오 질문을 이어 가며 데이터를 나눕니다. 맨 끝(잎)에서 <b>다수결</b>로 답합니다.</p>
+        <p class="small"><b>좋은 질문</b> = 묻고 나면 양쪽 그룹이 <b>깨끗하게</b>(한 종류만 남도록) 나뉘는 질문. 알고리즘은 모든 후보 질문을 다 시험해 보고 가장 깨끗하게 나누는 것을 고릅니다(지니 불순도·엔트로피).</p>
+        <p class="small muted">회귀에도 쓸 수 있습니다 — 잎에서 다수결 대신 <b>평균</b>.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">스무고개 게임에서 좋은 첫 질문("살아 있나요?")이 후보를 절반으로 줄이는 것처럼. 트리의 질문은 늘 "한 특징 &lt; 어떤 값"이라서 경계가 가로·세로 계단 모양이 된다 — 다음 데모에서 확인.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">03 분류</span><span class="lv l3">수학</span></div>
+  <h2>'깨끗함'을 재는 식: 지니 불순도</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1fr 1.25fr;align-items:start">
+      <div>
+        <div class="mbox mx">G = 1 − <span class="up">Σ</span><sub>k</sub> p<sub>k</sub><sup>2</sup><span class="cap">p<sub>k</sub> = <span class="ko">그룹 안에서</span> k<span class="ko">번째 종류의 비율</span></span></div>
+        <ul class="small" style="margin:14px 0 0">
+          <li>파랑 10 : 주황 0 → <span class="mx">1 − 1<sup>2</sup> = 0</span> (완전히 깨끗)</li>
+          <li>파랑 5 : 주황 5 → <span class="mx">1 − 0.5<sup>2</sup> − 0.5<sup>2</sup> = 0.5</span> (가장 섞임)</li>
+        </ul>
+        <p class="small muted" style="margin-top:8px">대신 엔트로피 <span class="mx">H = −<span class="up">Σ</span> p<sub>k</sub> log<sub>2</sub> p<sub>k</sub></span>를 써도 결과는 거의 같다.</p>
+      </div>
+      <div>
+        <p class="small" style="margin:0 0 8px"><b>계산해 보기</b> — 5 : 5인 그룹(G = 0.5)을 나눌 질문 두 후보</p>
+        <table class="symtab">
+          <tr><th>질문</th><th>왼쪽</th><th>오른쪽</th><th>나눈 뒤 G (크기로 가중평균)</th></tr>
+          <tr><td><b>A</b></td><td>4 : 0 → 0</td><td>1 : 5 → 0.28</td><td class="mx">0.4×0 + 0.6×0.28 = <b class="up" style="color:var(--accent)">0.17</b></td></tr>
+          <tr><td><b>B</b></td><td>3 : 2 → 0.48</td><td>2 : 3 → 0.48</td><td class="mx">0.5×0.48 + 0.5×0.48 = 0.48</td></tr>
+        </table>
+        <p class="frag" style="margin-top:14px;font-size:22px">불순도가 0.5 → 0.17로 <b>가장 많이 줄어드는</b> 질문 A를 고른다. 이것을 모든 특징·모든 기준값에 대해 반복.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">1:5의 G = 1 − (1/6)² − (5/6)² = 10/36 ≈ 0.28. 가중평균은 왼쪽 4개(0.4), 오른쪽 6개(0.6). 회귀 트리는 지니 대신 MSE(분산)가 가장 많이 줄어드는 질문을 고른다 — 부스팅 데모의 작은 나무가 그것.</aside>
+</section>
+
+
+<section class="slide lab">
+  <div class="s-head"><span class="labbar">직접 해 보기 7</span><span class="sec">결정트리</span></div>
+  <h2>나무를 깊게 키우면?</h2>
+  <div class="demo">
+    <div class="plot"><svg id="d6" aria-label="결정트리 깊이에 따른 영역 분할"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>최대 깊이 (질문 단계) <output id="d6do"></output></label><input type="range" id="d6d" min="1" max="12" step="1" value="1"></div>
+      <div class="row2">
+        <div class="meter"><div class="lbl">연습 정확도</div><div class="val" id="d6tr">-</div></div>
+        <div class="meter"><div class="lbl">실전 정확도</div><div class="val o" id="d6te">-</div></div>
+      </div>
+      <div class="stat" id="d6info">-</div>
+      <label class="chk"><input type="checkbox" id="d6test"> 실전 문제(테스트 점) 보이기</label>
+      <div class="callout b">경계가 <b>가로·세로 계단</b>인 이유: 질문이 늘 "특징 하나 &lt; 값?"이기 때문. 깊이를 끝까지 올려 작은 섬들을 찾아보세요.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">깊이 1: 선 하나. 깊이 4~5: 원 모양을 계단으로 근사, 실전 정확도 최고 근처. 깊이 12: 연습 100%, 잡음 점 하나를 위한 작은 섬들 → 실전 하락. 과적합의 세 번째 모습.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">03 분류</span></div>
+  <h2>결정트리의 장단점 — 그리고 앙상블의 씨앗</h2>
+  <div class="body">
+    <div class="vs">
+      <div class="box">
+        <div class="box-title"><svg class="ic"><use href="#i-check"/></svg>장점</div>
+        <ul class="small" style="margin:0">
+          <li><b>사람이 읽을 수 있다</b> — 질문 목록 그대로가 설명</li>
+          <li><b>단위 맞출 필요가 없다</b> — 질문은 한 특징씩</li>
+          <li>숫자·범주가 섞인 <b>표 데이터</b>에 강하다</li>
+        </ul>
+      </div>
+      <div class="box warn">
+        <div class="box-title"><svg class="ic"><use href="#i-alert"/></svg>단점</div>
+        <ul class="small" style="margin:0">
+          <li>깊어지면 쉽게 <b>과적합</b></li>
+          <li><b>불안정</b> — 데이터 몇 개만 바뀌어도 첫 질문부터 달라져 나무 모양이 통째로 바뀐다</li>
+        </ul>
+      </div>
+    </div>
+    <div class="box key frag" style="margin-top:20px">
+      <div class="box-title"><svg class="ic"><use href="#i-bulb"/></svg>발상의 전환</div>
+      한 그루는 들쭉날쭉하다. 그렇다면 <b>조금씩 다른 나무를 여러 그루</b> 키워 투표시키면? → 4구역 <b>랜덤 포레스트</b>와 <b>부스팅</b>의 출발점.
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">불안정성은 단점이지만 앙상블에서는 '다양성'이라는 재료가 된다. 기억해 둘 문장: 트리는 앙상블의 단골 부품.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">03 분류</span></div>
+  <h2>SVM: 가장 넓은 도로를 깐다</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1.1fr 1fr;align-items:center">
+      <svg viewBox="0 0 560 360" aria-label="두 그룹 사이에 가장 넓은 여백을 둔 경계선">
+        <rect x="20" y="20" width="520" height="320" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+        <polygon points="30,20 100,20 420,340 350,340" fill="var(--accent)" fill-opacity=".10"/>
+        <path d="M35 20 L355 340" stroke="var(--muted)" stroke-width="2" stroke-dasharray="3 6"/>
+        <path d="M95 20 L415 340" stroke="var(--muted)" stroke-width="2" stroke-dasharray="3 6"/>
+        <path d="M30 20 L350 340 M100 20 L420 340" stroke="var(--accent)" stroke-width="2" stroke-dasharray="8 6"/>
+        <path d="M65 20 L385 340" stroke="var(--text)" stroke-width="4"/>
+        <g class="p-good"><circle cx="90" cy="250" r="9"/><circle cx="130" cy="300" r="9"/><circle cx="160" cy="230" r="9"/><circle cx="70" cy="180" r="9"/><circle cx="200" cy="290" r="9"/><circle cx="120" cy="200" r="9"/><circle cx="200" cy="190" r="9"/><circle cx="240" cy="230" r="9"/></g>
+        <g class="p-bad"><circle cx="330" cy="110" r="9"/><circle cx="380" cy="160" r="9"/><circle cx="420" cy="90" r="9"/><circle cx="300" cy="60" r="9"/><circle cx="450" cy="200" r="9"/><circle cx="250" cy="170" r="9"/><circle cx="300" cy="220" r="9"/><circle cx="480" cy="120" r="9"/></g>
+        <g class="pick"><circle cx="200" cy="190" r="15"/><circle cx="240" cy="230" r="15"/><circle cx="250" cy="170" r="15"/><circle cx="300" cy="220" r="15"/></g>
+        <text x="525" y="44" text-anchor="end" class="t-sub">가는 점선 = 아슬아슬한 다른 후보들</text>
+      </svg>
+      <div>
+        <p>두 그룹을 가르는 선은 무수히 많습니다. SVM은 그중 <b>양쪽 점과의 여백(도로 폭)이 가장 넓은</b> 선을 고릅니다.</p>
+        <p class="small">도로 가장자리에 걸친 점(동그라미)만 선의 위치를 정합니다 → <b>서포트 벡터</b>. 나머지 점은 움직여도 선이 그대로.</p>
+        <p class="small muted">여백이 넓을수록 처음 보는 데이터가 조금 흔들려도 안전하게 같은 쪽에 남습니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">가는 점선 두 개도 두 그룹을 나누긴 하지만 한쪽 점에 바짝 붙어 있다. 현실에서는 완벽히 나뉘지 않으므로 약간의 침범을 허용하는 정도(C)를 조절한다 — 이것도 규제의 일종.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">03 분류</span><span class="lv l3">수학</span></div>
+  <h2>도로 폭을 식으로</h2>
+  <div class="body">
+    <div class="cols even" style="align-items:center">
+      <div>
+        <div class="mbox sm mx" style="margin-bottom:10px"><span class="up lbl"><span class="ko">경계</span></span> <b class="vb">w</b>·<b class="vb">x</b> + b = 0</div>
+        <div class="mbox sm mx" style="margin-bottom:10px"><span class="up lbl"><span class="ko">도로 가장자리</span></span> <b class="vb">w</b>·<b class="vb">x</b> + b = ±1</div>
+        <div class="mbox mx"><span class="up lbl"><span class="ko">도로 폭</span></span> <span class="fr"><span>2</span><span>‖<b class="vb">w</b>‖</span></span><span class="cap">‖w‖ = <span class="ko">가중치 벡터의 길이</span></span></div>
+      </div>
+      <div>
+        <ul class="small" style="margin:0">
+          <li>판정은 로지스틱과 같은 모양: <span class="mx"><b class="vb">w</b>·<b class="vb">x</b> + b</span>가 양수면 A, 음수면 B</li>
+          <li>도로를 넓히기 = <b>‖w‖를 작게</b> — 릿지 규제와 같은 생각</li>
+          <li>조건: 모든 점이 도로 밖에 <span class="mx">y<sub>i</sub>(<b class="vb">w</b>·<b class="vb">x</b><sub>i</sub> + b) ≥ 1</span> &nbsp;(y = +1 또는 −1)</li>
+        </ul>
+        <div class="box warn frag" style="margin:14px 0 0;padding:14px 20px">
+          <div class="box-title">현실 버전: 소프트 마진</div>
+          <span class="mx" style="font-size:23px"><span class="ko">최소화</span> &nbsp;½‖<b class="vb">w</b>‖<sup>2</sup> + C <span class="up">Σ</span> ξ<sub>i</sub></span><br>
+          <span class="small">ξ = 점이 도로를 침범한 정도, C = 침범 벌점. C가 크면 엄격 → 과적합 쪽, 작으면 너그러움.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">선택 내용으로 빠르게 넘어가도 된다. 핵심 한 문장: '여백 최대화 = 가중치 길이 최소화'. 커널 트릭은 식 안의 내적 w·x를 다른 '닮음 함수'로 바꿔치기하는 것.</aside>
+</section>
+
+
+<section class="slide">
+  <div class="s-head"><span class="sec">03 분류</span></div>
+  <h2>커널 트릭: 못 나누면 들어 올린다</h2>
+  <div class="body">
+    <svg viewBox="0 0 1100 330" aria-label="한 줄 위에서 섞인 점을 포물선 위로 올려 직선으로 나누는 그림">
+      <g>
+        <text x="250" y="30" text-anchor="middle" class="t-main">① 한 줄 위에서는 직선 하나로 못 나눔</text>
+        <line x1="30" y1="200" x2="470" y2="200" class="p-axis" stroke-width="3"/>
+        <g class="p-bad"><circle cx="50" cy="200" r="10"/><circle cx="90" cy="200" r="10"/><circle cx="130" cy="200" r="10"/><circle cx="370" cy="200" r="10"/><circle cx="410" cy="200" r="10"/><circle cx="450" cy="200" r="10"/></g>
+        <g class="p-good"><circle cx="190" cy="200" r="10"/><circle cx="230" cy="200" r="10"/><circle cx="270" cy="200" r="10"/><circle cx="310" cy="200" r="10"/></g>
+        <text x="250" y="250" text-anchor="middle" class="t-sub">가운데는 A, 양 끝은 B</text>
+      </g>
+      <g class="frag">
+        <text x="540" y="190" text-anchor="middle" style="font-size:40px;fill:var(--muted)">→</text>
+        <text x="830" y="30" text-anchor="middle" class="t-main">② '거리의 제곱'이라는 새 축을 더하면</text>
+        <line x1="610" y1="300" x2="1050" y2="300" class="p-axis" stroke-width="2"/>
+        <path d="M630 60 Q 830 540 1030 60" fill="none" stroke="var(--line)" stroke-width="3"/>
+        <g class="p-bad"><circle cx="630" cy="62" r="10"/><circle cx="670" cy="130" r="10"/><circle cx="710" cy="187" r="10"/><circle cx="950" cy="187" r="10"/><circle cx="990" cy="130" r="10"/><circle cx="1030" cy="62" r="10"/></g>
+        <g class="p-good"><circle cx="770" cy="248" r="10"/><circle cx="810" cy="266" r="10"/><circle cx="850" cy="266" r="10"/><circle cx="890" cy="248" r="10"/></g>
+        <line x1="610" y1="220" x2="1050" y2="220" stroke="var(--text)" stroke-width="4"/>
+        <text x="1050" y="244" text-anchor="end" class="t-acc">직선 하나로 나뉨!</text>
+      </g>
+    </svg>
+    <p class="frag small" style="margin-top:6px">원래 공간으로 돌아오면 이 직선은 <b>구간(곡선)</b> 모양의 경계가 됩니다. SVM은 실제로 높은 차원으로 옮기지 않고도 같은 효과를 내는 계산 지름길(커널)을 씁니다.</p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">비유: 탁자 위에 섞인 두 색 구슬 — 탁자를 툭 쳐서 가벼운 색만 튀어 오른 순간 종이를 끼운다. RBF 커널이 가장 흔히 쓰인다. SVM은 데이터가 수천~수만 개일 때 강하고, 수백만 개면 느려진다.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">03 분류 · 정리</span></div>
+  <h2>분류 알고리즘 한눈에</h2>
+  <div class="body">
+    <table>
+      <tr><th>알고리즘</th><th>생각하는 방식</th><th>경계 모양</th><th>강점</th><th>주의할 점</th></tr>
+      <tr><td><b>로지스틱 회귀</b></td><td>요인 합계를 S자로 → 확률</td><td>직선(평면)</td><td>빠름, 해석, 확률 출력</td><td>복잡한 경계 못 그림</td></tr>
+      <tr><td><b>KNN</b></td><td>가까운 이웃 K명의 다수결</td><td>자유로운 곡선</td><td>단순, 학습 불필요</td><td>단위 맞추기, 예측이 느림</td></tr>
+      <tr><td><b>결정트리</b></td><td>예/아니오 질문 스무고개</td><td>가로·세로 계단</td><td>설명 쉬움, 표 데이터</td><td>과적합, 불안정</td></tr>
+      <tr><td><b>SVM</b></td><td>가장 넓은 도로 + 커널</td><td>직선 또는 곡선</td><td>중간 규모 데이터에서 정확</td><td>큰 데이터에서 느림, 설정 민감</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:14px">이 밖에 확률 계산으로 분류하는 <b>나이브 베이즈</b>(문서·스팸 분류에서 빠르고 가벼움)도 기본 알고리즘으로 자주 쓰입니다.</p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">'경계 모양' 열이 핵심. 어떤 모양의 경계가 데이터에 맞을지가 알고리즘 선택의 직관.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">03 분류 · 확인</span></div>
+  <h2>분류 구역 확인 퀴즈</h2>
+  <div class="body">
+    <div class="grid g2">
+      <div class="q" data-answer="a" data-explain="연봉 숫자가 키보다 훨씬 커서 거리를 혼자 결정합니다. 두 특징을 같은 잣대로 표준화해야 합니다.">
+        <p class="q-title">KNN에 키(cm)와 연봉(원)을 그대로 넣었다. 무엇이 문제일까?</p>
+        <div class="opts"><button data-v="a">거리가 사실상 연봉으로만 정해진다</button><button data-v="b">K를 짝수로 해야 한다</button><button data-v="c">KNN은 숫자 특징을 쓸 수 없다</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="c" data-explain="깊은 트리는 연습 데이터의 잡음까지 외웁니다. 연습 정확도는 100%에 가깝지만 실전에서는 떨어집니다.">
+        <p class="q-title">결정트리의 깊이 제한을 없앴다. 가장 그럴듯한 결과는?</p>
+        <div class="opts"><button data-v="a">연습·실전 정확도 모두 오른다</button><button data-v="b">경계가 매끈한 곡선이 된다</button><button data-v="c">연습 정확도는 100% 가까이, 실전은 떨어진다</button></div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">퀴즈 후 두 번째 휴식.</aside>
+</section>
+
+<section class="slide breakslide">
+  <div class="big">휴식 10분</div>
+  <p style="font-size:26px;color:var(--muted);margin-top:20px">다음: <b>앙상블</b> — 여럿이 함께 맞히기</p>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="10">휴식.</aside>
+</section>
+
+<!-- ───────── 4. 앙상블 ───────── -->
+<section class="slide section">
+  <div class="big">04</div>
+  <h2>앙상블 — 여럿이 함께 맞히기</h2>
+  <p>보팅 · 배깅 · 랜덤 포레스트 · 부스팅 · 스태킹</p>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="0.5">마지막 큰 구역. 표 데이터 실무에서 가장 많이 쓰이는 방법들.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">04 앙상블</span></div>
+  <h2>집단지성: 황소의 무게 맞히기</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1fr 1.1fr;align-items:center">
+      <div class="box think" style="margin:0">
+        <div class="box-title"><svg class="ic"><use href="#i-users"/></svg>1906년 영국 시골 장터</div>
+        <p class="small">약 800명이 황소 한 마리의 무게를 추측하는 내기를 했습니다. 각자의 추측은 제각각 크게 틀렸지만, <b>모두의 추측을 모으자 실제 무게와 1%도 차이 나지 않았습니다</b>(통계학자 프랜시스 골턴의 기록).</p>
+      </div>
+      <div>
+        <p>여러 모델의 답을 모으면 한 모델보다 낫다 — 단, 조건이 있습니다.</p>
+        <div class="steps" style="display:grid;gap:10px">
+          <div class="card" style="font-size:20px"><b>① 각자 어느 정도는 해야 한다</b><br><span class="muted">동전 던지기보다는 나아야 함</span></div>
+          <div class="card frag" style="font-size:20px"><b>② 서로 다르게 틀려야 한다</b><br><span class="muted">모두 같은 방향으로 틀리면 모아도 그대로 틀림</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">조건 ②가 앙상블의 핵심이자 모든 기법의 설계 원리: 배깅은 데이터를, 랜덤 포레스트는 질문 후보까지, 스태킹은 알고리즘 종류를 달리해서 '서로 다르게 틀리게' 만든다. 다음 데모로 직접 확인.</aside>
+</section>
+
+<section class="slide lab">
+  <div class="s-head"><span class="labbar">직접 해 보기 8</span><span class="sec">다수결의 힘</span></div>
+  <h2>모델이 많을수록, 서로 다를수록</h2>
+  <div class="demo">
+    <div class="plot" style="flex-direction:column;align-items:stretch;gap:10px;padding:16px">
+      <div class="stat">한 번의 투표 결과 — <b class="ca">●</b> 맞힘 <b class="cb" style="color:var(--bad)">●</b> 틀림</div>
+      <svg id="d9" aria-label="모델들의 투표 결과"></svg>
+      <div class="stat" id="d9vote" style="font-size:19px">-</div>
+    </div>
+    <div class="side">
+      <div class="ctrl"><label>모델 수 <output id="d9no"></output></label><input type="range" id="d9n" min="1" max="51" step="2" value="1"></div>
+      <div class="ctrl"><label>모델 하나의 정확도 <output id="d9po"></output></label><input type="range" id="d9p" min="0.5" max="0.85" step="0.01" value="0.65"></div>
+      <div class="ctrl"><label>서로 닮은 정도 <output id="d9ro"></output></label><input type="range" id="d9r" min="0" max="1" step="0.05" value="0"></div>
+      <div class="row2">
+        <div class="meter"><div class="lbl">모델 하나</div><div class="val" id="d9single">-</div></div>
+        <div class="meter"><div class="lbl">다수결</div><div class="val o" id="d9group">-</div></div>
+      </div>
+      <button class="btn ghost" id="d9roll" type="button">한 번 더 투표시키기</button>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">1) 모델 수를 1→51: 65% 모델 51개의 다수결이 98% 근처. 2) '서로 닮은 정도'를 올리면 다수결 효과가 사라짐 — 100%면 한 모델과 똑같다. 3) 정확도 50%(동전)면 모아도 50%. 다수결 정확도는 수천 번 모의 투표로 계산한 값.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">04 앙상블</span><span class="lv l3">수학</span></div>
+  <h2>다수결의 힘을 계산해 보면</h2>
+  <div class="body">
+    <div class="grid g2" style="align-items:start">
+      <div>
+        <div class="mbox sm mx">P(<span class="ko">다수결 정답</span>) = <span class="op"><i>&nbsp;</i><span class="s">Σ</span><i>k &gt; M/2</i></span><sub>M</sub>C<sub>k</sub> p<sup>k</sup>(1 − p)<sup>M−k</sup><span class="cap">M<span class="ko">개 중</span> k<span class="ko">개가 맞힐 확률</span>(<span class="ko">이항분포</span>)<span class="ko">을</span> '<span class="ko">과반</span>'<span class="ko">인 경우만 더함</span></span></div>
+        <div class="box think calc" style="margin:12px 0 0">
+          <div class="box-title"><svg class="ic"><use href="#i-coins"/></svg>p = 0.65, M = 3</div>
+          셋 다 맞힘 <span class="mx">0.65<sup>3</sup> = 0.27</span><br>
+          둘만 맞힘 <span class="mx">3 × 0.65<sup>2</sup> × 0.35 = 0.44</span><br>
+          합 <b>0.72</b> &gt; 0.65 · M = 51이면 약 <b>0.99</b> (데모 값)
+        </div>
+      </div>
+      <div class="frag">
+        <p class="small" style="margin:0 0 10px">위 계산은 모델들이 <b>서로 독립</b>일 때만 맞습니다. 닮은 정도 ρ가 있으면, M개 예측의 평균이 흔들리는 정도는</p>
+        <div class="mbox sm mx"><span class="ko">분산</span> = ρσ<sup>2</sup> + <span class="fr"><span>(1 − ρ)σ<sup>2</sup></span><span>M</span></span></div>
+        <p class="small" style="margin-top:12px">M을 아무리 늘려도 둘째 항만 사라지고 <span class="mx">ρσ<sup>2</sup></span>는 남는다 → <span class="mark">닮은 정도 ρ를 낮추는 것이 핵심</span>. 배깅과 랜덤 포레스트의 '무작위'가 하는 일.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">ₘCₖ는 고등학교 조합. 오른쪽 식에서 ρ = 1이면 σ²(모델 하나와 같음), ρ = 0이면 σ²/M. 데모의 '서로 닮은 정도' 슬라이더가 이 ρ에 해당.</aside>
+</section>
+
+
+<section class="slide">
+  <div class="s-head"><span class="sec">04 앙상블</span></div>
+  <h2>앙상블의 세 갈래 (+ 보팅)</h2>
+  <div class="body">
+    <div class="big3">
+      <div class="card"><div class="k">배깅 Bagging</div><div class="h">동시에, 따로따로</div><div class="d">같은 알고리즘을 데이터만 다르게 해 여러 번 학습 → 평균·다수결. <b>들쭉날쭉함</b>을 줄인다.</div><div class="ex">대표: 랜덤 포레스트</div></div>
+      <div class="card"><div class="k" style="color:var(--accent-2)">부스팅 Boosting</div><div class="h">차례로, 앞의 실수를 보완</div><div class="d">약한 모델을 하나씩 추가하며 앞 모델이 틀린 부분에 집중. <b>덜 배운 부분</b>을 메운다.</div><div class="ex">대표: XGBoost · LightGBM · CatBoost</div></div>
+      <div class="card"><div class="k">스태킹 Stacking</div><div class="h">전문가 패널 + 의장</div><div class="d">서로 다른 종류의 모델들 답을 <b>또 하나의 모델</b>이 종합한다.</div><div class="ex">대회 상위권의 단골 마무리</div></div>
+    </div>
+    <div class="box frag" style="margin-top:16px;padding:18px 26px">
+      <div class="box-title"><svg class="ic"><use href="#i-check"/></svg>가장 단순한 형태: 보팅 Voting</div>
+      서로 다른 모델 몇 개를 그냥 투표시킵니다. <b>하드 보팅</b> = 판정끼리 다수결 · <b>소프트 보팅</b> = 확률을 평균.<br>
+      <span class="small muted">예) 스팸일 확률: 모델1 51%, 모델2 51%, 모델3 10% → 하드: 2:1로 스팸 / 소프트: 평균 37%로 정상. 확신의 크기까지 반영하는 쪽이 소프트.</span>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">지도 한 장. 배깅=병렬, 부스팅=직렬, 스태킹=계층. 보팅 예시에서 하드와 소프트가 다른 답을 내는 경우를 짚어 준다.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">04 앙상블 · 배깅</span></div>
+  <h2>배깅: 복원 추출로 '조금씩 다른 연습장' 만들기</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1.2fr 1fr;align-items:center">
+      <div style="display:grid;gap:10px">
+        <div class="bag"><div class="h">원본 데이터 (8개)</div><div class="balls"><span class="ball">1</span><span class="ball">2</span><span class="ball">3</span><span class="ball">4</span><span class="ball">5</span><span class="ball">6</span><span class="ball">7</span><span class="ball">8</span></div></div>
+        <div class="bag frag"><div class="h">연습장 ① → 나무 ①</div><div class="balls"><span class="ball">1</span><span class="ball dup">1</span><span class="ball">3</span><span class="ball">4</span><span class="ball">6</span><span class="ball">7</span><span class="ball dup">7</span><span class="ball">8</span><span class="ball miss">2</span><span class="ball miss">5</span></div></div>
+        <div class="bag frag"><div class="h">연습장 ② → 나무 ②</div><div class="balls"><span class="ball">2</span><span class="ball">3</span><span class="ball dup">3</span><span class="ball">5</span><span class="ball dup">5</span><span class="ball">6</span><span class="ball">8</span><span class="ball dup">8</span><span class="ball miss">1</span><span class="ball miss">4</span><span class="ball miss">7</span></div></div>
+        <div class="bag frag"><div class="h">연습장 ③ → 나무 ③</div><div class="balls"><span class="ball">1</span><span class="ball">2</span><span class="ball dup">2</span><span class="ball">4</span><span class="ball">5</span><span class="ball">7</span><span class="ball dup">7</span><span class="ball dup">7</span><span class="ball miss">3</span><span class="ball miss">6</span><span class="ball miss">8</span></div></div>
+      </div>
+      <div>
+        <p>주머니에서 하나 뽑아 적고 <b>다시 넣는다</b> — 이걸 원본 개수만큼 반복(<b>부트스트랩</b>).</p>
+        <ul class="small">
+          <li><span class="cb">주황</span> = 두 번 이상 뽑힌 것, 흐린 것 = 한 번도 안 뽑힌 것</li>
+          <li>연습장마다 내용이 조금씩 달라 <b>서로 다른 나무</b>가 자란다</li>
+          <li>예측은 모든 나무의 <b>다수결(분류)·평균(회귀)</b></li>
+          <li>안 뽑힌 데이터(약 1/3)는 그 나무의 <b>쪽지 시험</b>으로 쓸 수 있다(OOB 평가)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">Bagging = Bootstrap AGGregatING. 불안정한 모델(깊은 트리)일수록 효과가 크다. 안정적인 선형회귀에 배깅해도 별 이득이 없다. 나무들을 동시에 학습할 수 있어 병렬화가 쉽다.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">04 앙상블 · 배깅</span><span class="lv l3">수학</span></div>
+  <h2>한 번도 안 뽑힐 확률은?</h2>
+  <div class="body">
+    <div class="cols even" style="align-items:center">
+      <div>
+        <ul class="small" style="margin:0 0 14px">
+          <li>한 번 뽑을 때 특정 데이터가 <b>안</b> 뽑힐 확률: <span class="mx">1 − <span class="fr"><span>1</span><span>n</span></span></span></li>
+          <li>n번 뽑는 동안 <b>한 번도</b> 안 뽑힐 확률:</li>
+        </ul>
+        <div class="mbox mx">( 1 − <span class="fr"><span>1</span><span>n</span></span> )<sup>n</sup> → <span class="fr"><span>1</span><span>e</span></span> ≈ 0.368<span class="cap">n<span class="ko">이 커질수록 이 값으로 다가간다</span></span></div>
+      </div>
+      <div>
+        <table class="symtab" style="text-align:center">
+          <tr><th>데이터 수 n</th><th>안 뽑힐 확률</th></tr>
+          <tr><td>8 (앞 장 예)</td><td class="mx">(7/8)<sup>8</sup> ≈ 0.34</td></tr>
+          <tr><td>100</td><td class="mx">0.99<sup>100</sup> ≈ 0.37</td></tr>
+          <tr><td>10,000</td><td class="mx">≈ 0.37</td></tr>
+        </table>
+        <p class="frag" style="margin-top:16px;font-size:22px">연습장마다 원본의 약 <b>63%</b>만 들어가고, 나머지 <b>37%</b>는 그 나무가 처음 보는 데이터 → OOB 쪽지 시험이 공짜로 생긴다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">'약 1/3이 빠진다'의 근거. e가 등장하는 고전적인 극한. 앞 장 그림에서 8개 중 2~3개가 흐리게 빠진 것과 맞는다.</aside>
+</section>
+
+
+<section class="slide">
+  <div class="s-head"><span class="sec">04 앙상블 · 배깅</span></div>
+  <h2>랜덤 포레스트: 질문 후보까지 무작위로</h2>
+  <div class="body">
+    <div class="vs" style="align-items:start">
+      <div>
+        <p>배깅만 하면 문제가 남습니다. 아주 강한 특징이 하나 있으면 <b>모든 나무가 같은 첫 질문</b>을 해서 결국 비슷한 나무들이 됩니다 — 서로 닮아 버림.</p>
+        <p>그래서 질문을 고를 때마다 <b>특징 일부만 무작위로 보여 주고</b> 그중에서 고르게 합니다.</p>
+        <div class="box think frag" style="margin-top:8px"><div class="box-title"><svg class="ic"><use href="#i-bulb"/></svg>비유</div>회의에서 목소리 큰 사람이 매번 첫 발언을 하면 결론이 늘 같다. 가끔 그 사람을 빼고 의견을 들어야 다양한 관점이 나온다.</div>
+      </div>
+      <div class="box key" style="margin:0">
+        <div class="box-title"><svg class="ic"><use href="#i-layers"/></svg>랜덤 포레스트 = </div>
+        <ul class="small" style="margin:0">
+          <li>무작위 ① <b>데이터</b> — 부트스트랩 연습장</li>
+          <li>무작위 ② <b>질문 후보</b> — 갈림길마다 특징 일부만</li>
+          <li>깊게 키운 나무 수백 그루의 <b>다수결</b></li>
+        </ul>
+        <p class="small" style="margin:14px 0 0">덤: 어떤 특징이 질문에 많이 쓰여 성능을 올렸는지 <b>특징 중요도</b>를 알려 준다.</p>
+        <p class="small muted" style="margin:6px 0 0">설정을 크게 안 만져도 잘 동작해 "일단 돌려 보는" 표 데이터 모델 1순위.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">두 가지 무작위가 '서로 다르게 틀리기' 조건을 채운다. 나무 수는 많을수록 안정적이지만 일정 수 이후엔 이득이 거의 없음(과적합이 늘지는 않음). 다음 데모에서 확인.</aside>
+</section>
+
+<section class="slide lab">
+  <div class="s-head"><span class="labbar">직접 해 보기 9</span><span class="sec">랜덤 포레스트</span></div>
+  <h2>나무 한 그루 vs 숲</h2>
+  <div class="demo">
+    <div class="plot"><svg id="d7" aria-label="랜덤 포레스트 투표 영역"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>나무 수 <output id="d7no"></output></label><input type="range" id="d7n" min="1" max="60" step="1" value="1"></div>
+      <div class="row2">
+        <div class="meter"><div class="lbl">나무 1그루 실전</div><div class="val" id="d7one">-</div></div>
+        <div class="meter"><div class="lbl">숲 전체 실전</div><div class="val o" id="d7forest">-</div></div>
+      </div>
+      <div class="stat">숲 속 나무 몇 그루 (같은 데이터, 서로 다른 모양)</div>
+      <div class="thumbs"><div><svg id="d7t1"></svg><small>나무 1</small></div><div><svg id="d7t2"></svg><small>나무 2</small></div><div><svg id="d7t3"></svg><small>나무 3</small></div></div>
+      <div class="callout b">색이 진할수록 나무들의 의견이 <b>한쪽으로 모인</b> 곳. 경계 근처는 흐립니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2.5">데이터는 직접 해 보기 6과 같은 것. 나무 1그루(깊이 제한 없음)는 계단+섬투성이. 나무를 늘리면 섬이 투표에서 지워지고 경계가 원에 가까워짐. 작은 그림 세 개로 나무마다 모양이 다르다는 것을 확인.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">04 앙상블 · 부스팅</span></div>
+  <h2>부스팅: 오답 노트로 공부하기 (AdaBoost)</h2>
+  <div class="body">
+    <svg viewBox="0 0 1110 300" aria-label="세 단계에 걸쳐 틀린 점의 비중을 키우며 경계를 추가하는 그림">
+      <g id="ab">
+        <g transform="translate(10 0)">
+          <text x="170" y="22" text-anchor="middle" class="t-main">① 첫 모델: 세로선 하나</text>
+          <rect x="10" y="36" width="320" height="230" rx="12" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+          <rect x="200" y="36" width="130" height="230" fill="var(--accent-2)" fill-opacity=".12"/>
+          <line x1="200" y1="36" x2="200" y2="266" stroke="var(--text)" stroke-width="3"/>
+          <g class="p-good"><circle cx="60" cy="146" r="8"/><circle cx="80" cy="206" r="8"/><circle cx="130" cy="186" r="8"/><circle cx="230" cy="216" r="8"/><circle cx="170" cy="226" r="8"/></g>
+          <g class="p-bad"><circle cx="230" cy="96" r="8"/><circle cx="290" cy="156" r="8"/><circle cx="270" cy="66" r="8"/><circle cx="110" cy="76" r="8"/><circle cx="160" cy="96" r="8"/></g>
+          <g class="p-wrong"><circle cx="230" cy="216" r="14"/><circle cx="110" cy="76" r="14"/><circle cx="160" cy="96" r="14"/></g>
+          <text x="170" y="290" text-anchor="middle" class="t-sub">세 점을 틀림 (빨간 원)</text>
+        </g>
+        <g transform="translate(385 0)"><g class="frag">
+          <text x="170" y="22" text-anchor="middle" class="t-main">② 틀린 점을 크게 → 다음 모델</text>
+          <rect x="10" y="36" width="320" height="230" rx="12" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+          <rect x="10" y="36" width="320" height="90" fill="var(--accent-2)" fill-opacity=".12"/>
+          <line x1="10" y1="126" x2="330" y2="126" stroke="var(--text)" stroke-width="3"/>
+          <g class="p-good"><circle cx="60" cy="146" r="6"/><circle cx="80" cy="206" r="6"/><circle cx="130" cy="186" r="6"/><circle cx="230" cy="216" r="15"/><circle cx="170" cy="226" r="6"/></g>
+          <g class="p-bad"><circle cx="230" cy="96" r="6"/><circle cx="290" cy="156" r="6"/><circle cx="270" cy="66" r="6"/><circle cx="110" cy="76" r="15"/><circle cx="160" cy="96" r="15"/></g>
+          <g class="p-wrong"><circle cx="290" cy="156" r="12"/></g>
+          <text x="170" y="290" text-anchor="middle" class="t-sub">큰 점(오답)부터 맞히는 가로선</text>
+        </g></g>
+        <g transform="translate(760 0)"><g class="frag">
+          <text x="170" y="22" text-anchor="middle" class="t-main">③ 가중 투표로 합치기</text>
+          <rect x="10" y="36" width="320" height="230" rx="12" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+          <path d="M10 36 H330 V176 H200 V126 H10 Z" fill="var(--accent-2)" fill-opacity=".14"/>
+          <path d="M10 126 H200 V176 H330" fill="none" stroke="var(--text)" stroke-width="3"/>
+          <g class="p-good"><circle cx="60" cy="146" r="8"/><circle cx="80" cy="206" r="8"/><circle cx="130" cy="186" r="8"/><circle cx="230" cy="216" r="8"/><circle cx="170" cy="226" r="8"/></g>
+          <g class="p-bad"><circle cx="230" cy="96" r="8"/><circle cx="290" cy="156" r="8"/><circle cx="270" cy="66" r="8"/><circle cx="110" cy="76" r="8"/><circle cx="160" cy="96" r="8"/></g>
+          <text x="170" y="290" text-anchor="middle" class="t-sub">단순한 선들이 모여 계단 경계 — 모두 맞힘</text>
+        </g></g>
+      </g>
+    </svg>
+    <p class="small" style="margin-top:6px">각 모델은 아주 단순(선 하나)하지만, <b>틀린 문제에 가중치를 올려</b> 다음 모델이 거기에 집중하게 합니다. 최종 투표에서는 <b>잘한 모델일수록 발언권이 큽니다.</b></p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2.5">배깅은 동시에 독립적으로, 부스팅은 앞 모델의 결과를 보고 차례로. 약한 학습기(선 하나짜리 나무 = 그루터기 stump)를 쌓아 강한 학습기를 만든다는 발상. ③의 경계는 ①과 ②(와 추가 모델)의 가중 투표 결과를 단순화해 그린 것.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">04 앙상블 · 부스팅</span><span class="lv l3">수학</span></div>
+  <h2>AdaBoost의 두 식: 발언권과 오답 가중치</h2>
+  <div class="body">
+    <div class="cols even" style="align-items:start">
+      <div>
+        <div class="mbox sm mx" style="margin-bottom:10px"><span class="up lbl"><span class="ko">발언권</span></span> α = ½ ln <span class="fr"><span>1 − ε</span><span>ε</span></span></div>
+        <div class="mbox sm mx" style="margin-bottom:10px"><span class="up lbl"><span class="ko">가중치 갱신</span></span> <span class="ko">틀린 점</span> × e<sup>α</sup>, <span class="ko">맞힌 점</span> × e<sup>−α</sup></div>
+        <div class="mbox sm mx"><span class="up lbl"><span class="ko">최종 판정</span></span> H(x) = <span class="ko">부호</span>( <span class="up">Σ</span><sub>m</sub> α<sub>m</sub> h<sub>m</sub>(x) )</div>
+        <p class="small muted" style="margin-top:10px">ε = 이번 모델의 (가중치를 반영한) 오답률, h<sub>m</sub>(x) = +1 또는 −1</p>
+      </div>
+      <div class="box think calc" style="margin:0">
+        <div class="box-title"><svg class="ic"><use href="#i-coins"/></svg>계산해 보기</div>
+        <span class="mx">ε = 0.3 → α = ½ ln(0.7/0.3) ≈ 0.42</span><br>
+        틀린 점 × <span class="mx">e<sup>0.42</sup> ≈ 1.53</span>, 맞힌 점 × <span class="mx">e<sup>−0.42</sup> ≈ 0.66</span><br>
+        → 다음 모델이 볼 때 틀린 점이 약 <b>2.3배</b> 무거워진다.
+        <p class="frag" style="margin:12px 0 0"><span class="mx">ε = 0.1 → α ≈ 1.10</span> (잘한 모델, 큰 발언권)<br><span class="mx">ε = 0.5 → α = 0</span> (동전 던지기 수준, 발언권 없음)</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">앞 장 그림의 '점이 커진다'가 e^α 곱하기, '잘한 모델일수록 발언권'이 α. 갱신 후에는 가중치 합이 1이 되도록 나눠 준다(정규화)는 것만 말로.</aside>
+</section>
+
+
+<section class="slide">
+  <div class="s-head"><span class="sec">04 앙상블 · 부스팅</span></div>
+  <h2>그래디언트 부스팅: 남은 오차를 다음 나무가 메운다</h2>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1.15fr 1fr;align-items:center">
+      <svg viewBox="0 0 560 280" aria-label="골프공이 여러 번의 샷으로 홀에 가까워지는 그림">
+        <rect x="5" y="5" width="550" height="270" rx="16" class="f-surface" stroke="var(--line)" stroke-width="2"/>
+        <path d="M60 210 Q 230 40 380 190" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="6 6"/>
+        <path d="M380 190 Q 430 140 470 196" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="6 6"/>
+        <path d="M470 196 Q 482 186 492 200" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="6 6"/>
+        <line x1="30" y1="214" x2="535" y2="214" stroke="var(--line)" stroke-width="3"/>
+        <circle cx="60" cy="205" r="9" fill="var(--surface)" stroke="var(--text)" stroke-width="2"/>
+        <circle cx="380" cy="205" r="7" class="f-acc"/><circle cx="470" cy="205" r="7" class="f-acc"/>
+        <path d="M500 214 V140 l28 10 -28 10" fill="var(--accent-2)" stroke="var(--text)" stroke-width="2"/>
+        <text x="220" y="250" text-anchor="middle" class="t-sub">나무 ①: 큰 샷</text>
+        <text x="425" y="250" text-anchor="middle" class="t-sub">②: 남은 거리</text>
+        <text x="500" y="270" text-anchor="middle" class="t-sub">③</text>
+      </svg>
+      <div>
+        <ol class="small" style="padding-left:1.1em">
+          <li>첫 예측은 대충(예: 평균값)</li>
+          <li>각 데이터의 <b>남은 오차</b>(정답 − 지금 예측)를 계산</li>
+          <li>새 나무는 정답이 아니라 <b>이 남은 오차</b>를 맞히도록 학습</li>
+          <li>새 나무의 답을 <b>조금만</b>(학습률) 더해 예측을 고친다 → 2로</li>
+        </ol>
+        <div class="box warn frag" style="margin:10px 0 0;padding:14px 20px"><b>학습률</b> = 한 번에 얼마나 고칠지. 작게 여러 번이 보통 더 정확하지만 나무가 많이 필요. 너무 오래 하면 과적합 → 실전 점수가 나빠지기 시작할 때 멈춘다(<b>조기 종료</b>).</div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2.5">골프 비유: 첫 샷 후 남은 거리만큼 다음 샷, 또 남은 만큼 퍼팅. '그래디언트'는 오차를 줄이는 방향이라는 뜻 — 제곱 오차를 쓸 때는 그 방향이 바로 남은 오차라서 위 설명과 같아진다. 수식은 생략.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">04 앙상블 · 부스팅</span><span class="lv l3">수학</span></div>
+  <h2>그래디언트 부스팅을 식으로</h2>
+  <div class="body">
+    <div class="mbox mx">F<sub>m</sub>(x) = F<sub>m−1</sub>(x) + η · h<sub>m</sub>(x)<span class="cap"><span class="ko">지금까지의 예측</span> + <span class="ko">학습률</span> × <span class="ko">새 나무의 답</span></span></div>
+    <div class="grid g2" style="margin-top:16px;align-items:start">
+      <div>
+        <div class="terms" style="grid-template-columns:1fr">
+          <div><span class="mx">F<sub>0</sub> = ȳ</span>시작은 정답들의 평균</div>
+          <div><span class="mx">r<sub>i</sub> = y<sub>i</sub> − F<sub>m−1</sub>(x<sub>i</sub>)</span>남은 오차</div>
+          <div><span class="mx">h<sub>m</sub></span>r을 맞히도록 학습한 작은 나무</div>
+        </div>
+        <p class="small frag" style="margin-top:12px"><b>왜 '그래디언트'?</b> <span class="mx">L = ½(y − F)<sup>2</sup></span>을 F로 미분하면 <span class="mx">−(y − F)</span>. 남은 오차 = 오차를 줄이는 방향(음의 기울기) → <b>예측값 자체에 경사하강법</b>을 하는 것.</p>
+      </div>
+      <div class="box think calc" style="margin:0">
+        <div class="box-title"><svg class="ic"><use href="#i-coins"/></svg>계산해 보기 (나무가 r을 정확히 맞힌다고 할 때)</div>
+        정답 y = 10, F<sub>0</sub> = 6, η = 0.5<br>
+        <span class="mx">r = 4 → F<sub>1</sub> = 6 + 0.5×4 = 8</span><br>
+        <span class="mx">r = 2 → F<sub>2</sub> = 9 → F<sub>3</sub> = 9.5 → …</span><br>
+        매번 남은 거리의 절반씩 → 10에 다가간다.
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">분류에서는 손실을 로그 손실로 바꾸면 r 자리에 그 손실의 음의 기울기(정답 − 예측 확률)가 들어간다. XGBoost는 여기에 2차 미분과 규제 항을 더한 것. 다음 데모의 학습률 슬라이더가 η.</aside>
+</section>
+
+
+<section class="slide lab">
+  <div class="s-head"><span class="labbar">직접 해 보기 10</span><span class="sec">그래디언트 부스팅</span></div>
+  <h2>나무를 하나씩 더하며 오차 줄이기</h2>
+  <div class="demo">
+    <div class="plot"><svg id="d8" aria-label="부스팅 단계별 예측선과 남은 오차"></svg></div>
+    <div class="side">
+      <div class="ctrl"><label>학습률 (한 번에 고치는 양) <output id="d8lro"></output></label><input type="range" id="d8lr" min="0.1" max="1" step="0.1" value="0.5"></div>
+      <div class="btnrow"><button class="btn" id="d8add1" type="button">+ 나무 1그루</button><button class="btn ghost" id="d8add10" type="button">+ 10그루</button><button class="btn ghost" id="d8reset" type="button">처음으로</button></div>
+      <div class="row2">
+        <div class="meter"><div class="lbl">나무 수</div><div class="val" id="d8n">0</div></div>
+        <div class="meter"><div class="lbl">남은 오차</div><div class="val o" id="d8err">-</div></div>
+      </div>
+      <div class="legend"><span><i class="dot" style="background:var(--accent-2)"></i>지금 예측</span><span><i class="dot" style="background:var(--muted)"></i>한 단계 전</span><span>주황 점선 = 남은 오차</span></div>
+      <div class="callout b">각 나무는 질문 두 단계짜리 <b>아주 작은 나무</b>입니다. 작은 나무들이 쌓여 곡선이 됩니다.</div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2.5">처음엔 평평한 선(평균). 1그루씩 누르며 남은 오차(점선)가 줄어드는 것을 보여 줌. 학습률 1.0 vs 0.1 비교: 0.1은 느리지만 부드럽게. 수십 그루 이상 더하면 점 하나하나를 쫓아가며 계단이 잘아짐 = 과적합 조짐.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">04 앙상블 · 부스팅</span></div>
+  <h2>표 데이터의 강자: 부스팅 3총사</h2>
+  <div class="body">
+    <div class="big3">
+      <div class="card"><div class="k">2014~</div><div class="h">XGBoost</div><div class="d">그래디언트 부스팅에 규제와 빠른 계산을 더해 대중화. 빈칸(결측치)도 알아서 처리.</div></div>
+      <div class="card"><div class="k">2017~</div><div class="h">LightGBM</div><div class="d">나무를 잎 단위로 키우고 값을 구간으로 묶어 <b>대용량에서 매우 빠름</b>.</div></div>
+      <div class="card"><div class="k">2017~</div><div class="h">CatBoost</div><div class="d">'지역', '제품군' 같은 <b>범주형 특징</b>을 별도 손질 없이 잘 다룸. 기본 설정으로도 안정적.</div></div>
+    </div>
+    <div class="vs" style="margin-top:22px">
+      <div class="box" style="margin:0"><div class="box-title"><svg class="ic"><use href="#i-check"/></svg>왜 인기인가</div><span class="small">엑셀처럼 생긴 표 데이터(매출, 센서, 고객 기록)에서 지금도 가장 강력한 선택지 중 하나. 데이터 분석 대회 상위권 단골.</span></div>
+      <div class="box warn" style="margin:0"><div class="box-title"><svg class="ic"><use href="#i-alert"/></svg>주의</div><span class="small">손잡이(하이퍼파라미터)가 많다. 나무 수·학습률·깊이를 검증 데이터로 고르고, 조기 종료로 과적합을 막는다.</span></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">세 라이브러리 모두 원리는 그래디언트 부스팅. 차이는 속도·편의 기능. 이미지·음성·문장은 딥러닝이 강하지만, 표 데이터에서는 부스팅이 여전히 강력하다는 연구와 경험이 많다.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">04 앙상블 · 스태킹</span></div>
+  <h2>스태킹: 전문가 패널과 의장</h2>
+  <div class="body">
+    <div class="flow">
+      <div class="stepbox"><span class="ic-badge g"><svg class="ic"><use href="#i-database"/></svg></span><div class="h">데이터</div></div>
+      <div class="arrow">→</div>
+      <div style="flex:1.4;display:grid;gap:10px">
+        <div class="card" style="padding:12px 16px;text-align:center"><b>로지스틱 회귀</b> <span class="muted small">→ 72%</span></div>
+        <div class="card" style="padding:12px 16px;text-align:center"><b>KNN</b> <span class="muted small">→ 40%</span></div>
+        <div class="card" style="padding:12px 16px;text-align:center"><b>랜덤 포레스트</b> <span class="muted small">→ 81%</span></div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="stepbox"><span class="ic-badge"><svg class="ic"><use href="#i-scale"/></svg></span><div class="h">의장 모델</div><div class="d">누구 말을 얼마나<br>믿을지 학습</div></div>
+      <div class="arrow">→</div>
+      <div class="stepbox goal"><div class="h">최종 답</div></div>
+    </div>
+    <div class="vs" style="margin-top:22px">
+      <p class="small">서로 <b>다른 방식</b>으로 생각하는 모델을 모아야 '서로 다르게 틀리기'가 됩니다. 의장은 보통 단순한 모델(로지스틱 회귀 등).</p>
+      <div class="box warn frag" style="margin:0;padding:14px 20px"><span class="small"><b>커닝 금지</b> — 의장은 전문가들이 <b>처음 보는 데이터</b>에 낸 답으로 훈련해야 합니다. 이미 외운 데이터의 답을 보면 의장이 과적합합니다(그래서 교차 검증으로 답을 만든다).</span></div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">보팅이 '동등한 투표'라면 스태킹은 '투표 비중까지 학습'. 성능은 조금 더 오르지만 복잡도와 유지 비용이 크게 늘어 실무에서는 득실을 따진다.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">04 앙상블 · 정리</span></div>
+  <h2>배깅 vs 부스팅</h2>
+  <div class="body">
+    <table>
+      <tr><th></th><th class="c">배깅 (랜덤 포레스트)</th><th class="c">부스팅 (XGBoost 등)</th></tr>
+      <tr><td><b>학습 순서</b></td><td class="c">동시에, 서로 독립</td><td class="c">차례로, 앞 모델에 의존</td></tr>
+      <tr><td><b>부품 모델</b></td><td class="c">깊게 키운 나무 (불안정하지만 많이 아는)</td><td class="c">얕은 나무 (단순하고 약한)</td></tr>
+      <tr><td><b>줄이는 것</b></td><td class="c">들쭉날쭉함 (분산)</td><td class="c">덜 배운 부분 (편향)</td></tr>
+      <tr><td><b>과적합</b></td><td class="c">나무를 늘려도 잘 안 생김</td><td class="c">너무 오래 하면 생김 → 조기 종료</td></tr>
+      <tr><td><b>설정</b></td><td class="c">기본값으로도 대체로 잘 됨</td><td class="c">조율하면 보통 더 높은 성능</td></tr>
+    </table>
+    <p class="frag" style="margin-top:16px;font-size:23px">실무 순서: <b>랜덤 포레스트로 빠르게 기준</b>을 잡고 → <b>부스팅을 조율</b>해 성능을 끌어올린다.</p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">편향/분산이라는 용어는 여기서 한 번만 소개. 편향 = 너무 단순해서 생기는 체계적 오차(과소적합), 분산 = 데이터에 따라 흔들리는 정도(과적합).</aside>
+</section>
+
+<!-- ───────── 5. 정리 ───────── -->
+<section class="slide section">
+  <div class="big">05</div>
+  <h2>정리</h2>
+  <p>알고리즘 지도 · 무엇부터 써 볼까 · 종합 퀴즈</p>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="0.5">마무리 구역.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">05 정리</span></div>
+  <h2>오늘의 알고리즘 지도</h2>
+  <div class="body">
+    <svg viewBox="0 0 1120 440" aria-label="오늘 배운 알고리즘들의 관계도">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="10" y="58" class="t-acc">회귀</text><text x="10" y="198" class="t-acc">분류</text><text x="10" y="338" class="t-acc">나무 계열</text>
+      <g class="ed" marker-end="url(#ar)">
+        <path d="M290 50 L338 50" marker-end="url(#ar)"/><path d="M520 50 L568 50" marker-end="url(#ar)"/><path d="M750 50 L798 50" marker-end="url(#ar)"/>
+        <path d="M200 75 L200 163" marker-end="url(#ar)"/>
+        <path d="M290 330 L338 290" marker-end="url(#ar)"/><path d="M290 330 L338 380" marker-end="url(#ar)"/>
+        <path d="M520 290 L568 290" marker-end="url(#ar)"/><path d="M520 380 L568 380" marker-end="url(#ar)"/>
+        <path d="M750 290 C 830 290, 860 300, 898 318" marker-end="url(#ar)"/><path d="M750 380 C 830 380, 860 360, 898 348" marker-end="url(#ar)"/>
+        <path d="M750 190 C 860 190, 900 250, 950 305" marker-end="url(#ar)"/>
+      </g>
+      <text x="210" y="125" class="t-sub">S자로 감싸기</text>
+      <g class="node q"><rect x="110" y="25" width="180" height="50" rx="12"/><text x="200" y="57" text-anchor="middle" class="t-main">선형회귀</text></g>
+      <g class="node q"><rect x="340" y="25" width="180" height="50" rx="12"/><text x="430" y="57" text-anchor="middle" class="t-main">다중회귀</text></g>
+      <g class="node q"><rect x="570" y="25" width="180" height="50" rx="12"/><text x="660" y="57" text-anchor="middle" class="t-main">다항회귀</text></g>
+      <g class="node q"><rect x="800" y="25" width="220" height="50" rx="12"/><text x="910" y="57" text-anchor="middle" class="t-main">규제 (릿지·라쏘)</text></g>
+      <g class="node q"><rect x="110" y="165" width="180" height="50" rx="12"/><text x="200" y="197" text-anchor="middle" class="t-main">로지스틱 회귀</text></g>
+      <g class="node q"><rect x="340" y="165" width="180" height="50" rx="12"/><text x="430" y="197" text-anchor="middle" class="t-main">KNN</text></g>
+      <g class="node q"><rect x="570" y="165" width="180" height="50" rx="12"/><text x="660" y="197" text-anchor="middle" class="t-main">SVM</text></g>
+      <g class="node q"><rect x="110" y="305" width="180" height="50" rx="12"/><text x="200" y="337" text-anchor="middle" class="t-main">결정트리</text></g>
+      <g class="node la"><rect x="340" y="265" width="180" height="50" rx="12"/><text x="430" y="297" text-anchor="middle" class="t-main">배깅</text></g>
+      <g class="node la"><rect x="570" y="265" width="180" height="50" rx="12"/><text x="660" y="297" text-anchor="middle" class="t-main">랜덤 포레스트</text></g>
+      <g class="node lb"><rect x="340" y="355" width="180" height="50" rx="12"/><text x="430" y="387" text-anchor="middle" class="t-main">부스팅</text></g>
+      <g class="node lb"><rect x="570" y="355" width="180" height="50" rx="12"/><text x="660" y="380" text-anchor="middle" class="t-main">XGBoost 등</text><text x="660" y="398" text-anchor="middle" class="t-sub">LightGBM · CatBoost</text></g>
+      <g class="node"><rect x="900" y="305" width="200" height="60" rx="12" style="stroke:var(--text)"/><text x="1000" y="333" text-anchor="middle" class="t-main">보팅 · 스태킹</text><text x="1000" y="352" text-anchor="middle" class="t-sub">무엇이든 모아서</text></g>
+    </svg>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">세 줄기: 가중치 합 계열(선형→다중→다항·규제, 로지스틱), 거리·경계 계열(KNN, SVM), 나무 계열(트리→배깅/랜덤포레스트, 부스팅). 앙상블은 어떤 모델이든 묶을 수 있다.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">05 정리</span></div>
+  <h2>무엇부터 써 볼까?</h2>
+  <div class="body">
+    <ul class="agenda">
+      <li><span class="n">1</span><span><b>언제나 단순한 기준 모델부터</b> — 선형회귀 / 로지스틱 회귀</span><span class="t">비교 기준이 없으면 좋아졌는지도 모른다</span></li>
+      <li><span class="n">2</span><span><b>"왜?"를 설명해야 한다</b> — 선형 계열, 얕은 결정트리</span><span class="t">가중치·질문 목록이 곧 설명</span></li>
+      <li><span class="n">3</span><span><b>표 데이터에서 성능</b> — 랜덤 포레스트 → 부스팅</span><span class="t">실무에서 가장 흔한 경로</span></li>
+      <li><span class="n">4</span><span><b>데이터가 적고 경계가 복잡</b> — SVM(커널), KNN</span><span class="t">단위 맞추기 필수</span></li>
+      <li><span class="n">5</span><span><b>이미지 · 음성 · 문장</b> — 딥러닝</span><span class="t">오늘 범위 밖, 다음 단계</span></li>
+    </ul>
+    <p class="small muted" style="margin-top:16px">어떤 알고리즘이든 마지막 판단은 같습니다: <b>처음 보는 데이터</b>에서 몇 점인가.</p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">"공짜 점심은 없다" — 모든 문제에 항상 최고인 알고리즘은 없다. 그래서 여러 개를 같은 실전 데이터로 비교해 고른다.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">05 정리 · 확인</span></div>
+  <h2>종합 퀴즈</h2>
+  <div class="body">
+    <div class="grid g3">
+      <div class="q" data-answer="b" data-explain="모든 모델이 같은 방향으로 틀리면 모아도 그대로 틀립니다. 다수결 데모에서 '서로 닮은 정도'를 올렸을 때를 떠올려 보세요.">
+        <p class="q-title">앙상블이 효과를 보려면 모델들이 어때야 할까?</p>
+        <div class="opts"><button data-v="a">모두 똑같아야 한다</button><button data-v="b">서로 다르게 틀려야 한다</button><button data-v="c">모두 정확도 99%여야 한다</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="a" data-explain="부스팅은 앞 모델이 남긴 오차를 다음 모델이 차례로 메웁니다. 동시에 따로 배우는 것은 배깅입니다.">
+        <p class="q-title">'앞 모델의 남은 오차를 다음 모델이 학습'하는 방법은?</p>
+        <div class="opts"><button data-v="a">부스팅</button><button data-v="b">배깅</button><button data-v="c">KNN</button></div>
+        <div class="feedback"></div>
+      </div>
+      <div class="q" data-answer="c" data-explain="데이터와 질문 후보를 무작위로 해서 서로 다른 나무를 만드는 것이 랜덤 포레스트의 핵심입니다.">
+        <p class="q-title">랜덤 포레스트에서 '랜덤'한 것 두 가지는?</p>
+        <div class="opts"><button data-v="a">학습률과 나무 수</button><button data-v="b">정답과 오차</button><button data-v="c">연습 데이터 뽑기와 질문 후보</button></div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">세 문제를 조별로 토론 1분 후 답하게.</aside>
+</section>
+
+<section class="slide">
+  <div class="s-head"><span class="sec">05 정리</span></div>
+  <h2>코드로는 어떻게 생겼을까?</h2>
+  <div class="body">
+    <div class="cols" style="align-items:center">
+      <div>
+        <p class="fileh">파이썬 · scikit-learn</p>
+        <pre class="code">from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+
+model = RandomForestClassifier()   # 알고리즘 고르기
+model.fit(X_train, y_train)        # 연습 문제로 배우기
+model.score(X_test, y_test)        # 실전 문제로 채점
+
+model = LogisticRegression()       # 바꿔 끼우기만
+model.fit(X_train, y_train)</pre>
+      </div>
+      <div>
+        <p>오늘 배운 거의 모든 알고리즘이 <b>같은 사용법</b>(고르기 → <code class="i">fit</code> → <code class="i">predict</code>/<code class="i">score</code>)을 가집니다.</p>
+        <p class="small">그래서 코드보다 중요한 것은 오늘 한 일입니다 — <b>어떤 모델을 고르고, 결과를 어떻게 의심할지</b> 아는 것.</p>
+        <p class="small muted">XGBoost · LightGBM · CatBoost도 같은 모양으로 쓸 수 있습니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">코딩을 해 본 학생을 위한 다리. 직접 해 보고 싶으면 Colab에서 sklearn의 예제 데이터(load_breast_cancer 등)로 오늘 알고리즘을 모두 비교해 보라고 권한다.</aside>
+</section>
+
+<section class="slide mathslide">
+  <div class="s-head"><span class="sec">05 정리</span><span class="lv l3">수학</span></div>
+  <h2>오늘의 식 한 장</h2>
+  <div class="body">
+    <table class="symtab cheat">
+      <tr><td><b>선형회귀</b></td><td class="mx">ŷ = wx + b, &nbsp; <span class="up">MSE</span> = (1/n) <span class="up">Σ</span>(y − ŷ)<sup>2</sup></td><td><b>규제</b></td><td class="mx"><span class="up">MSE</span> + λ<span class="up">Σ</span>w<sup>2</sup> &nbsp;/&nbsp; + λ<span class="up">Σ</span>|w|</td></tr>
+      <tr><td><b>경사하강법</b></td><td class="mx">w ← w − η · ∂L/∂w</td><td><b>로지스틱</b></td><td class="mx">p = 1 / (1 + e<sup>−(<b class="vb">w</b>·<b class="vb">x</b>+b)</sup>)</td></tr>
+      <tr><td><b>다중회귀</b></td><td class="mx">ŷ = <b class="vb">w</b>·<b class="vb">x</b> + b</td><td><b>로그 손실</b></td><td class="mx">−[y ln p + (1−y) ln(1−p)]</td></tr>
+      <tr><td><b>KNN 거리</b></td><td class="mx">d = √<span class="up">Σ</span>(a<sub>j</sub> − b<sub>j</sub>)<sup>2</sup>, &nbsp; z = (x − μ)/σ</td><td><b>결정트리</b></td><td class="mx">G = 1 − <span class="up">Σ</span>p<sub>k</sub><sup>2</sup></td></tr>
+      <tr><td><b>SVM</b></td><td class="mx"><span class="ko">도로 폭</span> = 2 / ‖<b class="vb">w</b>‖</td><td><b>앙상블 분산</b></td><td class="mx">ρσ<sup>2</sup> + (1 − ρ)σ<sup>2</sup>/M</td></tr>
+      <tr><td><b>배깅</b></td><td class="mx">(1 − 1/n)<sup>n</sup> ≈ 0.37</td><td><b>AdaBoost</b></td><td class="mx">α = ½ ln((1 − ε)/ε)</td></tr>
+      <tr><td><b>그래디언트 부스팅</b></td><td class="mx" colspan="3">F<sub>m</sub> = F<sub>m−1</sub> + η · h<sub>m</sub>, &nbsp; h<sub>m</sub><span class="ko">은 남은 오차</span> r = y − F<sub>m−1</sub><span class="ko">을 학습</span></td></tr>
+    </table>
+    <p class="small muted" style="margin-top:14px">공통 뼈대: <b>무엇을 줄일지 식으로 정하고(MSE, 로그 손실, 불순도 …), 그것을 줄이는 방향으로 조금씩 고친다.</b></p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="3">인쇄해서 나눠 줄 수 있는 한 장 요약. 대부분의 식이 '손실 = 무엇을 줄일지'와 '고치는 규칙' 두 종류라는 점을 정리.</aside>
+</section>
+
+<section class="slide" style="justify-content:center">
+  <div class="s-head"><span class="sec">마무리</span></div>
+  <h2>오늘의 한 줄씩</h2>
+  <div class="body">
+    <div class="grid g2" style="gap:14px">
+      <div class="card"><b>선형·다중회귀</b> — 요인마다 가중치를 곱해 더한다</div>
+      <div class="card"><b>과적합·규제</b> — 연습만 잘하면 안 된다, 복잡함엔 벌점</div>
+      <div class="card"><b>로지스틱 회귀</b> — 가중치 합을 S자로 눌러 확률로</div>
+      <div class="card"><b>KNN</b> — 가까운 이웃의 다수결</div>
+      <div class="card"><b>결정트리</b> — 깨끗하게 나누는 질문의 스무고개</div>
+      <div class="card"><b>SVM</b> — 가장 넓은 도로, 못 나누면 들어 올리기</div>
+      <div class="card"><b>배깅·랜덤 포레스트</b> — 조금씩 다른 나무들의 투표</div>
+      <div class="card"><b>부스팅</b> — 남은 오차를 다음 나무가 메운다</div>
+    </div>
+    <p style="margin-top:18px;display:flex;gap:12px;align-items:center"><a class="btn ghost" href="../">☰ 강의 목록</a><a class="btn ghost" href="../ml-algorithms/">그림만 있는 버전</a><span class="small muted">질문은 daeil.noh@deu.ac.kr</span></p>
+  </div>
+  <div class="s-foot"><span>머신러닝 알고리즘 특강 · 수학 포함판</span><span class="no"></span></div>
+  <aside class="notes" data-min="2">여덟 줄 요약을 함께 읽고 질의응답.</aside>
+</section>
+
+</div>
+</div>
+
+<div class="bar"></div>
+<nav class="controls" aria-label="슬라이드 이동">
+  <a href="../">☰ 목록</a>
+  <span class="title">머신러닝 알고리즘, 그림과 수식으로 (수학 포함판)</span>
+  <span class="spacer"></span>
+  <span class="hint">← → · N 노트 · T 시계 · O 목록 · F 전체화면</span>
+  <button type="button" data-prev aria-label="이전">◀</button>
+  <span class="count">1 / 1</span>
+  <button type="button" data-next aria-label="다음">▶</button>
+  <button type="button" class="fs" data-fs aria-label="전체화면">⛶</button>
+</nav>
+
+<script src="../assets/js/icons.js"></script>
+<script src="../assets/js/slides.js"></script>
+<script src="../assets/js/notes.js"></script>
+<script src="../ml-algorithms/demo.js"></script>
+<script src="math-demo.js"></script>
+</body>
+</html>

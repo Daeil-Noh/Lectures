@@ -1,0 +1,34 @@
+  /* 수학 포함판 */
+  .slide.mathslide { background: linear-gradient(90deg, var(--accent-2) 0 6px, transparent 6px), var(--bg); }
+  .mx { font-family: "Times New Roman", "Noto Serif KR", "Nanum Myeongjo", serif; font-style: italic; white-space: nowrap; }
+  .mx .up, .mx .lbl, .mx .vb { font-style: normal; }
+  .mx .vb { font-weight: 800; }
+  .mx sub, .mx sup { font-size: .62em; }
+  .mbox { background: var(--surface); border: 2px solid var(--accent); border-radius: 16px; padding: 14px 20px; text-align: center; font-size: 34px; line-height: 1.6; white-space: normal; }
+  .mbox.sm { font-size: 26px; padding: 8px 16px; }
+  .mbox .lbl { font-family: "Pretendard Variable", Pretendard, sans-serif; font-size: 15px; font-weight: 800; color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 2px 8px; margin-right: 10px; vertical-align: 5px; }
+  .mbox .cap { display: block; font-family: "Pretendard Variable", Pretendard, sans-serif; font-style: normal; font-size: 16px; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+  .fr { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 .12em; line-height: 1.15; }
+  .fr > span { padding: 0 .15em; }
+  .fr > span:first-child { border-bottom: .055em solid currentColor; padding-bottom: .04em; }
+  .op { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1; margin: 0 .12em; }
+  .op i { font-size: .42em; }
+  .op .s { font-style: normal; font-size: 1.2em; }
+  .sq { border-top: .055em solid currentColor; padding: .02em .1em 0; }
+  .terms { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; font-size: 17px; line-height: 1.45; }
+  .terms > div { background: var(--surface-2); border-radius: 10px; padding: 7px 12px; }
+  .terms .mx { font-size: 20px; color: var(--accent); font-weight: 700; margin-right: 8px; }
+  .calc { font-size: 19px; line-height: 1.7; }
+  .calc .mx { font-size: 22px; }
+  table.symtab { font-size: 19px; }
+  table.symtab th, table.symtab td { padding: 7px 14px; }
+  table.symtab td.mx { font-size: 23px; }
+  table.cheat { font-size: 17px; }
+  table.cheat td { padding: 9px 12px; vertical-align: middle; }
+  table.cheat td.mx { font-size: 20px; }
+  .bars { display: grid; gap: 8px; }
+  .bars > div { display: grid; grid-template-columns: 90px 1fr 54px; align-items: center; gap: 10px; font-size: 18px; }
+  .bars i { display: block; height: 22px; border-radius: 6px; background: var(--accent-2); min-width: 4px; }
+  .bars b { font-variant-numeric: tabular-nums; }
+  .mx .ko { font-family: "Pretendard Variable", Pretendard, sans-serif; font-style: normal; font-size: .82em; }
+  .mbox .cap .ko, .mbox .lbl .ko { font-size: 1em; }

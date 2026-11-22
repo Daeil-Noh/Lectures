@@ -3,7 +3,8 @@
 동의대학교 인공지능학과 · 노대일 교수 · 특강 (약 3시간, 휴식 2회 포함)  
 수식 대신 그림과 비유로 대표 머신러닝 알고리즘을 설명하는 슬라이드입니다. 수식은 꼭 필요한 세 곳(직선, 여러 요인의 합, S자 곡선)에만 한 줄씩 나옵니다.
 
-**보기**: https://daeil-noh.github.io/Lectures/ml-algorithms/ (로컬에서는 `index.html`을 브라우저로 열기)
+**보기**: https://daeil-noh.github.io/Lectures/ml-algorithms/ (로컬에서는 `index.html`을 브라우저로 열기)  
+수학 슬라이드를 더한 버전: [ml-algorithms-math/](../ml-algorithms-math/) — 이 폴더의 `index.html`·`demo.js`를 고치면 `python3 ml-algorithms-math/src/build.py`로 수학판도 다시 만드세요.
 
 ## 구성 (52장)
 
