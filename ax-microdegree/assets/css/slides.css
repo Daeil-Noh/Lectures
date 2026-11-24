@@ -297,3 +297,18 @@ a.colab:hover { filter: brightness(1.05); }
 .msg.ai { align-self: flex-start; background: var(--surface-2); color: var(--text); border-bottom-left-radius: 4px; }
 .msg.ai.warn { background: var(--bad-soft); }
 .msg .who { display: block; font-size: 12px; font-weight: 800; opacity: .75; margin-bottom: 2px; }
+
+/* 하단 탐색 막대: 진행 막대를 누르거나 끌어서 이동 */
+.scrub { position: fixed; left: 0; right: 0; bottom: 52px; height: 18px; cursor: pointer; touch-action: none; z-index: 5; }
+.scrub::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--line); opacity: 0; transition: opacity .15s, height .15s; }
+.scrub .bar { position: absolute; left: 0; bottom: 0; }
+.scrub .bar::after { content: ""; position: absolute; right: -7px; top: 50%; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.25); transform: translateY(-50%) scale(0); transition: transform .15s; }
+.scrub:hover::before, .scrub.drag::before { opacity: 1; height: 6px; }
+.scrub:hover .bar, .scrub.drag .bar { height: 6px; }
+.scrub:hover .bar::after, .scrub.drag .bar::after { transform: translateY(-50%) scale(1); }
+.scrub.drag .bar { transition: none; }
+.scrub-mark { position: absolute; bottom: 0; width: 2px; height: 6px; margin-left: -1px; background: var(--surface); opacity: 0; transition: opacity .15s; pointer-events: none; z-index: 1; }
+.scrub:hover .scrub-mark, .scrub.drag .scrub-mark { opacity: 1; }
+.scrub-tip { position: absolute; bottom: 20px; left: 0; padding: 6px 12px; border-radius: 8px; background: var(--text); color: var(--bg); font-size: 13px; font-weight: 600; white-space: nowrap; max-width: min(70vw, 560px); overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 14px rgba(0,0,0,.2); opacity: 0; pointer-events: none; transition: opacity .12s; }
+.scrub:hover .scrub-tip, .scrub.drag .scrub-tip { opacity: 1; }
+@media print { .scrub { display: none; } }

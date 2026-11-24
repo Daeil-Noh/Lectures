@@ -1,5 +1,5 @@
 // 슬라이드 엔진 (AX 교안 엔진 기반)
-// · ← → / 스페이스 / 스와이프 / 하단 버튼으로 이동, F 전체화면, #번호로 바로가기
+// · ← → / 스페이스 / 스와이프 / 하단 버튼으로 이동, 하단 진행 막대를 누르거나 끌어서 바로 이동, F 전체화면, #번호로 바로가기
 // · .frag 요소는 '다음'을 누를 때마다 하나씩 나타남 (PPT 애니메이션처럼)
 // · 슬라이드가 보일 때 document 에 'slideenter' 이벤트 (detail: {index, slide})
 (function () {
@@ -11,6 +11,7 @@
   const bar = document.querySelector('body > .bar') || document.querySelector('.bar');
   const total = slides.length;
   let cur = 0;
+  let scrub = null;
 
   slides.forEach((s, i) => {
     const no = s.querySelector('.s-foot .no');
@@ -38,6 +39,7 @@
     if (changed) setFrags(slides[cur], fromBack ? 'all' : 'none');
     count.textContent = (cur + 1) + ' / ' + total;
     bar.style.width = ((cur + 1) / total) * 100 + '%';
+    if (scrub) scrub.setAttribute('aria-valuenow', String(cur + 1));
     prev.disabled = cur === 0;
     next.disabled = cur === total - 1 && frags(slides[cur]).every((f) => f.classList.contains('show'));
     history.replaceState(null, '', '#' + (cur + 1));
@@ -72,7 +74,7 @@
 
   let sx = null, sy = null;
   document.addEventListener('touchstart', (e) => {
-    if (e.target.closest('input, .demo')) { sx = null; return; }
+    if (e.target.closest('input, .demo, .scrub')) { sx = null; return; }
     sx = e.touches[0].clientX; sy = e.touches[0].clientY;
   }, { passive: true });
   document.addEventListener('touchend', (e) => {
@@ -88,6 +90,43 @@
   }
   const fs = document.querySelector('[data-fs]');
   if (fs) fs.addEventListener('click', toggleFs);
+
+  // 하단 진행 막대 = 탐색 막대: 누르거나 끌어서 원하는 장으로 바로 이동 (마우스·터치)
+  scrub = document.createElement('div');
+  scrub.className = 'scrub';
+  scrub.setAttribute('role', 'slider');
+  scrub.setAttribute('aria-label', '슬라이드 위치 (끌어서 이동)');
+  scrub.setAttribute('aria-valuemin', '1');
+  scrub.setAttribute('aria-valuemax', String(total));
+  bar.parentNode.insertBefore(scrub, bar);
+  scrub.appendChild(bar);
+  slides.forEach((s, i) => { // 구역 표지 장 위치에 눈금
+    if (i > 0 && s.classList.contains('section')) {
+      const m = document.createElement('i'); m.className = 'scrub-mark';
+      m.style.left = (i / total * 100) + '%'; scrub.appendChild(m);
+    }
+  });
+  const tip = document.createElement('div'); tip.className = 'scrub-tip'; scrub.appendChild(tip);
+  const titleOf = (i) => { const h = slides[i].querySelector('h1, h2'); return h ? h.textContent.replace(/\s+/g, ' ').trim() : ''; };
+  const idxAt = (x) => { const r = scrub.getBoundingClientRect(); return Math.max(0, Math.min(total - 1, Math.floor((x - r.left) / r.width * total))); };
+  function tipAt(x) {
+    const i = idxAt(x), t = titleOf(i), r = scrub.getBoundingClientRect();
+    tip.textContent = (i + 1) + ' / ' + total + (t ? '  ·  ' + t : '');
+    const w = tip.offsetWidth;
+    tip.style.left = Math.max(8, Math.min(r.width - w - 8, x - r.left - w / 2)) + 'px';
+  }
+  let dragging = false;
+  function jump(x) { const i = idxAt(x); if (i !== cur) show(i, i < cur); }
+  scrub.addEventListener('pointerdown', (e) => {
+    if (e.button) return;
+    e.preventDefault(); dragging = true;
+    try { scrub.setPointerCapture(e.pointerId); } catch (err) { /* 무시 */ }
+    scrub.classList.add('drag'); tipAt(e.clientX); jump(e.clientX);
+  });
+  scrub.addEventListener('pointermove', (e) => { tipAt(e.clientX); if (dragging) jump(e.clientX); });
+  const stop = () => { dragging = false; scrub.classList.remove('drag'); };
+  scrub.addEventListener('pointerup', stop);
+  scrub.addEventListener('pointercancel', stop);
 
   window.addEventListener('resize', fit);
   window.addEventListener('hashchange', () => {
